@@ -6,6 +6,18 @@ Unified root instructions for AI coding assistants (Cursor, Claude, Codex, OpenC
 
 Humans: see [Development Setup → Use of AI and LLM Tools](https://docs.nvidia.com/nemo/gym/latest/contribute/development-setup#use-of-ai-and-llm-tools) (maintainer response policy) and [Agent Skills](https://docs.nvidia.com/nemo/gym/latest/contribute/agent-skills).
 
+## Neutrality migration checkpoints
+
+For the benchmark-neutrality migration, first read [MIGRATION-WORKFLOW.md](MIGRATION-WORKFLOW.md)
+and [MIGRATION-STATE.md](MIGRATION-STATE.md) on the `checkpoint/migration-control` branch.
+These files are the durable operating instructions and recovery index for this migration.
+
+- Save scoped work to a reachable `checkpoint/*` commit after each small editing batch and before validation or handoff.
+- Read back the branch and changed files before reporting a checkpoint as saved.
+- Keep saved, validated, and accepted states separate. Checkpoints do not weaken formal PR or final acceptance gates.
+- Keep one implementation slice active; independent review may run in parallel against saved commits.
+- Follow the user's phase boundary: no real-model experiments, merge, release, or publishing during this migration work.
+
 ## Quality bar
 
 - Prefer focused changes. Do not make unrelated "drive-by" edits. If a drive-by fix is worth keeping, open a separate issue or PR.
