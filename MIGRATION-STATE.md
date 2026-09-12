@@ -3,7 +3,7 @@
 
 # Migration state
 
-Updated: 2026-09-12T23:50:01.884Z
+Updated: 2026-09-12T23:59:42.179Z
 
 Control branch: `checkpoint/migration-control`.
 Procedure: [MIGRATION-WORKFLOW.md](MIGRATION-WORKFLOW.md).
@@ -78,16 +78,32 @@ from the restored plan and the immutable accepted source APIs; they are not reco
 Next actions, in order:
 
 1. Original plan recovered and saved with provenance (this checkpoint).
-2. Restore the accepted source from its immutable Git tree; verify each file hash.
+2. Accepted source restored: all 5,134 tracked blobs and modes verified, no missing paths or unsafe symlinks.
    Sol is specifying a new PR02c contract. Unpublished source remains unavailable and must be rebuilt.
 3. Create `checkpoint/pr-02c` from the durable implementation base above.
    Save the PR02c contract, scope, owner, and recovery record before changing code.
 4. Implement or restore PR02c in small saved batches, then perform source review and all required validation.
 5. Advance the migration stack one accepted implementation slice at a time.
 
-Current implementation work in progress: none. Sol owns PR02c design; Luna owns restoration of accepted source.
+Current implementation work in progress: none. Source restoration is complete; Sol owns PR02c design.
+Independent Sol design work is characterizing PR04 grader isolation, PR06 GDPval semantics, and PR08 AA-v2 protocol.
 The next implementation prerequisite is saving Sol's reviewed PR02c contract.
 Do not recreate all unpublished slices in parallel.
+
+## Accepted source and development environment recovered
+
+The complete repository was recovered using a read-only Git clone at the accepted implementation base above.
+All 5,134 tracked blobs were checked byte-for-byte and mode-for-mode against Git. The worktree was clean.
+There were zero missing paths, content mismatches, mode mismatches, or unsafe symlinks.
+
+Development environment recreation succeeded with:
+
+- CPython 3.13.14.
+- uv 0.11.29, invoked with `uvx --from uv==0.11.29 uv`.
+- `uv sync --locked --extra dev --python 3.13.14`, using the accepted `uv.lock`.
+- No source or lock-file modifications.
+
+This is recovery and environment preparation evidence. No new implementation validation or acceptance is claimed.
 
 ## Verified recovery drill
 
