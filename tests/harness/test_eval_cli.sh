@@ -44,7 +44,7 @@ grep -q '^codex' <<<"$executors"
 grep -q '^claude-code' <<<"$executors"
 grep -q '^cursor' <<<"$executors"
 grep -q '^stirrup' <<<"$executors"
-grep -q 'legacy ./gdpval path only' <<<"$executors"
+grep -q '^stirrup.*not available through the generic runner' <<<"$executors"
 
 if ./eval run aime26 --executor claude-code --limit 1 >/dev/null 2>&1; then
   echo "AIME26 unexpectedly accepted an unsupported executor" >&2
