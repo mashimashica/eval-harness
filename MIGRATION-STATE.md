@@ -3,7 +3,7 @@
 
 # Migration state
 
-Updated: 2026-09-12T23:40:54.119Z
+Updated: 2026-09-12T23:50:01.884Z
 
 Control branch: `checkpoint/migration-control`.
 Procedure: [MIGRATION-WORKFLOW.md](MIGRATION-WORKFLOW.md).
@@ -68,19 +68,25 @@ Do not mark these slices restored or validated until their actual bytes are reco
 
 Original user plan: `eval-harness-neutrality-migration-plan-2026-09-12.md`.
 The user-provided canonical plan remains the scope authority.
-Its local attachment copy is absent and its full text is not included in this checkpoint.
-Do not substitute this state summary for that plan or for the exact interface contracts.
+The user reattached the original plan, and its complete UTF-8 bytes are saved in this control branch at
+[`eval-harness-neutrality-migration-plan-2026-09-12.md`](eval-harness-neutrality-migration-plan-2026-09-12.md).
+Provenance: user reattachment of `libfile_9e4457a4cf308191ad99ea93950cf903`; read from the provided scratch copy.
+Size: 33790 bytes. SHA-256: `174f0b3d289ddffa9e9d617637e58dc2ad4198f2046a3064407ba41aa423885f`.
+Do not substitute this state summary for that plan. Missing unpublished contracts will be newly specified by Sol
+from the restored plan and the immutable accepted source APIs; they are not recovered original contracts.
 
 Next actions, in order:
 
-1. Recover the original plan through an authorized source and save its exact bytes with provenance.
-2. Recover any exact unpublished contracts/source that remain available; explicitly identify what needs rebuilding.
+1. Original plan recovered and saved with provenance (this checkpoint).
+2. Restore the accepted source from its immutable Git tree; verify each file hash.
+   Sol is specifying a new PR02c contract. Unpublished source remains unavailable and must be rebuilt.
 3. Create `checkpoint/pr-02c` from the durable implementation base above.
    Save the PR02c contract, scope, owner, and recovery record before changing code.
 4. Implement or restore PR02c in small saved batches, then perform source review and all required validation.
 5. Advance the migration stack one accepted implementation slice at a time.
 
-Current implementation work in progress: none. Recovery of the plan/contracts is the next prerequisite.
+Current implementation work in progress: none. Sol owns PR02c design; Luna owns restoration of accepted source.
+The next implementation prerequisite is saving Sol's reviewed PR02c contract.
 Do not recreate all unpublished slices in parallel.
 
 ## Verified recovery drill
