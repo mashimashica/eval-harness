@@ -3,7 +3,7 @@
 
 # Migration state
 
-Updated: 2026-09-12T23:35:06.893Z
+Updated: 2026-09-12T23:40:54.119Z
 
 Control branch: `checkpoint/migration-control`.
 Procedure: [MIGRATION-WORKFLOW.md](MIGRATION-WORKFLOW.md).
@@ -82,6 +82,25 @@ Next actions, in order:
 
 Current implementation work in progress: none. Recovery of the plan/contracts is the next prerequisite.
 Do not recreate all unpublished slices in parallel.
+
+## Verified recovery drill
+
+Checkpoint tested: `e823f3b2739b2be49f12bfd7e757323dbca48d02`.
+
+The three control files were fetched from that immutable remote commit into a newly empty local directory.
+All three restored files matched their recorded Git blob hashes:
+
+| File | Verified Git blob |
+| --- | --- |
+| `AGENTS.md` | `a1fd166e25ed240c7e8538d02b22699f3cc0d882` |
+| `MIGRATION-WORKFLOW.md` | `43523cefe12d3a30b28edc53e3e2d2cbc0ed8896` |
+| `MIGRATION-STATE.md` | `b88dfae67c1cfa4080b71452ed0fbea281cca28d` |
+
+The remote comparison also confirmed that the checkpoint changed only these three paths.
+No workflow runs were returned for that checkpoint when checked after publication.
+This drill verifies recovery of the saved control documents. It does not recover the missing unpublished source
+or provide implementation acceptance. This evidence is recorded in a descendant commit so that the tested commit
+and file hashes remain immutable.
 
 ## Updating this control record
 
