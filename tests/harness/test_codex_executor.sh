@@ -21,7 +21,7 @@ fi
 printf '%s\n' "$*" >>"${FAKE_CODEX_ARGS_LOG:?}"
 case "${1-}" in
   --version)
-    echo "codex-cli 9.9.9"
+    echo "codex-cli 0.154.0"
     exit 0
     ;;
   login)
@@ -55,7 +55,13 @@ case "${1-}" in
     cat >"${FAKE_CODEX_PROMPT_LOG:?}"
     mkdir -p "$workspace/deliverables/nested"
     printf 'fake deliverable\n' >"$workspace/deliverables/nested/result.txt"
-    printf '\377{"type":"turn.completed"}\n'
+    printf '%s\n' \
+      '{"type":"thread.started","thread_id":"fixture-thread"}' \
+      '{"type":"turn.started"}'
+    printf '%s%s\n' \
+      '{"type":"turn.completed","usage":' \
+      '{"input_tokens":1,"cached_input_tokens":0,"output_tokens":1,"reasoning_output_tokens":0}}'
+    printf '\377diagnostic\n' >&2
     printf 'done\n' >"$final_message"
     exit 0
     ;;
@@ -100,11 +106,13 @@ grep -q -- '--ignore-user-config' "$args_log"
 grep -q 'approval_policy="never"' "$args_log"
 grep -q 'sandbox_workspace_write.network_access=false' "$args_log"
 grep -q './deliverables/' "$prompt_log"
+cmp -- "$prompt_log" "$out/tasks/task-one/executor/prompt.txt"
 grep -q '"auth_mode": "chatgpt-subscription"' "$out/tasks/task-one/executor/metadata.json"
-python3 - "$out/tasks/task-one/executor/stdout.log" <<'PY'
+python3 - "$out/tasks/task-one/executor/stderr.log" "$out/tasks/task-one/executor/task-prompt.txt" <<'PY'
 from pathlib import Path
 import sys
 assert "\ufffd" in Path(sys.argv[1]).read_text(encoding="utf-8")
+assert Path(sys.argv[2]).read_bytes() == b"Create the requested work product."
 PY
 if grep -R -q 'must-not-leak' "$out"; then
   echo "secret leaked into run output" >&2

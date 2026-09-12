@@ -8,7 +8,11 @@ cd "$ROOT"
 work="$(mktemp -d)"
 trap 'rm -rf "$work"' EXIT
 fake_bin="$work/bin"
-mkdir -p "$fake_bin"
+config_home="$work/config"
+mkdir -p "$fake_bin" "$config_home/cursor"
+cat >"$config_home/cursor/auth.json" <<'EOF'
+{"accessToken":"fixture-access-only","refreshToken":"fixture-refresh-only"}
+EOF
 cat >"$fake_bin/agent" <<'EOF'
 #!/usr/bin/env bash
 set -euo pipefail
@@ -21,15 +25,13 @@ done
 printf '%s\n' "$*" >>"${FAKE_CURSOR_ARGS_LOG:?}"
 case "${1-}" in
   --version)
-    printf 'cursor-agent 2026.09.10-test\n'
+    printf 'cursor-agent 2026.09.10-fd3934a\n'
     exit 0
     ;;
   status)
-    if [[ "${FAKE_CURSOR_AUTH:-account}" == api ]]; then
-      echo "Authenticated using API key"
-    else
-      echo "Authenticated account: test-user@example.invalid"
-    fi
+    printf '%s%s\n' \
+      '{"status":"authenticated","isAuthenticated":true,"hasAccessToken":true,"hasRefreshToken":true,' \
+      '"userInfo":{"email":"test-user@example.invalid"}}'
     exit 0
     ;;
   -p)
@@ -44,7 +46,8 @@ case "${1-}" in
       esac
     done
     test -n "$workspace"
-    test -f "$workspace/GDPVAL_TASK.md"
+    test ! -e "$workspace/GDPVAL_TASK.md"
+    cat >"${FAKE_CURSOR_PROMPT_LOG:?}"
     test -f "$workspace/.cursor/sandbox.json"
     test -f "$workspace/.cursor/cli.json"
     if [[ -e "$workspace/reference_files" ]]; then
@@ -60,7 +63,10 @@ PY
     fi
     mkdir -p "$workspace/deliverables/nested"
     printf 'fake cursor deliverable\n' >"$workspace/deliverables/nested/result.txt"
-    printf '{"type":"result","status":"completed"}\n\377'
+    printf '%s%s\n' \
+      '{"type":"result","subtype":"success","is_error":false,"result":"done",' \
+      '"session_id":"fixture-session","duration_ms":1,"duration_api_ms":1}'
+    printf '\377diagnostic\n' >&2
     exit 0
     ;;
 esac
@@ -73,13 +79,16 @@ printf 'reference-original\n' >"$ref"
 benchmark="$work/tasks.jsonl"
 printf '{"task_id":"task-cursor","prompt":"Create a professional work product.","reference_files":["reference_files/input.txt"],"reference_file_urls":["file://%s"]}\n' "$ref" >"$benchmark"
 args_log="$work/args.log"
+prompt_log="$work/prompt.log"
 : >"$args_log"
 out="$work/run"
 
 PATH="$fake_bin:$PATH" \
+XDG_CONFIG_HOME="$config_home" \
 CURSOR_API_KEY="must-not-leak" \
 CURSOR_AUTH_TOKEN="token-must-not-leak" \
 FAKE_CURSOR_ARGS_LOG="$args_log" \
+FAKE_CURSOR_PROMPT_LOG="$prompt_log" \
 GDPVAL_BENCHMARK_JSONL="$benchmark" \
 ./gdpval run --executor cursor --limit 1 --out "$out" --no-metadata
 
@@ -94,6 +103,8 @@ test -f "$out/tasks/task-cursor/executor/metadata.json"
 test -d "$out/tasks/task-cursor/workspace/reference_files"
 test ! -L "$out/tasks/task-cursor/workspace/reference_files"
 grep -q '^-p ' "$args_log"
+grep -q '^status --format json$' "$args_log"
+cmp -- "$prompt_log" "$out/tasks/task-cursor/executor/prompt.txt"
 grep -q -- '--trust' "$args_log"
 if grep -q -- '--force' "$args_log"; then
   echo "Cursor executor unexpectedly used --force" >&2
@@ -106,19 +117,22 @@ grep -q '"auth_mode": "cursor-account"' "$out/tasks/task-cursor/executor/metadat
 grep -q '"reference_integrity_verified": true' "$out/tasks/task-cursor/executor/metadata.json"
 grep -q '"default": "deny"' "$out/tasks/task-cursor/workspace/.cursor/sandbox.json"
 grep -q 'WebFetch(\*)' "$out/tasks/task-cursor/workspace/.cursor/cli.json"
-python3 - "$out/tasks/task-cursor/executor/stdout.log" <<'PY'
+python3 - "$out/tasks/task-cursor/executor/stderr.log" "$out/tasks/task-cursor/executor/task-prompt.txt" <<'PY'
 from pathlib import Path
 import sys
 assert "\ufffd" in Path(sys.argv[1]).read_text(encoding="utf-8")
+assert Path(sys.argv[2]).read_bytes() == b"Create a professional work product."
 PY
-if grep -R -q 'must-not-leak\|token-must-not-leak' "$out"; then
+if grep -R -q 'must-not-leak\|token-must-not-leak\|fixture-access-only\|fixture-refresh-only' "$out"; then
   echo "Cursor secret leaked into run output" >&2
   exit 1
 fi
 
 : >"$args_log"
 if PATH="$fake_bin:$PATH" \
+  XDG_CONFIG_HOME="$config_home" \
   FAKE_CURSOR_ARGS_LOG="$args_log" \
+  FAKE_CURSOR_PROMPT_LOG="$prompt_log" \
   GDPVAL_BENCHMARK_JSONL="$benchmark" \
   ./gdpval run --executor cursor --out "$work/no-limit" --no-metadata >/dev/null 2>&1; then
   echo "Cursor run without --limit unexpectedly succeeded" >&2
@@ -130,8 +144,11 @@ if grep -q '^-p ' "$args_log"; then
 fi
 
 : >"$args_log"
+cat >"$config_home/cursor/auth.json" <<'EOF'
+{"accessToken":"fixture-access-only","refreshToken":"fixture-refresh-only","apiKey":"fixture-api-only"}
+EOF
 if PATH="$fake_bin:$PATH" \
-  FAKE_CURSOR_AUTH=api \
+  XDG_CONFIG_HOME="$config_home" \
   FAKE_CURSOR_ARGS_LOG="$args_log" \
   ./gdpval check --executor cursor --out "$work/check" >/dev/null 2>&1; then
   echo "Cursor API auth unexpectedly passed account preflight" >&2

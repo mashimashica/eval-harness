@@ -21,7 +21,7 @@ done
 printf '%s\n' "$*" >>"${FAKE_CLAUDE_ARGS_LOG:?}"
 case "${1-}" in
   --version)
-    echo "2.1.999"
+    echo "2.1.259"
     exit 0
     ;;
   auth)
@@ -44,7 +44,10 @@ case "${1-}" in
     cat >"${FAKE_CLAUDE_PROMPT_LOG:?}"
     mkdir -p "$PWD/deliverables/nested"
     printf 'fake claude deliverable\n' >"$PWD/deliverables/nested/result.txt"
-    printf '{"type":"result","subtype":"success","is_error":false}\n\377'
+    printf '%s%s\n' \
+      '{"type":"result","subtype":"success","is_error":false,"result":"done",' \
+      '"session_id":"fixture-session","duration_ms":1,"duration_api_ms":1,"num_turns":1}'
+    printf '\377diagnostic\n' >&2
     exit 0
     ;;
 esac
@@ -88,11 +91,13 @@ grep -q 'failIfUnavailable' "$args_log"
 grep -q 'strictAllowlist' "$args_log"
 grep -q '"auth_mode": "claude-subscription"' "$out/tasks/task-claude/executor/metadata.json"
 grep -q './deliverables/' "$prompt_log"
-python3 - "$out/tasks/task-claude/executor/stdout.log" <<'PY'
+cmp -- "$prompt_log" "$out/tasks/task-claude/executor/prompt.txt"
+python3 - "$out/tasks/task-claude/executor/stderr.log" "$out/tasks/task-claude/executor/task-prompt.txt" <<'PY'
 from pathlib import Path
 import sys
 text = Path(sys.argv[1]).read_text(encoding="utf-8")
 assert "\ufffd" in text, text
+assert Path(sys.argv[2]).read_bytes() == b"Create a professional work product."
 PY
 if grep -R -q 'must-not-leak\|token-must-not-leak\|api.example.invalid' "$out"; then
   echo "secret or API routing value leaked into Claude run output" >&2
