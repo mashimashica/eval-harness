@@ -3,7 +3,7 @@
 
 # Migration state
 
-Updated: 2026-09-13T09:55:56Z
+Updated: 2026-09-13T10:13:17Z
 
 Control branch: `checkpoint/migration-control`.
 Procedure: [MIGRATION-WORKFLOW.md](MIGRATION-WORKFLOW.md).
@@ -12,13 +12,31 @@ This record preserves recoverable work; it does not declare the migration accept
 ## Latest recovery point: fixed Linux CI promoted; public boundary implementation
 
 Implementation `checkpoint/pr-04` is saved at
-`fe23c09bedf07d51ec320373fd89f502428dff16`, tree
-`14516822b8e6e162c54dc65b67555dd927406f70`. This new unvalidated four-file draft
+`1df1ef8cbf363c7e69a43d119f816a6666f79b36`, tree
+`716048eb253ef1180fde77e2a48f564ef52c5fa8`. This adds ten-file legacy/test ports
+and exact Ninja identity checking to the preceding four-file public draft. Parent's
+first grouped check ran 114 unit methods: 112 pass, one new undefined test variable
+error, and one already-known local case-sensitive-filesystem failure. Strict typing
+has 27 errors in four files (including 22 in the newly checked resource test module),
+Ruff has nine findings and four files need formatting. See
+`reports/m2-public-draft-local-validation.json`. No whole batch is validated.
+
+Sol's fixed `fe23c09b` review has eleven open issue groups, saved in
+`reports/m2-public-boundary-draft-review.md`: mandatory identity-before-execution and
+stale comparison, full bounded real probes, fail-closed startup, trusted prepared-root
+connection, planned forbidden roots, locked launch order, outcome/provenance mapping,
+strict public types, accepted production limits, cancellation ownership and legacy
+removal. Current drafts are not promoted to the real sandbox job. The latest setup
+draft reintroduced an explicit compatibility wrapper and evaluator's ignored legacy
+argument remains; preserving old spellings is rejected, not accepted as a migration.
+Luna has the consolidated corrections and continues by 10:30 UTC, saving by 10:25.
+Sol is checking the finite registry/locator scope by 10:20 UTC. Parent verifies evidence.
+
+The original four-file draft
 adds public manifest/probe/run handling, connects evaluator/resource app to the shared
-seam and deletes bcb_runner. Sol is reviewing the fixed source by 10:20 UTC; no test,
-type or real-boundary success is claimed for this draft. Luna is now porting required
-regressions, removing remaining legacy API/config/setup behavior, and applying the
-source-backed Ninja/secret-baseline corrections by 10:30 UTC. Save before grouped checks
+seam and deletes bcb_runner. No real-boundary success is claimed for either draft.
+Luna is removing remaining legacy API/config/setup behavior and applying the
+source-backed security/Ninja/secret-baseline corrections. Save before grouped checks
 and within 15 minutes. The finite new baseline path and exact Ninja identity interpretation
 are accepted by Sol in `reports/m2-linux-gate-correction-contract.md`, saved on control
 `df9be5942515b07b97523ef4d35488d4cea0e0b7`. Parent's first review-worktree checkout

@@ -1,0 +1,44 @@
+{
+  "schema_version": 1,
+  "head": "1df1ef8cbf363c7e69a43d119f816a6666f79b36",
+  "tree": "716048eb253ef1180fde77e2a48f564ef52c5fa8",
+  "owner": "parent fixed-checkpoint validation; Luna corrects next source",
+  "evidence_class": "local-unit-type-lint-partial-not-boundary-acceptance",
+  "platform": "macOS arm64, Python 3.13.14, physical private TMPDIR",
+  "logs": "/private/tmp/pr04-draft-checks.RwpkfI",
+  "unit": {
+    "command": "python -m unittest tests.harness.test_bigcodebench_runner tests.harness.test_bigcodebench_sitecustomize tests.harness.test_bigcodebench_grader_boundary tests.harness.test_bigcodebench_benchmark tests.harness.test_benchmark_evaluator_edge_coverage tests.harness.test_boundary_failure_coverage",
+    "methods": 114,
+    "seconds": 6.602,
+    "passed": 112,
+    "failures": 1,
+    "errors": 1,
+    "new_defect": "test_boundary_failure_coverage.py:697 uses undefined bigcode in test_bigcode_preflight_and_evaluation_never_install_or_fallback",
+    "known_local_platform_failure": "unchanged intervention case-collision test requires case-sensitive filesystem; fixed Linux previously passed it. Do not change that guard or repeat it locally.",
+    "security_acceptance": false
+  },
+  "strict_mypy": {
+    "command": "mypy --strict --explicit-package-bases --show-error-codes eval_harness/grader_sandbox.py eval_harness/evaluators/bigcodebench.py resources_servers/bigcodebench/app.py resources_servers/bigcodebench/setup_bcb_venv.py tests/harness/test_bigcodebench_runner.py tests/harness/test_bigcodebench_sitecustomize.py tests/harness/test_bigcodebench_grader_boundary.py tests/harness/test_bigcodebench_benchmark.py tests/harness/test_benchmark_evaluator_edge_coverage.py tests/harness/test_boundary_failure_coverage.py resources_servers/bigcodebench/tests/test_app.py",
+    "checked_files": 11,
+    "errors": 27,
+    "error_files": 4,
+    "summary": [
+      "grader_sandbox.py:1120 Path-or-None variable reused for object inventory digest",
+      "test_boundary_failure_coverage.py:697 undefined bigcode",
+      "app.py:93 invalid narrower verify override; 143/144 unvalidated object passed to typed response status/details",
+      "resource test_app.py:22 errors: unqualified imports, missing annotations, generic Generator, untyped callbacks and raw response-output dict type"
+    ],
+    "scope_note": "Includes changed resource test module in addition to the existing required source typing; do not misrepresent all 27 as the prior six CI source errors."
+  },
+  "ruff": {
+    "lint_errors": 9,
+    "summary": ["six import-order findings", "unused LimitKind in evaluator", "unused subprocess in boundary tests", "undefined bigcode in boundary tests"],
+    "format_required": ["eval_harness/grader_sandbox.py", "resources_servers/bigcodebench/app.py", "tests/harness/test_bigcodebench_benchmark.py", "tests/harness/test_boundary_failure_coverage.py"],
+    "files_already_formatted": 5,
+    "source_edits_by_parent": false
+  },
+  "review_worktree": "clean at exact tested head after checks",
+  "corrective_history": "First grouped check of these new drafts. The prior uv two failures and successful extra correction are unchanged; Ninja still requires real Linux rerun. Public security review has eleven open groups.",
+  "next": "same Luna owner fixes consolidated security and local findings, deletes compatibility surfaces, adds exact secret baseline; save then grouped validation and fixed-SHA Sol review",
+  "acceptance": "not accepted"
+}
