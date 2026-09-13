@@ -15,7 +15,6 @@ from pathlib import Path
 from typing import TypedDict, cast
 from unittest.mock import patch
 
-import eval_harness.run_manifest as run_manifest_module
 import eval_harness.runner as runner_module
 from eval_harness.benchmarks.base import Benchmark, BenchmarkTask
 from eval_harness.benchmarks.snapshot import Availability, SnapshotTaskContent, open_verified_snapshot
@@ -454,7 +453,7 @@ class GenerationHandoffTests(unittest.TestCase):
             executor = FixtureExecutor(events=events)
             index_path = out / "candidate-results.jsonl"
 
-            real_fsync = run_manifest_module.os.fsync
+            real_fsync = os.fsync
 
             def record_index_fsync(descriptor: int) -> None:
                 real_fsync(descriptor)
@@ -472,7 +471,7 @@ class GenerationHandoffTests(unittest.TestCase):
                 ):
                     events.append("candidate_index_fsync")
 
-            with patch.object(run_manifest_module.os, "fsync", side_effect=record_index_fsync):
+            with patch.object(os, "fsync", side_effect=record_index_fsync):
                 run_benchmark(
                     benchmark,
                     evaluator,
@@ -748,6 +747,38 @@ class GenerationHandoffTests(unittest.TestCase):
                 self.assertNotEqual(first["run_fingerprint_sha256"], changed["run_fingerprint_sha256"])
                 if "prompt_suffix" not in changes:
                     self.assertNotEqual(first["configuration_sha256"], changed["configuration_sha256"])
+
+    def test_prepare_and_repository_provenance_precede_run_root_creation(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            out = root / "run"
+            runtime = root / "runtime"
+            benchmark = FixtureBenchmark(task_count=1)
+            observations: list[tuple[int, bool, bool, bool]] = []
+
+            def observe_provenance(_repository_root: Path) -> RepositoryProvenance:
+                observations.append(
+                    (
+                        benchmark.prepare_calls,
+                        out.exists(),
+                        runtime.exists(),
+                        any(path.name.startswith(".run.staging-") for path in root.iterdir()),
+                    )
+                )
+                return RepositoryProvenance("a" * 40, "available", "clean")
+
+            with patch.object(runner_module, "repository_provenance", side_effect=observe_provenance):
+                run_benchmark(
+                    benchmark,
+                    FixtureEvaluator(),
+                    FixtureExecutor(),
+                    out_dir=out,
+                    runtime_root=runtime,
+                    limit=1,
+                    intervention=FixtureIntervention(),
+                )
+            self.assertEqual(benchmark.prepare_calls, 1)
+            self.assertEqual(observations, [(1, False, False, False)])
 
     def test_systemic_executor_failure_is_sealed_indexed_before_abort(self) -> None:
         failures = (

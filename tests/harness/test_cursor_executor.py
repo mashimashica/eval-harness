@@ -5,14 +5,15 @@ from __future__ import annotations
 
 import json
 import os
+import shutil
 import subprocess
 import tempfile
 import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from eval_harness.executors.base import ExecutionRequest, TaskSpec
-from eval_harness.executors.cursor import CursorExecutor, subscription_environment
+from eval_harness.executors.base import ExecutionRequest, ExecutionStatus, TaskSpec
+from eval_harness.executors.cursor import CursorExecutor, _tree_digest, subscription_environment
 from eval_harness.failures import FailureKind
 
 
@@ -86,6 +87,79 @@ class CursorExecutorTests(unittest.TestCase):
             executor._restore_task_inputs(workspace, protected)
             self.assertFalse(inputs.is_symlink())
             self.assertEqual((inputs / "input.txt").read_text(encoding="utf-8"), "original\n")
+
+    def test_tree_digest_frames_paths_lengths_content_and_empty_directories(self) -> None:
+        with tempfile.TemporaryDirectory() as root:
+            base = Path(root)
+            first = base / "first"
+            second = base / "second"
+            first.mkdir()
+            second.mkdir()
+            (first / "a").write_bytes(b"X")
+            (first / "b").write_bytes(b"Y")
+            (second / "a").write_bytes(b"X" + (1).to_bytes(8, "big") + b"bY")
+            self.assertNotEqual(_tree_digest(first), _tree_digest(second))
+
+            with_empty_directory = base / "with-empty-directory"
+            without_empty_directory = base / "without-empty-directory"
+            (with_empty_directory / "empty").mkdir(parents=True)
+            without_empty_directory.mkdir()
+            self.assertNotEqual(_tree_digest(with_empty_directory), _tree_digest(without_empty_directory))
+
+            symlink_tree = base / "symlink-tree"
+            symlink_tree.mkdir()
+            target = symlink_tree / "target"
+            target.write_bytes(b"target")
+            (symlink_tree / "link").symlink_to(target)
+            with self.assertRaisesRegex(OSError, "cannot contain symlinks"):
+                _tree_digest(symlink_tree)
+
+            missing = base / "missing"
+            with self.assertRaisesRegex(OSError, "root"):
+                _tree_digest(missing)
+            regular = base / "regular"
+            regular.write_bytes(b"file")
+            with self.assertRaisesRegex(OSError, "root"):
+                _tree_digest(regular)
+
+    def test_restore_rejects_missing_or_symlink_protected_tree(self) -> None:
+        for replacement in ("missing", "symlink"):
+            with self.subTest(replacement=replacement), tempfile.TemporaryDirectory() as root:
+                workspace = Path(root) / "task" / "workspace"
+                inputs = workspace / "task_inputs"
+                inputs.mkdir(parents=True)
+                original = inputs / "input.txt"
+                original.write_text("original", encoding="utf-8")
+                executor = CursorExecutor()
+                protected, _digest = executor._isolate_task_inputs(workspace)
+                self.assertIsNotNone(protected)
+                assert protected is not None
+                if replacement == "missing":
+                    shutil.rmtree(protected)
+                else:
+                    shutil.rmtree(protected)
+                    target = Path(root) / "replacement"
+                    target.mkdir()
+                    protected.symlink_to(target, target_is_directory=True)
+                with self.assertRaisesRegex(RuntimeError, "protected real directory"):
+                    executor._restore_task_inputs(workspace, protected)
+                self.assertTrue(inputs.is_symlink())
+
+    def test_symlink_creation_interrupt_restores_task_inputs(self) -> None:
+        with tempfile.TemporaryDirectory() as root:
+            workspace = Path(root) / "task" / "workspace"
+            inputs = workspace / "task_inputs"
+            inputs.mkdir(parents=True)
+            original = inputs / "input.txt"
+            original.write_text("original", encoding="utf-8")
+            protected = workspace.parent / "cursor-task-inputs-readonly"
+            with patch.object(Path, "symlink_to", side_effect=KeyboardInterrupt):
+                with self.assertRaises(KeyboardInterrupt):
+                    CursorExecutor()._isolate_task_inputs(workspace)
+            self.assertTrue(inputs.is_dir())
+            self.assertFalse(inputs.is_symlink())
+            self.assertEqual(original.read_text(encoding="utf-8"), "original")
+            self.assertFalse(protected.exists())
 
     def test_legacy_reference_namespace_is_rejected_before_execution(self) -> None:
         with tempfile.TemporaryDirectory() as root:
@@ -211,7 +285,7 @@ class CursorExecutorTests(unittest.TestCase):
                 ),
                 patch(
                     "eval_harness.executors.cursor._tree_digest",
-                    side_effect=["baseline", "baseline", "mutated"],
+                    side_effect=["baseline", "mutated"],
                 ),
             ):
                 result = executor.execute(request)
@@ -327,6 +401,107 @@ class CursorExecutorTests(unittest.TestCase):
             self.assertEqual(result.failure.code, "interrupted")
             self.assertIsNone(result.output_text)
             self.assertEqual(result.available_outputs, frozenset())
+
+    def test_log_persistence_failure_preserves_primary_failure_and_channels(self) -> None:
+        success = json.dumps(
+            {
+                "type": "result",
+                "subtype": "success",
+                "is_error": False,
+                "duration_ms": 1,
+                "duration_api_ms": 1,
+                "result": "answer",
+                "session_id": "session",
+            }
+        )
+        cases = (
+            (
+                "success",
+                subprocess.CompletedProcess([], 0, stdout=success, stderr=""),
+                FailureKind.PROCESS,
+                "log_persistence",
+            ),
+            (
+                "timeout",
+                subprocess.TimeoutExpired([], 1, output=b"partial", stderr=b"error"),
+                FailureKind.TIMEOUT,
+                "timeout",
+            ),
+            (
+                "process",
+                subprocess.CompletedProcess([], 7, stdout="", stderr="error"),
+                FailureKind.PROCESS,
+                "process_exit",
+            ),
+            ("interrupted", KeyboardInterrupt(), FailureKind.INTERRUPTED, "interrupted"),
+            (
+                "protocol",
+                subprocess.CompletedProcess([], 0, stdout="malformed", stderr=""),
+                FailureKind.PROTOCOL,
+                "output_protocol",
+            ),
+            (
+                "integrity",
+                subprocess.CompletedProcess([], 0, stdout=success, stderr=""),
+                FailureKind.INTEGRITY,
+                "task_input_mutation",
+            ),
+        )
+        for name, process_result, expected_kind, expected_code in cases:
+            for failed_log in ("stdout.log", "stderr.log"):
+                with self.subTest(name=name, failed_log=failed_log), tempfile.TemporaryDirectory() as root:
+                    request = self.request(root)
+                    inputs = request.workspace / "task_inputs"
+                    inputs.mkdir()
+                    (inputs / "input.txt").write_text("original", encoding="utf-8")
+                    executor = CursorExecutor(command="agent")
+                    executor._version = "fake-cursor"
+                    original_write_text = Path.write_text
+
+                    def write_text(
+                        path: Path,
+                        data: str,
+                        encoding: str | None = None,
+                        errors: str | None = None,
+                        newline: str | None = None,
+                    ) -> int:
+                        if path == request.executor_dir / failed_log:
+                            raise OSError("disk full")
+                        return original_write_text(path, data, encoding=encoding, errors=errors, newline=newline)
+
+                    digest_side_effect = ["baseline", "mutated"] if name == "integrity" else None
+                    digest_return_value = None if name == "integrity" else "baseline"
+                    with (
+                        patch(
+                            "eval_harness.executors.cursor.subprocess.run",
+                            side_effect=process_result if isinstance(process_result, BaseException) else None,
+                            return_value=process_result if not isinstance(process_result, BaseException) else None,
+                        ),
+                        patch(
+                            "eval_harness.executors.cursor._tree_digest",
+                            side_effect=digest_side_effect,
+                            return_value=digest_return_value,
+                        ),
+                        patch.object(Path, "write_text", autospec=True, side_effect=write_text),
+                    ):
+                        result = executor.execute(request)
+
+                    self.assertEqual(
+                        result.status,
+                        ExecutionStatus.FAILED
+                        if name != "timeout" and name != "interrupted"
+                        else (ExecutionStatus.TIMED_OUT if name == "timeout" else ExecutionStatus.INTERRUPTED),
+                    )
+                    self.assertIsNotNone(result.failure)
+                    assert result.failure is not None
+                    self.assertEqual(result.failure.kind, expected_kind)
+                    self.assertEqual(result.failure.code, expected_code)
+                    self.assertIsNone(result.output_text)
+                    self.assertEqual(result.available_outputs, frozenset())
+                    self.assertEqual(result.metadata["log_persistence_errors"], [failed_log])
+                    self.assertNotIn("disk full", json.dumps(result.metadata))
+                    other_log = "stderr.log" if failed_log == "stdout.log" else "stdout.log"
+                    self.assertTrue((request.executor_dir / other_log).is_file())
 
     def test_subscription_environment_removes_api_auth(self) -> None:
         env = subscription_environment(

@@ -523,6 +523,9 @@ def run_benchmark(
         raise TypeError("executor capabilities must be an ExecutorCapabilities")
     network_policy = "enabled" if network_access_enabled else "disabled"
 
+    benchmark.prepare()
+    repository_info = _repository_record(repository_provenance(Path(__file__).resolve().parents[1]))
+
     # Snapshot acquisition is the only benchmark task load.  The temporary
     # sibling lets all plan/intervention validation complete while both planned
     # roots remain absent; the sealed snapshot is then moved into the run root.
@@ -530,7 +533,6 @@ def run_benchmark(
     with tempfile.TemporaryDirectory(prefix=f".{out_root.name}.staging-", dir=str(out_root.parent)) as controller_name:
         controller_root = Path(controller_name)
         snapshot_destination = controller_root / "snapshot"
-        benchmark.prepare()
         snapshot = benchmark.acquire_snapshot(limit, snapshot_destination)
         if type(snapshot) is not BenchmarkSnapshot:
             raise TypeError("benchmark snapshot acquisition returned an invalid snapshot")
@@ -659,7 +661,6 @@ def run_benchmark(
     candidate_writer = RunResultWriter.create(candidate_results_path)
     manifest = write_run_manifest(out_root, manifest)
 
-    repository_info = _repository_record(repository_provenance(Path(__file__).resolve().parents[1]))
     base_metadata: dict[str, object] = {
         "schema_version": 4,
         "run_id": run_id,
