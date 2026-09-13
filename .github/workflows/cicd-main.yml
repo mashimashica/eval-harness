@@ -39,6 +39,7 @@ permissions:
 
 jobs:
   ephemeral-runner-routing:
+    if: github.repository == 'NVIDIA-NeMo/Gym'
     uses: NVIDIA-NeMo/FW-CI-templates/.github/workflows/_ephemeral_runner_routing.yml@4fe957d4ea5816af1d67fae130bbab4b434c10b3 # v1.9.2
     with:
       lane: ${{ vars.NEMO_CI_EPHEMERAL_LANE }}
@@ -280,7 +281,7 @@ jobs:
 
   Nemo_CICD_Test:
     needs: [pre-flight, classify_changes, unit_tests, container_build, gpu_e2e_tests, provider_e2e_tests]
-    if: always() && !cancelled()
+    if: github.repository == 'NVIDIA-NeMo/Gym' && always() && !cancelled()
     runs-on: ubuntu-latest
     steps:
       - name: Check test results

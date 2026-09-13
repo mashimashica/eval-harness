@@ -1,0 +1,73 @@
+{
+  "scope": "Real Codex CLI GDPval application; quality judgment follows separately",
+  "run_id": "d81ed414154a4c2cbfcd1f7b07a938a7",
+  "task_id": "83d10b06-26d1-4636-a32c-23f92c57f30b",
+  "runtime": "Codex CLI 0.154.0",
+  "authentication": "ChatGPT",
+  "model": "gpt-5.6-luna",
+  "reasoning_effort": "medium",
+  "execution_status": "completed",
+  "task_success": null,
+  "elapsed_seconds": 415.7224705000117,
+  "usage": {
+    "cached_input_tokens": 509952,
+    "cost_usd": null,
+    "input_tokens": 581207,
+    "output_tokens": 15957,
+    "reasoning_tokens": 3252
+  },
+  "artifact_set_sha256": "611466868b62410161b54e56ebf06847325ae58c06bef019f26119709a9a6457",
+  "requested_artifact": [
+    {
+      "bytes": 93352,
+      "path": "Sample.xlsx",
+      "sha256": "de11ace397c0da05e4f3bb16344b6dbdfc796f50c4f27e2c6913767eaa4a246a"
+    }
+  ],
+  "local_run_directory": "runs/gdpval-pilot-01",
+  "source_files_sha256": {
+    "harness/src/eval_harness/__init__.py": "8fe3d600a7f2be3ea6e499db44dfd0b1fb69beb0d6b257f8e03841226a5c96d1",
+    "harness/src/eval_harness/__main__.py": "977ae670edcda9026c7fb443027151a99dac0210a28997626a4563a41345bef6",
+    "harness/src/eval_harness/artifacts.py": "d761af211c01a302d1b0f1d58e4dad17fd46c58be521600ea143c3582f238bf4",
+    "harness/src/eval_harness/cli.py": "5714e43b1fbddacc7ff4a78de9a64fd7ff640adb8d2f538f446151ebdf15f4bd",
+    "harness/src/eval_harness/compare_pipeline.py": "fcd3bb6ed2c1a6084fba61716eef2b9990cb7672074eb7885edae01361e9d12c",
+    "harness/src/eval_harness/config.py": "babf964cff3a725fe7e55c6692fd8f98b0c38c1e63053df14f41f0964e9982c8",
+    "harness/src/eval_harness/errors.py": "fc04614f8af8d7e7477da169cbfdae4fab1e6c1a20235555a6a39cb29ad43463",
+    "harness/src/eval_harness/evaluate_pipeline.py": "0ba33b5e15e8888d1d4d41b73a8d454e0b75c565fa84b7b1aa9a8c92a653d627",
+    "harness/src/eval_harness/executor.py": "b877c90dc5dd9b93e2f67a3fe51a2f018f9ae11e0b6a0f7f874f37e3d7d9f130",
+    "harness/src/eval_harness/gdpval.py": "279bc3573fb245d47f807dd70268c785e1f65748cb4aadde844005a127134b75",
+    "harness/src/eval_harness/run_pipeline.py": "d10edbd93388814f6d453266d963cbd98bc9bb8aad53a2ab4dfbc6bf580737cf"
+  },
+  "known_observation": "Python uv minor-version symlink was not readable in the initial profile; agent produced the workbook using other native tools. Final executor includes the verified uv runtime namespace read permission.",
+  "excluded_evaluation": {
+    "score": 0.94,
+    "rationale": "Created Sample.xlsx with 1,516 population rows, 90 selected samples, full division/sub-division and required-country coverage, variance calculations, exception highlighting, and a documented finite-population sample-size calculation (R=65).",
+    "judge_elapsed_seconds": 222.77984987499076,
+    "judge_usage": {
+      "cached_input_tokens": 127744,
+      "cost_usd": null,
+      "input_tokens": 179557,
+      "output_tokens": 10578,
+      "reasoning_tokens": 2619
+    },
+    "reason": "Evaluator generated a replacement workbook instead of evaluating the original submission.",
+    "evaluation_id": "6e61dd420859404f94789686dd77e729"
+  },
+  "accepted_scalar_evaluation": {
+    "evaluation_id": "61c08f5131d542a3a20f229887deb347",
+    "score": 0.81,
+    "rationale": "Sample.xlsx is present, contains both required worksheets, N=1516, 90%/10% parameters, z/p/e and finite-population formulas, all 1516 population rows copied accurately, and 65 rows sampled with broad division/sub-division and country coverage. Deficits include variance formulas placed in column J while the rubric requires column I, no clear exceptional-change highlighting, no Italy Corporate Loans sample, and the first tab is named 'Selected sample' rather than 'Sample'; formatting is generally adequate but incomplete.",
+    "evaluation_status": "completed",
+    "judge_elapsed_seconds": 197.30585983398487,
+    "judge_usage": {
+      "cached_input_tokens": 252160,
+      "cost_usd": null,
+      "input_tokens": 316480,
+      "output_tokens": 9021,
+      "reasoning_tokens": 4522
+    },
+    "source_artifact_sha256": "611466868b62410161b54e56ebf06847325ae58c06bef019f26119709a9a6457",
+    "original_artifacts_unchanged": true,
+    "interpretation": "Local AI rubric judgment, not an official benchmark score or a human quality assessment."
+  }
+}

@@ -20,6 +20,7 @@ jobs:
   retry-failed-jobs:
     name: Retry failed jobs
     if: >-
+      github.repository == 'NVIDIA-NeMo/Gym' &&
       github.event.workflow_run.conclusion == 'failure' &&
       github.event.workflow_run.run_attempt == 1 &&
       github.event.workflow_run.head_repository.full_name == github.repository &&

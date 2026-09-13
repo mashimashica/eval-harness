@@ -21,6 +21,7 @@ on:
 
 jobs:
   lint-check:
+    if: github.repository == 'NVIDIA-NeMo/Gym'
     name: Lint check
     runs-on: ubuntu-latest
     steps:

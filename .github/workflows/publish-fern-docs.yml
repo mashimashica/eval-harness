@@ -42,6 +42,7 @@ concurrency:
 
 jobs:
   publish:
+    if: github.repository == 'NVIDIA-NeMo/Gym'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository

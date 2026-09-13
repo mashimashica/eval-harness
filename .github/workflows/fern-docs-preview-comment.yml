@@ -37,7 +37,7 @@ permissions:
 jobs:
   preview:
     runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    if: ${{ github.repository == 'NVIDIA-NeMo/Gym' && github.event.workflow_run.conclusion == 'success' }}
     steps:
       - name: Download fern sources and metadata
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0

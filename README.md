@@ -1,5 +1,9 @@
 # NeMo Gym
 
+This fork also provides an account-authenticated **Eval Harness** for Codex CLI, Claude Code and Skill comparisons.
+Start with the [local harness guide](fern/versions/latest/pages/get-started/eval-harness.mdx). The retained NeMo Gym
+project and its upstream usage are described below.
+
 [![PyPI](https://img.shields.io/pypi/v/nemo-gym)](https://pypi.org/project/nemo-gym/)
 [![Python](https://img.shields.io/pypi/pyversions/nemo-gym)](https://pypi.org/project/nemo-gym/)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)

@@ -1,0 +1,45 @@
+{
+  "scope": "Real Claude subscription execution through common GSM8K run, mechanical evaluation and aggregation",
+  "run_id": "97a63faac65345c3b32764559f8e0c1a",
+  "task_id": "gsm8k-0001",
+  "runtime": "Claude Code 2.1.270",
+  "model": "claude-sonnet-4-6",
+  "reasoning_effort": "medium",
+  "authentication": "claude.ai / firstParty / Max",
+  "account_extra_usage_enabled": false,
+  "context_1m_enabled": false,
+  "api_retries": 0,
+  "max_turns": 12,
+  "timeout_seconds": 300,
+  "execution": {
+    "execution_status": "completed",
+    "elapsed_seconds": 2.4365462089772336,
+    "usage": {
+      "cache_creation_input_tokens": 6567,
+      "cached_input_tokens": 0,
+      "cost_usd": 0.039978,
+      "input_tokens": 2,
+      "output_tokens": 38,
+      "reasoning_tokens": null
+    },
+    "artifact_sha256": "824a872f37ea076e8ab6fc6bf8d3ddb320e1b9bb9a1aaa35ede3fc5594b3af89"
+  },
+  "evaluation": {
+    "evaluation_status": "completed",
+    "score": 1.0,
+    "extracted_answer": "18",
+    "expected_answer": 18,
+    "generation_id": "97a63faac65345c3b32764559f8e0c1a:baseline:gsm8k-0001:0"
+  },
+  "exposed_tools": [
+    "Edit",
+    "Glob",
+    "Grep",
+    "Read",
+    "Write"
+  ],
+  "cost_interpretation": "CLI-reported USD is an API-equivalent estimate, not a subscription charge.",
+  "local_run_directory": "runs/claude-gsm8k-01",
+  "config_sha256": "836628e975094c46d6c29fb22e8de1a6391b35ca9cacc19e82b3e1b701da21c3",
+  "dataset_sha256": "3cc70e34cf12813c6c7a951da579b4a4deeda827277c12b71ba842ae3dd38fe9"
+}

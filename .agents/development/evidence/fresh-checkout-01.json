@@ -1,0 +1,271 @@
+{
+  "ai_judge_calls": 0,
+  "answer": "Janet sells \\(16 - 3 - 4 = 9\\) eggs daily.\n\nAt $2 each: \\(9 \\times 2 = 18\\).\n\nFinal answer: $18",
+  "artifacts": [
+    {
+      "after_reevaluation_and_resume_sha256": "b855a97b65a0ea53d9c964178fcb3c0f733f9279466aed1ee1ea7fbd3dd72879",
+      "bytes": 95,
+      "path": "agent_response.txt",
+      "sha256": "b855a97b65a0ea53d9c964178fcb3c0f733f9279466aed1ee1ea7fbd3dd72879"
+    }
+  ],
+  "commands": [
+    {
+      "command": [
+        ".venv-tools/bin/uv",
+        "run",
+        "--project",
+        "harness",
+        "--no-sync",
+        "eval-harness",
+        "run",
+        "harness/examples/gsm8k-one-task.yaml",
+        "--out",
+        "runs/first"
+      ],
+      "elapsed_seconds": 6.598040416,
+      "exit_code": 0,
+      "nonexistent_cli_paths": false
+    },
+    {
+      "command": [
+        ".venv-tools/bin/uv",
+        "run",
+        "--project",
+        "harness",
+        "--no-sync",
+        "eval-harness",
+        "compare",
+        "runs/first",
+        "--out",
+        "reports/first"
+      ],
+      "elapsed_seconds": 0.12953483300000013,
+      "exit_code": 0,
+      "nonexistent_cli_paths": true
+    },
+    {
+      "command": [
+        ".venv-tools/bin/uv",
+        "run",
+        "--project",
+        "harness",
+        "--no-sync",
+        "eval-harness",
+        "evaluate",
+        "runs/first",
+        "--config",
+        ".audit/reproduction/mechanical.yaml",
+        "--out",
+        "evaluations/rejudge"
+      ],
+      "elapsed_seconds": 0.12697979100000012,
+      "exit_code": 0,
+      "nonexistent_cli_paths": true
+    },
+    {
+      "command": [
+        ".venv-tools/bin/uv",
+        "run",
+        "--project",
+        "harness",
+        "--no-sync",
+        "eval-harness",
+        "resume",
+        "runs/first"
+      ],
+      "elapsed_seconds": 0.47704725000000003,
+      "exit_code": 0,
+      "nonexistent_cli_paths": false
+    },
+    {
+      "command": [
+        ".venv-tools/bin/uv",
+        "run",
+        "--project",
+        "harness",
+        "--no-sync",
+        "eval-harness",
+        "resume",
+        "evaluations/rejudge"
+      ],
+      "elapsed_seconds": 0.11227504199999938,
+      "exit_code": 0,
+      "nonexistent_cli_paths": true
+    },
+    {
+      "command": [
+        ".venv-tools/bin/uv",
+        "run",
+        "--project",
+        "harness",
+        "--no-sync",
+        "eval-harness",
+        "compare",
+        "runs/first",
+        "evaluations/rejudge",
+        "--out",
+        "reports/both"
+      ],
+      "elapsed_seconds": 0.10920562500000042,
+      "exit_code": 0,
+      "nonexistent_cli_paths": true
+    }
+  ],
+  "creator_calls": 0,
+  "execution": {
+    "artifact_sha256": "9aae58fc96e0cff25f22971fea4505d58c339aca59829d23e00491f65bdec836",
+    "attempt_count": 1,
+    "condition_id": "baseline",
+    "cost_usd": null,
+    "elapsed_seconds": 5.591922749998048,
+    "execution_status": "completed",
+    "repeat": 0,
+    "task_id": "gsm8k-0001",
+    "usage": {
+      "cached_input_tokens": 0,
+      "cost_usd": null,
+      "input_tokens": 7227,
+      "output_tokens": 90,
+      "reasoning_tokens": 44
+    }
+  },
+  "installation": {
+    "PYTHONPATH_used": false,
+    "checkout": "detached worktree at exact candidate, independently created venv/toolchain",
+    "cli_tools": "existing pinned project-local executables via CODEX_BIN and CLAUDE_BIN",
+    "editable": false,
+    "global_environment_changes": false,
+    "installed_import": "/Users/naokishima/Library/Mobile Documents/com~apple~CloudDocs/Project/eval-harness/.audit/fresh-checkout/harness/.venv/lib/python3.13/site-packages/eval_harness/__init__.py",
+    "local_python_install_command": "UV_PYTHON_INSTALL_DIR=\"$PWD/.tools/python\" .venv-tools/bin/uv python install --no-bin 3.13.14",
+    "python": "3.13.14",
+    "setup_exit_code": 0,
+    "sync_command": ".venv-tools/bin/uv sync --project harness --python 3.13.14 --locked --no-editable",
+    "uv": "0.12.13"
+  },
+  "interpretation": "One task validates reproducibility, not performance or ranking. Cost remains unknown, not zero.",
+  "launch": {
+    "PYTHONPATH_present": false,
+    "authentication": "ChatGPT account",
+    "automatic_retries": 0,
+    "candidate_commit": "3849a49134bdf4061fabf91329e5bd66fde307ba",
+    "concurrency": 1,
+    "config_sha256": "240a2f5922a03e5b67143abb1030156c1b0f4ed5810bdf727210d237416e12f7",
+    "data_sha256": "3cc70e34cf12813c6c7a951da579b4a4deeda827277c12b71ba842ae3dd38fe9",
+    "lock_sha256": "5e7a40660761752ecb35102b96594f3d3a1bd6ffffe9183cf81d47a344dc76aa",
+    "maximum_model_calls": 1,
+    "model": "gpt-5.6-luna",
+    "reasoning_effort": "medium",
+    "source_sha256": {
+      "harness/src/eval_harness/__init__.py": "8fe3d600a7f2be3ea6e499db44dfd0b1fb69beb0d6b257f8e03841226a5c96d1",
+      "harness/src/eval_harness/__main__.py": "977ae670edcda9026c7fb443027151a99dac0210a28997626a4563a41345bef6",
+      "harness/src/eval_harness/artifacts.py": "9fe9d90de45940b9b9e31f29f27aa4720e62fed39357d53ec9c815a65f63c2be",
+      "harness/src/eval_harness/benchmark.py": "bebf7aafb13d55f6e111e55f329bc994520a58a83c927d9c5180ad3cadc365d8",
+      "harness/src/eval_harness/claude_executor.py": "1fa311fb6146f0eca9eeb4b808b4dc315adc1e79c6f1cbb2efa8d65680bd8433",
+      "harness/src/eval_harness/cli.py": "3ecb7466f322b8a878faa194efaae53968e33c2f13953fc3eff96770f72f8510",
+      "harness/src/eval_harness/compare_pipeline.py": "f93997b8a37d8e6134c2bdaace42d5df907d9b53d332d0bc89f966757d831905",
+      "harness/src/eval_harness/config.py": "fcfac308e45fac708f7e0ca8be42c055885a0ffe9949774876324b09544e5751",
+      "harness/src/eval_harness/errors.py": "fc04614f8af8d7e7477da169cbfdae4fab1e6c1a20235555a6a39cb29ad43463",
+      "harness/src/eval_harness/evaluate_pipeline.py": "b45968498c09ff9be6294e5d9a89014ed0c792dac8a64c76a344a9b71554b651",
+      "harness/src/eval_harness/executor.py": "9861591d309ae99d78dd5a77441078789cb45c2d20148abfb060eee9de47d694",
+      "harness/src/eval_harness/gdpval.py": "a28aaac5f237794b1f705f0de4dcf2d1e7b874c5efeafb322f04d241f7c0be76",
+      "harness/src/eval_harness/gsm8k.py": "43281a2a5221479ac908a1559885ab5c965f36f99de435a2d846d39dce6bcd98",
+      "harness/src/eval_harness/run_pipeline.py": "cd66164fda7535c5e1f22cba82143d8a732dcc74c59d891aaf01e3b12ebe31ac",
+      "harness/src/eval_harness/skill_pipeline.py": "052a342e986b8447a02d08cfba06a82588fa06b1c6f891d150d42003276456d7"
+    },
+    "timeout_seconds": 600
+  },
+  "preflight": {
+    "application_auth": "ChatGPT account login available",
+    "application_executor": "codex",
+    "application_model": "gpt-5.6-luna",
+    "available_task_count": 1319,
+    "benchmark": "gsm8k",
+    "condition_auth": {
+      "baseline": "ChatGPT account login available"
+    },
+    "condition_ids": [
+      "baseline"
+    ],
+    "evaluation": "mechanical",
+    "evaluation_auth": null,
+    "selected_task_ids": [
+      "gsm8k-0001"
+    ],
+    "status": "ready",
+    "task_source": "/Users/naokishima/Library/Mobile Documents/com~apple~CloudDocs/Project/eval-harness/.audit/fresh-checkout/benchmarks/gsm8k/data/gsm8k_benchmark.jsonl"
+  },
+  "preparation": {
+    "command": ".venv-tools/bin/uv run --project harness --no-sync python benchmarks/gsm8k/prepare.py",
+    "exit_code": 0,
+    "prepared_rows": 1319
+  },
+  "raw_local_directory": ".audit/fresh-checkout/.audit/reproduction",
+  "raw_run_directory": ".audit/fresh-checkout/runs/first",
+  "real_application_calls": 1,
+  "reevaluation_judgments": [
+    {
+      "condition_id": "baseline",
+      "evaluation_attempt_count": 1,
+      "evaluation_status": "completed",
+      "execution_status": "completed",
+      "expected_answer": 18,
+      "extracted_answer": "$18",
+      "generation_id": "d2fd94341ac843f6be32d79f9394a52c:baseline:gsm8k-0001:0",
+      "grading_method": "mechanical",
+      "judge_cost_usd": null,
+      "judge_elapsed_seconds": 0.0,
+      "judge_error": null,
+      "judge_events_path": null,
+      "judge_execution_status": "not_run",
+      "judge_response_path": null,
+      "judge_returncode": null,
+      "judge_stderr_path": null,
+      "judge_usage": {
+        "cached_input_tokens": null,
+        "cost_usd": null,
+        "input_tokens": null,
+        "output_tokens": null,
+        "reasoning_tokens": null
+      },
+      "judgment_path": "judgments/baseline/gsm8k-0001/repeat_0/judgment.json",
+      "rationale": "The extracted answer matches the prepared answer",
+      "repeat": 0,
+      "score": 1.0,
+      "score_error": null,
+      "score_valid": true,
+      "source_artifact_sha256": "9aae58fc96e0cff25f22971fea4505d58c339aca59829d23e00491f65bdec836",
+      "submission_files": [
+        {
+          "bytes": 95,
+          "path": "agent_response.txt",
+          "sha256": "b855a97b65a0ea53d9c964178fcb3c0f733f9279466aed1ee1ea7fbd3dd72879"
+        }
+      ],
+      "task_id": "gsm8k-0001",
+      "task_success": true
+    }
+  ],
+  "run_id": "d2fd94341ac843f6be32d79f9394a52c",
+  "scope": "Fresh-checkout install, one real application, immutable re-evaluation, comparison and completed resume",
+  "verification": {
+    "all_deliverables_match_original_journal": true,
+    "artifact_check": "After re-evaluation/resume, hash every captured deliverable and compare with the immutable execution journal captured before those commands; nonempty file list required.",
+    "completed_resume_additional_attempts": 0,
+    "distinct_evaluation_ids": [
+      "44dfcab6bc974bd4bbc87fb1f0450181",
+      "07676fa4ecc6441a8b1880b040cc2828"
+    ],
+    "distinct_generations_across_two_evaluations": 1,
+    "execution_record_sha256_before_and_after": {
+      "conditions/baseline/tasks/gsm8k-0001/repeat_0/execution.json": "169664e9dba43fb2ece16584b1372c78423354ebeef85535eaca2759e3398a7d",
+      "evaluations/mechanical-f137b7f388b3/source_snapshot/conditions/baseline/tasks/gsm8k-0001/repeat_0/execution.json": "169664e9dba43fb2ece16584b1372c78423354ebeef85535eaca2759e3398a7d"
+    },
+    "mechanical_and_compare_succeeded_with_nonexistent_cli_paths": true,
+    "run_state_sha256_before_and_after": "99ec074777c18efe50a1fbee373332b1ed5daaf02a9c53fbd741dc211ce196e9",
+    "scores": [
+      1.0,
+      1.0
+    ]
+  }
+}
