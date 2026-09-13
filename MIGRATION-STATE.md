@@ -3,7 +3,7 @@
 
 # Migration state
 
-Updated: 2026-09-13T04:30:56.162Z
+Updated: 2026-09-13T04:47:39.388Z
 
 Control branch: `checkpoint/migration-control`.
 Procedure: [MIGRATION-WORKFLOW.md](MIGRATION-WORKFLOW.md).
@@ -23,11 +23,20 @@ is 10070/10469 (96.18874773139746%), with 553 Python, six shell, 45 compatibilit
 tests passing. Review and DCO are closed. Checkpoint `272092f26948bdce763c185333ca417898eef88d`
 has the same tree. See `reports/m1-acceptance.md` and `reports/m1-evidence/acceptance.json`.
 
-Next prepare and save PR04's exact frozen contract and start record on a new checkpoint based on
-PR02c head. Luna owns implementation; Sol reviews bounded saved deltas; Astra controls scope and
-acceptance. First PR04 working allowance is 90 minutes with existing stop conditions. No extra
-NLTK investigation or rejected patch. CVE failure remains visible and cannot be called CI success.
-No PR04 code has been implemented yet. Remaining milestone estimates and limits are in the M1 report.
+M2 / PR04 is active from 2026-09-13T04:30:56.162Z (first 90-minute working allowance).
+Checkpoint branch `checkpoint/pr-04`, head `16d8447885f5c38372f5b4a2db8b2caa9756db95`, contains the exact
+frozen contract/appendix, reviewed finite code-start amendment, and hash-verified metric/build/data inputs.
+Its implementation base is accepted PR02c head `6038a782`. See `contracts/pr04-work.md` on that branch.
+
+Sol's code-start review is closed: candidate-only functional manifest/CI sequencing retains failed CVE
+acceptance; the authenticated native-signal union and exact trusted-mount path clarification are frozen.
+Luna is implementing only public types and pure request/frame/state codecs in three files. No native
+process launch or real boundary evidence exists yet. Root saves the next coherent batch before tests;
+Sol reviews the immutable delta. Do not repeat the NLTK investigation or rejected patch.
+
+The exact vendor-byte pre-commit exclusions and two stale grader test paths have a pending finite Sol
+scope review for subsequent batches. They are not permission to broaden authored-code exclusions.
+All ordinary stop conditions and the one-active-implementation rule remain in effect.
 
 ## Last durable implementation base
 
