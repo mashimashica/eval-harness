@@ -18,7 +18,25 @@
     "passed": ["end-of-file", "trailing-whitespace", "Ruff lint", "Ruff import order", "Ruff format", "verified config flag", "upstream environment list"],
     "not_applicable": ["Markdown underscore filename hook: no matching files"]
   },
-  "correction_grouped_checks": "pending Luna return",
-  "real_linux_started": false,
+  "correction_grouped_checks": {
+    "YAML_and_path_wiring": "pass",
+    "all_new_job_run_blocks_bash_n": "pass",
+    "installer_bash_n": "pass",
+    "embedded_Python_AST_two_heredocs": "pass",
+    "actual_physical_resource_path_step": "pass",
+    "preflight_true_false_exception_semantics": "pass",
+    "initial_validator_issue": "heredoc extractor initially included a pipeline line; validator extraction corrected once, source unchanged",
+    "tracked_changes_after": []
+  },
+  "sol_final": "both findings closed, no delta defects; local CI preparation component only",
+  "promotion": {
+    "draft_pr": 43,
+    "url": "https://github.com/mashimashica/eval-harness/pull/43",
+    "branch": "migration/04-isolated-grader",
+    "base": "6038a7828d62247ad98d000bc6e71c706f6d14a4",
+    "head": "0c919a5cd1256af121a912bef5a42cf41d5e360b",
+    "head_tree_readback": "28ef134a48c04a783e98277c09bc6770d121996e"
+  },
+  "real_linux_started": "Draft PR triggers requested; results pending",
   "acceptance": "held: actual provisioning, public attestation, hostile sandbox tests, native parity, coverage and known NLTK audit remain open"
 }

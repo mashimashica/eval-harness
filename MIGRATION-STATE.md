@@ -9,21 +9,28 @@ Control branch: `checkpoint/migration-control`.
 Procedure: [MIGRATION-WORKFLOW.md](MIGRATION-WORKFLOW.md).
 This record preserves recoverable work; it does not declare the migration accepted.
 
-## Latest recovery point: fixed Linux CI wiring under review
+## Latest recovery point: fixed Linux CI promoted; public boundary implementation
 
 Implementation `checkpoint/pr-04` is saved at
-`0c919a5cd1256af121a912bef5a42cf41d5e360b`, tree
-`28ef134a48c04a783e98277c09bc6770d121996e`. It adds the fixed Ubuntu candidate
+`7ebef3f004fad1a8df88792dfac6f0db7b1dd3c7`, tree
+`937e7d73b2179c0099b9f4a57279536beadb6c63`. Its source is the reviewed
+`0c919a5cd1256af121a912bef5a42cf41d5e360b` plus a saved next-batch work record.
+It adds the fixed Ubuntu candidate
 provisioning/audit workflow and exact-vendor gate/attribution changes. Luna reports
 YAML/TOML parsing, shell syntax including added run blocks, exact vendor selector checks
 and scoped vendor pre-commit behavior passing at preceding `92408b9d`. Sol found two
 workflow defects, both reproduced and source-closed in this correction: the installer's
 resource directory is now physical/absolute, and preflight false/exception fails while
-true alone continues. Luna's grouped correction checks are pending. Parent ran
+true alone continues. Luna's grouped correction checks all pass and Sol closed both
+findings with no remaining delta defects. Parent ran
 `pre-commit run --all-files` on the exact correction in a separate temporary worktree:
 all applicable hooks pass and the worktree remains clean. See
-`reports/m2-ci-preparation-validation.json`. Draft PR promotion follows consolidated
-checks; no real Linux job has started yet.
+`reports/m2-ci-preparation-validation.json`. Reviewed source was promoted unchanged to
+Draft PR #43 (`migration/04-isolated-grader`, head `0c919a5c`, base PR #42 at
+`6038a7828d62247ad98d000bc6e71c706f6d14a4`) to run real Linux checks; results are pending.
+Luna is assigned public attestation/run followed by shared callers/readonly environment
+resolution/old runner deletion, deadline 10:30 UTC, with coherent saves before validation
+and within 15 minutes. Parent collects CI evidence. No other PR is being implemented.
 
 The preceding preparation component is locally closed at `e2a5a6a7` (14 tests,
 strict typing, Ruff, shell syntax and Sol). A separate parent whole-suite baseline on
