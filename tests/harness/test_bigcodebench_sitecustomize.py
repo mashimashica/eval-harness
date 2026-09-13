@@ -5,6 +5,7 @@
 
 from __future__ import annotations
 
+import importlib
 import os
 import sys
 import types
@@ -78,9 +79,7 @@ class TestBigCodeBenchSitecustomize(unittest.TestCase):
     def test_nonliteral_policy_does_not_import_nltk(self) -> None:
         with (
             patch.dict(os.environ, {POLICY_ENVIRONMENT_VARIABLE: "other-policy"}, clear=True),
-            patch.object(
-                sitecustomize.importlib, "import_module", side_effect=AssertionError("unexpected NLTK import")
-            ),
+            patch.object(importlib, "import_module", side_effect=AssertionError("unexpected NLTK import")),
         ):
             sitecustomize.configure_bigcodebench_nltk()
 

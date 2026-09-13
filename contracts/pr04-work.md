@@ -20,6 +20,13 @@ precedes grouped bootstrap unit/mypy/Ruff verification and independent delta rev
 It does not install NLTK, prepare its data, or prove fresh/spawn/real-sandbox behavior.
 Existing frozen offline evidence is reused; CVE research remains closed.
 
+Bootstrap initial head `2d6a96a0` passes four configuration tests and Ruff; one test-only
+implicit import re-export type error is corrected in this save. Sol identified that
+CPython's automatic sitecustomize import absorbs ordinary Exceptions, so direct function
+error tests do not prove fatal startup failure. The same owner must add a secret-free
+fatal automatic entry and fresh isolated-interpreter tests using the copied bootstrap.
+This is not yet bootstrap component closure; real pinned NLTK/data/sandbox remain pending.
+
 Fixed implementation base: `7be35da9fae98c5e56ba14bf13a15a4cdbb9a8e7`;
 control recovery: `2d36c56c8056bd34186ed11da5004e0e01188dc8`. Both refs and clean local
 worktrees match; no repeated plan/design/dependency investigation is needed. Root remains
