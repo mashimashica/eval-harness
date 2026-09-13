@@ -6,17 +6,25 @@ from __future__ import annotations
 import json
 import os
 import shutil
+import stat
 import tempfile
 import unittest
 from collections.abc import Mapping, Sequence
+from dataclasses import replace
 from pathlib import Path
 from typing import TypedDict, cast
 from unittest.mock import patch
 
+import eval_harness.run_manifest as run_manifest_module
 import eval_harness.runner as runner_module
 from eval_harness.benchmarks.base import Benchmark, BenchmarkTask
 from eval_harness.benchmarks.snapshot import Availability, SnapshotTaskContent, open_verified_snapshot
-from eval_harness.candidate_bundle import SnapshotReference, VerifiedSnapshotBinding
+from eval_harness.candidate_bundle import (
+    CandidateBundleError,
+    SnapshotReference,
+    VerifiedSnapshotBinding,
+    load_candidate_bundle,
+)
 from eval_harness.capabilities import ExecutorCapabilities, ExecutorInput, ExecutorOutput
 from eval_harness.evaluators.base import (
     EvaluationPlan,
@@ -35,6 +43,7 @@ from eval_harness.executors.base import (
     PreflightResult,
     TaskSpec,
 )
+from eval_harness.failures import Failure, FailureImpact, FailureKind, RunAbort
 from eval_harness.interventions.base import (
     ApplicationMapping,
     Intervention,
@@ -46,9 +55,16 @@ from eval_harness.interventions.base import (
     compute_bundle_sha256,
     file_evidence,
 )
+from eval_harness.layout import candidate_layout
 from eval_harness.provenance import RepositoryProvenance
 from eval_harness.reasoning import ReasoningEffortOption
-from eval_harness.run_manifest import load_run_manifest, load_run_results
+from eval_harness.run_manifest import (
+    RunManifestError,
+    RunResultRow,
+    RunResultWriter,
+    load_run_manifest,
+    load_run_results,
+)
 from eval_harness.runner import run_benchmark
 
 
@@ -291,6 +307,68 @@ class FixtureExecutor(Executor):
         )
 
 
+class SystemicFailureExecutor(FixtureExecutor):
+    def __init__(self, failure: Failure, *, events: list[str] | None = None) -> None:
+        super().__init__(events=events)
+        self.systemic_failure = failure
+
+    def execute(self, request: ExecutionRequest) -> ExecutionResult:
+        result = super().execute(request)
+        return replace(
+            result,
+            status=ExecutionStatus.FAILED,
+            output_text=None,
+            available_outputs=frozenset(),
+            failure=self.systemic_failure,
+            exit_code=1,
+        )
+
+
+class OutputCapabilityMismatchExecutor(FixtureExecutor):
+    capabilities = ExecutorCapabilities(
+        inputs=frozenset({ExecutorInput.PROMPT_TEXT, ExecutorInput.WORKSPACE_FILES}),
+        outputs=frozenset(),
+    )
+
+
+class SymlinkArtifactExecutor(FixtureExecutor):
+    def __init__(self, artifact_target: Path) -> None:
+        super().__init__()
+        self.artifact_target = artifact_target
+
+    def execute(self, request: ExecutionRequest) -> ExecutionResult:
+        result = super().execute(request)
+        artifact = request.deliverables_dir / "answer.txt"
+        artifact.unlink()
+        artifact.symlink_to(self.artifact_target)
+        return result
+
+
+class ResultPathMismatchExecutor(FixtureExecutor):
+    def __init__(self, *, replacement: Path, workspace: bool) -> None:
+        super().__init__()
+        self.replacement = replacement
+        self.workspace = workspace
+
+    def execute(self, request: ExecutionRequest) -> ExecutionResult:
+        result = super().execute(request)
+        if self.workspace:
+            return replace(result, workspace=self.replacement)
+        return replace(result, deliverables_dir=self.replacement)
+
+
+class DestinationCollisionExecutor(FixtureExecutor):
+    def __init__(self, destination: Path) -> None:
+        super().__init__()
+        self.destination = destination
+
+    def execute(self, request: ExecutionRequest) -> ExecutionResult:
+        result = super().execute(request)
+        self.destination.mkdir(parents=True)
+        (self.destination / "collision-marker").write_text("occupied", encoding="utf-8")
+        return result
+
+
 class MissingNetworkExecutor(FixtureExecutor):
     def __init__(self) -> None:
         super().__init__()
@@ -374,17 +452,37 @@ class GenerationHandoffTests(unittest.TestCase):
             evaluator = FixtureEvaluator(events=events, handoff_root=out)
             intervention = FixtureIntervention(events=events)
             executor = FixtureExecutor(events=events)
+            index_path = out / "candidate-results.jsonl"
 
-            run_benchmark(
-                benchmark,
-                evaluator,
-                executor,
-                out_dir=out,
-                runtime_root=runtime,
-                limit=2,
-                model="requested-model",
-                intervention=intervention,
-            )
+            real_fsync = run_manifest_module.os.fsync
+
+            def record_index_fsync(descriptor: int) -> None:
+                real_fsync(descriptor)
+                try:
+                    descriptor_info = os.fstat(descriptor)
+                    index_info = index_path.stat()
+                except OSError:
+                    return
+                if (
+                    stat.S_ISREG(descriptor_info.st_mode)
+                    and stat.S_ISREG(index_info.st_mode)
+                    and descriptor_info.st_dev == index_info.st_dev
+                    and descriptor_info.st_ino == index_info.st_ino
+                    and descriptor_info.st_size > 0
+                ):
+                    events.append("candidate_index_fsync")
+
+            with patch.object(run_manifest_module.os, "fsync", side_effect=record_index_fsync):
+                run_benchmark(
+                    benchmark,
+                    evaluator,
+                    executor,
+                    out_dir=out,
+                    runtime_root=runtime,
+                    limit=2,
+                    model="requested-model",
+                    intervention=intervention,
+                )
 
             manifest = load_run_manifest(out)
             self.assertEqual(manifest.snapshot_path, "snapshot")
@@ -396,6 +494,10 @@ class GenerationHandoffTests(unittest.TestCase):
                 evaluator.durability_checks,
                 [f"{manifest.run_id}:candidate-00000000", f"{manifest.run_id}:candidate-00000001"],
             )
+            index_fsync_positions = [index for index, event in enumerate(events) if event == "candidate_index_fsync"]
+            self.assertEqual(len(index_fsync_positions), 2)
+            for sequence in range(2):
+                self.assertLess(index_fsync_positions[sequence], events.index(f"evaluate:fixture-{sequence}"))
             for sequence, ((row, bundle), reference) in enumerate(zip(loaded, manifest.ordered_tasks, strict=True)):
                 self.assertEqual(row.sequence, sequence)
                 self.assertEqual(row.candidate_id, f"{manifest.run_id}:candidate-{sequence:08d}")
@@ -646,6 +748,158 @@ class GenerationHandoffTests(unittest.TestCase):
                 self.assertNotEqual(first["run_fingerprint_sha256"], changed["run_fingerprint_sha256"])
                 if "prompt_suffix" not in changes:
                     self.assertNotEqual(first["configuration_sha256"], changed["configuration_sha256"])
+
+    def test_systemic_executor_failure_is_sealed_indexed_before_abort(self) -> None:
+        failures = (
+            Failure(FailureKind.AUTH, "fixture-auth", FailureImpact.RUN),
+            Failure(FailureKind.QUOTA, "fixture-quota", FailureImpact.RUN),
+            Failure(FailureKind.PROTOCOL, "fixture-protocol", FailureImpact.RUN),
+            Failure(FailureKind.INTEGRITY, "fixture-integrity", FailureImpact.RUN),
+        )
+        for failure in failures:
+            with self.subTest(failure=failure), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                out = root / "run"
+                events: list[str] = []
+                benchmark = FixtureBenchmark(task_count=2, events=events)
+                evaluator = FixtureEvaluator(events=events)
+                executor = SystemicFailureExecutor(failure, events=events)
+
+                with self.assertRaises(RunAbort) as raised:
+                    run_benchmark(
+                        benchmark,
+                        evaluator,
+                        executor,
+                        out_dir=out,
+                        limit=2,
+                        intervention=FixtureIntervention(events=events),
+                    )
+
+                self.assertEqual(raised.exception.failure, failure)
+                self.assertEqual(executor.execute_calls, 1)
+                self.assertEqual(evaluator.evaluation_requests, [])
+                self.assertNotIn("execute:fixture-1", events)
+
+                manifest = load_run_manifest(out)
+                binding = VerifiedSnapshotBinding.load(out / manifest.snapshot_path)
+                loaded = load_run_results(manifest, snapshot_binding=binding)
+                self.assertEqual(len(loaded), 1)
+                row, bundle = loaded[0]
+                self.assertEqual(row.sequence, 0)
+                self.assertEqual(bundle.outcome.status, ExecutionStatus.FAILED)
+                self.assertEqual(bundle.outcome.failure, failure)
+                self.assertEqual(bundle.outcome.available_outputs, frozenset())
+                self.assertIsNone(bundle.outcome.output_text)
+                self.assertEqual(
+                    bundle.outcome.failure,
+                    Failure(failure.kind, failure.code, failure.impact),
+                )
+
+                legacy_rows = [
+                    json.loads(line) for line in (out / "results.jsonl").read_text(encoding="utf-8").splitlines()
+                ]
+                self.assertEqual(len(legacy_rows), 1)
+                self.assertEqual(legacy_rows[0]["evaluation"]["status"], "skipped")
+                self.assertEqual(
+                    legacy_rows[0]["execution"]["failure"],
+                    {"kind": failure.kind.value, "code": failure.code, "impact": failure.impact.value},
+                )
+                metadata = _load_json(out / "run-metadata.json")
+                self.assertEqual(metadata["status"], "failed")
+
+    def test_seal_index_path_and_capability_failures_fail_closed(self) -> None:
+        cases: tuple[tuple[str, type[Exception], str], ...] = (
+            ("capability", CandidateBundleError, "undeclared output channel"),
+            ("workspace", ValueError, "outside the assigned task workspace"),
+            ("deliverables", ValueError, "outside the assigned task directory"),
+            ("symlink", CandidateBundleError, "artifact source cannot contain symlinks"),
+            ("collision", CandidateBundleError, "candidate destination must be fresh"),
+        )
+        for case, expected_exception, message in cases:
+            with self.subTest(case=case), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                out = root / "run"
+                evaluator = FixtureEvaluator()
+                if case == "capability":
+                    executor: FixtureExecutor = OutputCapabilityMismatchExecutor()
+                elif case == "workspace":
+                    executor = ResultPathMismatchExecutor(replacement=root / "outside", workspace=True)
+                elif case == "deliverables":
+                    executor = ResultPathMismatchExecutor(replacement=root / "outside", workspace=False)
+                elif case == "symlink":
+                    target = root / "outside-artifact.txt"
+                    target.write_bytes(b"outside artifact")
+                    executor = SymlinkArtifactExecutor(target)
+                else:
+                    executor = DestinationCollisionExecutor(candidate_layout(out, 0).root)
+
+                with self.assertRaisesRegex(expected_exception, message):
+                    run_benchmark(
+                        FixtureBenchmark(task_count=1),
+                        evaluator,
+                        executor,
+                        out_dir=out,
+                        limit=1,
+                        intervention=FixtureIntervention(),
+                    )
+
+                self.assertEqual(evaluator.evaluation_requests, [])
+                self.assertEqual(executor.execute_calls, 1)
+                self.assertEqual((out / "candidate-results.jsonl").read_text(encoding="utf-8"), "")
+                if case == "collision":
+                    self.assertEqual(
+                        (candidate_layout(out, 0).root / "collision-marker").read_text(encoding="utf-8"),
+                        "occupied",
+                    )
+                else:
+                    self.assertFalse(candidate_layout(out, 0).root.exists())
+                    candidates_root = out / "candidates"
+                    if candidates_root.exists():
+                        self.assertEqual(tuple(candidates_root.iterdir()), ())
+
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            out = root / "run"
+            evaluator = FixtureEvaluator()
+            executor = FixtureExecutor()
+            append_sequences: list[int] = []
+            original_append = RunResultWriter.append
+
+            def append_then_fail(writer: RunResultWriter, row: RunResultRow) -> None:
+                append_sequences.append(row.sequence)
+                if row.sequence == 1:
+                    raise RunManifestError("forced index append failure")
+                original_append(writer, row)
+
+            with patch.object(RunResultWriter, "append", new=append_then_fail):
+                with self.assertRaisesRegex(RunManifestError, "forced index append failure"):
+                    run_benchmark(
+                        FixtureBenchmark(task_count=2),
+                        evaluator,
+                        executor,
+                        out_dir=out,
+                        limit=2,
+                        intervention=FixtureIntervention(),
+                    )
+
+            self.assertEqual(append_sequences, [0, 1])
+            self.assertEqual(executor.execute_calls, 2)
+            self.assertEqual(len(evaluator.evaluation_requests), 1)
+            manifest = load_run_manifest(out)
+            binding = VerifiedSnapshotBinding.load(out / manifest.snapshot_path)
+            loaded = load_run_results(manifest, snapshot_binding=binding)
+            self.assertEqual(len(loaded), 1)
+            first_row, first_bundle = loaded[0]
+            self.assertEqual(first_row.sequence, 0)
+            self.assertEqual(first_bundle.read_artifact("answer.txt"), b"artifact-fixture-0")
+            unindexed = candidate_layout(out, 1).root
+            unindexed_bundle = load_candidate_bundle(unindexed, snapshot_binding=binding)
+            self.assertEqual(unindexed_bundle.candidate_id, f"{manifest.run_id}:candidate-00000001")
+            result_rows = (out / "candidate-results.jsonl").read_text(encoding="utf-8").splitlines()
+            self.assertEqual(len(result_rows), 1)
+            legacy_rows = (out / "results.jsonl").read_text(encoding="utf-8").splitlines()
+            self.assertEqual(len(legacy_rows), 2)
+            self.assertEqual(json.loads(legacy_rows[1])["evaluation"]["status"], "failed")
 
     def test_unknown_fixture_benchmark_keeps_labels_out_of_handoff_identity_and_evaluator_input(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
