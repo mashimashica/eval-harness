@@ -10,10 +10,12 @@ import os
 import shutil
 import stat
 import tempfile
+import textwrap
 import unittest
 from collections.abc import Mapping, Sequence
 from dataclasses import replace
 from pathlib import Path
+from types import SimpleNamespace
 from typing import TypedDict, cast
 from unittest.mock import patch
 
@@ -1117,6 +1119,312 @@ class GenerationHandoffTests(unittest.TestCase):
                 for label in forbidden:
                     self.assertNotIn(label, row.candidate_id)
                     self.assertNotIn(label, row.bundle_path)
+
+    def test_cli_cursor_executor_handoff_survives_runtime_deletion_and_relocation(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            out_root = root / "durable-output"
+            runtime_root = root / "runtime-work"
+            config_root = root / "cursor-config"
+            auth_store = config_root / "cursor" / "auth.json"
+            auth_store.parent.mkdir(parents=True)
+            auth_store.write_text(
+                json.dumps(
+                    {
+                        "accessToken": "fixture-access-token",
+                        "refreshToken": "fixture-refresh-token",
+                    },
+                    sort_keys=True,
+                ),
+                encoding="utf-8",
+            )
+            invocation_log = root / "cursor-invocations.jsonl"
+            fake_command = root / "fake-cursor"
+            fake_command.write_text(
+                textwrap.dedent(
+                    f"""\
+                    #!/usr/bin/env python3
+                    import json
+                    import os
+                    import sys
+                    from pathlib import Path
+
+                    LOG_PATH = Path({str(invocation_log)!r})
+                    FORBIDDEN_ENVIRONMENT = (
+                        "CURSOR_API_KEY",
+                        "CURSOR_AUTH_TOKEN",
+                        "CURSOR_LOCAL_PROVIDER",
+                        "CURSOR_LOCAL_PROVIDER_URL",
+                        "CURSOR_USE_LOCAL_PROVIDER",
+                        "CURSOR_USE_BEDROCK",
+                        "CURSOR_BASE_URL",
+                        "CURSOR_API_BASE_URL",
+                        "CURSOR_API_URL",
+                        "CURSOR_BEDROCK_ENDPOINT",
+                        "CURSOR_BEDROCK_ENDPOINT_URL",
+                        "BEDROCK_ENDPOINT_URL",
+                        "AWS_BEDROCK_ENDPOINT_URL",
+                        "AWS_ENDPOINT_URL_BEDROCK",
+                    )
+
+                    def record(kind, **values):
+                        with LOG_PATH.open("a", encoding="utf-8") as handle:
+                            handle.write(json.dumps({{"kind": kind, **values}}, sort_keys=True) + "\\n")
+
+                    def fail(message):
+                        record("failure", message=message)
+                        print(message, file=sys.stderr)
+                        return 1
+
+                    arguments = sys.argv[1:]
+                    if arguments == ["--version"]:
+                        record("version")
+                        print("2026.09.10-fd3934a")
+                        raise SystemExit(0)
+                    if arguments == ["status", "--format", "json"]:
+                        record("status")
+                        print(json.dumps({{
+                            "status": "authenticated",
+                            "isAuthenticated": True,
+                            "hasAccessToken": True,
+                            "hasRefreshToken": True,
+                            "userInfo": {{"email": "fixture@example.invalid"}},
+                        }}, sort_keys=True))
+                        raise SystemExit(0)
+                    if not arguments or arguments[0] != "-p":
+                        raise SystemExit(fail("unexpected Cursor invocation"))
+                    if any(name in os.environ for name in FORBIDDEN_ENVIRONMENT):
+                        raise SystemExit(fail("Cursor API/provider environment was not removed"))
+                    try:
+                        workspace = Path(arguments[arguments.index("--workspace") + 1])
+                    except (ValueError, IndexError):
+                        raise SystemExit(fail("Cursor invocation omitted its workspace"))
+                    if workspace != Path.cwd():
+                        raise SystemExit(fail("Cursor workspace and cwd differ"))
+                    task_inputs = workspace / "task_inputs"
+                    if not task_inputs.is_symlink() or not task_inputs.resolve().is_dir():
+                        raise SystemExit(fail("task_inputs was not isolated as a symlink"))
+                    legacy_inputs = workspace / "reference_files"
+                    if legacy_inputs.is_symlink() or legacy_inputs.exists():
+                        raise SystemExit(fail("legacy reference_files unexpectedly exists"))
+                    try:
+                        sandbox = json.loads((workspace / ".cursor" / "sandbox.json").read_text(encoding="utf-8"))
+                        readonly_paths = sandbox["additionalReadonlyPaths"]
+                        cli_config = json.loads((workspace / ".cursor" / "cli.json").read_text(encoding="utf-8"))
+                        denied = cli_config["permissions"]["deny"]
+                    except (KeyError, OSError, TypeError, ValueError):
+                        raise SystemExit(fail("Cursor policy files were malformed"))
+                    protected = str(task_inputs.resolve())
+                    if protected not in readonly_paths:
+                        raise SystemExit(fail("protected task_inputs path was absent from the sandbox policy"))
+                    if "Write(task_inputs/**)" not in denied:
+                        raise SystemExit(fail("task_inputs write protection was absent from the CLI policy"))
+                    input_bytes = (task_inputs / "fixture-0.txt").read_bytes()
+                    if input_bytes != b"canonical prompt 0":
+                        raise SystemExit(fail("neutral task input bytes were not preserved"))
+                    prompt = sys.stdin.read()
+                    expected_prompt = "fixture execution wrapper; network_policy=disabled\\ncanonical prompt 0"
+                    if prompt != expected_prompt:
+                        raise SystemExit(fail("Cursor received an unexpected task prompt"))
+                    artifact = workspace / "deliverables" / "nested" / "cursor-answer.txt"
+                    artifact.parent.mkdir(parents=True, exist_ok=True)
+                    artifact.write_bytes(b"cursor nested artifact bytes")
+                    record(
+                        "run",
+                        argv=arguments,
+                        api_environment_removed=True,
+                        artifact_path="nested/cursor-answer.txt",
+                        cwd=str(Path.cwd()),
+                        protected_task_inputs=protected,
+                        prompt=prompt,
+                        task_input=input_bytes.decode("utf-8"),
+                    )
+                    print(json.dumps({{
+                        "type": "result",
+                        "subtype": "success",
+                        "is_error": False,
+                        "duration_ms": 12,
+                        "duration_api_ms": 9,
+                        "result": "cursor final answer",
+                        "session_id": "session_fixture",
+                        "request_id": "request_fixture",
+                    }}, sort_keys=True))
+                    """
+                ),
+                encoding="utf-8",
+            )
+            fake_command.chmod(fake_command.stat().st_mode | stat.S_IXUSR)
+
+            benchmark = CursorFixtureBenchmark(task_count=1)
+            evaluator = FixtureEvaluator()
+            executor = CursorExecutor(command=str(fake_command))
+            environment = {
+                "XDG_CONFIG_HOME": str(config_root),
+                "CURSOR_API_KEY": "removed-api-key",
+                "CURSOR_LOCAL_PROVIDER": "removed-local-provider",
+                "CURSOR_USE_BEDROCK": "removed-bedrock-provider",
+            }
+            descriptor = SimpleNamespace(supported_executors=("cursor",))
+            with (
+                patch.dict(os.environ, environment),
+                patch.object(cli, "get_benchmark_descriptor", return_value=descriptor),
+                patch.object(cli, "get_executor_descriptor", return_value=SimpleNamespace()),
+                patch.object(cli, "create_benchmark", return_value=benchmark),
+                patch.object(cli, "create_evaluator", return_value=evaluator),
+                patch.object(cli, "create_executor", return_value=executor),
+            ):
+                stdout = io.StringIO()
+                with contextlib.redirect_stdout(stdout):
+                    self.assertEqual(
+                        cli.main(
+                            [
+                                "run",
+                                "fixture-cursor",
+                                "--executor",
+                                "cursor",
+                                "--limit",
+                                "1",
+                                "--out",
+                                str(out_root),
+                                "--runtime-root",
+                                str(runtime_root),
+                            ]
+                        ),
+                        0,
+                    )
+
+            summary = _json_object(json.loads(stdout.getvalue()))
+            self.assertEqual(summary["benchmark"], "fixture-cursor")
+            self.assertEqual(summary["executor"], "cursor")
+            self.assertEqual(summary["status"], "completed")
+            self.assertEqual(summary["task_count"], 1)
+            self.assertEqual(summary["metrics"], {"score": 1.0})
+            self.assertEqual(summary["evaluation_status_counts"], {"completed": 1})
+            self.assertEqual(evaluator.preflight_calls, 1)
+            self.assertEqual(len(evaluator.evaluation_requests), 1)
+            typed_result = evaluator.evaluation_requests[0].candidates[0].execution
+            self.assertEqual(typed_result.executor_version, "2026.09.10-fd3934a")
+            self.assertEqual(typed_result.auth_mode, "cursor-account")
+            self.assertEqual(typed_result.runtime, "host-subprocess")
+            self.assertEqual(typed_result.invocation_mode, "agent -p")
+            self.assertIsNone(typed_result.model_id)
+            self.assertEqual(
+                typed_result.available_outputs,
+                frozenset({ExecutorOutput.FINAL_TEXT, ExecutorOutput.ARTIFACT_FILES}),
+            )
+            self.assertTrue(typed_result.metadata["task_inputs_integrity_verified"])
+
+            events = [
+                _json_object(json.loads(line)) for line in invocation_log.read_text(encoding="utf-8").splitlines()
+            ]
+            self.assertEqual([event["kind"] for event in events], ["version", "status", "run"])
+            run_event = events[-1]
+            self.assertEqual(run_event["api_environment_removed"], True)
+            self.assertEqual(run_event["task_input"], "canonical prompt 0")
+            self.assertEqual(run_event["artifact_path"], "nested/cursor-answer.txt")
+            self.assertEqual(
+                run_event["prompt"],
+                "fixture execution wrapper; network_policy=disabled\ncanonical prompt 0",
+            )
+            run_argv = cast(list[object], run_event["argv"])
+            self.assertEqual(run_argv.count("-p"), 1)
+            self.assertNotIn("--model", run_argv)
+
+            workspace = runtime_root / "tasks" / "fixture-0" / "workspace"
+            visible_inputs = workspace / "task_inputs"
+            self.assertTrue(visible_inputs.is_dir())
+            self.assertFalse(visible_inputs.is_symlink())
+            self.assertEqual((visible_inputs / "fixture-0.txt").read_bytes(), b"canonical prompt 0")
+            self.assertFalse((workspace / "reference_files").exists())
+            self.assertFalse((workspace / "reference_files").is_symlink())
+
+            manifest = load_run_manifest(out_root)
+            binding = VerifiedSnapshotBinding.load(out_root / manifest.snapshot_path)
+            loaded = load_run_results(manifest, snapshot_binding=binding)
+            self.assertEqual(len(loaded), 1)
+            row, bundle = loaded[0]
+            self.assertEqual(row.sequence, 0)
+            self.assertEqual(row.candidate_id, f"{manifest.run_id}:candidate-00000000")
+            self.assertEqual(row.bundle_path, "candidates/candidate-00000000")
+            self.assertEqual(bundle.root, out_root / row.bundle_path)
+            self.assertEqual(bundle.snapshot_reference, manifest.ordered_tasks[0])
+            self.assertEqual(bundle.canonical_task_prompt, "canonical prompt 0")
+            self.assertEqual(
+                bundle.effective_executor_prompt,
+                "fixture execution wrapper; network_policy=disabled\ncanonical prompt 0",
+            )
+            evidence = bundle.executor_evidence
+            self.assertEqual(evidence.executor_id, "cursor")
+            self.assertEqual(evidence.executor_version, "2026.09.10-fd3934a")
+            self.assertEqual(evidence.runtime, "host-subprocess")
+            self.assertEqual(evidence.invocation_mode, "agent -p")
+            self.assertEqual(evidence.auth_mode, "cursor-account")
+            self.assertIsNone(evidence.requested_model)
+            self.assertIsNone(evidence.model_id)
+            self.assertIsNone(evidence.reasoning_effort_requested)
+            self.assertIsNone(evidence.effective_reasoning_effort)
+            self.assertFalse(evidence.effective_reasoning_effort_available)
+            self.assertEqual(
+                evidence.declared_capabilities,
+                ExecutorCapabilities(
+                    inputs=frozenset({ExecutorInput.PROMPT_TEXT, ExecutorInput.WORKSPACE_FILES}),
+                    outputs=frozenset({ExecutorOutput.FINAL_TEXT, ExecutorOutput.ARTIFACT_FILES}),
+                ),
+            )
+            self.assertEqual(bundle.outcome.status, ExecutionStatus.COMPLETED)
+            self.assertEqual(bundle.outcome.output_text, "cursor final answer")
+            self.assertEqual(
+                bundle.outcome.available_outputs,
+                frozenset({ExecutorOutput.FINAL_TEXT, ExecutorOutput.ARTIFACT_FILES}),
+            )
+            self.assertEqual(tuple(item.path for item in bundle.outcome.artifacts), ("nested/cursor-answer.txt",))
+            self.assertEqual(bundle.read_artifact("nested/cursor-answer.txt"), b"cursor nested artifact bytes")
+
+            legacy_rows = [
+                _json_object(json.loads(line))
+                for line in (out_root / "results.jsonl").read_text(encoding="utf-8").splitlines()
+            ]
+            self.assertEqual(len(legacy_rows), 1)
+            execution = _json_object(legacy_rows[0]["execution"])
+            self.assertEqual(execution["executor_version"], "2026.09.10-fd3934a")
+            self.assertEqual(execution["auth_mode"], "cursor-account")
+            self.assertEqual(execution["runtime"], "host-subprocess")
+            self.assertEqual(execution["invocation_mode"], "agent -p")
+            self.assertEqual(execution["model_id"], None)
+            self.assertEqual(execution["available_outputs"], ["artifact_files", "final_text"])
+
+            shutil.rmtree(runtime_root)
+            manifest_after_runtime_delete = load_run_manifest(out_root)
+            binding_after_runtime_delete = VerifiedSnapshotBinding.load(
+                out_root / manifest_after_runtime_delete.snapshot_path
+            )
+            loaded_after_runtime_delete = load_run_results(
+                manifest_after_runtime_delete,
+                snapshot_binding=binding_after_runtime_delete,
+            )
+            self.assertEqual(len(loaded_after_runtime_delete), 1)
+            self.assertEqual(loaded_after_runtime_delete[0][0], row)
+            self.assertEqual(loaded_after_runtime_delete[0][1].bundle_sha256, bundle.bundle_sha256)
+            self.assertFalse(runtime_root.exists())
+
+            relocated = root / "relocated-output"
+            out_root.rename(relocated)
+            relocated_manifest = load_run_manifest(relocated)
+            relocated_binding = VerifiedSnapshotBinding.load(relocated / relocated_manifest.snapshot_path)
+            relocated_loaded = load_run_results(relocated_manifest, snapshot_binding=relocated_binding)
+            self.assertEqual(len(relocated_loaded), 1)
+            relocated_row, relocated_bundle = relocated_loaded[0]
+            self.assertEqual(relocated_row, row)
+            self.assertEqual(relocated_bundle.root, relocated / row.bundle_path)
+            self.assertEqual(relocated_bundle.bundle_sha256, bundle.bundle_sha256)
+            self.assertEqual(relocated_bundle.outcome.output_text, "cursor final answer")
+            self.assertEqual(
+                relocated_bundle.read_artifact("nested/cursor-answer.txt"),
+                b"cursor nested artifact bytes",
+            )
+            candidate_manifest = (relocated / row.bundle_path / "candidate-bundle.json").read_text(encoding="utf-8")
+            self.assertNotIn(str(runtime_root), candidate_manifest)
+            self.assertNotIn(str(out_root), candidate_manifest)
 
     def test_late_plan_or_intervention_validation_fails_before_publication(self) -> None:
         cases = ("evaluator", "intervention")
