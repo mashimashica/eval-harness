@@ -123,6 +123,12 @@ class FileInterventionTests(unittest.TestCase):
             (reserved_source / "deliverables" / "x").write_text("x", encoding="utf-8")
             cases.append(("reserved", lambda: FilesIntervention(reserved_source).preflight()))
 
+            for index, name in enumerate(("task_inputs", "Task_Inputs", "reference_files", "Reference_Files")):
+                reserved_input = root / f"reserved-input-{index}"
+                (reserved_input / name).mkdir(parents=True)
+                (reserved_input / name / "x").write_text("x", encoding="utf-8")
+                cases.append((f"reserved-{name}", lambda path=reserved_input: FilesIntervention(path).preflight()))
+
             if os.name == "posix":
                 special_source = root / "special-source"
                 special_source.mkdir()

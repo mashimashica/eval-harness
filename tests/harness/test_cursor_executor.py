@@ -49,10 +49,10 @@ class CursorExecutorTests(unittest.TestCase):
             self.assertNotIn("--auth-token", command)
             self.assertNotIn("--worktree", command)
 
-    def test_workspace_policy_denies_network_mcp_and_adds_readonly_reference_path(self) -> None:
+    def test_workspace_policy_denies_network_mcp_and_adds_readonly_task_input_path(self) -> None:
         with tempfile.TemporaryDirectory() as root:
             workspace = Path(root) / "workspace"
-            readonly = Path(root) / "readonly-refs"
+            readonly = Path(root) / "readonly-inputs"
             workspace.mkdir()
             readonly.mkdir()
             CursorExecutor(network_enabled=False)._write_workspace_policy(workspace, readonly)
@@ -64,24 +64,47 @@ class CursorExecutorTests(unittest.TestCase):
             self.assertIn(str(readonly.resolve()), sandbox["additionalReadonlyPaths"])
             self.assertIn("Mcp(*:*)", config["permissions"]["deny"])
             self.assertIn("WebFetch(*)", config["permissions"]["deny"])
-            self.assertIn("Write(reference_files/**)", config["permissions"]["deny"])
+            self.assertIn("Write(task_inputs/**)", config["permissions"]["deny"])
+            self.assertNotIn("Write(reference_files/**)", config["permissions"]["deny"])
             self.assertIn("Shell(*)", config["permissions"]["allow"])
 
-    def test_reference_tree_is_moved_outside_workspace_then_restored(self) -> None:
+    def test_task_input_tree_is_moved_outside_workspace_then_restored(self) -> None:
         with tempfile.TemporaryDirectory() as root:
             workspace = Path(root) / "task" / "workspace"
-            refs = workspace / "reference_files"
-            refs.mkdir(parents=True)
-            (refs / "input.txt").write_text("original\n", encoding="utf-8")
+            inputs = workspace / "task_inputs"
+            inputs.mkdir(parents=True)
+            (inputs / "input.txt").write_text("original\n", encoding="utf-8")
             executor = CursorExecutor()
-            protected, digest = executor._isolate_reference_files(workspace)
+            protected, digest = executor._isolate_task_inputs(workspace)
             self.assertIsNotNone(protected)
             self.assertIsNotNone(digest)
-            self.assertTrue(refs.is_symlink())
+            self.assertTrue(inputs.is_symlink())
             self.assertFalse(str(protected).startswith(str(workspace) + os.sep))
-            executor._restore_reference_files(workspace, protected)
-            self.assertFalse(refs.is_symlink())
-            self.assertEqual((refs / "input.txt").read_text(encoding="utf-8"), "original\n")
+            executor._restore_task_inputs(workspace, protected)
+            self.assertFalse(inputs.is_symlink())
+            self.assertEqual((inputs / "input.txt").read_text(encoding="utf-8"), "original\n")
+
+    def test_legacy_reference_namespace_is_rejected_before_execution(self) -> None:
+        with tempfile.TemporaryDirectory() as root:
+            workspace = Path(root) / "workspace"
+            (workspace / "reference_files").mkdir(parents=True)
+            with self.assertRaisesRegex(ValueError, "does not accept the legacy reference_files input namespace"):
+                CursorExecutor()._isolate_task_inputs(workspace)
+
+    def test_task_input_symlink_and_non_directory_are_rejected(self) -> None:
+        with tempfile.TemporaryDirectory() as root:
+            workspace = Path(root) / "workspace"
+            workspace.mkdir()
+            target = Path(root) / "target"
+            target.mkdir()
+            (workspace / "task_inputs").symlink_to(target, target_is_directory=True)
+            with self.assertRaisesRegex(ValueError, "task_inputs input must be a real directory"):
+                CursorExecutor()._isolate_task_inputs(workspace)
+
+            (workspace / "task_inputs").unlink()
+            (workspace / "task_inputs").write_text("input", encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "task_inputs input must be a real directory"):
+                CursorExecutor()._isolate_task_inputs(workspace)
 
     def test_subscription_environment_removes_api_auth(self) -> None:
         env = subscription_environment(

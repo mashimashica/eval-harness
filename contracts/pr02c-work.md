@@ -3,20 +3,32 @@
 
 # PR-02c work record
 
-Status: design accepted for implementation; source implementation and tests have not begun.
+Status: incomplete implementation checkpoint. Validation and acceptance remain open.
 
 - Repository: `mashimashica/eval-harness`
 - Implementation owner: Luna (`/root/luna_restore_source`); design/review: Sol (`/root/sol_pr02c_design`); architecture/acceptance: Astra (`/root`).
-- Branch: `checkpoint/pr-02c`; one writer, Luna, after this initial contract checkpoint.
+- Branch: `checkpoint/pr-02c`; root temporarily owns remote writes during persistence recovery. Luna's implementation turn is paused.
 - Immutable implementation base: `d5ce0c10162cad788a17cb90f34b8f60574e7f75`, tree `354943ebbb8ea81a30523bfdc12baf26771853b5`.
 - Dependency heads: PR01 `b0d4229f49c7cc2441efd0f3aa929b58a9096c55`; PR02a `86b03a910799ecf97b33d3dac230c069a44bde65`; PR02b `0b3f41a0edcfffc1b6f4b537bcb2cab2e55e39c4`; PR03 is the base above.
 - Original plan: control commit `8518f25d107d9043df449a9198fbb41b00ba1c22`, `eval-harness-neutrality-migration-plan-2026-09-12.md`, SHA-256 `174f0b3d289ddffa9e9d617637e58dc2ad4198f2046a3064407ba41aa423885f`.
 - Contract: `contracts/pr02c-reconstruction.md` in this commit. The production/test path allowlist, fixed APIs, invariants, failure behavior, and gates in that file govern this slice.
+- Accepted scope amendment: `contracts/pr02c-input-protection-amendment.md`, SHA-256
+  `98c69de050dcbce42bad8db805243402f69633bb896a704e2a4628bdd9eba9c8`. It adds the Cursor and FilesIntervention
+  paths and exact `task_inputs` protection/legacy rejection requirements described in that file.
 - Control procedure: `checkpoint/migration-control:MIGRATION-WORKFLOW.md` (current control head at initialization: `ff85149636b55c207f7fdd388727db20475a7ab2`).
 
-This checkpoint contains the reviewed reconstructed contract and this work record only. It does not recover any unpublished old implementation. Original plan bytes and all 5,134 tracked files at the implementation base have been verified. Python 3.13.14 and uv 0.11.29 recreate the locked development environment.
+This checkpoint preserves a newly written, incomplete implementation of the candidate layout, snapshot generation handoff, Cursor task-input protection, FilesIntervention reservation, and initial fixture updates. It also includes the accepted input-protection amendment. It does not recover previously lost unpublished implementation. Original plan bytes and all 5,134 tracked files at the implementation base have been verified. Python 3.13.14 and uv 0.11.29 recreate the locked development environment.
 
-Next action: create an isolated worktree from this saved checkpoint; read the exact contract; implement candidate layout and the single-snapshot generation handoff in small saved batches. Save source and update this record before tests or handoffs. Return fixed-contract conflicts to Sol before broadening scope. No real model or judge execution, merge, or release is authorized in this phase.
+Persistence correction: Luna created local commits through `909b95519aa2434d4c9b1c68ff5ee712267aed36`, but the remote branch still pointed to the initial contract commit. Those local commits were not durable checkpoints and their generic local DCO did not match the required user sign-off. Root paused further edits/tests, inspected the allowed nine-file delta, and is preserving the exact source tree through the required UTF-8 GitHub APIs with the correct DCO. Local commits are not being promoted into remote ancestry. A prior local work-record sentence claiming remote readback was incorrect and is replaced here.
+
+Known remaining work before acceptance:
+
+- Complete the GDPval `task_inputs` wrapper correction, the generation handoff integration tests, and all required fixture migrations, including the new common CLI Cursor coverage and explicit legacy rejection.
+- Fix Cursor cleanup failure handling so a late integrity/restore failure clears successful output text and cannot violate the typed failed-result schema. Preserve an already typed primary timeout/interruption/process failure; record cleanup evidence without masking it.
+- Review the initial generic intervention fixture change: retain meaningful materialized-file provenance coverage using valid file bytes, hashes, and manifest evidence rather than removing that behavior.
+- Sol's source/API/security review is in progress against this incomplete tree; no review acceptance is claimed.
+
+Next action: verify this remote checkpoint and changed bytes, return a fresh checkout of it to Luna, fix the reviewed Cursor/fixture issues in one bounded batch, save/read back that batch, then complete the remaining handoff implementation and tests. No source expansion or long test may precede its required checkpoint. No real model or judge execution, merge, or release is authorized in this phase.
 
 Validation of this checkpoint: design reviewed by Sol and Astra; no source implementation tests run or claimed. Base PR03 exact-head validation remains historical evidence for that unchanged base only. PR02c requires focused tests, independent review, and all unchanged mandatory CI gates on its own saved implementation head.
 

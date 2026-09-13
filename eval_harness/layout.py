@@ -27,6 +27,14 @@ class TaskLayout:
     judge_deliverables: Path
 
 
+@dataclass(frozen=True)
+class CandidateLayout:
+    """Durable path and relative index link for one generated candidate."""
+
+    relative_path: str
+    root: Path
+
+
 def task_layout(
     run_root: Path,
     task_id: str,
@@ -49,4 +57,18 @@ def task_layout(
         executor_dir=task_root / "executor",
         workspace_deliverables=workspace / "deliverables",
         judge_deliverables=run_root / "deliverables" / f"task_{safe_id}" / f"repeat_{repeat}",
+    )
+
+
+def candidate_layout(run_root: Path, sequence: int) -> CandidateLayout:
+    """Return the deterministic in-run location for one candidate sequence."""
+
+    if not isinstance(run_root, Path):
+        raise TypeError("run root must be a Path")
+    if type(sequence) is not int or sequence < 0:
+        raise ValueError("candidate sequence must be a non-negative integer")
+    name = f"candidate-{sequence:08d}"
+    return CandidateLayout(
+        relative_path=f"candidates/{name}",
+        root=run_root / "candidates" / name,
     )

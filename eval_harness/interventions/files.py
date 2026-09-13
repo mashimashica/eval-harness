@@ -29,7 +29,9 @@ from eval_harness.interventions.base import (
 )
 
 
-_RESERVED_TOP_LEVEL = frozenset({"deliverables", "reference_files", ".gdpval", ".cursor", ".claude", ".agents"})
+_RESERVED_TOP_LEVEL = frozenset(
+    {"deliverables", "task_inputs", "reference_files", ".gdpval", ".cursor", ".claude", ".agents"}
+)
 
 
 def _canonical_collision_key(path: str) -> str:
@@ -40,7 +42,7 @@ def _validate_logical_path(path: str) -> None:
     pure = PurePosixPath(path)
     if "\\" in path or pure.is_absolute() or not path or any(part in {"", ".", ".."} for part in pure.parts):
         raise ValueError(f"intervention source contains an unsafe relative path: {path!r}")
-    if pure.parts[0].casefold() in _RESERVED_TOP_LEVEL:
+    if _canonical_collision_key(pure.parts[0]) in _RESERVED_TOP_LEVEL:
         raise ValueError(f"intervention source uses reserved top-level path: {pure.parts[0]!r}")
 
 

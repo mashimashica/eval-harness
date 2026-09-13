@@ -267,14 +267,14 @@ class CursorExecutor(Executor):
             details=("Cursor account login detected with alternate provider environment variables removed",),
         )
 
-    def _write_workspace_policy(self, workspace: Path, readonly_reference_path: Path | None = None) -> None:
+    def _write_workspace_policy(self, workspace: Path, readonly_task_inputs_path: Path | None = None) -> None:
         cursor_dir = workspace / ".cursor"
         cursor_dir.mkdir(parents=True, exist_ok=True)
         network_default = "allow" if self.network_access_enabled else "deny"
         sandbox = {
             "type": "workspace_readwrite",
             "additionalReadwritePaths": [],
-            "additionalReadonlyPaths": [str(readonly_reference_path.resolve())] if readonly_reference_path else [],
+            "additionalReadonlyPaths": [str(readonly_task_inputs_path.resolve())] if readonly_task_inputs_path else [],
             "disableTmpWrite": True,
             "enableSharedBuildCache": False,
             "networkPolicy": {"default": network_default, "allow": [], "deny": []},
@@ -286,7 +286,7 @@ class CursorExecutor(Executor):
 
         deny = [
             "Mcp(*:*)",
-            "Write(reference_files/**)",
+            "Write(task_inputs/**)",
             "Read(.env*)",
             "Write(.env*)",
         ]
@@ -305,12 +305,20 @@ class CursorExecutor(Executor):
             encoding="utf-8",
         )
 
-    def _isolate_reference_files(self, workspace: Path) -> tuple[Path | None, str | None]:
-        visible = workspace / "reference_files"
-        if not visible.is_dir():
-            return None, None
+    def _isolate_task_inputs(self, workspace: Path) -> tuple[Path | None, str | None]:
+        legacy = workspace / "reference_files"
+        if legacy.is_symlink() or legacy.exists():
+            raise ValueError("Cursor executor does not accept the legacy reference_files input namespace")
 
-        protected = workspace.parent / "cursor-reference-files-readonly"
+        visible = workspace / "task_inputs"
+        if visible.is_symlink():
+            raise ValueError("Cursor task_inputs input must be a real directory")
+        if not visible.exists():
+            return None, None
+        if not visible.is_dir():
+            raise ValueError("Cursor task_inputs input must be a real directory")
+
+        protected = workspace.parent / "cursor-task-inputs-readonly"
         if protected.is_symlink() or protected.is_file():
             protected.unlink()
         elif protected.is_dir():
@@ -320,17 +328,22 @@ class CursorExecutor(Executor):
         try:
             visible.symlink_to(protected.resolve(), target_is_directory=True)
         except OSError:
-            protected.rename(visible)
+            try:
+                protected.rename(visible)
+            except OSError as restore_error:
+                raise RuntimeError(
+                    "Cursor task input isolation requires directory symlink support; refusing to run with writable inputs"
+                ) from restore_error
             raise RuntimeError(
-                "Cursor reference isolation requires directory symlink support; refusing to run with writable references"
+                "Cursor task input isolation requires directory symlink support; refusing to run with writable inputs"
             )
         return protected, digest
 
     @staticmethod
-    def _restore_reference_files(workspace: Path, protected: Path | None) -> None:
+    def _restore_task_inputs(workspace: Path, protected: Path | None) -> None:
         if protected is None:
             return
-        visible = workspace / "reference_files"
+        visible = workspace / "task_inputs"
         if visible.is_symlink() or visible.is_file():
             visible.unlink()
         elif visible.is_dir():
@@ -358,8 +371,8 @@ class CursorExecutor(Executor):
         request.workspace.mkdir(parents=True, exist_ok=True)
         request.deliverables_dir.mkdir(parents=True, exist_ok=True)
         request.executor_dir.mkdir(parents=True, exist_ok=True)
-        protected_references, reference_digest = self._isolate_reference_files(request.workspace)
-        self._write_workspace_policy(request.workspace, protected_references)
+        protected_task_inputs, task_inputs_digest = self._isolate_task_inputs(request.workspace)
+        self._write_workspace_policy(request.workspace, protected_task_inputs)
         (request.executor_dir / "prompt.txt").write_text(request.task.prompt, encoding="utf-8")
 
         started_at = _utc_now()
@@ -369,7 +382,9 @@ class CursorExecutor(Executor):
         status = ExecutionStatus.FAILED
         stdout = ""
         stderr = ""
-        reference_integrity_ok = True
+        task_inputs_integrity_ok = True
+        task_inputs_integrity_error: str | None = None
+        restore_error: BaseException | None = None
         has_deliverable = False
         output_text: str | None = None
         protocol_error: str | None = None
@@ -390,14 +405,16 @@ class CursorExecutor(Executor):
             exit_code = completed.returncode
             stdout = _text(completed.stdout)
             stderr = _text(completed.stderr)
-            if protected_references is not None and reference_digest is not None:
-                reference_integrity_ok = _tree_digest(protected_references) == reference_digest
-                if not reference_integrity_ok:
-                    stderr += "\nCursor executor detected reference-file mutation; failing closed.\n"
-                    failure = Failure(FailureKind.INTEGRITY, "reference_mutation", FailureImpact.RUN)
+            if protected_task_inputs is not None and task_inputs_digest is not None:
+                task_inputs_integrity_ok = _tree_digest(protected_task_inputs) == task_inputs_digest
+                if not task_inputs_integrity_ok:
+                    task_inputs_integrity_error = "task input tree changed during execution"
+                    stderr += "\nCursor executor detected task-input mutation; failing closed.\n"
+                    failure = Failure(FailureKind.INTEGRITY, "task_input_mutation", FailureImpact.RUN)
+                    status = ExecutionStatus.FAILED
             if exit_code != 0 and failure is None:
                 failure = Failure(FailureKind.PROCESS, "process_exit", FailureImpact.RUN)
-            if exit_code == 0 and reference_integrity_ok:
+            if exit_code == 0 and task_inputs_integrity_ok and failure is None:
                 try:
                     parsed = parse_cursor_output(stdout)
                 except OutputProtocolError as exc:
@@ -426,7 +443,28 @@ class CursorExecutor(Executor):
             status = ExecutionStatus.FAILED
             failure = Failure(FailureKind.PROCESS, "process_spawn", FailureImpact.RUN)
         finally:
-            self._restore_reference_files(request.workspace, protected_references)
+            if protected_task_inputs is not None and task_inputs_digest is not None:
+                try:
+                    task_inputs_integrity_ok = _tree_digest(protected_task_inputs) == task_inputs_digest
+                except BaseException:
+                    task_inputs_integrity_ok = False
+                    task_inputs_integrity_error = "task input integrity could not be verified"
+                    if failure is None:
+                        failure = Failure(FailureKind.INTEGRITY, "task_input_integrity", FailureImpact.RUN)
+                        status = ExecutionStatus.FAILED
+                    else:
+                        task_inputs_integrity_error = "task input integrity check failed after execution"
+                if not task_inputs_integrity_ok and failure is None:
+                    task_inputs_integrity_error = "task input tree changed during execution"
+                    failure = Failure(FailureKind.INTEGRITY, "task_input_mutation", FailureImpact.RUN)
+                    status = ExecutionStatus.FAILED
+            try:
+                self._restore_task_inputs(request.workspace, protected_task_inputs)
+            except BaseException as exc:
+                restore_error = exc
+                if failure is None:
+                    failure = Failure(FailureKind.INTEGRITY, "task_input_restore", FailureImpact.RUN)
+                    status = ExecutionStatus.FAILED
             stdout_path.write_text(stdout, encoding="utf-8")
             stderr_path.write_text(stderr, encoding="utf-8")
 
@@ -449,10 +487,16 @@ class CursorExecutor(Executor):
             "cloud_execution": False,
             "structured_output": "json",
             "usage_mode": "cursor-account-usage",
-            "reference_files_isolation": "outside-workspace + additionalReadonlyPaths",
-            "reference_integrity_verified": reference_integrity_ok,
+            "task_inputs_isolation": "outside-workspace + additionalReadonlyPaths"
+            if protected_task_inputs is not None
+            else "none",
+            "task_inputs_integrity_verified": task_inputs_integrity_ok,
             "api_environment_removed": sorted(_API_ENV_VARS),
         }
+        if task_inputs_integrity_error is not None:
+            metadata["task_inputs_integrity_detail"] = task_inputs_integrity_error
+        if restore_error is not None:
+            metadata["task_inputs_restore_error"] = type(restore_error).__name__
         if protocol_error is not None:
             metadata["protocol_error"] = protocol_error
         return ExecutionResult(

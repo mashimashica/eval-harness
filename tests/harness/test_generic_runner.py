@@ -15,7 +15,8 @@ from unittest.mock import patch
 
 import eval_harness.runner as runner_module
 from eval_harness.benchmarks.base import Benchmark, BenchmarkTask
-from eval_harness.capabilities import ExecutorOutput
+from eval_harness.benchmarks.snapshot import Availability
+from eval_harness.capabilities import ExecutorCapabilities, ExecutorInput, ExecutorOutput
 from eval_harness.evaluators.base import (
     EvaluationPlan,
     EvaluationRequest,
@@ -79,6 +80,7 @@ def _load_json_object(path: Path) -> JsonObject:
 class FakeBenchmark(Benchmark):
     name = "fake"
     revision = "test-revision"
+    revision_availability = Availability.AVAILABLE
 
     def __init__(
         self,
@@ -188,13 +190,7 @@ class FakeIntervention(Intervention):
         return InterventionApplication(
             application_run_id=application_run_id,
             task=TaskSpec(task.task_id, f"[OVERLAY FOR CONDITION SECRET]\n{task.prompt}"),
-            materialized_files=(
-                InterventionFile(
-                    path="injected.txt",
-                    size=7,
-                    sha256="".join(["b"] * 64),
-                ),
-            ),
+            materialized_files=(),
             bundle_sha256=bundle_sha256,
             manifest_sha256=manifest_sha256,
             application=application_mapping,
@@ -261,6 +257,10 @@ class FakeExecutor(Executor):
     invocation_mode = "fake"
     network_access_enabled: bool = False
     reasoning_effort: ReasoningEffortOption = None
+    capabilities = ExecutorCapabilities(
+        inputs=frozenset({ExecutorInput.PROMPT_TEXT, ExecutorInput.WORKSPACE_FILES}),
+        outputs=frozenset({ExecutorOutput.FINAL_TEXT}),
+    )
 
     def __init__(
         self,
@@ -434,8 +434,7 @@ class GenericRunnerTests(unittest.TestCase):
             row = json.loads((run_dir / "results.jsonl").read_text(encoding="utf-8"))
             evidence = row["intervention"]
             self.assertEqual(evidence["status"], "applied")
-            self.assertEqual(evidence["materialized_files"][0]["path"], "injected.txt")
-            self.assertEqual(evidence["materialized_files"][0]["size"], 7)
+            self.assertEqual(evidence["materialized_files"], [])
             self.assertNotIn("/external/secret/intervention-source", json.dumps(row))
             self.assertNotIn("sentinel", json.dumps(row))
             self.assertNotIn("task-0", evidence["application_run_id"])
