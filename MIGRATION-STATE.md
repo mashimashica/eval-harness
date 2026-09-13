@@ -3,13 +3,41 @@
 
 # Migration state
 
-Updated: 2026-09-13T05:37:43.728Z
+Updated: 2026-09-13T06:12:00Z
 
 Control branch: `checkpoint/migration-control`.
 Procedure: [MIGRATION-WORKFLOW.md](MIGRATION-WORKFLOW.md).
 This record preserves recoverable work; it does not declare the migration accepted.
 
-## Current status: M1 accepted; M2 partial and paused after user progress report
+## Current status: M1 accepted; M2 host-supervisor implementation resumed
+
+The user resumed the migration from `aa7e2cc9df25795be50559ea5c5d986af020c933`.
+Root recovered the complete original plan, workflow, latest/historical state, M1 acceptance
+and M2 worker evidence from control `02cba161d480f45d3eb955eaad035488bde936c4`.
+All remote Draft heads 38–42 and the frozen design refs were checked and match this index.
+The previously reported local clone was absent, so a fresh clone was made; its root remains
+clean on `main`. Implementation runs in a separate worktree from the exact PR04 checkpoint.
+
+Resumption record: `checkpoint/pr-04` at `9bed63c6c3a26eb2542ce22d6cd9669a618cd8ec`,
+tree `87536f7a5862842cb29f1d675fda6a06b9464b57`; ref and changed UTF-8 bytes/Git blob
+were read back. This changes the work record only. No new implementation test is claimed.
+Luna is the sole implementation owner; Sol reviews saved commits without source edits;
+Astra owns API checkpoints, integration and acceptance. No grandchildren are used.
+
+Current allowance is 2026-09-13T05:58:23Z–07:28:23Z (90 minutes including recovery).
+The first bounded host-policy/supervisor batch permits only `eval_harness/grader_sandbox.py`
+and `tests/harness/test_bigcodebench_runner.py`; save before validation and within 15 minutes.
+Runtime provisioning, caller replacement, real Linux boundary/native parity and full PR04
+acceptance remain pending. The local host is macOS arm64, not the required Linux acceptance
+platform. The locked development environment is being recreated for local correctness checks.
+
+The user explicitly requires removal of all tracked `contracts/*.md` from final implementation
+head after incorporating necessary permanent specification into formal docs. History and
+checkpoint refs remain preserved. This requirement supersedes conflicting saved designs.
+The NLTK CVE acceptance hold, closed investigation, no model experiments/merge/release,
+two-failed-correction stop rule and all quality gates remain unchanged.
+
+## Previous segment status: M1 accepted; M2 partial and paused after user progress report
 
 The user's latest steering requested an immediate intermediate report because elapsed time was excessive.
 Root reported progress and limited the remaining segment to the existing worker correction, verification
