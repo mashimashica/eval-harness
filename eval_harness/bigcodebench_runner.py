@@ -56,13 +56,6 @@ class ProtocolError(ValueError):
     """A malformed, non-canonical, or unauthenticated protocol value."""
 
 
-# Descriptive aliases make it possible for callers to classify either side of
-# the protocol without introducing a second exception hierarchy.
-BCBIError = ProtocolError
-BCBOError = ProtocolError
-GraderProtocolError = ProtocolError
-
-
 class NativeStatus(StrEnum):
     PASS = "pass"
     FAIL = "fail"
@@ -88,10 +81,6 @@ class FrameType(IntEnum):
     ERROR = 3
 
 
-# A commonly used spelling in host-side code and tests.
-OutputFrameType = FrameType
-
-
 def _protocol_error(message: str) -> ProtocolError:
     """Build a deliberately secret-free protocol error."""
 
@@ -101,13 +90,13 @@ def _protocol_error(message: str) -> ProtocolError:
 def _require_exact_int(value: object, field: str) -> int:
     if type(value) is not int:
         raise _protocol_error(f"{field} must be an integer")
-    return cast(int, value)
+    return value
 
 
 def _require_string(value: object, field: str, maximum: int, *, nonempty: bool = False) -> str:
     if type(value) is not str:
         raise _protocol_error(f"{field} must be a string")
-    string = cast(str, value)
+    string = value
     if nonempty and not string:
         raise _protocol_error(f"{field} must not be empty")
     if "\x00" in string:
@@ -517,13 +506,10 @@ parse_bcbo = parse_authenticated_output
 __all__ = [
     "AuthenticatedFrame",
     "AuthenticatedOutputParser",
-    "BCBIError",
-    "BCBOError",
     "BigCodeBenchGradeRequest",
     "ERROR_CODES",
     "FrameType",
     "GraderNativeResult",
-    "GraderProtocolError",
     "INPUT_MAGIC",
     "KEY_SIZE",
     "LimitKind",
@@ -535,7 +521,6 @@ __all__ = [
     "MAX_TEST_CODE_BYTES",
     "NativeSignal",
     "NativeStatus",
-    "OutputFrameType",
     "PROTOCOL_VERSION",
     "ProtocolError",
     "decode_bcbi",

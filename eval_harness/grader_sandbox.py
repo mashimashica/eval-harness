@@ -16,10 +16,6 @@ from pathlib import Path
 from typing import Final
 
 from eval_harness.bigcodebench_runner import (
-    AuthenticatedFrame,
-    AuthenticatedOutputParser,
-    BCBIError,
-    BCBOError,
     BigCodeBenchGradeRequest,
     FrameType,
     GraderNativeResult,
@@ -27,13 +23,6 @@ from eval_harness.bigcodebench_runner import (
     NativeSignal,
     NativeStatus,
     ProtocolError,
-    decode_bcbi,
-    encode_bcbi,
-    encode_bcbo,
-    encode_error,
-    encode_result,
-    encode_signal,
-    encode_start,
     parse_authenticated_output,
 )
 
@@ -177,11 +166,6 @@ def parse_grader_output(data: bytes, key: bytes) -> GraderNativeResult:
 
 __all__ = [
     "BigCodeBenchGradeRequest",
-    "AuthenticatedFrame",
-    "AuthenticatedOutputParser",
-    "BCBIError",
-    "BCBOError",
-    "FrameType",
     "GraderInfrastructureError",
     "GraderNativeResult",
     "GraderSandboxLimits",
@@ -191,14 +175,5 @@ __all__ = [
     "NativeSignal",
     "NativeStatus",
     "PRODUCTION_GRADER_LIMITS",
-    "ProtocolError",
-    "decode_bcbi",
-    "encode_bcbi",
-    "encode_bcbo",
-    "encode_error",
-    "encode_result",
-    "encode_signal",
-    "encode_start",
-    "parse_authenticated_output",
     "parse_grader_output",
 ]
