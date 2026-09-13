@@ -6,6 +6,7 @@ from __future__ import annotations
 import json
 import tempfile
 import unittest
+from dataclasses import replace
 from pathlib import Path
 from typing import cast
 from unittest.mock import MagicMock, patch
@@ -148,13 +149,16 @@ class BigCodeBenchBenchmarkTests(unittest.TestCase):
             fake_preflight = GraderSandboxPreflight(
                 True, "0.12.0", "bigcodebench-bwrap-v1", "spec", "manifest", "attestation", ()
             )
-            with patch(
-                "eval_harness.evaluators.bigcodebench.resolve_bigcodebench_sandbox_spec",
-                return_value=fake_spec,
-            ) as resolve, patch(
-                "eval_harness.evaluators.bigcodebench.preflight_bigcodebench_sandbox",
-                return_value=fake_preflight,
-            ) as preflight:
+            with (
+                patch(
+                    "eval_harness.evaluators.bigcodebench.resolve_bigcodebench_sandbox_spec",
+                    return_value=fake_spec,
+                ) as resolve,
+                patch(
+                    "eval_harness.evaluators.bigcodebench.preflight_bigcodebench_sandbox",
+                    return_value=fake_preflight,
+                ) as preflight,
+            ):
                 result = evaluator.preflight(root / "run")
             resolve.assert_called_once_with(grader.resolve(), forbidden_roots=(root / "run",))
             preflight.assert_called_once_with(fake_spec)
@@ -200,6 +204,74 @@ class BigCodeBenchBenchmarkTests(unittest.TestCase):
 
             with self.assertRaisesRegex(RuntimeError, "grader directory must be separate"):
                 evaluator.evaluate(self.request(root, result))
+
+    def test_workspace_must_not_overlap_any_attested_grader_mount(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            grader = root / "grader"
+            grader.mkdir()
+            venv = root / "venv"
+            (venv / "bin").mkdir(parents=True)
+            python = venv / "bin" / "python"
+            python.write_bytes(b"python")
+            bwrap = root / "bwrap"
+            bwrap.write_bytes(b"bwrap")
+            spec = GraderSandboxSpec(resource_dir=grader, bwrap_path=bwrap, grader_python=python)
+            evaluator = BigCodeBenchEvaluator(resource_dir=grader)
+            evaluator._sandbox_spec = spec
+            evaluator._sandbox_preflight = GraderSandboxPreflight(
+                True, "0.12.0", "bigcodebench-bwrap-v1", "spec", "manifest", "attestation", ()
+            )
+            result = replace(
+                self.result(root, output_text="```python\nreturn 42\n```"),
+                workspace=venv / "workspace",
+                deliverables_dir=venv / "workspace" / "deliverables",
+            )
+            with patch("eval_harness.evaluators.bigcodebench._native_bigcodebench_evaluate") as native:
+                with self.assertRaises(RuntimeError):
+                    evaluator.evaluate(self.request(root, result))
+            native.assert_not_called()
+
+    def test_missing_task_identity_is_a_grader_infrastructure_error(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            grader = root / "grader"
+            grader.mkdir()
+            evaluator = BigCodeBenchEvaluator(resource_dir=grader)
+            self.ready(evaluator)
+            result = self.result(root, output_text="```python\nreturn 42\n```")
+            request = self.request(root, result)
+            metadata = dict(request.metadata)
+            del metadata["task_id"]
+            request = replace(request, metadata=metadata)
+            with patch("eval_harness.evaluators.bigcodebench._native_bigcodebench_evaluate") as native:
+                with self.assertRaises(GraderInfrastructureError):
+                    evaluator.evaluate(request)
+            native.assert_not_called()
+
+    def test_no_code_result_does_not_claim_that_grader_was_invoked(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            grader = root / "grader"
+            grader.mkdir()
+            evaluator = BigCodeBenchEvaluator(resource_dir=grader)
+            self.ready(evaluator)
+            result = self.result(root, output_text="plain text without a code block")
+            native_result = {
+                "reward": 0.0,
+                "status": "no_code_block",
+                "extracted_model_code": None,
+                "details": None,
+                "grader_provenance": {"policy_revision": "bigcodebench-bwrap-v1"},
+            }
+            with patch(
+                "eval_harness.evaluators.bigcodebench._native_bigcodebench_evaluate",
+                return_value=native_result,
+            ) as native:
+                evaluation = evaluator.evaluate(self.request(root, result))
+            native.assert_called_once()
+            self.assertEqual(evaluation.metrics, {"pass_rate": 0.0})
+            self.assertFalse(evaluation.details["grader_invoked"])
 
     def test_native_helper_uses_the_shared_attested_sandbox(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

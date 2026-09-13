@@ -4,6 +4,8 @@
 from __future__ import annotations
 
 import unittest
+from pathlib import Path
+from unittest.mock import patch
 
 from eval_harness.evaluators.base import EvaluatorType
 from eval_harness.evaluators.registry import get_evaluator_descriptor
@@ -29,6 +31,18 @@ class EvaluatorRegistryTests(unittest.TestCase):
             ),
         )
         self.assertEqual(bigcode.evaluator_type, EvaluatorType.EXECUTABLE_TESTS)
+
+    def test_bigcodebench_factory_uses_only_the_trusted_resource_locator(self) -> None:
+        trusted = Path("/private/trusted/pr04-bigcodebench-resources")
+        with patch(
+            "eval_harness.grader_sandbox.resolve_bigcodebench_resource_dir",
+            return_value=trusted,
+        ) as resolve:
+            from eval_harness.evaluators.registry import create_evaluator
+
+            evaluator = create_evaluator("bigcodebench", root=Path("/private/caller-controlled"))
+        resolve.assert_called_once_with()
+        self.assertEqual(evaluator.resource_dir, trusted)
 
     def test_gdpval_descriptor_is_external_and_has_no_default_judge(self) -> None:
         gdpval = get_evaluator_descriptor("gdpval")

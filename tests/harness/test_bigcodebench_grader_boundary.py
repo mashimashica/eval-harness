@@ -25,8 +25,10 @@ from unittest import mock
 
 from scripts.ci import install_bigcodebench_grader as installer
 
+from eval_harness import grader_sandbox as sandbox_module
 from eval_harness.grader_sandbox import (
     GraderInfrastructureError,
+    GraderSandboxSpec,
     canonical_file_inventory,
     canonical_json_bytes,
     file_inventory_sha256,
@@ -36,6 +38,70 @@ from eval_harness.grader_sandbox import (
 
 
 class BigCodeBenchBoundaryPreparationTests(unittest.TestCase):
+    def test_explicit_accepted_manifest_path_is_rejected(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            resource = Path(temporary) / "resource"
+            resource.mkdir(mode=0o700)
+            manifest_path = resource / "grader-manifest.json"
+            manifest_path.write_bytes(
+                canonical_json_bytes(
+                    {
+                        "schema_version": 1,
+                        "policy_revision": sandbox_module.POLICY_REVISION,
+                        "manifest_role": "accepted",
+                        "acceptance_eligible": True,
+                        "dependency_audit_state": "clean",
+                    },
+                    final_newline=True,
+                )
+            )
+            spec = GraderSandboxSpec(
+                resource_dir=resource,
+                bwrap_path=resource / "bwrap",
+                grader_python=resource / "python",
+                manifest_path=manifest_path,
+            )
+            paths = cast(sandbox_module._ResolvedSandboxPaths, mock.Mock())
+            with self.assertRaises(GraderInfrastructureError):
+                sandbox_module._manifest_file(spec, paths)
+
+    def test_policy_probe_socket_setup_failure_is_secret_free_and_cleans_temp(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            probe_temp = Path(temporary) / "probe"
+            probe_temp.mkdir(mode=0o700)
+            fake_stat = mock.Mock(st_ino=17)
+            spec = cast(GraderSandboxSpec, mock.Mock())
+            paths = cast(sandbox_module._ResolvedSandboxPaths, mock.Mock())
+            with (
+                mock.patch.object(sandbox_module.os, "stat", return_value=fake_stat),
+                mock.patch.object(sandbox_module.tempfile, "mkdtemp", return_value=str(probe_temp)),
+                mock.patch.object(sandbox_module.socket, "socket", side_effect=OSError("private detail")),
+            ):
+                with self.assertRaisesRegex(GraderInfrastructureError, "listener probe is unavailable"):
+                    sandbox_module._run_policy_probe(spec, paths)
+            self.assertFalse(probe_temp.exists())
+
+    def test_host_bwrap_capability_check_uses_enodata_xattr_without_getcap(self) -> None:
+        path = Path("/private/fixed bwrap")
+        metadata = mock.Mock(st_mode=stat.S_IFREG | 0o755, st_nlink=1, st_uid=os.getuid())
+        with (
+            mock.patch.object(sandbox_module.os, "lstat", return_value=metadata),
+            mock.patch.object(
+                sandbox_module.os,
+                "getxattr",
+                create=True,
+                side_effect=OSError(errno.ENODATA, "private detail"),
+            ) as getxattr,
+            mock.patch.object(
+                sandbox_module.subprocess,
+                "run",
+                return_value=subprocess.CompletedProcess([], 0, stdout=b"", stderr=b""),
+            ) as run,
+        ):
+            sandbox_module._verify_bwrap_metadata(path)
+        getxattr.assert_called_once_with(path, "security.capability", follow_symlinks=False)
+        run.assert_not_called()
+
     def test_prepared_root_locator_requires_fixed_physical_layout(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary).resolve() / "setup"

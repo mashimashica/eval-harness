@@ -3,6 +3,28 @@
 
 # PR04 implementation work record
 
+## Second public correction: initial test-first checkpoint
+
+Fixed base `67888fb29663f087f0c1309ecf8b41ca77732e3f`. Production source is
+unchanged. Luna adds a first coherent three-test-file reproduction batch for explicit
+accepted-manifest rejection, probe setup cleanup/redaction, host xattr/no-getcap,
+trusted-venv/workspace intersection, missing task identity, no-code invocation provenance
+and explicit-registry-root fallback. This is an initial subset of the consolidated
+14-item correction, not complete regression coverage for all required identities,
+lifecycle facts, cancellation or fixed-uv behavior.
+
+Diff whitespace passes. RED reproductions, unit/static checks and source corrections
+have not run. Save these tests before confirming their expected failures on unchanged
+source. Distinguish real reproduction from fixture/setup errors; only then apply the
+second correction and complete the remaining required regression matrix. The owner,
+allowed files, fixed f713ca31 review/contract, 11:58 UTC deadline, 15-minute saves and
+all prior failure histories remain unchanged.
+
+Separately, parent promoted the reviewed capability/baseline-only integration
+`2d022f7649f8ee159a63593028f74b23b5b665fd` to Draft PR #43 after exact-tree scoped
+checks passed. Actual Linux run `34754202308` is in progress. No public source is in
+that tree and no actual boundary or parity result is inferred from its preparation work.
+
 ## Capability-test typing and two exact baseline fingerprints corrected
 
 Base `7282be1a149c7352b91fd3df1a3b9f712ef9d1b5`. The preparation regression now
