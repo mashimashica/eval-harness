@@ -1,0 +1,137 @@
+{
+  "accepted": true,
+  "baseline_main": "98f7634747b6e489309f73df97f7d08529592e9a",
+  "branch_protection": {
+    "allow_deletions": false,
+    "allow_force_pushes": false,
+    "bypass_used": false,
+    "enforce_admins": true,
+    "require_up_to_date_branch": true,
+    "required_pull_request_reviews": 0,
+    "required_status_checks": [
+      {
+        "app_id": 15368,
+        "context": "Harness quality"
+      }
+    ]
+  },
+  "candidate_ci": {
+    "conclusion": "success",
+    "head_sha": "bd3cb2dbc82b20a115aa13f8655ec36e69c6d240",
+    "url": "https://github.com/mashimashica/eval-harness/actions/runs/34768821823"
+  },
+  "dco": "Both source commits and the merge commit contain Signed-off-by: mashimashica <mashimashica@gmail.com>",
+  "evidence_files": [
+    "gdpval-pilot-01.json",
+    "claude-gsm8k-01.json",
+    "nsa-comparison-02.json",
+    "grading-and-aggregation-01.json",
+    "fresh-checkout-01.json",
+    "security-and-quality.json",
+    "2026-09-13.md"
+  ],
+  "implementation_pr": {
+    "headRefOid": "bd3cb2dbc82b20a115aa13f8655ec36e69c6d240",
+    "mergeCommit": {
+      "oid": "f917ebc59e46d2e4b03af7d5735be442eddbd611"
+    },
+    "mergedAt": "2026-09-13T16:32:31Z",
+    "state": "MERGED",
+    "url": "https://github.com/mashimashica/eval-harness/pull/46"
+  },
+  "main_ci": {
+    "conclusion": "success",
+    "event": "push",
+    "headSha": "f917ebc59e46d2e4b03af7d5735be442eddbd611",
+    "status": "completed",
+    "url": "https://github.com/mashimashica/eval-harness/actions/runs/34768895116"
+  },
+  "main_quality_steps": [
+    {
+      "conclusion": "success",
+      "name": "Set up job"
+    },
+    {
+      "conclusion": "success",
+      "name": "Run actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803"
+    },
+    {
+      "conclusion": "success",
+      "name": "Run astral-sh/setup-uv@45c121f982720f3bdf236c2ac06f126ca211949c"
+    },
+    {
+      "conclusion": "success",
+      "name": "Install locked local harness"
+    },
+    {
+      "conclusion": "success",
+      "name": "Lint and type check"
+    },
+    {
+      "conclusion": "success",
+      "name": "Behavioral tests and measured coverage"
+    },
+    {
+      "conclusion": "success",
+      "name": "Dependency audit"
+    },
+    {
+      "conclusion": "success",
+      "name": "Documentation links"
+    },
+    {
+      "conclusion": "success",
+      "name": "Fern configuration"
+    },
+    {
+      "conclusion": "success",
+      "name": "Install verified secret scanner"
+    },
+    {
+      "conclusion": "success",
+      "name": "Scan submitted changes for secrets"
+    },
+    {
+      "conclusion": "success",
+      "name": "Post Run astral-sh/setup-uv@45c121f982720f3bdf236c2ac06f126ca211949c"
+    },
+    {
+      "conclusion": "success",
+      "name": "Post Run actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803"
+    },
+    {
+      "conclusion": "success",
+      "name": "Complete job"
+    }
+  ],
+  "merge_tree_identical_to_checked_pr_head": true,
+  "quality": {
+    "behavioral_tests": 82,
+    "documentation_link_tests": 14,
+    "fern_check": "passed",
+    "known_vulnerabilities": 0,
+    "locked_distributions_audited": 52,
+    "mypy_source_modules": 15,
+    "ruff": "passed",
+    "submitted_commit_secret_scan": "passed with no findings"
+  },
+  "real_trial_calls": {
+    "ai_judgment": 6,
+    "application": 15,
+    "note": "Includes retained excluded/corrective trials; no quality ranking inferred. Native no-model probes and authentication checks are separate.",
+    "skill_creation": 4,
+    "total": 25
+  },
+  "record_note": "This receipt records the completed implementation merge and passing main CI. The subsequent acceptance-record-only commit preserves the accepted implementation.",
+  "remaining_product_acceptance_items": [],
+  "scope": "Acceptance and actual main integration of R01-R10 and the six CLI commands",
+  "usage_constraints": [
+    "Live verification on macOS with standalone Codex0.154.0 and Claude2.1.270; Luna medium and Sonnet4.6 medium.",
+    "Claude GDPval office application/judging rejected before execution; use Codex.",
+    "Serial execution (concurrency1); choose bounded tasks/repeats/retries/timeouts explicitly.",
+    "Unavailable cost is null; Claude reported USD is an API-equivalent estimate, not subscription billing.",
+    "Human evaluation acceptance uses explicitly synthetic fixture ratings, not real human quality judgments.",
+    "Small functional comparisons are neither official benchmark scores nor evidence of ALPS superiority."
+  ],
+  "user_documentation": "fern/versions/latest/pages/get-started/eval-harness.mdx"
+}
