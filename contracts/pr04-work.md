@@ -30,6 +30,21 @@ not checkpoint count. No new validation has run at this record-only save.
 
 ### Test-first reproduction checkpoint
 
+### First combined correction, parent review still requires closure
+
+At `3081b86a`, all three reproductions failed for the expected reasons (6 versus 5,
+2 versus 1, infrastructure error absent); no host changes existed at that red baseline.
+Luna returned shared cleanup state, one cleanup invocation and a termination receipt.
+Before running checks, parent review finds that the receipt still means only that
+`Popen.kill()` was called: its internal poll may observe natural exit and send no signal.
+Also, passing remaining seconds into a helper that establishes a new deadline after
+kill can extend the absolute budget by termination latency. These are incomplete closure
+of the same two findings, not new scope. Save this first correction before returning the
+remaining details to the same owner. The next correction must use actual termination
+readback and carry an absolute deadline through helpers, with corresponding regressions.
+No corrective test run or independent acceptance is claimed. One corrective review in
+this resumed segment has not closed the findings; a second failure triggers the stop rule.
+
 Fixture refinement now drains both EOFs before the success cleanup and arms natural exit
 from the second resource sample, after the caller's alive poll but at the cleanup helper's
 poll. Tests import their own time module for strict typing. Production remains byte-identical

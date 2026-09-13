@@ -545,15 +545,18 @@ def _sample_process_tree(root_pid: int) -> tuple[set[int], int]:
     return descendants, sum(_rss_bytes(pid) for pid in observed)
 
 
-def _terminate_and_reap(process: subprocess.Popen[bytes], recorded: set[int], timeout: float) -> None:
+def _terminate_and_reap(process: subprocess.Popen[bytes], recorded: set[int], timeout: float) -> bool:
     """Kill only the outer bwrap PID and require its recorded tree to vanish."""
 
+    killed = False
     try:
         if process.poll() is None:
             process.kill()
+            killed = True
     except (OSError, ProcessLookupError) as exc:
         raise GraderInfrastructureError("sandbox termination failed") from exc
     _wait_for_cleanup(process, recorded, timeout)
+    return killed
 
 
 def _wait_for_cleanup(process: subprocess.Popen[bytes], recorded: set[int], timeout: float) -> None:
@@ -615,6 +618,8 @@ def _run_bounded_supervisor(
     stdout = process.stdout
     stderr = process.stderr
     selector: selectors.BaseSelector | None = None
+    cleanup_started = False
+    cleanup_deadline: float | None = None
     try:
         if stdin is None or stdout is None or stderr is None:
             raise GraderInfrastructureError("sandbox pipes unavailable")
@@ -628,7 +633,6 @@ def _run_bounded_supervisor(
         now = time.monotonic()
         deadline = now + limits.startup_seconds
         next_sample = now
-        post_exit_deadline: float | None = None
         registered_streams: dict[str, IO[bytes]] = {"stdout": stdout, "stderr": stderr}
         for bound_stream, event_mask, name in (
             (stdout, selectors.EVENT_READ, "stdout"),
@@ -648,9 +652,10 @@ def _run_bounded_supervisor(
             now = time.monotonic()
             process_alive = process.poll() is None
             if not process_alive:
-                if post_exit_deadline is None:
-                    post_exit_deadline = now + limits.teardown_seconds
-                elif now >= post_exit_deadline:
+                if cleanup_deadline is None:
+                    cleanup_deadline = now + limits.teardown_seconds
+                deadline = cleanup_deadline
+                if now >= cleanup_deadline:
                     raise GraderInfrastructureError("trusted grader pipes did not close")
             if process_alive and now >= deadline:
                 if not started:
@@ -674,14 +679,17 @@ def _run_bounded_supervisor(
                 if process.poll() is not None:
                     enforced = None
                 else:
-                    _terminate_and_reap(process, recorded_descendants, limits.teardown_seconds)
+                    cleanup_started = True
+                    terminated = _terminate_and_reap(process, recorded_descendants, limits.teardown_seconds)
+                    if not terminated:
+                        raise GraderInfrastructureError("trusted grader exited during limit enforcement")
                     if not started:
                         raise GraderInfrastructureError("sandbox limit before grader start")
                     return GraderNativeResult(None, enforced)
 
             timeout = (
-                max(0.0, post_exit_deadline - now)
-                if not process_alive and post_exit_deadline is not None
+                max(0.0, deadline - now)
+                if not process_alive
                 else max(0.0, min(deadline - now, max(0.0, next_sample - now)))
             )
             ready_events = selector.select(timeout)
@@ -734,7 +742,13 @@ def _run_bounded_supervisor(
                                 deadline = time.monotonic() + limits.candidate_wall_seconds
                             elif frame.frame_type in (FrameType.RESULT, FrameType.ERROR):
                                 terminal = True
-                                deadline = time.monotonic() + limits.teardown_seconds
+                                terminal_deadline = time.monotonic() + limits.teardown_seconds
+                                cleanup_deadline = (
+                                    terminal_deadline
+                                    if cleanup_deadline is None
+                                    else min(cleanup_deadline, terminal_deadline)
+                                )
+                                deadline = cleanup_deadline
                     else:
                         if len(diagnostics) + len(chunk) > limits.diagnostic_bytes:
                             raise GraderInfrastructureError("grader diagnostics exceed its size limit")
@@ -757,13 +771,27 @@ def _run_bounded_supervisor(
         if process.returncode != 0:
             raise GraderInfrastructureError("trusted grader exited unexpectedly")
         result = parse_grader_output(bytes(output), key)
-        _wait_for_cleanup(process, recorded_descendants, limits.teardown_seconds)
+        cleanup_started = True
+        cleanup_timeout = (
+            limits.teardown_seconds if cleanup_deadline is None else max(0.0, cleanup_deadline - time.monotonic())
+        )
+        _wait_for_cleanup(process, recorded_descendants, cleanup_timeout)
         return result
     except GraderInfrastructureError:
-        _terminate_and_reap(process, recorded_descendants, limits.teardown_seconds)
+        if not cleanup_started:
+            cleanup_started = True
+            cleanup_timeout = (
+                limits.teardown_seconds if cleanup_deadline is None else max(0.0, cleanup_deadline - time.monotonic())
+            )
+            _terminate_and_reap(process, recorded_descendants, cleanup_timeout)
         raise
     except Exception as exc:
-        _terminate_and_reap(process, recorded_descendants, limits.teardown_seconds)
+        if not cleanup_started:
+            cleanup_started = True
+            cleanup_timeout = (
+                limits.teardown_seconds if cleanup_deadline is None else max(0.0, cleanup_deadline - time.monotonic())
+            )
+            _terminate_and_reap(process, recorded_descendants, cleanup_timeout)
         raise GraderInfrastructureError("sandbox I/O failed") from exc
     finally:
         if selector is not None:
