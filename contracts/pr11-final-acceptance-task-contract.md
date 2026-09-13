@@ -192,7 +192,7 @@ Task-impact S Builder failure leaves S missing, preserves the three-arm planned 
 
 The complete N/S/A case additionally asserts candidate count `3`, comparison-group candidate-slot count `3`, Builder-call count `2`, generation coverage `3/3`, evaluation coverage `3/3`, and zero evaluation before group seal. The task-impact Builder-failure case asserts planned arms `3`, Builder calls `2`, generated ready candidates `2` for N/A, sealed complete groups `0`, evaluation jobs/calls `0`, and one explicit missing S occurrence.
 
-Test 9 obtains the PR-11 diff from the recorded accepted base and asserts exact equality to the add-only allowlist in section 3. It is an acceptance inventory, not a self-fulfilling source scan: the work record independently captures the same Git diff and reviewer verifies it.
+Test 9 reads the recorded `<PR10_ACCEPTED_HEAD_SHA>` object already provisioned by CI setup and asserts that the HEAD source tree, or the explicitly recorded source tree underlying an equal-tree synthetic merge, differs from that accepted base by exactly the add-only allowlist in section 3. The ordinary PR workflow uses PR-10's harness-tests `fetch-depth: 2`, so the synthetic merge and both real-head/base parents are locally available. The test performs no fetch or network call and fails if the recorded base object or topology/equal-tree proof is absent. If final promotion uses different ancestry, setup must bind and provision the required accepted-base object before tests. The work record independently captures the same Git diff and reviewer verifies it, so the assertion is not a self-fulfilling source scan.
 
 ## 9. Final quality gates: unchanged scope
 
@@ -208,7 +208,7 @@ Run the exact accepted PR-10 deterministic workflow on `<FINAL_PR11_HEAD_SHA>`, 
 - PR-04's real supported-Ubuntu grader-boundary job and PR-07's real supported Apptainer 1.5.3 containment/preflight job, using their accepted non-mock criteria; and
 - tracked-path/import/retired-literal/owner-uniqueness, generated-environment, copyright, secret and DCO checks.
 
-Coverage includes the new fixture adapter/evaluator because they are Python under `tests/harness`; no omission/exclusion is added. Test-only fixture code may not be counted as production source to inflate the production numerator. Existing historical fixtures and recorded outputs are byte-identical unless a prior accepted contract explicitly required their migration.
+The new fixture adapter/evaluator is executed by the suite and remains inside the unchanged strict-mypy and Ruff test scope. The unchanged coverage configuration measures `source=eval_harness`, so test-fixture code is outside the production numerator by the existing source setting; PR-11 adds no exclusion, omission, source change, or numerator inflation. Existing historical fixtures and recorded outputs are byte-identical unless a prior accepted contract explicitly required their migration.
 
 ## 10. Final acceptance record
 

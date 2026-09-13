@@ -74,7 +74,7 @@ No added file may create a compatibility reader or production implementation.
 | `nemo_gym/rollout_collection.py` | Remove only the stale comment naming the deleted GDPval multistage orchestrator as a custom-driver consumer; do not change row resolution or materialized-input behavior |
 | `scripts/ci/run_eval_harness_coverage.py` | Invoke `bash tests/harness/test_eval_cli.sh`; retain subprocess coverage and the exact integer 96-percent predicate |
 | `pyproject.toml` | Remove `scripts/gdpval_run_metadata.py` from the strict-mypy file set; retain all accepted extras/groups, coverage settings, dependency pins, and thresholds |
-| `.github/workflows/eval-harness-ci.yml` | Remove the deleted metadata-script mypy argument; rename the coverage log to `test-eval-cli.log`; retain every accepted job, runner, setup, extra/group, audit, and threshold |
+| `.github/workflows/eval-harness-ci.yml` | Remove the deleted metadata-script mypy argument; rename the coverage log to `test-eval-cli.log`; set only the harness-tests checkout to `fetch-depth: 2` so a PR synthetic merge has its real-head and accepted-base parent objects for PR-11's offline diff assertion; retain every other accepted job, runner, setup, extra/group, audit, and threshold |
 | `tests/unit_tests/test_cli_main.py` | Remove the old alias-success row and add a bounded negative assertion that the deleted Stirrup flavor is not resolved; retain every unrelated alias case |
 | `tests/unit_tests/test_rollout_collection.py` | Make the paired row-resolution test docstring neutral after the deleted orchestrator example is removed; do not change its assertions |
 | `tests/harness/test_eval_cli.sh` | Become the neutral full-suite entrypoint described in section 6 while retaining its public CLI checks |
@@ -372,6 +372,7 @@ Run the accepted final workflow commands on the exact PR-10 candidate head. At m
 - Ruff check and format check cover the same production/test scope;
 - strict mypy covers `eval_harness`, `tests/harness`, `scripts/ci/run_eval_harness_coverage.py`, `scripts/update_env_list.py`, and the existing updater/HF unit tests, with only the deleted metadata path removed;
 - the subprocess-aware coverage sequence runs the neutral entrypoint and satisfies `covered_lines * 100 >= num_statements * 96`; neither measured source nor exclusions narrow;
+- the harness-tests checkout uses `fetch-depth: 2` solely to provision both parents of the normal PR synthetic merge for the later add-only acceptance test. Tests perform no fetch/network operation; if the final promotion topology is not that merge shape, setup explicitly provisions and verifies the recorded accepted-base object before tests instead of widening test-time network access;
 - dependency exports retain hashes and the accepted extras/groups, strict aliased `pip-audit` is clean, and separately locked grader/build/runtime dependencies remain audited by their dedicated jobs;
 - PR-04's real supported-platform grader boundary and PR-07's real supported Stirrup containment tests still pass without mocks/skips; and
 - inventory, copyright, secret, DCO and all unchanged required checks pass.
