@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "tested_commit": "d8e7653b704d2ba8a3b03ca966f9caf31b1f9bfc",
+  "tree": "f483df8105dd8bf1ca8c1662d423cf07843943a1",
+  "python": "3.13.14",
+  "platform": "macOS arm64",
+  "source_isolation": "clean detached review worktree at saved head",
+  "commands": {
+    "unittest": "../pr04/.venv/bin/python -m unittest discover -s tests/harness -p test_bigcodebench_grader_boundary.py -v",
+    "mypy": "../pr04/.venv/bin/mypy --strict --explicit-package-bases --show-error-codes eval_harness/grader_sandbox.py scripts/ci/install_bigcodebench_grader.py tests/harness/test_bigcodebench_grader_boundary.py",
+    "ruff": "ruff check and ruff format --check for the same three Python files",
+    "shell": "bash -n scripts/ci/install_bubblewrap.sh"
+  },
+  "results": {
+    "unit_methods": 5,
+    "unit_passes": 5,
+    "unit_elapsed_seconds": 0.014,
+    "expected_zip_duplicate_warning": true,
+    "mypy_errors": 4,
+    "mypy_cause": "symlink member list uses PurePosixPath rather than Path; target is reused for a file writer and string",
+    "ruff_lint": "passed",
+    "ruff_format": "passed",
+    "shell_syntax": "passed"
+  },
+  "parent_real_fixture_reproductions": {
+    "fixture": "small generated ZIP containing stopwords/english; exact saved extractor and policy input validator, no network or candidate execution",
+    "expected_nltk_path_exists": false,
+    "actual_nltk_paths": ["corpora/english"],
+    "dropped_vendor_manifest_accepted": true
+  },
+  "independent_review": {
+    "reviewer": "Sol",
+    "source_closed": ["canonical candidate", "candidate-only eligibility false", "uv version", "venv identity", "bwrap owner/link/machine", "major Python/NLTK/bwrap policy fields"],
+    "remaining": ["NLTK package-id level", "actual Ubuntu release", "exact vendor keyset", "validated build package version map", "separate full-data and prepared-content inventory hashes", "canonical installed resource paths without repository mutation", "absolute real setup paths", "required identity mutation regressions and four mypy errors"]
+  },
+  "failed_corrective_rounds": 1,
+  "real_installation_executed": false,
+  "pr04_accepted": false,
+  "whole_migration_complete": false
+}

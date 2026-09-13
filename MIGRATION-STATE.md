@@ -16,8 +16,8 @@ before the two P1 corrections. Verified recovery is implementation
 `7be35da9fae98c5e56ba14bf13a15a4cdbb9a8e7` and control
 `2d36c56c8056bd34186ed11da5004e0e01188dc8`; no local edits needed protection beyond
 keeping the clean main root untouched. Current implementation checkpoint is
-`88fdbcffead2adb63c0f1871fd4805cf6c07d056`, tree
-`d279ff0193694cd4f6b10f1d0b558c49b32ad1c3`, saved and read back.
+`d8e7653b704d2ba8a3b03ca966f9caf31b1f9bfc`, tree
+`f483df8105dd8bf1ca8c1662d423cf07843943a1`, saved and read back.
 
 All three new reproductions fail as intended against the unchanged host: simulated
 terminal/exit teardown lasts 6 instead of 5 seconds, success/exception cleanup lasts 2
@@ -40,9 +40,13 @@ not canonical); strict mypy finds two new test typing errors, while Ruff and she
 pass. Parent review additionally identifies incomplete NLTK layout/identity, bwrap mode
 handling and runtime provenance. Sol completed the fixed-head review and confirmed seven
 blocking preparation issues; `reports/m2-preparation-review-88fdbcff.md` records them.
-Luna owns one consolidated correction with actual archive/manifest/identity fixtures,
-before any real installation. Its bounded allowance is 12 minutes from about 07:35 UTC.
-This is initial implementation validation, not a failed corrective round. Host supervision
+The first correction passes five unit methods (0.014 s), Ruff and shell syntax, but has
+four installer mypy errors. Parent actual-file probes confirm the package-id directory
+is still dropped and an empty vendor hash map is accepted. Sol independently confirms
+remaining Ubuntu/identity/runtime binding and regression gaps. See
+`reports/m2-preparation-first-correction.json`. One corrective round has failed to close
+the preparation findings; a second failure for the same issue requires saving and stopping.
+No real installation is authorized by these partial results. Host supervision
 remains unchanged except allowed preparation helpers. No Linux job or dependency install
 has executed, and common callers/preflight/old-runner removal remain outstanding.
 Parent also verified the immutable v0.1.4 parity Parquet hash, size, all 1,140 unique IDs and
