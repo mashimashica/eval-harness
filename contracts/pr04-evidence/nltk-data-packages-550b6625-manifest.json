@@ -1,0 +1,164 @@
+{
+  "_spdx_copyright": "Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.",
+  "_spdx_license": "Apache-2.0",
+  "offline_index": {
+    "package_count": 7,
+    "sandbox_path": "/opt/bigcodebench/nltk_data/index.xml",
+    "sha256": "27b1257a84cfec723c024c6762ed801ceb6984437d5438d4c7bed8bc6b52aafc",
+    "size": 3447
+  },
+  "packages": [
+    {
+      "commit_url": "https://raw.githubusercontent.com/nltk/nltk_data/550b6625bcef1f2abff2ff770a5a0d272c9c6b2a/packages/taggers/averaged_perceptron_tagger.zip",
+      "content_inventory_sha256": "271291c4bf1fbd30e8d2481343b38df54a5aab9808b3156e6ccb807fafd518df",
+      "declared_license": "MIT License",
+      "file_count": 1,
+      "filename": "taggers/averaged_perceptron_tagger.zip",
+      "git_blob": "d5bfb6852aa5d288c8f33b3f0ef0fde343afa405",
+      "id": "averaged_perceptron_tagger",
+      "license_like_members": [],
+      "license_state": "explicit-mit",
+      "sha256": "e1f13cf2532daadfd6f3bc481a49859f0b8ea6432ccdcd83e6a49a5f19008de9",
+      "size": 2526731,
+      "subdir": "taggers",
+      "unzip": true,
+      "unzipped_size": 6138625
+    },
+    {
+      "commit_url": "https://raw.githubusercontent.com/nltk/nltk_data/550b6625bcef1f2abff2ff770a5a0d272c9c6b2a/packages/taggers/averaged_perceptron_tagger_eng.zip",
+      "content_inventory_sha256": "7baf7610f89708e1bc36cf5835f64c34af5684e789eadd32b1c9d65625c0fccd",
+      "declared_license": "MIT License",
+      "file_count": 3,
+      "filename": "taggers/averaged_perceptron_tagger_eng.zip",
+      "git_blob": "b792e19546a5711218a05f4029ef17c8d62cd839",
+      "id": "averaged_perceptron_tagger_eng",
+      "license_like_members": [],
+      "license_state": "explicit-mit",
+      "sha256": "6025f530624335c67d6547d44757b357b4e79bae030a0383e9887a92c1718f0b",
+      "size": 1539115,
+      "subdir": "taggers",
+      "unzip": true,
+      "unzipped_size": 5703817
+    },
+    {
+      "commit_url": "https://raw.githubusercontent.com/nltk/nltk_data/550b6625bcef1f2abff2ff770a5a0d272c9c6b2a/packages/tokenizers/punkt.zip",
+      "content_inventory_sha256": "d4bbe3e1dfa8ca4f6ccf9b499bef17fb405600865bc8ccce409382890a28c394",
+      "declared_license": null,
+      "file_count": 41,
+      "filename": "tokenizers/punkt.zip",
+      "git_blob": "da7ffbd1e6fd6cc5c2f6879c2d4da23c7691944c",
+      "id": "punkt",
+      "license_like_members": [
+        "punkt/PY3/README",
+        "punkt/README"
+      ],
+      "license_state": "unclarified",
+      "sha256": "51c3078994aeaf650bfc8e028be4fb42b4a0d177d41c012b6a983979653660ec",
+      "size": 13905355,
+      "subdir": "tokenizers",
+      "unzip": true,
+      "unzipped_size": 37245719
+    },
+    {
+      "commit_url": "https://raw.githubusercontent.com/nltk/nltk_data/550b6625bcef1f2abff2ff770a5a0d272c9c6b2a/packages/tokenizers/punkt_tab.zip",
+      "content_inventory_sha256": "e63284e77c3753edfbeffb6228e6de8625f1545e311f4176e0cee4d65d295147",
+      "declared_license": null,
+      "file_count": 77,
+      "filename": "tokenizers/punkt_tab.zip",
+      "git_blob": "5e5ff6137d5ee6025e400d1c3a7b21914c48b635",
+      "id": "punkt_tab",
+      "license_like_members": [
+        "punkt_tab/README"
+      ],
+      "license_state": "unclarified",
+      "sha256": "e57f64187974277726a3417ca6f181ec5403676c717672eef6a748a7b20e0106",
+      "size": 4319076,
+      "subdir": "tokenizers",
+      "unzip": true,
+      "unzipped_size": 10885330
+    },
+    {
+      "commit_url": "https://raw.githubusercontent.com/nltk/nltk_data/550b6625bcef1f2abff2ff770a5a0d272c9c6b2a/packages/corpora/stopwords.zip",
+      "content_inventory_sha256": "8ba432c914480d4015d69d63a3ce90126979eeee1afd9eee05fa3697df7d2b82",
+      "declared_license": null,
+      "file_count": 34,
+      "filename": "corpora/stopwords.zip",
+      "git_blob": "56d35b5d204d64480f71edc0f5f82aebce6730b6",
+      "id": "stopwords",
+      "license_like_members": [
+        "stopwords/README"
+      ],
+      "license_state": "unclarified",
+      "sha256": "48c0e52d8b52546e827f53761fb30300c0ab94f70660d28bd65ba0a86270946b",
+      "size": 37733,
+      "subdir": "corpora",
+      "unzip": true,
+      "unzipped_size": 89446
+    },
+    {
+      "commit_url": "https://raw.githubusercontent.com/nltk/nltk_data/550b6625bcef1f2abff2ff770a5a0d272c9c6b2a/packages/sentiment/vader_lexicon.zip",
+      "content_inventory_sha256": "db7110719f1b9eb4ce16fa5e9d158fbf6c0a492277b5d34225a84ca4c8643549",
+      "declared_license": "MIT License",
+      "file_count": 1,
+      "filename": "sentiment/vader_lexicon.zip",
+      "git_blob": "c8d4b96e5f0648ee28fb2829276da0f85a1165f1",
+      "id": "vader_lexicon",
+      "license_like_members": [],
+      "license_state": "explicit-mit",
+      "sha256": "8adba4294eef3964d820bf655e37e61bdc3a341994356af59b74fb3b4a36ce5c",
+      "size": 90486,
+      "subdir": "sentiment",
+      "unzip": false,
+      "unzipped_size": 434147
+    },
+    {
+      "commit_url": "https://raw.githubusercontent.com/nltk/nltk_data/550b6625bcef1f2abff2ff770a5a0d272c9c6b2a/packages/corpora/words.zip",
+      "content_inventory_sha256": "0918af335f47dc6bdfd62d06febef63ab2bb627b3322d22257f8acd27bdc0dfe",
+      "declared_license": "public domain",
+      "file_count": 3,
+      "filename": "corpora/words.zip",
+      "git_blob": "d1a5a834a19fc3bf77f5dd663e1779fe8f7a2c50",
+      "id": "words",
+      "license_like_members": [
+        "words/README"
+      ],
+      "license_state": "public-domain",
+      "sha256": "54ed02917d6771dcc3e8141218960d020947f7f2ccfd9ac9b320979349746015",
+      "size": 757777,
+      "subdir": "corpora",
+      "unzip": true,
+      "unzipped_size": 2498552
+    }
+  ],
+  "prepared_tree": {
+    "algorithm": "SHA-256 of UTF-8 RFC8259 compact JSON array sorted by path; each element has path, sha256, size and object keys are sorted",
+    "canonical_inventory_sha256": "5a30cfb5c9d2a0353a987535b261386244abe66ac898185c514c913ac518514a",
+    "file_count": 167,
+    "regular_bytes": 85741209
+  },
+  "schema_version": 1,
+  "source_commit": "550b6625bcef1f2abff2ff770a5a0d272c9c6b2a",
+  "source_index": {
+    "git_blob": "65370112729759a945832b368c6411da7a657c87",
+    "sha256": "97dce5e72320cd9850b7c20130196006710c18f9c03134c822a37da330198bf6",
+    "size": 78939
+  },
+  "source_license_files": {
+    "DATASET-LICENSES.md": {
+      "git_blob": "978a24ba488cd8fa1d02dc4014106ba63301b670",
+      "sha256": "4285f61badbbdc755811f1f5a61e3dd341a516ff2343490819b019fd8f674ff9",
+      "size": 9910
+    },
+    "LICENSE": {
+      "git_blob": "cdec0628108cd794df64b265a9ab0544b4833557",
+      "sha256": "8d030ab5afc58f0b6a1f4207c12fd9553de6da2294efede65a0c58f9a6495fcc",
+      "size": 11320
+    },
+    "LICENSE-OVERVIEW.md": {
+      "git_blob": "30d163d3aef25c99f6e505bffec77a0f5ea4094b",
+      "sha256": "8115f9aadc98ec981082621265a88a05c8b132c82c458b32d52e541129d61ecf",
+      "size": 3365
+    }
+  },
+  "source_repository": "nltk/nltk_data"
+}

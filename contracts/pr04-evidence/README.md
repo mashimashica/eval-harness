@@ -24,6 +24,7 @@ first resolution target was CPython 3.10.21 on
 | `bigcodebench-v0.2.5-candidate-py310.lock` | Hash-complete first-pass candidate resolution | Rejected by audit |
 | `bigcodebench-v0.2.5-candidate-py310-pip-audit.json` | Full audit result for the candidate resolution | Nine alias-inclusive findings across three distributions |
 | `bigcodebench-0.2.5-pypi.json` | PyPI project/release metadata captured for package provenance | Evidence |
+| `upstream-bigcodebench-v0.2.5/` | Exact three metric modules, root Apache-2.0 license and byte/line-ending provenance | Recoverable source evidence |
 | `bigcodebench-v0.2.5-py311-security-overrides.txt` | Explicit Python 3.11.16 compatibility/security overrides | Research input |
 | `bigcodebench-v0.2.5-candidate-py311.lock` | uv 0.11.29, 160-distribution hash-complete candidate | Rejected by NLTK audit |
 | `bigcodebench-v0.2.5-candidate-py311-pip-audit.json` | Full strict aliased audit | One NLTK finding, no fix |
@@ -34,7 +35,11 @@ first resolution target was CPython 3.10.21 on
 | `nltk-backport-validation.md` | Historical commands/build/audit record | Rejected evidence |
 | `nltk-backport-rejection-review.md` | Independent normal-path/hardlink review | Decisive rejection |
 | `test_nltk_backport_rejection_repro.py` | Exact benign-roundtrip/destructive-hardlink reproducer | Fails rejected patch |
-| `nltk-data-index-550b6625.xml` | Exact official data index at commit `550b6625...` | Data-lock input |
+| `nltk-data-index-550b6625.xml` | Exact official full data index at commit `550b6625...` | Data-lock input |
+| `nltk-data-packages-550b6625-manifest.json` | Seven exact asset Git blobs/hashes/inventories/licenses | Content validated; three licenses unresolved |
+| `nltk-data-offline-index-550b6625.xml` | Reduced in-sandbox seven-package `file://` index | Functional local validation passed |
+| `nltk-data-offline-validation.md` | Safe preparation, downloader behavior and license evidence | Technical pass; artifact packaging review needed |
+| `copyright-workflow-v0.55.0-source.md` | Immutable reusable-workflow blob and exact one-file vendor exception | Source/scope verified |
 | `cpython-3.11.16-20260901-provenance.md` | Immutable interpreter asset/API/source and extraction evidence | Artifact selected; CI install unvalidated |
 | `requirements-bwrap-build.in` | Exact Meson/Ninja build-tool input | Research input |
 | `requirements-bwrap-build.lock` | uv 0.11.29 hash-complete Meson/Ninja lock | Sync and `pip check` passed |
@@ -95,6 +100,8 @@ or claim this patch as remediation.
   <https://github.com/nltk/nltk/commit/cbc98458b43de5f792f0382583c16df39e5c5117>.
 * NLTK data index commit `550b6625bcef1f2abff2ff770a5a0d272c9c6b2a`:
   <https://github.com/nltk/nltk_data/tree/550b6625bcef1f2abff2ff770a5a0d272c9c6b2a>.
+* Reusable copyright workflow source, commit `d7f020b83b60462b762eca9c24403e976dc549f2`, blob `2dc70bccaf8de76c8e4d3fa8dbcdb3c161139af0`:
+  <https://github.com/NVIDIA-NeMo/FW-CI-templates/blob/d7f020b83b60462b762eca9c24403e976dc549f2/.github/workflows/_copyright_check.yml>.
 
 The JSON reports retain duplicate aliases because `--aliases` was deliberate;
 the counts above are report-entry counts, not unique root-cause counts.

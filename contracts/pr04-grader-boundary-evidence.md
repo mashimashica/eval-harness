@@ -48,7 +48,7 @@ Observed upstream execution behavior:
 
 Conclusion: pinning and calling `untrusted_check` preserves native metric semantics, but it cannot be credited as the host-security boundary.
 
-The accepted source-selection design vendors only the native metric's actual import closure rather than installing the wheel's unrelated generation/provider dependencies. Exact content evidence is:
+The accepted source-selection design vendors only the native metric's actual import closure rather than installing the wheel's unrelated generation/provider dependencies. The upstream root `LICENSE` below is Apache-2.0; `eval/__init__.py` and `eval/utils.py` retain embedded OpenAI MIT notices. Exact content evidence is:
 
 | Path | Git blob | SHA-256 of content |
 |---|---|---|
@@ -89,7 +89,11 @@ Standard strict audit also cannot attest a truthful local patch: hashed direct-U
 
 Official dataset commit `b74c0d0bf70d2c0bc459be537895cca163007f1a` supplies `data/v0.1.4-00000-of-00001.parquet`, SHA-256 `d9a4965821c9507ebdfb551c288656b2d5fe553234f5183044333ca8a4018267`, 2,362,110 bytes and 1,140 rows. Twenty-six rows declare NLTK. None contains the six advisory API names, but candidate code is arbitrary and can call them, so task occurrence cannot remove the dependency finding.
 
-Nine dataset rows call `nltk.download()`. Static task review plus runtime APIs require exactly these prepared resources: `stopwords`, `punkt`, `punkt_tab`, `averaged_perceptron_tagger`, `averaged_perceptron_tagger_eng`, `vader_lexicon`, and `words`. Their official metadata is pinned to `nltk/nltk_data` gh-pages commit `550b6625bcef1f2abff2ff770a5a0d272c9c6b2a`; exact index SHA-256 is `97dce5e72320cd9850b7c20130196006710c18f9c03134c822a37da330198bf6`. The full index is preserved for package hashes/licenses. Grade-time assets must be prepared and verified before the network namespace is created, then mounted read-only with a local index.
+Nine executable dataset rows call `nltk.download()` (eight in `code_prompt`, one in `test`); 26 rows declare NLTK. Static task review plus runtime APIs require exactly these prepared resources: `stopwords`, `punkt`, `punkt_tab`, `averaged_perceptron_tagger`, `averaged_perceptron_tagger_eng`, `vader_lexicon`, and `words`. Their official metadata is pinned to `nltk/nltk_data` gh-pages commit `550b6625bcef1f2abff2ff770a5a0d272c9c6b2a`; exact full-index SHA-256 is `97dce5e72320cd9850b7c20130196006710c18f9c03134c822a37da330198bf6`.
+
+All seven commit-addressed ZIPs matched official Git blobs and size/SHA-256 fields; safe archive inspection and functional offline preparation passed. The prepared tree is 167 files/85,741,209 bytes, canonical inventory SHA-256 `5a30cfb5c9d2a0353a987535b261386244abe66ac898185c514c913ac518514a`; the reduced local index SHA-256 is `27b1257a84cfec723c024c6762ed801ceb6984437d5438d4c7bed8bc6b52aafc`. The NLTK 3.10.3 global downloader ignores `NLTK_DATA` for its index URL and skips a read-only destination, so a measured site bootstrap must set its local index/destination before spawn children import candidate code. Exact manifest, algorithm and checks are preserved in the evidence directory.
+
+Official license files at the same commit explicitly classify required `punkt`, `punkt_tab`, and `stopwords` as unclarified/unknown and warn that the repository Apache license does not cover individual datasets. Technical preparation passed. Their bytes must not be vendored into this repository or a redistributed artifact, and must not be described as Apache-compatible, without repository review or a clearly licensed native-parity source. Fixed-commit retrieval into an ephemeral directory may continue for read-only provenance and benign compatibility tests; that does not decide redistribution rights.
 
 ## Bubblewrap primary source
 
@@ -101,14 +105,17 @@ Official repository: [containers/bubblewrap](https://github.com/containers/bubbl
 - The release removes setuid support and requires unprivileged user namespaces. It fixes [`GHSA-pxhw-h44j-8pfx`](https://github.com/containers/bubblewrap/security/advisories/GHSA-pxhw-h44j-8pfx), where absolute symlink handling during setup could escape the sandbox. This is why Ubuntu's older 0.9 package is not an acceptable version substitute.
 - The pinned [`README.md`](https://github.com/containers/bubblewrap/blob/v0.12.0/README.md) says bubblewrap constructs an empty mount-namespace root, uses user namespaces for unprivileged operation, always creates a mount namespace, can make mounts read-only/nodev, and can add PID/network/IPC/UTS namespaces. It also says security depends entirely on caller arguments and `--new-session` is needed against TIOCSTI when no seccomp filter supplies that protection.
 - The pinned [`bwrap.xml`](https://github.com/containers/bubblewrap/blob/v0.12.0/bwrap.xml) defines explicit mandatory namespace flags, `--disable-userns`, `--clearenv`, `--size`/`--tmpfs`, `--ro-bind`, `--proc`, `--dev`, `--new-session`, and `--die-with-parent`. It states `--unshare-all` uses `--unshare-user-try` and `--unshare-cgroup-try`; therefore it is unsuitable for a fail-closed proof. The new `--not-a-security-boundary` flag deliberately makes some setup failures nonfatal and must be forbidden.
+- Pinned [`bubblewrap.c`](https://github.com/containers/bubblewrap/blob/2a76602a8c71f36c1527cf9fc3417d9149822e0c/bubblewrap.c) closes extra descriptors in its PID-namespace init but explicitly passes any other descriptors to the executed command. The host must therefore launch with `close_fds=True, pass_fds=()`; bwrap is not an inherited-FD filter for the result protocol. The same source applies `PR_SET_PDEATHSIG` to the monitor, namespace init and command for `--die-with-parent`, supporting exact-parent kill plus PID-init cleanup.
 
 Bubblewrap is a mechanism, not a complete policy. The proposed contract supplies the mount/env/namespace/resource/process arguments and verifies their effects in a real probe. The Meson 1.9.1/Ninja 1.13.0 build-tool lock synced with uv 0.11.29 under CPython 3.13.14; `uv pip check` passed and strict aliased pip-audit 2.10.1 found zero vulnerabilities across both distributions. An exact hosted bubblewrap build remains unvalidated.
 
 ## CI platform evidence and observed local limitation
 
-The repository CI currently uses `ubuntu-latest`, Python `3.13.14`, and uv `0.11.29`; the boundary needs a dedicated fixed `ubuntu-24.04` job because the sandbox/BigCodeBench Python 3.10 environment is distinct from the harness environment.
+The repository CI currently uses `ubuntu-latest`, Python `3.13.14`, and uv `0.11.29`; the boundary needs a dedicated fixed `ubuntu-24.04` job because the sandbox/BigCodeBench Python 3.11.16 environment is distinct from the harness environment.
 
 GitHub's official [`Ubuntu2404-Readme.md`](https://github.com/actions/runner-images/blob/bac22751eb7d886e12c6063685275299469e9e5b/images/ubuntu/Ubuntu2404-Readme.md) at runner-images commit `bac22751eb7d886e12c6063685275299469e9e5b` reported image `20260907.300.1`, Ubuntu 24.04.5, kernel 6.17.0-1022-azure, compilers/Meson/Ninja, and cached Python 3.10.21. Bubblewrap 0.12.0 is not listed as preinstalled. The job must build the verified release and must not accidentally select an older distro binary.
+
+The pinned reusable copyright workflow source is Git blob `2dc70bccaf8de76c8e4d3fa8dbcdb3c161139af0` at commit `d7f020b83b60462b762eca9c24403e976dc549f2`. It scans every non-`__init__.py` Python file and accepts an MIT/Apache notice in the first ten lines. Exact `utils.py` passes its embedded MIT notice and exact `_special_oracle.py` does not. The caller therefore supplies `additional-find-args: '-not -path "./resources_servers/bigcodebench/vendor/bigcodebench/eval/_special_oracle.py"'`. This is the only copyright exception; a separate hash/license/provenance test covers the exact file, and authored code remains under every gate. Exact source and scope are preserved in `pr04-evidence/copyright-workflow-v0.55.0-source.md`.
 
 The current development container has Ubuntu 24.04, bubblewrap 0.9.0, and an outer policy that rejects the required namespace setup. That environment is intentionally classified unsupported. It is evidence that version printing or venv import is inadequate; it is not evidence that GitHub-hosted CI will pass. CI must demonstrate the actual boundary without a skip.
 
@@ -120,11 +127,13 @@ The boundary aims to contain host effects and bound denial of service. It does n
 
 `RLIMIT_NPROC` is counted per real UID and is not a perfect per-sandbox process quota when CI runs concurrent graders. PID namespaces hide processes but do not themselves impose a count. The implementation must choose concurrency/headroom deliberately, test cleanup, and record this residual limitation. A cgroup fallback is out of scope because the design intentionally supports one rootless runtime mechanism.
 
+The threaded host cannot safely set rlimits through Python `preexec_fn`. The selected design starts bwrap with only stdio descriptors, then has the trusted inner runner set and verify inherited hard limits before it reads the HMAC key or attacker payload. `F_DUPFD_CLOEXEC`, forced multiprocessing `spawn` and `PR_SET_DUMPABLE=0` keep the result FD/key out of child exec inheritance and deny same-UID `/proc`/ptrace reopening; real CI fixtures still must prove those effects. Native Manager/state remains semantically gameable and is not claimed as an integrity boundary.
+
 ## Unvalidated items at this checkpoint
 
 - The Python 3.11.16 lock is solver-valid and its dry-run/audit are preserved, but it is rejected until the NLTK gate is resolved and a full install/inventory is tested.
 - The pinned CPython 3.11.16 artifact still needs exact installer, full prepared-prefix/venv inventory and hosted-CI validation; uv 0.11.29 must run with managed downloads disabled.
-- The exact runtime mount list and seven NLTK assets need all-1,140 canonical-solution validation; imports do not justify mounting home/repository trees.
+- The exact runtime mount list and prepared NLTK tree need all-1,140 canonical-solution/spawn validation; imports do not justify mounting home/repository trees. The three unclarified data licenses need resolution before redistribution.
 - Upstream compatibility with forced multiprocessing `spawn`, `PR_SET_DUMPABLE=0`, descriptor redirection and authenticated frames needs a real same-UID hostile test.
 - GitHub-hosted `ubuntu-24.04` has not yet run the exact mandatory namespace/probe command. PR04 acceptance requires that green execution.
 - The proposed exact limits must pass the full canonical corpus and hostile resource fixtures. `RLIMIT_NPROC`/RSS polling limitations remain explicit.
