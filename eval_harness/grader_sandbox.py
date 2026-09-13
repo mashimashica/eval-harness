@@ -25,11 +25,11 @@ from pathlib import Path
 from typing import Final, Iterator, Sequence
 
 from eval_harness.bigcodebench_runner import (
+    INPUT_FIXED_BYTES,
     AuthenticatedOutputParser,
     BigCodeBenchGradeRequest,
     FrameType,
     GraderNativeResult,
-    INPUT_FIXED_BYTES,
     LimitKind,
     NativeSignal,
     NativeStatus,
@@ -323,7 +323,7 @@ def _process_thread_count(entry: Path, uid: int) -> int | None:
     """Return a process's thread count when its real UID matches ``uid``."""
 
     try:
-        status_lines = (entry / "status").read_text(encoding="ascii").splitlines()
+        status_lines = (entry / "status").read_text(encoding="utf-8", errors="replace").splitlines()
         uid_fields = next((line.split() for line in status_lines if line.startswith("Uid:")), None)
         thread_fields = next((line.split() for line in status_lines if line.startswith("Threads:")), None)
         if (
@@ -341,9 +341,13 @@ def _process_thread_count(entry: Path, uid: int) -> int | None:
         # Processes can disappear between readdir and status read.
         return None
     except (OSError, UnicodeError, ValueError) as exc:
-        if entry.exists():
-            raise GraderInfrastructureError("process baseline observation failed") from exc
-        return None
+        try:
+            entry.stat()
+        except FileNotFoundError:
+            return None
+        except OSError as stat_exc:
+            raise GraderInfrastructureError("process baseline observation failed") from stat_exc
+        raise GraderInfrastructureError("process baseline observation failed") from exc
 
 
 def _validate_process_limit(value: int) -> int:
@@ -411,7 +415,7 @@ def _build_bwrap_command(spec: GraderSandboxSpec, *, process_limit: int | None =
         if not source_path.is_file() or source_path.is_symlink():
             raise GraderInfrastructureError("synthetic sandbox etc file is unavailable")
         command.extend(("--ro-bind", str(source_path), f"/etc/{name}"))
-    command.extend(("--remount-ro", "/", "--remount-ro", "/dev"))
+    command.extend(("--remount-ro", "/dev", "--remount-ro", "/"))
 
     environment = (("PATH", f"{paths.venv / 'bin'}:/usr/bin:/bin"),) + _FIXED_ENVIRONMENT
     for name, environment_value in environment:
@@ -476,7 +480,7 @@ def _proc_parent_map() -> dict[int, int]:
         if not entry.name.isdecimal():
             continue
         try:
-            raw = (entry / "stat").read_text(encoding="ascii")
+            raw = (entry / "stat").read_text(encoding="utf-8", errors="replace")
             tail = raw.rsplit(")", 1)[1].split()
             if len(tail) < 2:
                 raise ValueError("short stat row")
@@ -485,8 +489,13 @@ def _proc_parent_map() -> dict[int, int]:
             # A process can disappear between readdir and stat/read.
             continue
         except (OSError, UnicodeError, ValueError, IndexError) as exc:
-            if entry.exists():
-                raise GraderInfrastructureError("process tree observation failed") from exc
+            try:
+                entry.stat()
+            except FileNotFoundError:
+                continue
+            except OSError as stat_exc:
+                raise GraderInfrastructureError("process tree observation failed") from stat_exc
+            raise GraderInfrastructureError("process tree observation failed") from exc
     return result
 
 
@@ -505,20 +514,28 @@ def _descendant_pids(root_pid: int) -> set[int]:
 def _rss_bytes(pid: int) -> int:
     status_path = Path("/proc") / str(pid) / "status"
     try:
-        lines = status_path.read_text(encoding="ascii").splitlines()
+        lines = status_path.read_text(encoding="utf-8", errors="replace").splitlines()
     except FileNotFoundError:
         return 0
     except (OSError, UnicodeError) as exc:
         raise GraderInfrastructureError("process memory observation failed") from exc
+    state: str | None = None
     try:
         for line in lines:
-            if line.startswith("VmRSS:"):
+            if line.startswith("State:"):
+                fields = line.split()
+                if len(fields) < 2:
+                    raise ValueError("invalid process state row")
+                state = fields[1]
+            elif line.startswith("VmRSS:"):
                 fields = line.split()
                 if len(fields) >= 2 and fields[1].isdecimal():
                     return int(fields[1]) * 1024
                 raise ValueError("invalid VmRSS row")
     except ValueError as exc:
         raise GraderInfrastructureError("process memory observation failed") from exc
+    if state in {"Z", "X"}:
+        return 0
     raise GraderInfrastructureError("process memory observation is incomplete")
 
 
@@ -544,11 +561,22 @@ def _wait_for_cleanup(process: subprocess.Popen[bytes], recorded: set[int], time
 
     deadline = time.monotonic() + timeout
     while True:
+        # Poll first so a failure to inspect the descendant tree never leaves
+        # the outer process unreaped.  The observation error remains fatal.
+        process_done = process.poll() is not None
+        observation_error: GraderInfrastructureError | None = None
         live = {pid for pid in recorded if Path(f"/proc/{pid}").exists()}
-        live.update(_descendant_pids(process.pid))
-        if process.poll() is not None and not live:
+        try:
+            live.update(_descendant_pids(process.pid))
+        except GraderInfrastructureError as exc:
+            observation_error = exc
+        if process_done and observation_error is not None:
+            raise observation_error
+        if process_done and not live:
             return
         if time.monotonic() >= deadline:
+            if observation_error is not None:
+                raise observation_error
             raise GraderInfrastructureError("sandbox descendants did not exit")
         time.sleep(min(DESCENDANT_SAMPLE_SECONDS, max(0.0, deadline - time.monotonic())))
 
@@ -600,12 +628,13 @@ def _run_bounded_supervisor(
         now = time.monotonic()
         deadline = now + limits.startup_seconds
         next_sample = now
-        for stream, event_mask, name in (
+        post_exit_deadline: float | None = None
+        for bound_stream, event_mask, name in (
             (stdout, selectors.EVENT_READ, "stdout"),
             (stderr, selectors.EVENT_READ, "stderr"),
         ):
-            os.set_blocking(stream.fileno(), False)
-            selector.register(stream, event_mask, name)
+            os.set_blocking(bound_stream.fileno(), False)
+            selector.register(bound_stream, event_mask, name)
         os.set_blocking(stdin.fileno(), False)
         if stdin_open:
             selector.register(stdin, selectors.EVENT_WRITE, "stdin")
@@ -616,6 +645,11 @@ def _run_bounded_supervisor(
         while True:
             now = time.monotonic()
             process_alive = process.poll() is None
+            if not process_alive:
+                if post_exit_deadline is None:
+                    post_exit_deadline = now + limits.teardown_seconds
+                elif now >= post_exit_deadline:
+                    raise GraderInfrastructureError("trusted grader pipes did not close")
             if process_alive and now >= deadline:
                 if not started:
                     raise GraderInfrastructureError("grader startup timed out")
@@ -643,36 +677,40 @@ def _run_bounded_supervisor(
                         raise GraderInfrastructureError("sandbox limit before grader start")
                     return GraderNativeResult(None, enforced)
 
-            timeout = 0.0 if not process_alive else max(0.0, min(deadline - now, max(0.0, next_sample - now)))
+            timeout = (
+                max(0.0, post_exit_deadline - now)
+                if not process_alive and post_exit_deadline is not None
+                else max(0.0, min(deadline - now, max(0.0, next_sample - now)))
+            )
             ready_events = selector.select(timeout)
             for selected_key, mask in ready_events:
                 stream_name = selected_key.data
-                stream = selected_key.fileobj
+                ready_stream = selected_key.fileobj
                 if stream_name == "stdin" and mask & selectors.EVENT_WRITE:
                     try:
-                        written = os.write(stream.fileno(), input_bytes[input_offset:])
+                        written = os.write(ready_stream.fileno(), input_bytes[input_offset:])
                     except (BlockingIOError, InterruptedError):
                         continue
                     except BrokenPipeError:
-                        selector.unregister(stream)
-                        stream.close()
+                        selector.unregister(ready_stream)
+                        ready_stream.close()
                         stdin_open = False
                         continue
                     if written <= 0:
                         raise GraderInfrastructureError("grader input write failed")
                     input_offset += written
                     if input_offset >= len(input_bytes):
-                        selector.unregister(stream)
-                        stream.close()
+                        selector.unregister(ready_stream)
+                        ready_stream.close()
                         stdin_open = False
                 elif stream_name in ("stdout", "stderr") and mask & selectors.EVENT_READ:
                     try:
-                        chunk = os.read(stream.fileno(), 64 * 1024)
+                        chunk = os.read(ready_stream.fileno(), 64 * 1024)
                     except (BlockingIOError, InterruptedError):
                         continue
                     if not chunk:
-                        selector.unregister(stream)
-                        stream.close()
+                        selector.unregister(ready_stream)
+                        ready_stream.close()
                         continue
                     if stream_name == "stdout":
                         if len(output) + len(chunk) > limits.protocol_bytes:

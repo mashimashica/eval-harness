@@ -24,6 +24,7 @@ from unittest.mock import patch
 import eval_harness.bigcodebench_runner as runner_module
 import eval_harness.grader_sandbox as sandbox_module
 from eval_harness.bigcodebench_runner import (
+    INPUT_FIXED_BYTES,
     MAX_INPUT_FRAME_BYTES,
     MAX_OUTPUT_BYTES,
     OUTPUT_FRAME_OVERHEAD,
@@ -33,7 +34,6 @@ from eval_harness.bigcodebench_runner import (
     BigCodeBenchGradeRequest,
     FrameType,
     GraderNativeResult,
-    INPUT_FIXED_BYTES,
     LimitKind,
     NativeSignal,
     NativeStatus,
@@ -48,8 +48,8 @@ from eval_harness.bigcodebench_runner import (
     parse_authenticated_output,
 )
 from eval_harness.grader_sandbox import (
-    GraderInfrastructureError,
     PRODUCTION_GRADER_LIMITS,
+    GraderInfrastructureError,
     GraderSandboxLimits,
     GraderSandboxPreflight,
     GraderSandboxSpec,
@@ -82,7 +82,7 @@ def frame_with_body(key: bytes, sequence: int, frame_type: FrameType, body: byte
 class _FakePopen:
     """Small pipe-backed process double for host selector-loop tests."""
 
-    def __init__(self, output: bytes, *, hold_open: bool = False) -> None:
+    def __init__(self, output: bytes, *, hold_open: bool = False, hold_pipes: bool = False) -> None:
         input_read, input_write = os.pipe()
         output_read, output_write = os.pipe()
         error_read, error_write = os.pipe()
@@ -92,11 +92,13 @@ class _FakePopen:
         self.pid = 424242
         self.returncode: int | None = None
         self.killed = False
+        self.poll_calls = 0
         self._input_read = input_read
         self._output_write = output_write
         self._error_write = error_write
         self._output = output
         self._hold_open = hold_open
+        self._hold_pipes = hold_pipes
         self._fd_lock = threading.Lock()
         self._thread = threading.Thread(target=self._emit, daemon=True)
         self._thread.start()
@@ -120,13 +122,15 @@ class _FakePopen:
                 except BrokenPipeError:
                     break
         finally:
-            self._close_fd("_output_write")
-            self._close_fd("_error_write")
+            if not self._hold_pipes:
+                self._close_fd("_output_write")
+                self._close_fd("_error_write")
             self._close_fd("_input_read")
             if not self._hold_open and not self.killed:
                 self.returncode = 0
 
     def poll(self) -> int | None:
+        self.poll_calls += 1
         return self.returncode
 
     def kill(self) -> None:
@@ -134,6 +138,10 @@ class _FakePopen:
         self.returncode = -9
         for name in ("_output_write", "_error_write", "_input_read"):
             self._close_fd(name)
+
+    def close_writers(self) -> None:
+        self._close_fd("_output_write")
+        self._close_fd("_error_write")
 
 
 class TestBigCodeBenchRunner(unittest.TestCase):
@@ -222,9 +230,20 @@ class TestBigCodeBenchRunner(unittest.TestCase):
                 ("usr/lib64", "/lib64"),
             ):
                 expected.extend(("--symlink", target, link))
+            frozen_system_mounts = (
+                ("/etc/ld.so.cache", "/etc/ld.so.cache"),
+                ("/etc/ssl/certs", "/etc/ssl/certs"),
+                ("/etc/fonts", "/etc/fonts"),
+                ("/etc/localtime", "/etc/localtime"),
+            )
+            self.assertEqual(sandbox_module._SYSTEM_OPTIONAL_MOUNTS, frozen_system_mounts)
+            present_system_mounts = {Path("/etc/ld.so.cache"), Path("/etc/localtime")}
+            for source, target in frozen_system_mounts:
+                if Path(source) in present_system_mounts:
+                    expected.extend(("--ro-bind", source, target))
             for name in ("hosts", "nsswitch.conf", "resolv.conf", "passwd", "group"):
                 expected.extend(("--ro-bind", str(expected_resource / "sandbox_etc" / name), f"/etc/{name}"))
-            expected.extend(("--remount-ro", "/", "--remount-ro", "/dev"))
+            expected.extend(("--remount-ro", "/dev", "--remount-ro", "/"))
             environment = (
                 ("PATH", f"{expected_venv / 'bin'}:/usr/bin:/bin"),
                 ("LANG", "C.UTF-8"),
@@ -279,7 +298,15 @@ class TestBigCodeBenchRunner(unittest.TestCase):
                     "123",
                 )
             )
-            with patch.object(sandbox_module, "_SYSTEM_OPTIONAL_MOUNTS", ()):
+            original_exists = Path.exists
+
+            def controlled_exists(path: Path) -> bool:
+                for source, _target in frozen_system_mounts:
+                    if path == Path(source):
+                        return path in present_system_mounts
+                return original_exists(path)
+
+            with patch.object(Path, "exists", controlled_exists):
                 command = sandbox_module._build_bwrap_command(spec, process_limit=123)
             self.assertEqual(command, tuple(expected))
 
@@ -334,7 +361,7 @@ class TestBigCodeBenchRunner(unittest.TestCase):
     ) -> tuple[GraderNativeResult, _FakePopen]:
         fake = _FakePopen(output, hold_open=hold_open)
         values = iter(samples or [(set(), 0)])
-        last_sample = (set(), 0)
+        last_sample: tuple[set[int], int] = (set(), 0)
 
         def sample(_pid: int) -> tuple[set[int], int]:
             nonlocal last_sample
@@ -417,6 +444,35 @@ class TestBigCodeBenchRunner(unittest.TestCase):
                 sandbox_module._run_bounded_supervisor(("bwrap",), b"", KEY, GraderSandboxLimits())
         self.assertFalse(fake.killed)
 
+    def test_supervisor_bounds_drain_after_dead_process_with_held_pipes(self) -> None:
+        fake = _FakePopen(b"", hold_pipes=True)
+        fake.returncode = 0
+        limits = GraderSandboxLimits(teardown_seconds=0.01)
+        try:
+            with (
+                patch.object(subprocess, "Popen", return_value=fake),
+                patch.object(sandbox_module, "_descendant_pids", return_value=set()),
+            ):
+                with self.assertRaisesRegex(GraderInfrastructureError, "pipes did not close"):
+                    sandbox_module._run_bounded_supervisor(("bwrap",), b"", KEY, limits)
+        finally:
+            fake.close_writers()
+
+    def test_cleanup_polls_outer_process_before_unverifiable_descendants(self) -> None:
+        fake = _FakePopen(b"", hold_open=True)
+        try:
+            with patch.object(
+                sandbox_module,
+                "_descendant_pids",
+                side_effect=GraderInfrastructureError("process tree is unavailable"),
+            ):
+                with self.assertRaisesRegex(GraderInfrastructureError, "process tree"):
+                    sandbox_module._terminate_and_reap(fake, set(), 0.01)
+            self.assertTrue(fake.killed)
+            self.assertGreaterEqual(fake.poll_calls, 2)
+        finally:
+            fake.close_writers()
+
     def test_supervisor_reaps_when_popen_does_not_supply_all_pipes(self) -> None:
         class NoPipes:
             pid = 424243
@@ -442,6 +498,31 @@ class TestBigCodeBenchRunner(unittest.TestCase):
                 sandbox_module._run_bounded_supervisor(("bwrap",), b"", KEY, GraderSandboxLimits())
         self.assertTrue(fake.killed)
 
+    def test_supervisor_cleans_up_parser_and_selector_initialization_failures(self) -> None:
+        for patcher, message in (
+            (
+                patch.object(sandbox_module, "AuthenticatedOutputParser", side_effect=ProtocolError("bad key")),
+                "sandbox I/O",
+            ),
+            (
+                patch.object(sandbox_module.selectors, "DefaultSelector", side_effect=OSError("selector")),
+                "sandbox I/O",
+            ),
+        ):
+            with self.subTest(message=message):
+                fake = _FakePopen(b"", hold_open=True)
+                try:
+                    with (
+                        patch.object(subprocess, "Popen", return_value=fake),
+                        patch.object(sandbox_module, "_descendant_pids", return_value=set()),
+                        patcher,
+                    ):
+                        with self.assertRaisesRegex(GraderInfrastructureError, message):
+                            sandbox_module._run_bounded_supervisor(("bwrap",), b"", KEY, GraderSandboxLimits())
+                    self.assertTrue(fake.killed)
+                finally:
+                    fake.close_writers()
+
     def test_process_baseline_uses_real_uid_and_all_threads(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             entry = Path(temporary) / "123"
@@ -455,6 +536,42 @@ class TestBigCodeBenchRunner(unittest.TestCase):
             (entry / "status").write_text("Name:\tworker\nUid:\tbroken\nThreads:\t3\n", encoding="ascii")
             with self.assertRaisesRegex(GraderInfrastructureError, "baseline observation"):
                 sandbox_module._process_thread_count(entry, os.getuid())
+
+    def test_process_tree_observation_fails_closed_except_exit_races(self) -> None:
+        with patch.object(Path, "iterdir", side_effect=PermissionError):
+            with self.assertRaisesRegex(GraderInfrastructureError, "process tree is unavailable"):
+                sandbox_module._proc_parent_map()
+
+        with tempfile.TemporaryDirectory() as temporary:
+            entry = Path(temporary) / "123"
+            entry.mkdir()
+            (entry / "stat").write_text("malformed", encoding="utf-8")
+            with patch.object(Path, "iterdir", return_value=(entry,)):
+                with self.assertRaisesRegex(GraderInfrastructureError, "observation failed"):
+                    sandbox_module._proc_parent_map()
+
+            disappeared = Path(temporary) / "456"
+            with patch.object(Path, "iterdir", return_value=(disappeared,)):
+                self.assertEqual(sandbox_module._proc_parent_map(), {})
+
+            (entry / "stat").write_text("123 (worker-☃) S 1 2 3\n", encoding="utf-8")
+            with patch.object(Path, "iterdir", return_value=(entry,)):
+                self.assertEqual(sandbox_module._proc_parent_map(), {123: 1})
+
+    def test_rss_observation_recognizes_zombies_and_rejects_live_gaps(self) -> None:
+        with patch.object(Path, "read_text", return_value="Name:\tworker\nState:\tZ (zombie)\n"):
+            self.assertEqual(sandbox_module._rss_bytes(123), 0)
+        with patch.object(Path, "read_text", return_value="Name:\tworker\nState:\tX (dead)\n"):
+            self.assertEqual(sandbox_module._rss_bytes(123), 0)
+        with patch.object(Path, "read_text", return_value="Name:\tworker\nState:\tS (sleeping)\n"):
+            with self.assertRaisesRegex(GraderInfrastructureError, "incomplete"):
+                sandbox_module._rss_bytes(123)
+        with patch.object(Path, "read_text", return_value="Name:\tworker\nState:\tS (sleeping)\nVmRSS:\tbad kB\n"):
+            with self.assertRaisesRegex(GraderInfrastructureError, "observation failed"):
+                sandbox_module._rss_bytes(123)
+        with patch.object(Path, "read_text", side_effect=PermissionError):
+            with self.assertRaisesRegex(GraderInfrastructureError, "memory observation"):
+                sandbox_module._rss_bytes(123)
 
     def test_public_types_are_frozen_and_have_contract_defaults(self) -> None:
         limits = GraderSandboxLimits()

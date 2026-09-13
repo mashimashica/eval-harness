@@ -20,6 +20,17 @@ not an implementation base. Draft PR heads 38–42 and design refs match the rec
 - Latest user requirement: remove all tracked `contracts/*.md` from the final implementation head after integrating necessary permanent specification into formal documentation. Preserve history/checkpoints. This takes priority over saved designs.
 - Stop conditions: second failed correction for one problem, permission obstacle, or allowance expiry; preserve source and evidence and report the unfinished scope.
 
+### Lifecycle and procfs correction checkpoint
+
+Luna returned the bounded post-exit pipe deadline, cleanup polling before observation,
+zombie/no-RSS handling, fail-closed live procfs parsing, exact optional-mount fixtures and
+parser/selector-construction failure regressions. The two-file batch is saved before
+tests. Prior head `e839a8cba1416e600910c90171a72a15b910a23c` passed 26 unit methods;
+strict typing and import sorting were not clean. This is still partial host implementation,
+not preflight, real isolation, native parity or PR04 acceptance. Root's read-through also
+flags selector file-object narrowing and test module export typing for the same owner to
+resolve before the next corrective verification.
+
 ## Earlier records
 
 ### Consolidated host-supervisor correction checkpoint
