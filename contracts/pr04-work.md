@@ -5,6 +5,21 @@
 
 ## User-authorized test-first continuation, 2026-09-13T06:54:57Z
 
+### Current component state: host findings closed; offline bootstrap saved
+
+At `e012ccc43d0129124efa63d14b223a1b4027d79f`, all 37 unit methods, strict mypy of
+the two changed files and Ruff lint/format pass. Sol independently closed both original
+P1 findings and found no remaining actionable defect in that fixed host delta. Parent
+accepts only that component closure. Exact evidence is in control
+`reports/m2-host-closure-validation.json`; real Linux/PR04 acceptance is still outstanding.
+
+Luna now adds only `eval_harness/bigcodebench_sitecustomize.py` and
+`tests/harness/test_bigcodebench_sitecustomize.py`: literal-policy-only configuration,
+retained pinned downloader, fixed local index/data paths and bound aliases. This save
+precedes grouped bootstrap unit/mypy/Ruff verification and independent delta review.
+It does not install NLTK, prepare its data, or prove fresh/spawn/real-sandbox behavior.
+Existing frozen offline evidence is reused; CVE research remains closed.
+
 Fixed implementation base: `7be35da9fae98c5e56ba14bf13a15a4cdbb9a8e7`;
 control recovery: `2d36c56c8056bd34186ed11da5004e0e01188dc8`. Both refs and clean local
 worktrees match; no repeated plan/design/dependency investigation is needed. Root remains
