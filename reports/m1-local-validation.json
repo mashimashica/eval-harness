@@ -1,0 +1,53 @@
+{
+  "milestone": "M1",
+  "status": "formal CI pending",
+  "started_at": "2026-09-13T03:56:46Z",
+  "ci_wait_started_at": "2026-09-13T04:26:49.544Z",
+  "implementation_head": "ece294de8af4f54f1138df4674b13a80fcdd77db",
+  "formal_head": "6038a7828d62247ad98d000bc6e71c706f6d14a4",
+  "formal_tree": "4f7fc21be5195611ba7df8feeefe3a5cc962c2cb",
+  "checkpoint": "272092f26948bdce763c185333ca417898eef88d",
+  "pr": "https://github.com/mashimashica/eval-harness/pull/42",
+  "deterministic_tests": {
+    "python": 553,
+    "shell": 6,
+    "status": "passed"
+  },
+  "coverage": {
+    "covered_statements": 10070,
+    "total_statements": 10469,
+    "integer_gate": "10070 * 100 >= 10469 * 96",
+    "passed": true
+  },
+  "strict_mypy": {
+    "files": 111,
+    "status": "passed"
+  },
+  "pre_commit_all_files": {
+    "status": "passed",
+    "promoted_head_also_checked": true
+  },
+  "unchanged_input_checks": {
+    "head": "a248c4076a4817701b3e3662dce91a2959e23907",
+    "dependency_compatibility": 45,
+    "inventory": 5,
+    "audit_packages": 153,
+    "audit_findings": 0,
+    "audit_skips": 0
+  },
+  "review": {
+    "source": "no new findings at 2aa8c28b",
+    "completion": "two test findings at a248c407, both closed at ece294de",
+    "fixture_amendment": "two direct execution-view namespace literals only",
+    "outstanding_findings": 0
+  },
+  "repairs": {
+    "whole_suite_stale_fixture": 1,
+    "strict_mypy_lambda": 1,
+    "review_test_gaps": 1
+  },
+  "pending": [
+    "formal exact-head required CI",
+    "PR04 and affected later heads: known NLTK CVE acceptance issue"
+  ]
+}
