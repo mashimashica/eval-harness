@@ -15,7 +15,7 @@ from unittest.mock import patch
 
 import eval_harness.runner as runner_module
 from eval_harness.benchmarks.base import Benchmark, BenchmarkTask
-from eval_harness.benchmarks.snapshot import Availability
+from eval_harness.benchmarks.snapshot import Availability, BenchmarkSnapshot
 from eval_harness.capabilities import ExecutorCapabilities, ExecutorInput, ExecutorOutput
 from eval_harness.evaluators.base import (
     EvaluationPlan,
@@ -49,6 +49,7 @@ from eval_harness.interventions.base import (
     InterventionType,
     compute_bundle_sha256,
 )
+from eval_harness.interventions.files import FilesIntervention
 from eval_harness.judges.base import JudgeExecutor, JudgePreflightResult, JudgeRequest, JudgeResult
 from eval_harness.judges.pairwise import discover_tasks
 from eval_harness.local_judge_runner import _candidate_task_prompt
@@ -60,8 +61,9 @@ from eval_harness.runner import run_benchmark
 class _ExecutorOptions(TypedDict, total=False):
     result_executor: str
     result_invocation_mode: str
-    result_version: str
-    result_auth_mode: str
+    result_version: str | None
+    result_auth_mode: str | None
+    result_reasoning_effort: ReasoningEffortOption
 
 
 JsonObject = dict[str, object]
@@ -113,8 +115,10 @@ class FakeBenchmark(Benchmark):
 
     def materialize(self, task: BenchmarkTask, workspace: Path) -> list[str]:
         self.events.append(f"materialize:{task.execution.task_id}")
-        (workspace / "input.txt").write_text(task.execution.prompt, encoding="utf-8")
-        return ["input.txt"]
+        input_path = workspace / "task_inputs" / "input.txt"
+        input_path.parent.mkdir(parents=True, exist_ok=True)
+        input_path.write_text(task.execution.prompt, encoding="utf-8")
+        return ["task_inputs/input.txt"]
 
     def execution_task(self, task: BenchmarkTask, workspace: Path, *, network_policy: str) -> TaskSpec:
         del workspace, network_policy
@@ -147,7 +151,7 @@ class FakeIntervention(Intervention):
         self.events.append("intervention-preflight")
         self.preflight_calls += 1
         content = b"secret intervention source"
-        entry = InterventionFile(path="overlay.txt", size=len(content), sha256="".join(["a"] * 64))
+        entry = InterventionFile(path="overlay.txt", size=len(content), sha256=hashlib.sha256(content).hexdigest())
         manifest = InterventionManifest(
             intervention_id="fake-intervention-id",
             intervention_type=self.intervention_type,
@@ -272,6 +276,7 @@ class FakeExecutor(Executor):
         result_invocation_mode: str | None = None,
         result_version: str | None = "fake-1",
         result_auth_mode: str | None = "fake-local",
+        result_reasoning_effort: ReasoningEffortOption = None,
         result_metadata: dict[str, object] | None = None,
         result_output_text: str | None = "answer",
         result_status: ExecutionStatus = ExecutionStatus.NO_DELIVERABLE,
@@ -287,6 +292,7 @@ class FakeExecutor(Executor):
         self.result_invocation_mode = result_invocation_mode
         self.result_version = result_version
         self.result_auth_mode = result_auth_mode
+        self.result_reasoning_effort = result_reasoning_effort
         self.result_metadata = result_metadata if result_metadata is not None else {"fake": True}
         self.result_output_text = result_output_text
         self.result_status = result_status
@@ -330,6 +336,7 @@ class FakeExecutor(Executor):
             # ``None`` is retained by the null-result fixture to test the
             # runner's persisted identity handling.
             auth_mode=cast(str, self.result_auth_mode),
+            reasoning_effort_requested=self.result_reasoning_effort,
             workspace=request.workspace,
             deliverables_dir=deliverables_dir,
             status=status,
@@ -422,7 +429,13 @@ class GenericRunnerTests(unittest.TestCase):
             self.assertEqual(metadata["intervention"]["type"], "prompt-overlay")
             self.assertEqual(
                 metadata["intervention"]["files"],
-                [{"path": "overlay.txt", "size": len(b"secret intervention source"), "sha256": "a" * 64}],
+                [
+                    {
+                        "path": "overlay.txt",
+                        "size": len(b"secret intervention source"),
+                        "sha256": hashlib.sha256(b"secret intervention source").hexdigest(),
+                    }
+                ],
             )
             self.assertEqual(
                 metadata["intervention"]["application"],
@@ -438,6 +451,44 @@ class GenericRunnerTests(unittest.TestCase):
             self.assertNotIn("/external/secret/intervention-source", json.dumps(row))
             self.assertNotIn("sentinel", json.dumps(row))
             self.assertNotIn("task-0", evidence["application_run_id"])
+
+    def test_files_intervention_persists_materialized_file_hashes(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            source = root / "files"
+            source.mkdir()
+            content = b"declared intervention bytes\x00\n"
+            (source / "guide.txt").write_bytes(content)
+            intervention = FilesIntervention(
+                source,
+                intervention_id="files-intervention-id",
+                source_revision="files-revision",
+            )
+            out = root / "run"
+            run_benchmark(
+                FakeBenchmark(task_count=1),
+                FakeEvaluator(),
+                FakeExecutor(),
+                out_dir=out,
+                limit=1,
+                intervention=intervention,
+            )
+
+            digest = hashlib.sha256(content).hexdigest()
+            metadata = _load_json_object(out / "run-metadata.json")
+            self.assertEqual(
+                metadata["intervention"]["files"],
+                [{"path": "guide.txt", "size": len(content), "sha256": digest}],
+            )
+            row = _load_json_object(out / "results.jsonl")
+            self.assertEqual(
+                row["intervention"]["materialized_files"],
+                [{"path": "guide.txt", "size": len(content), "sha256": digest}],
+            )
+            self.assertEqual(
+                (out / "tasks" / "task-0" / "workspace" / "guide.txt").read_bytes(),
+                content,
+            )
 
     def test_agent_skill_workspace_reference_is_portable_and_outer_only_source_provenance(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -686,7 +737,7 @@ class GenericRunnerTests(unittest.TestCase):
                 summary.application_run_ids,
                 {row["task_id"]: row["intervention"]["application_run_id"] for row in rows},
             )
-            self.assertEqual(rows[0]["materialized"], ["input.txt"])
+            self.assertEqual(rows[0]["materialized"], ["task_inputs/input.txt"])
             self.assertEqual(rows[0]["evaluation"]["metrics"], {"accuracy": 1.0})
             self.assertEqual(rows[0]["evaluation"]["status"], "completed")
             self.assertEqual(
@@ -717,7 +768,7 @@ class GenericRunnerTests(unittest.TestCase):
             runtime_task = runtime / "tasks" / "task-0"
             self.assertEqual(summary.runtime_root, runtime.resolve())
             self.assertEqual(summary.out_dir, out)
-            self.assertTrue((runtime_task / "workspace" / "input.txt").is_file())
+            self.assertTrue((runtime_task / "workspace" / "task_inputs" / "input.txt").is_file())
             self.assertTrue((runtime_task / "executor" / "stdout.log").is_file())
             self.assertTrue((runtime_task / "executor" / "task-prompt.txt").is_file())
             self.assertTrue((runtime_task / "result.json").is_file())
@@ -982,6 +1033,33 @@ class GenericRunnerTests(unittest.TestCase):
             self.assertEqual(events[:2], ["evaluator-preflight", "intervention-preflight"])
             self.assertFalse(out.exists())
 
+    def test_returned_snapshot_metadata_must_match_sealed_digest_before_roots(self) -> None:
+        class IncoherentSnapshotBenchmark(FakeBenchmark):
+            def acquire_snapshot(self, limit: int, destination: Path) -> BenchmarkSnapshot:
+                snapshot = super().acquire_snapshot(limit, destination)
+                object.__setattr__(snapshot, "revision", "tampered-revision")
+                return snapshot
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            out = root / "out"
+            runtime = root / "runtime"
+            evaluator = FakeEvaluator()
+            executor = FakeExecutor()
+            with self.assertRaisesRegex(ValueError, "snapshot metadata/digest"):
+                run_benchmark(
+                    IncoherentSnapshotBenchmark(task_count=1),
+                    evaluator,
+                    executor,
+                    out_dir=out,
+                    runtime_root=runtime,
+                    limit=1,
+                )
+            self.assertEqual(evaluator.calls, 0)
+            self.assertEqual(executor.calls, 0)
+            self.assertFalse(out.exists())
+            self.assertFalse(runtime.exists())
+
     def test_all_evaluation_plans_validate_before_any_execution(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             out = Path(tmp) / "run"
@@ -1036,6 +1114,7 @@ class GenericRunnerTests(unittest.TestCase):
             self.assertEqual(rows[0]["intervention"]["status"], "applied")
             self.assertEqual(rows[1]["intervention"]["status"], "failed")
             self.assertEqual(rows[1]["execution"], None)
+            self.assertIsNone(rows[1]["evaluation"])
             self.assertNotIn("secret failure", json.dumps(rows[1]))
             self.assertTrue((out / "tasks" / "task-0" / "executor" / "stdout.log").is_file())
             self.assertTrue((out / "tasks" / "task-0" / "result.json").is_file())
@@ -1062,6 +1141,7 @@ class GenericRunnerTests(unittest.TestCase):
             self.assertEqual(len(rows), 1)
             self.assertEqual(rows[0]["intervention"]["status"], "failed")
             self.assertIsNone(rows[0]["execution"])
+            self.assertIsNone(rows[0]["evaluation"])
 
     def test_pairwise_injection_rejects_generic_single_candidate_plan_before_execution(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -1205,7 +1285,16 @@ class GenericRunnerTests(unittest.TestCase):
             self.assertEqual(metadata["judge"], metadata["evaluator"]["judge"])
             self.assertEqual(
                 set(metadata["executor_descriptor"]),
-                {"id", "version", "invocation_mode", "auth_mode", "model", "network_policy"},
+                {
+                    "id",
+                    "version",
+                    "invocation_mode",
+                    "auth_mode",
+                    "model",
+                    "network_policy",
+                    "reasoning_effort_requested",
+                    "capabilities",
+                },
             )
             self.assertEqual(execution["metadata"], {})
             self.assertNotIn("output_text", execution)
@@ -1245,7 +1334,8 @@ class GenericRunnerTests(unittest.TestCase):
             out = Path(tmp) / "run"
             benchmark = FakeBenchmark(task_count=1)
             # Preserve an unavailable benchmark revision in this fixture.
-            benchmark.revision = cast(str, None)
+            benchmark.revision = None
+            benchmark.revision_availability = Availability.UNAVAILABLE
             run_benchmark(
                 benchmark,
                 FakeEvaluator(judge_fields={"judge_executor": "ignored-non-judge"}),
@@ -1302,7 +1392,7 @@ class GenericRunnerTests(unittest.TestCase):
                 ]
 
         cases = (
-            (("duplicate", "duplicate"), "duplicate task_id"),
+            (("duplicate", "duplicate"), "duplicate task IDs"),
             (("a/b", "a?b"), "collide after safe normalization"),
         )
         for index, (task_ids, message) in enumerate(cases):
@@ -1383,6 +1473,9 @@ class GenericRunnerTests(unittest.TestCase):
             ({"result_invocation_mode": "tampered-mode"}, "mismatched invocation_mode"),
             ({"result_version": "tampered-version"}, "mismatched executor_version"),
             ({"result_auth_mode": "tampered-auth"}, "mismatched auth_mode"),
+            ({"result_version": None}, "mismatched executor_version"),
+            ({"result_auth_mode": None}, "mismatched auth_mode"),
+            ({"result_reasoning_effort": "low"}, "mismatched reasoning_effort_requested"),
         )
         for index, (executor_options, message) in enumerate(cases):
             with self.subTest(message=message), tempfile.TemporaryDirectory() as tmp:
@@ -1401,20 +1494,8 @@ class GenericRunnerTests(unittest.TestCase):
                 metadata = json.loads((out / "run-metadata.json").read_text(encoding="utf-8"))
                 self.assertEqual(row["evaluation"]["status"], "failed")
                 self.assertEqual(metadata["status"], "failed")
-
-        with tempfile.TemporaryDirectory() as tmp:
-            out = Path(tmp) / "null-result-fields"
-            summary = run_benchmark(
-                FakeBenchmark(task_count=1),
-                FakeEvaluator(),
-                FakeExecutor(result_version=None, result_auth_mode=None),
-                out_dir=out,
-                limit=1,
-            )
-            self.assertEqual(summary.status, "completed")
-            row = json.loads((out / "results.jsonl").read_text(encoding="utf-8"))
-            self.assertIsNone(row["execution"]["executor_version"])
-            self.assertIsNone(row["execution"]["auth_mode"])
+                self.assertEqual((out / "candidate-results.jsonl").read_text(encoding="utf-8"), "")
+                self.assertFalse((out / "candidates").exists())
 
     def test_executor_preflight_identity_mismatch_stops_before_execution_or_roots(self) -> None:
         class TamperedPreflightExecutor(FakeExecutor):

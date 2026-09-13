@@ -141,10 +141,16 @@ class CursorExecutorTests(unittest.TestCase):
                 executor = CursorExecutor(command="agent")
                 original_write_text = Path.write_text
 
-                def write_text(path: Path, data: str, *args: object, **kwargs: object) -> int:
+                def write_text(
+                    path: Path,
+                    data: str,
+                    encoding: str | None = None,
+                    errors: str | None = None,
+                    newline: str | None = None,
+                ) -> int:
                     if path == prompt_path:
                         raise prompt_error
-                    return original_write_text(path, data, *args, **kwargs)
+                    return original_write_text(path, data, encoding=encoding, errors=errors, newline=newline)
 
                 with (
                     patch.object(Path, "write_text", autospec=True, side_effect=write_text),

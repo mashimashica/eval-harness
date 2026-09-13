@@ -16,6 +16,7 @@ from pathlib import Path
 from typing import Mapping, Sequence, TextIO
 
 from eval_harness.benchmarks.base import Benchmark, BenchmarkTask
+from eval_harness.benchmarks.snapshot import BenchmarkSnapshot
 from eval_harness.candidate_bundle import (
     CandidateBundleError,
     ExecutorEvidence,
@@ -46,7 +47,7 @@ from eval_harness.interventions.base import (
     ensure_source_output_separation,
 )
 from eval_harness.interventions.none import NoneIntervention
-from eval_harness.layout import candidate_layout, safe_task_id, task_layout
+from eval_harness.layout import TaskLayout, candidate_layout, safe_task_id, task_layout
 from eval_harness.provenance import (
     RepositoryProvenance,
     execution_record,
@@ -531,10 +532,22 @@ def run_benchmark(
         snapshot_destination = controller_root / "snapshot"
         benchmark.prepare()
         snapshot = benchmark.acquire_snapshot(limit, snapshot_destination)
-        temporary_binding = VerifiedSnapshotBinding.load(snapshot_destination)
+        if type(snapshot) is not BenchmarkSnapshot:
+            raise TypeError("benchmark snapshot acquisition returned an invalid snapshot")
         snapshot_tasks = tuple(snapshot.tasks)
         if not snapshot_tasks:
             raise ValueError("benchmark snapshot returned no tasks")
+        returned_snapshot_sha256 = snapshot.compute_snapshot_sha256()
+        snapshot_sha256 = snapshot.snapshot_sha256
+        if type(snapshot_sha256) is not str or not snapshot_sha256:
+            raise ValueError("benchmark snapshot returned an empty snapshot digest")
+        temporary_binding = VerifiedSnapshotBinding.load(snapshot_destination)
+        first_reference = temporary_binding.reference(snapshot_tasks[0].task_id)
+        if (
+            returned_snapshot_sha256 != snapshot_sha256
+            or snapshot_sha256 != first_reference.snapshot_sha256
+        ):
+            raise ValueError("benchmark snapshot metadata/digest disagrees with its sealed binding")
 
         seen_task_ids: set[str] = set()
         safe_task_ids: dict[str, str] = {}
@@ -711,23 +724,21 @@ def run_benchmark(
 
             def persist_legacy_row(
                 task_id: str,
-                task_layout_value: object,
+                task_layout_value: TaskLayout,
                 materialized: Sequence[str],
                 intervention_payload: Mapping[str, object],
-                result: object,
-                evaluation_payload: dict[str, object],
+                result: ExecutionResult | None,
+                evaluation_payload: Mapping[str, object] | None,
             ) -> dict[str, object]:
-                execution_payload = _execution_payload(result) if type(result) is ExecutionResult else None
+                execution_payload = _execution_payload(result) if result is not None else None
                 row: dict[str, object] = {
                     "task_id": task_id,
                     "task_sha256": legacy_task_hashes[task_id],
                     "materialized": list(materialized),
                     "intervention": dict(intervention_payload),
                     "execution": execution_payload,
-                    "evaluation": evaluation_payload,
+                    "evaluation": dict(evaluation_payload) if evaluation_payload is not None else None,
                 }
-                if not hasattr(task_layout_value, "executor_dir"):
-                    raise TypeError("task layout is invalid")
                 executor_dir = task_layout_value.executor_dir
                 _write_json(executor_dir.parent / "result.json", row)
                 _append_jsonl(results_handle, row)
@@ -798,7 +809,7 @@ def run_benchmark(
                         materialized,
                         intervention_payload,
                         None,
-                        _evaluation_interrupt_payload(exc),
+                        None,
                     )
                     base_metadata["failure"] = {
                         "phase": "intervention_apply",
@@ -820,7 +831,7 @@ def run_benchmark(
                         materialized,
                         intervention_payload,
                         None,
-                        _evaluation_error_payload(exc, phase="intervention_apply"),
+                        None,
                     )
                     base_metadata["failure"] = {
                         "phase": "intervention_apply",
@@ -850,18 +861,12 @@ def run_benchmark(
                         raise ValueError("executor returned a mismatched executor")
                     if result.invocation_mode != executor.invocation_mode:
                         raise ValueError("executor returned a mismatched invocation_mode")
-                    if (
-                        executor_preflight.version is not None
-                        and result.executor_version is not None
-                        and result.executor_version != executor_preflight.version
-                    ):
+                    if executor_preflight.version is not None and result.executor_version != executor_preflight.version:
                         raise ValueError("executor returned a mismatched executor_version")
-                    if (
-                        executor_preflight.auth_mode is not None
-                        and result.auth_mode is not None
-                        and result.auth_mode != executor_preflight.auth_mode
-                    ):
+                    if executor_preflight.auth_mode is not None and result.auth_mode != executor_preflight.auth_mode:
                         raise ValueError("executor returned a mismatched auth_mode")
+                    if result.reasoning_effort_requested != reasoning_effort:
+                        raise ValueError("executor returned a mismatched reasoning_effort_requested")
                     if result.runtime != executor.runtime:
                         raise ValueError("executor returned a mismatched runtime")
                     if not _path_matches(result.workspace, layout.workspace):
