@@ -17,6 +17,7 @@ import fcntl
 import math
 import os
 import selectors
+import signal
 import stat
 import subprocess
 import time
@@ -545,7 +546,13 @@ def _sample_process_tree(root_pid: int) -> tuple[set[int], int]:
     return descendants, sum(_rss_bytes(pid) for pid in observed)
 
 
-def _terminate_and_reap(process: subprocess.Popen[bytes], recorded: set[int], timeout: float) -> bool:
+def _ensure_cleanup_deadline(existing: float | None, duration: float) -> float:
+    if existing is not None:
+        return existing
+    return time.monotonic() + duration
+
+
+def _terminate_and_reap(process: subprocess.Popen[bytes], recorded: set[int], deadline: float) -> bool:
     """Kill only the outer bwrap PID and require its recorded tree to vanish."""
 
     killed = False
@@ -555,14 +562,13 @@ def _terminate_and_reap(process: subprocess.Popen[bytes], recorded: set[int], ti
             killed = True
     except (OSError, ProcessLookupError) as exc:
         raise GraderInfrastructureError("sandbox termination failed") from exc
-    _wait_for_cleanup(process, recorded, timeout)
-    return killed
+    _wait_for_cleanup(process, recorded, deadline)
+    return killed and process.returncode == -signal.SIGKILL
 
 
-def _wait_for_cleanup(process: subprocess.Popen[bytes], recorded: set[int], timeout: float) -> None:
+def _wait_for_cleanup(process: subprocess.Popen[bytes], recorded: set[int], deadline: float) -> None:
     """Wait for the trusted process and every observed descendant to vanish."""
 
-    deadline = time.monotonic() + timeout
     while True:
         # Poll first so a failure to inspect the descendant tree never leaves
         # the outer process unreaped.  The observation error remains fatal.
@@ -680,7 +686,8 @@ def _run_bounded_supervisor(
                     enforced = None
                 else:
                     cleanup_started = True
-                    terminated = _terminate_and_reap(process, recorded_descendants, limits.teardown_seconds)
+                    cleanup_deadline = _ensure_cleanup_deadline(cleanup_deadline, limits.teardown_seconds)
+                    terminated = _terminate_and_reap(process, recorded_descendants, cleanup_deadline)
                     if not terminated:
                         raise GraderInfrastructureError("trusted grader exited during limit enforcement")
                     if not started:
@@ -772,26 +779,20 @@ def _run_bounded_supervisor(
             raise GraderInfrastructureError("trusted grader exited unexpectedly")
         result = parse_grader_output(bytes(output), key)
         cleanup_started = True
-        cleanup_timeout = (
-            limits.teardown_seconds if cleanup_deadline is None else max(0.0, cleanup_deadline - time.monotonic())
-        )
-        _wait_for_cleanup(process, recorded_descendants, cleanup_timeout)
+        cleanup_deadline = _ensure_cleanup_deadline(cleanup_deadline, limits.teardown_seconds)
+        _wait_for_cleanup(process, recorded_descendants, cleanup_deadline)
         return result
     except GraderInfrastructureError:
         if not cleanup_started:
             cleanup_started = True
-            cleanup_timeout = (
-                limits.teardown_seconds if cleanup_deadline is None else max(0.0, cleanup_deadline - time.monotonic())
-            )
-            _terminate_and_reap(process, recorded_descendants, cleanup_timeout)
+            cleanup_deadline = _ensure_cleanup_deadline(cleanup_deadline, limits.teardown_seconds)
+            _terminate_and_reap(process, recorded_descendants, cleanup_deadline)
         raise
     except Exception as exc:
         if not cleanup_started:
             cleanup_started = True
-            cleanup_timeout = (
-                limits.teardown_seconds if cleanup_deadline is None else max(0.0, cleanup_deadline - time.monotonic())
-            )
-            _terminate_and_reap(process, recorded_descendants, cleanup_timeout)
+            cleanup_deadline = _ensure_cleanup_deadline(cleanup_deadline, limits.teardown_seconds)
+            _terminate_and_reap(process, recorded_descendants, cleanup_deadline)
         raise GraderInfrastructureError("sandbox I/O failed") from exc
     finally:
         if selector is not None:

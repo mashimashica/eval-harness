@@ -205,6 +205,8 @@ class _PipePopen:
         clock: _FakeClock | None = None,
         exit_at: float | None = None,
         exit_on_poll: int | None = None,
+        kill_advances: float = 0.0,
+        kill_observes_exit: bool = False,
         hold_pipes: bool = False,
     ) -> None:
         input_read, input_write = os.pipe()
@@ -216,6 +218,7 @@ class _PipePopen:
         self.pid = 424244
         self.returncode: int | None = None
         self.killed = False
+        self.signal_sent = False
         self.poll_calls = 0
         self._input_read = input_read
         self._output_write = output_write
@@ -223,6 +226,8 @@ class _PipePopen:
         self._clock = clock
         self._exit_at = exit_at
         self._exit_on_poll = exit_on_poll
+        self._kill_advances = kill_advances
+        self._kill_observes_exit = kill_observes_exit
         os.write(output_write, output)
         if not hold_pipes:
             self._close_fd("_output_write")
@@ -247,8 +252,14 @@ class _PipePopen:
         return self.returncode
 
     def kill(self) -> None:
+        if self._clock is not None:
+            self._clock.value += self._kill_advances
         self.killed = True
-        self.returncode = -9
+        if self._kill_observes_exit:
+            self.returncode = 0
+        else:
+            self.returncode = -9
+            self.signal_sent = True
         for name in ("_output_write", "_error_write", "_input_read"):
             self._close_fd(name)
 
@@ -658,6 +669,55 @@ class TestBigCodeBenchRunner(unittest.TestCase):
         finally:
             fake.close_all()
 
+    def test_supervisor_rejects_limit_when_kill_observes_natural_exit(self) -> None:
+        clock = _FakeClock()
+        fake = _PipePopen(encode_start(KEY), clock=clock, kill_observes_exit=True, hold_pipes=True)
+        selector = _ScriptedSelector(clock, ["stdout"])
+        samples = iter([(set(), 0), ({99}, 0)])
+
+        def sample(_pid: int) -> tuple[set[int], int]:
+            return next(samples)
+
+        try:
+            with (
+                patch.object(subprocess, "Popen", return_value=fake),
+                patch.object(
+                    selectors,
+                    "DefaultSelector",
+                    return_value=cast(selectors.BaseSelector, selector),
+                ),
+                patch.object(sandbox_module, "_sample_process_tree", side_effect=sample),
+                patch.object(sandbox_module, "_descendant_pids", return_value=set()),
+                patch.object(time, "monotonic", side_effect=clock.monotonic),
+                patch.object(time, "sleep", side_effect=clock.sleep),
+                patch.object(sandbox_module, "DESCENDANT_SAMPLE_SECONDS", 0.0),
+            ):
+                with self.assertRaises(GraderInfrastructureError):
+                    sandbox_module._run_bounded_supervisor(
+                        ("bwrap",), b"", KEY, GraderSandboxLimits(process_headroom=1)
+                    )
+            self.assertTrue(fake.killed)
+            self.assertFalse(fake.signal_sent)
+        finally:
+            fake.close_all()
+
+    def test_cleanup_preserves_absolute_deadline_after_kill_advances_clock(self) -> None:
+        clock = _FakeClock()
+        fake = _PipePopen(b"", clock=clock, kill_advances=2.0, hold_pipes=True)
+        typed_fake = cast(subprocess.Popen[bytes], fake)
+        try:
+            with (
+                patch.object(sandbox_module, "_descendant_pids", return_value={99}),
+                patch.object(time, "monotonic", side_effect=clock.monotonic),
+                patch.object(time, "sleep", side_effect=clock.sleep),
+            ):
+                with self.assertRaises(GraderInfrastructureError):
+                    sandbox_module._terminate_and_reap(typed_fake, set(), 1.0)
+            self.assertEqual(clock.value, 2.0)
+            self.assertTrue(fake.signal_sent)
+        finally:
+            fake.close_all()
+
     def test_supervisor_bounds_drain_after_dead_process_with_held_pipes(self) -> None:
         fake = _FakePopen(b"", hold_pipes=True)
         fake.returncode = 0
@@ -682,7 +742,7 @@ class TestBigCodeBenchRunner(unittest.TestCase):
                 side_effect=GraderInfrastructureError("process tree is unavailable"),
             ):
                 with self.assertRaisesRegex(GraderInfrastructureError, "process tree"):
-                    sandbox_module._terminate_and_reap(typed_fake, set(), 0.01)
+                    sandbox_module._terminate_and_reap(typed_fake, set(), time.monotonic() + 0.01)
             self.assertTrue(fake.killed)
             self.assertGreaterEqual(fake.poll_calls, 2)
         finally:

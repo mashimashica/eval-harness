@@ -32,6 +32,13 @@ not checkpoint count. No new validation has run at this record-only save.
 
 ### First combined correction, parent review still requires closure
 
+The final corrective batch now carries absolute deadlines through cleanup helpers and
+checks the reaped SIGKILL result, with internal no-op-kill and termination-latency tests.
+The parent also requested preserving the pre-terminal phase deadline when a dead process
+first begins draining; this queued clarification remains part of the same bounded batch.
+Save before any further refinement or grouped validation. No corrective test result or
+independent closure is claimed yet.
+
 At `3081b86a`, all three reproductions failed for the expected reasons (6 versus 5,
 2 versus 1, infrastructure error absent); no host changes existed at that red baseline.
 Luna returned shared cleanup state, one cleanup invocation and a termination receipt.
