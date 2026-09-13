@@ -3,13 +3,37 @@
 
 # Migration state
 
-Updated: 2026-09-13T06:33:12Z
+Updated: 2026-09-13T06:56:34Z
 
 Control branch: `checkpoint/migration-control`.
 Procedure: [MIGRATION-WORKFLOW.md](MIGRATION-WORKFLOW.md).
 This record preserves recoverable work; it does not declare the migration accepted.
 
-## Current status: M1 accepted; M2 partial, stopped under the two-failed-correction rule
+## Current status: M1 accepted; M2 test-first continuation authorized
+
+The user explicitly resumed from the saved implementation head and requires reproductions
+before the two P1 corrections. Verified recovery is implementation
+`7be35da9fae98c5e56ba14bf13a15a4cdbb9a8e7` and control
+`2d36c56c8056bd34186ed11da5004e0e01188dc8`; no local edits needed protection beyond
+keeping the clean main root untouched. The record-only implementation continuation is
+`4d6717771de4102005ad10e5d50aee520286429f`, tree
+`210ff93cf2882659d837fa82fffb20e72d589cdb`, saved and read back.
+
+New allowance: `2026-09-13T06:54:57Z`–`2026-09-13T08:24:57Z`, maximum 90 minutes.
+Luna first edits only the existing runner test file to reproduce late-exit/cleanup budget
+restart and third-poll trusted exit; host source remains unchanged for the expected-red
+baseline. Then save a combined correction, run related tests/mypy/Ruff together and have
+Sol review the fixed head. Parent owns evidence/checkpoint integration. No grandchildren,
+one active implementation PR, same stop/save/quality requirements. Prior designs and
+closed dependency evidence are reused. GitHub Actions is enabled for the required later
+Linux job; no job or PR was started just to save this checkpoint.
+
+After the two findings close, continue PR04 fixed environment/preflight/shared callers,
+old-runner deletion and real probes/parity. CVE-only blockage holds acceptance while
+independent implementation continues. Final deletion, fourth benchmark and all quality
+gates remain incomplete. Progress reports focus on behavior/findings/barriers.
+
+## Previous segment: stopped under the two-failed-correction rule
 
 The user resumed the migration from `aa7e2cc9df25795be50559ea5c5d986af020c933`.
 Root recovered the complete original plan, workflow, latest/historical state, M1 acceptance
