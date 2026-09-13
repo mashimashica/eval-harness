@@ -1493,8 +1493,19 @@ class BenchmarkBoundaryTests(unittest.TestCase):
                 side_effect=fake_download,
             ):
                 self.assertEqual(gdpval.materialize(gdp_tasks[0], workspace), ["reference_files/source.txt"])
-            execution = gdpval.execution_task(gdp_tasks[0], workspace, network_policy="disabled")
-            self.assertIn("reference_files/source.txt", execution.prompt)
+            snapshot_workspace = root / "gdp-snapshot-workspace"
+            task_inputs = snapshot_workspace / "task_inputs"
+            task_inputs.mkdir(parents=True)
+            (task_inputs / "source.txt").write_text("reference", encoding="utf-8")
+            execution = gdpval.execution_task(
+                BenchmarkTask(execution=gdp_tasks[0].execution),
+                snapshot_workspace,
+                network_policy="disabled",
+            )
+            self.assertIn("task_inputs/source.txt", execution.prompt)
+            self.assertIn("Do not modify the task_inputs directory.", execution.prompt)
+            self.assertNotIn("reference_files", execution.prompt)
+            self.assertEqual(gdp_tasks[0].execution, TaskSpec("g-1", "review"))
             self.assertIn("legal", str(gdp_tasks[0].evaluation["sector"]))
 
     def test_gdpval_reference_materialization_rejects_mismatch_and_unsafe_results(self) -> None:

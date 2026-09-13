@@ -46,10 +46,10 @@ def _is_inside(root: Path, path: Path) -> bool:
 
 
 def _reference_listing(workspace: Path) -> str:
-    ref_root = workspace / "reference_files"
-    if not ref_root.is_dir():
+    task_inputs_root = workspace / "task_inputs"
+    if not task_inputs_root.is_dir():
         return "None"
-    files = [str(path.relative_to(workspace)) for path in sorted(ref_root.rglob("*")) if path.is_file()]
+    files = [str(path.relative_to(workspace)) for path in sorted(task_inputs_root.rglob("*")) if path.is_file()]
     return "\n".join(f"- {item}" for item in files) if files else "None"
 
 
@@ -169,7 +169,7 @@ class GDPvalBenchmark(Benchmark):
 Work only on this task. Do not create, hand off, or continue the task in any cloud/background agent.
 Use only tools actually available in this local runtime; do not assume packages or system tools are installed.
 
-Reference files, when provided, are under the current workspace:
+Task inputs, when provided, are under the current workspace:
 {_reference_listing(workspace)}
 
 Final deliverables contract:
@@ -177,7 +177,7 @@ Final deliverables contract:
 - Create ./deliverables/ if needed.
 - Nested files and directories under ./deliverables/ are allowed.
 - Keep scratch files, logs, caches, helper scripts, and executor metadata out of ./deliverables/.
-- Do not modify the reference_files directory.
+- Do not modify the task_inputs directory.
 - Network policy for model-generated tools: {network_policy}.
 
 Task:

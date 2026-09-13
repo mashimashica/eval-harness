@@ -63,3 +63,11 @@ Exact clean head `66c01eefbce311592a65e9bba7d294318be3139b` ran 48 Cursor/generi
 This two-source-file batch explicitly validates the sealed digest before indexing, uses typed fixture JSON/revision fields, updates the canonical availability key, and verifies the semantic fingerprint from the persisted RunManifest snapshot references while retaining the separate legacy prompt hash assertion. Root caught and corrected a draft assertion that had confused those two task digests before saving. Scoped Ruff formatting is included. No tests have run on this batch.
 
 Next: validate these focused tests/types on the saved head, then complete the GDPval wrapper, new generation handoff tests, and the enumerated fixture ports. Root remains the sole remote checkpoint writer; Luna returns each bounded edit before testing or further scope.
+
+## GDPval execution input wrapper batch
+
+Exact clean head `621be5d6b43ef65b0f4c75d3c414aca0bb05a7f9` passed all 48 Cursor/generic runner tests, scoped strict mypy of three changed modules/tests, and Ruff lint/format. These are focused results, not full acceptance.
+
+Luna returned a three-file GDPval wrapper/test edit before tests or commits. The execution prompt now lists and protects only `task_inputs`. A real sealed snapshot is reopened through VerifiedSnapshotBinding, its execution files are materialized from the bound view, and the wrapper is checked for nested input paths and canonical-task preservation. The legacy direct materialization test remains separate for its staged consumer; no downloader or legacy fallback was added. Root reviewed and saves this batch before its scoped snapshot/boundary tests, typing and Ruff.
+
+Next: validate this saved wrapper batch, add the required generation handoff integration file, and port the already enumerated typed-executor/Cursor fixtures. Full tests, coverage, audit, independent review and formal PR CI remain open.

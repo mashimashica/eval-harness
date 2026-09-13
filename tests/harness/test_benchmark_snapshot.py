@@ -34,6 +34,7 @@ from eval_harness.benchmarks.snapshot import (
     read_evaluation_file,
     verify_snapshot,
 )
+from eval_harness.candidate_bundle import VerifiedSnapshotBinding
 from eval_harness.executors.base import TaskSpec
 
 
@@ -376,8 +377,20 @@ class BenchmarkSnapshotTests(unittest.TestCase):
             self.assertNotIn("rubric_json", json.dumps(task.execution_projection()))
             source.write_bytes(b"changed after seal")
             workspace = root / "workspace"
-            self.assertEqual(materialize_execution(snapshot, "gdp-task", workspace), ("task_inputs/a/source.txt",))
+            binding = VerifiedSnapshotBinding.load(snapshot.root)
+            reference = binding.reference(task.task_id)
+            self.assertEqual(binding.materialize_execution(reference, workspace), ("task_inputs/a/source.txt",))
             self.assertEqual((workspace / "task_inputs/a/source.txt").read_bytes(), b"one")
+            canonical_task = task.task_spec()
+            execution = benchmark.execution_task(
+                BenchmarkTask(execution=canonical_task),
+                workspace,
+                network_policy="disabled",
+            )
+            self.assertEqual(canonical_task, TaskSpec("gdp-task", "p"))
+            self.assertIn("- task_inputs/a/source.txt", execution.prompt)
+            self.assertIn("Do not modify the task_inputs directory.", execution.prompt)
+            self.assertNotIn("reference_files", execution.prompt)
 
     def test_gdpval_snapshot_rejects_malformed_rows_and_downloader_results(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
