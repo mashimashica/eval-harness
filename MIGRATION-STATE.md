@@ -3,11 +3,24 @@
 
 # Migration state
 
-Updated: 2026-09-13T03:16:55.718Z
+Updated: 2026-09-13T03:45:12.310Z
 
 Control branch: `checkpoint/migration-control`.
 Procedure: [MIGRATION-WORKFLOW.md](MIGRATION-WORKFLOW.md).
 This file records durable state; it does not declare the entire migration accepted.
+
+## Accepted bounded plan and M0 stop
+
+The user approved the bounded completion/reporting plan at control commit `a45e0108` and requested resumption.
+M0 completed its one investigation round on 2026-09-13, 03:40:37–03:42:55 UTC, within the 30-minute cap.
+Official metadata still lists NLTK 3.10.3 with no patched release for GHSA-8mgp-746c-j5xp.
+A fresh standard pip-audit of the preserved grader lock reports 160 dependencies, one vulnerability, zero skips, exit 1.
+Sol independently confirms no released upgrade path was established. No rejected patch or reproduction was retried.
+Under the user-approved M0 condition, implementation is STOPPED pending a scope decision. No M1 budget has been spent.
+The two options are to remain stopped, or explicitly permit only PR02c completion within its 90-minute budget while
+PR04 acceptance remains blocked. The latter is recommended; it is not yet authorized as a change to the M0 stop rule.
+Evidence and the reviewable options are saved in `reports/m0-dependency-decision-2026-09-13.md` and
+`reports/m0-evidence/grader-pip-audit.json`. All mandatory quality gates remain unchanged.
 
 ## Last durable implementation base
 
@@ -77,14 +90,14 @@ from the restored plan and the immutable accepted source APIs; they are not reco
 
 ## Active work and reachable checkpoints
 
-Only PR02c implementation is active. Luna owners edit bounded disjoint source/test batches in separate checkouts.
+Implementation is paused at M0. No implementation owner is running. Previously returned PR02c batches remain saved.
 Root owns all remote checkpoint writes, saves each batch before validation, and verifies common-base blobs before
 combining reviewed deltas. Each branch has one writer; no future migration slice is implemented in parallel.
 Sol design/review proceeds independently; drafts below are saved work, not implementation acceptance.
 
 | Slice | Checkpoint branch | Saved commit | Saved contract / state |
 | --- | --- | --- | --- |
-| 02c | `checkpoint/pr-02c` | `b2a4ea431b0e1d3f23d093c01ba0b5f1db4b87f6` | Reviewed selected consumer integrated; CLI runtime-root/rejection passes 14 tests plus shell/types/Ruff; real Cursor handoff integration and full gates remain |
+| 02c | `checkpoint/pr-02c` | `2aa8c28b3f074f5e8887fcdccf883123b85199a1` | Reviewed Cursor fixture delta integrated; common CLI handoff test remains incomplete; whole-head gates pending; paused at M0 |
 | 04 | `checkpoint/design-pr04` | `deb807e8454eb4fbb3652bb1f335489fa5325bea` | Final grader design/appendix, exact dependencies/source/licenses and rejected patch evidence saved; strict NLTK audit red; implementation pending |
 | 05 | `checkpoint/design-pr05` | `7e7629c330ca0841ee92612f534db72c0a459b2b` | Final PR05 APIs plus PR02c fixture/consumer amendment and four-finding closure review saved; implementation pending |
 | 06 | `checkpoint/design-pr06` | `f598dbe34b38dcb9f5bb8f9309283c88c7a2dab9` | Final GDPval API contract/appendix aligned with PR05 exact resume/events/aggregate interfaces; implementation pending |
@@ -99,9 +112,9 @@ PR02c disjoint work branches, both based on `3f37a1b7e7e6e74900d475dd018a25931ac
   common-base blob checks.
 - `checkpoint/pr-02c-cursor-fixtures` at `9bcdee9ab8c5b8732bcb2a044ae998303154d0f5`: two Cursor fixture files
   saved/read back; all 43 tests, strict mypy and Ruff pass. Independent fixture review reports no findings; primary
-  promotion awaits the current owner's bounded one-file handoff integration batch.
+  promotion is preserved at 2aa8c28b; combined-head acceptance remains open.
 
-Primary owner is implementing the real Cursor common CLI integration in the one handoff test file.
+The real Cursor common CLI integration remains incomplete in the saved handoff test file; its implementation is paused.
 CLI runtime-root plumbing and legacy Cursor rejection are saved and validated at e8571865. The current batch also fixes the independently reviewed snapshot-missing-byte and valid-but-missing
 indexed-bundle-link test cases. The saved tamper source itself passes all 13 handoff tests, strict mypy and Ruff.
 All source/test scopes are disjoint. Side-branch bytes must be saved/read back and reviewed before combination.
@@ -122,7 +135,7 @@ handoff/loaders, unchanged production coverage scope, and an offline diff check 
 Sol also owns bounded PR05 design work; no source implementation is running for those slices.
 New design documents are reconstructions from the original plan and accepted APIs, not recovered lost files.
 
-Next actions, in order:
+Next actions, subject to the M0 stop above and a user scope decision:
 
 1. Luna completes PR02c within the saved path/API contract, returning each bounded edited batch to root for
    direct API checkpoint/readback before tests or another editing batch.
