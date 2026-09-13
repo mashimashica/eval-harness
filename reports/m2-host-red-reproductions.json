@@ -17,7 +17,13 @@
     {"case": "success_cleanup_then_exception_cleanup", "observed_clock": 2.0, "required_maximum": 1.0},
     {"case": "natural_exit_between_limit_observation_and_reap_poll", "observed": "candidate resource result returned; GraderInfrastructureError not raised", "required": "infrastructure failure"}
   ],
-  "corrective_verifications_failed_in_this_segment": 0,
+  "corrective_verifications_failed_in_this_segment": 1,
+  "first_corrective_review": {
+    "commit": "5c0b1a8439f334dc4bb44b3e6e90c58c20df3728",
+    "reviewer": "Astra parent source review before grouped checks",
+    "remaining": ["Popen.kill call flag is not proof that its internal poll sent a signal", "remaining-seconds conversion restarts deadline after termination latency"],
+    "unit_run": "not run on this incomplete correction"
+  },
   "next": "same Luna owner performs one combined correction, preserving all three assertions; save before grouped verification and independent Sol review",
   "pr04_accepted": false
 }
