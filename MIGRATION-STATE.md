@@ -3,13 +3,39 @@
 
 # Migration state
 
-Updated: 2026-09-13T09:03:34Z
+Updated: 2026-09-13T09:35:03Z
 
 Control branch: `checkpoint/migration-control`.
 Procedure: [MIGRATION-WORKFLOW.md](MIGRATION-WORKFLOW.md).
 This record preserves recoverable work; it does not declare the migration accepted.
 
-## Current status: autonomous continuation under revised issue-level stop rule
+## Latest recovery point: fixed Linux CI wiring under review
+
+Implementation `checkpoint/pr-04` is saved at
+`92408b9d506f6b287598616b7ac58e9e145713c7`, tree
+`3b38520b2eb62264e2a265db13c80ed65dc26dfc`. It adds the fixed Ubuntu candidate
+provisioning/audit workflow and exact-vendor gate/attribution changes. Luna reports
+YAML/TOML parsing, shell syntax including added run blocks, exact vendor selector checks
+and scoped vendor pre-commit behavior passing. Sol is reviewing this exact delta before
+parent Draft PR promotion. No real Linux job has started yet.
+
+The preceding preparation component is locally closed at `e2a5a6a7` (14 tests,
+strict typing, Ruff, shell syntax and Sol). A separate parent whole-suite baseline on
+that head failed locally: initial /tmp-symlink test setup was corrected once; the
+physical-path attempt ran 610 unit methods with 11 failures and two errors involving
+the existing Linux-only Cursor guard and case-insensitive collision fixtures. Measured
+coverage is 10954/11791 = 92.90%, below the exact 96% gate. See
+`reports/m2-local-suite-baseline.json`. Do not relax guards, count this as accepted,
+or repeat the same local platform checks. Fixed Linux CI and meaningful additional
+PR04 host/worker coverage remain required. Both local test sessions have finished.
+
+Current interval deadline remains `2026-09-13T10:33:34Z`; after save/readback/report,
+continue the next interval autonomously. The heartbeat id is `automation`. New issue-level
+stop rules, preserved failure history, DCO/non-force/readback, 15-minute saves, role split,
+one-PR implementation, no models/merge/release, CVE hold and final deletion requirements
+below remain authoritative. Main and pre-existing user changes are protected.
+
+## Autonomous continuation policy and preceding interval notes
 
 Preparation component local closure is verified at
 `e2a5a6a74c14a6577900859c7a4cc33d98482562`, tree

@@ -1,0 +1,49 @@
+{
+  "schema_version": 1,
+  "tested_commit": "e2a5a6a74c14a6577900859c7a4cc33d98482562",
+  "tested_tree": "84afcaa43ab36e025bf741882731a127c81a54ff",
+  "platform": "macOS arm64, case-insensitive filesystem, Python 3.13.14",
+  "purpose": "One whole-suite baseline attempt while CI wiring was implemented independently; not real Linux, isolation or final acceptance",
+  "command": "coverage run --rcfile=config/eval-harness-coveragerc scripts/ci/run_eval_harness_coverage.py; coverage combine; coverage json; exact --check-summary guard",
+  "environment": "Empty inherited environment with explicit locked-venv/system PATH, UV_OFFLINE=1, task-specific TMPDIR and COVERAGE_FILE; no model calls or dependency installation",
+  "first_attempt": {
+    "log": "/tmp/pr04-coverage.7vIh3S/suite.log",
+    "suite_exit": 1,
+    "unit_methods_run": 610,
+    "failures": 59,
+    "errors": 124,
+    "elapsed_seconds": 41.519,
+    "coverage": "9448/11791 statements, 80.13%",
+    "cause": "Parent chose /tmp as TMPDIR ancestor, but /tmp is a macOS symlink. Existing canonical-path guards correctly reject this test configuration.",
+    "correction": "Do not weaken production guards. Repeat once with an explicitly physical /private/tmp root."
+  },
+  "physical_path_attempt": {
+    "log": "/private/tmp/pr04-coverage-physical.2STe1O/suite.log",
+    "coverage_json": "/private/tmp/pr04-coverage-physical.2STe1O/coverage.json",
+    "suite_exit": 1,
+    "unit_methods_run": 610,
+    "failures": 11,
+    "errors": 2,
+    "elapsed_seconds": 28.679,
+    "covered_lines": 10954,
+    "num_statements": 11791,
+    "missing_lines": 837,
+    "percent_covered": 92.90136544822322,
+    "exact_96_percent_gate": false,
+    "observed_platform_limits": [
+      "Cursor tests reach the existing published-Linux-x86_64-only preflight guard on macOS arm64.",
+      "Casefold-collision fixtures cannot create both A/a directory names on this case-insensitive filesystem; two fixture mkdir calls raise FileExistsError, while file overwrites erase intended collisions."
+    ],
+    "unrun": "The top-level shell suite exits after failing unittest, so any later shell stages are not claimed complete."
+  },
+  "pr04_source_coverage_observation": [
+    {"file": "eval_harness/bigcodebench_runner.py", "statements": 628, "missing": 180},
+    {"file": "eval_harness/grader_sandbox.py", "statements": 649, "missing": 163}
+  ],
+  "decision": "No more local whole-suite repetitions or changes to already accepted platform guards/collision policies. Use the fixed Linux CI gate; expand meaningful PR04 worker/host regression coverage with the upcoming boundary implementation. Keep this failed local result explicit, not waived or accepted.",
+  "original_tmp_alias_issue": "Resolved by the one physical-path correction; the remaining unsupported-platform fixtures are distinct, not a reset of the same issue's history.",
+  "source_changed_by_parent": false,
+  "local_sessions_finished": true,
+  "pr04_accepted": false,
+  "migration_complete": false
+}
