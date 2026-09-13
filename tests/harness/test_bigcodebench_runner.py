@@ -8,9 +8,13 @@ from __future__ import annotations
 import hashlib
 import hmac
 import json
+import sys
+import types
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
+import eval_harness.bigcodebench_runner as runner_module
 from eval_harness.bigcodebench_runner import (
     MAX_OUTPUT_BYTES,
     OUTPUT_FRAME_OVERHEAD,
@@ -206,6 +210,89 @@ class TestBigCodeBenchRunner(unittest.TestCase):
         payload = b'{"schema_version":1,"code":' + nested + b',"test_code":"","entry_point":"answer","task_id":"t"}'
         with self.assertRaises(ProtocolError):
             decode_bcbi(input_with_payload(KEY, payload))
+
+    def test_main_orders_dumpability_limits_input_and_fd_setup(self) -> None:
+        arguments = [item for flag, _field in runner_module._CLI_LIMIT_FIELDS for item in (flag, "1")]
+        events: list[str] = []
+        input_bytes = encode_bcbi(request(), KEY)
+        with (
+            patch.object(runner_module, "_set_dumpability", side_effect=lambda: events.append("dumpability")),
+            patch.object(runner_module, "_apply_runner_limits", side_effect=lambda _limits: events.append("limits")),
+            patch.object(
+                runner_module, "_read_bounded_input", side_effect=lambda: events.append("input") or input_bytes
+            ),
+            patch.object(runner_module, "_prepare_output_fd", side_effect=lambda: events.append("dup") or 9),
+            patch.object(runner_module, "_replace_standard_fds", side_effect=lambda: events.append("null")),
+            patch.object(runner_module, "_run_native", side_effect=lambda *_args: events.append("native") or True),
+            patch.object(runner_module.os, "close"),
+        ):
+            result = runner_module.main(arguments)
+        self.assertEqual(result, 0)
+        self.assertEqual(events, ["dumpability", "limits", "input", "dup", "null", "native"])
+
+    def test_native_hook_emits_authenticated_start_and_result_without_key_args(self) -> None:
+        events: list[object] = []
+        original_start_holder: list[object] = []
+
+        class FakeProcess:
+            instances: list[object] = []
+
+            def __init__(self, target: object, args: tuple[object, ...] = ()) -> None:
+                self._target = target
+                self._args = args
+                self.exitcode: int | None = 0
+                self.instances.append(self)
+
+            def start(self) -> None:
+                self.exitcode = 0
+
+        original_start_holder.append(FakeProcess.start)
+
+        def unsafe_execute(*_args: object) -> None:
+            return None
+
+        def untrusted_check(
+            code: str,
+            test_code: str,
+            entry_point: str,
+            max_as_limit: int,
+            max_data_limit: int,
+            max_stack_limit: int,
+        ) -> tuple[str, dict[str, object]]:
+            self.assertEqual(
+                (code, test_code, entry_point), (request().code, request().test_code, request().entry_point)
+            )
+            self.assertEqual((max_as_limit, max_data_limit, max_stack_limit), (8192, 6144, 10))
+            process = FakeProcess(unsafe_execute, (request().code,))
+            process.start()
+            return "pass", {}
+
+        fake_multiprocessing = types.ModuleType("multiprocessing")
+        setattr(fake_multiprocessing, "set_start_method", lambda method, force: events.append((method, force)))
+        setattr(fake_multiprocessing, "get_start_method", lambda: "spawn")
+        setattr(fake_multiprocessing, "get_context", lambda: types.SimpleNamespace(Process=FakeProcess))
+        fake_package = types.ModuleType("bigcodebench")
+        fake_eval = types.ModuleType("bigcodebench.eval")
+        setattr(fake_eval, "unsafe_execute", unsafe_execute)
+        setattr(fake_eval, "untrusted_check", untrusted_check)
+        output: list[bytes] = []
+        with (
+            patch.dict(
+                sys.modules,
+                {
+                    "multiprocessing": fake_multiprocessing,
+                    "bigcodebench": fake_package,
+                    "bigcodebench.eval": fake_eval,
+                },
+            ),
+            patch.object(runner_module.sys, "path", list(runner_module.sys.path)),
+            patch.object(runner_module, "_write_frame", side_effect=output.append),
+        ):
+            self.assertTrue(runner_module._run_native(request(), KEY, 9))
+        self.assertEqual(events, [("spawn", True)])
+        self.assertEqual(FakeProcess.start, original_start_holder[0])
+        self.assertEqual(parse_authenticated_output(b"".join(output), KEY).native_status, NativeStatus.PASS)
+        self.assertNotIn(KEY, FakeProcess.instances[0]._args)
 
 
 if __name__ == "__main__":
