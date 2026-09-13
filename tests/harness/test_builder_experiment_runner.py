@@ -482,12 +482,12 @@ class BuilderExperimentRunnerTests(unittest.TestCase):
                 tuple(item.path for item in snapshot_task.execution_view.files),
                 ("task_inputs/execution.txt",),
             )
-            self.assertEqual(dict(snapshot_task.execution_view.data), {})
+            self.assertEqual(snapshot_task.execution_view.data, {})
             self.assertEqual(
                 tuple(item.path for item in snapshot_task.evaluation_view.files),
                 ("task_inputs/evaluation.txt",),
             )
-            self.assertEqual(dict(snapshot_task.evaluation_view.data), {"private": "evaluation-only"})
+            self.assertEqual(snapshot_task.evaluation_view.data, {"private": "evaluation-only"})
 
             execution = selected.execution_task(
                 BenchmarkTask(execution=snapshot_task.task_spec()),
