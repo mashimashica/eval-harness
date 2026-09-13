@@ -3,7 +3,7 @@
 
 # Migration state
 
-Updated: 2026-09-12T23:59:42.179Z
+Updated: 2026-09-13T00:24:04.831Z
 
 Control branch: `checkpoint/migration-control`.
 Procedure: [MIGRATION-WORKFLOW.md](MIGRATION-WORKFLOW.md).
@@ -44,7 +44,7 @@ PR02c has not been published. The migration still uses the original eleven logic
 These results apply to the recorded PR03 source. They do not establish final migration acceptance.
 Real-model experiments have not been run.
 
-## Unpublished work requires recovery
+## Previous unpublished work was lost
 
 The previous execution environment became unavailable. After reconnection, the expected scratch directories,
 including source stages and interface-contract files, were absent.
@@ -64,7 +64,7 @@ No usable remote implementation checkpoint for the unpublished slices has been i
 Earlier focused test reports are historical observations, not proof of currently available source.
 Do not mark these slices restored or validated until their actual bytes are recovered and checked.
 
-## Required inputs before restarting implementation
+## Recovered canonical plan
 
 Original user plan: `eval-harness-neutrality-migration-plan-2026-09-12.md`.
 The user-provided canonical plan remains the scope authority.
@@ -75,20 +75,32 @@ Size: 33790 bytes. SHA-256: `174f0b3d289ddffa9e9d617637e58dc2ad4198f2046a3064407
 Do not substitute this state summary for that plan. Missing unpublished contracts will be newly specified by Sol
 from the restored plan and the immutable accepted source APIs; they are not recovered original contracts.
 
+## Active work and reachable checkpoints
+
+Only PR02c implementation is active. Luna owns its isolated worktree and checkpoint branch.
+Sol design/review proceeds independently; drafts below are saved work, not implementation acceptance.
+
+| Slice | Checkpoint branch | Saved commit | Saved contract / state |
+| --- | --- | --- | --- |
+| 02c | `checkpoint/pr-02c` | `039f5524b8fc4a7d51f2bf2521cbdbf1a71cc705` | `contracts/pr02c-reconstruction.md`, `contracts/pr02c-work.md`; design accepted, Luna implementing; no new test claim |
+| 04 | `checkpoint/design-pr04` | `31b3344c9c0f0f66d25265153f405d06dfa25c20` | Grader boundary contract, evidence, and checkpoint record; draft, remaining sandbox/lock proof |
+| 06 | `checkpoint/design-pr06` | `2b4a597d94f800fc28bcce70e6ccbfc419303f1c` | GDPval rubric/pairwise/panel design draft; exact fixtures still being completed |
+| 08 | `checkpoint/design-pr08` | `bd490241c0b29ceef11133693117ea6499c7e427` | AA-v2 protocol design draft; exact hashes/fixtures/resume rules being completed |
+
+PR02c contract SHA-256: `a755aa7ef611238258308146ac8d602e4b9debd1e644a1e9b795616c95ce86fc`.
+Its two files and ref were read back and matched the saved bytes/Git blobs before implementation started.
+Sol also owns bounded PR05 and PR07 design work; no source implementation is running for those slices.
+New design documents are reconstructions from the original plan and accepted APIs, not recovered lost files.
+
 Next actions, in order:
 
-1. Original plan recovered and saved with provenance (this checkpoint).
-2. Accepted source restored: all 5,134 tracked blobs and modes verified, no missing paths or unsafe symlinks.
-   Sol is specifying a new PR02c contract. Unpublished source remains unavailable and must be rebuilt.
-3. Create `checkpoint/pr-02c` from the durable implementation base above.
-   Save the PR02c contract, scope, owner, and recovery record before changing code.
-4. Implement or restore PR02c in small saved batches, then perform source review and all required validation.
-5. Advance the migration stack one accepted implementation slice at a time.
+1. Luna implements PR02c within the saved path/API contract and checkpoints each coherent batch before testing.
+2. Sol reviews the saved implementation; close focused tests and all unchanged required gates on its resulting head.
+3. Root promotes the reviewed slice to the Draft stack, verifies the saved head and CI commit/tree evidence.
+4. Advance through PR04–09 one accepted implementation slice at a time.
+5. Delete replaced routes in PR10 and close fourth-benchmark/final-head acceptance in PR11.
 
-Current implementation work in progress: none. Source restoration is complete; Sol owns PR02c design.
-Independent Sol design work is characterizing PR04 grader isolation, PR06 GDPval semantics, and PR08 AA-v2 protocol.
-The next implementation prerequisite is saving Sol's reviewed PR02c contract.
-Do not recreate all unpublished slices in parallel.
+No merge, release, publish, or real-model experiment is part of this work.
 
 ## Accepted source and development environment recovered
 
