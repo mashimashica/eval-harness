@@ -41,3 +41,17 @@ The parent ran the separate grouped unit/static checks recorded in
 NLTK execution, real sandbox or parity ran. This is the initial draft review; no corrective
 round has yet been verified. Luna receives one consolidated bounded correction; unchanged
 evidence and closed dependency investigation are not repeated.
+
+## Fixed archive compatibility check during the first correction
+
+The parent retrieved only the frozen CPython archive into memory, verified its exact
+30,778,779 bytes and SHA-256 `64427febea27864d136db46c8efe968eb6fa5ca2813ce1dca4bb95aec31cb2e4`,
+and listed members with `tar -tvzf -`; no extraction, interpreter execution or installation
+occurred. Its 4,906 members include 1,048 symlinks, 300 with parent-relative targets,
+zero directory entries and zero special entries. For example,
+`python/share/terminfo/1/1178 -> ../a/adm1178` remains within the archive root.
+The initial `_contained_link` rejects every `..` and therefore rejects this fixed input.
+Luna was notified before returning the first corrective batch: normalize and check true
+containment, preserve safe aliases, prevent writes through archive symlinks, and add a
+corresponding real archive fixture. This is new extractor/input compatibility evidence,
+not reopened dependency research or a corrective test run.
