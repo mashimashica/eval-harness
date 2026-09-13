@@ -1,0 +1,80 @@
+{
+  "schema_version": 1,
+  "recorded_at": "2026-09-13T08:47:25Z",
+  "tested_commit": "7757c8ae9cd18681c789e2294d02597bcc4c39e3",
+  "tested_tree": "dd4c83b28cbbc138236154c7aee0714f4339cec1",
+  "record_only_checkpoint": "90dc9d17f0c10532028ace4f8657240b6e742a26",
+  "record_only_tree": "9512e2469b787a7f82703b050d52415a78d5022e",
+  "source_and_test_bytes_unchanged_after_validation": true,
+  "python": "3.13.14",
+  "platform": "macOS arm64",
+  "source_isolation": "clean detached review worktree at the exact saved second-correction commit",
+  "commands": {
+    "unittest": "../pr04/.venv/bin/python -m unittest discover -s tests/harness -p test_bigcodebench_grader_boundary.py -v",
+    "mypy": "../pr04/.venv/bin/mypy --strict --explicit-package-bases --show-error-codes eval_harness/grader_sandbox.py scripts/ci/install_bigcodebench_grader.py tests/harness/test_bigcodebench_grader_boundary.py",
+    "ruff_lint": "../pr04/.venv/bin/ruff check eval_harness/grader_sandbox.py scripts/ci/install_bigcodebench_grader.py tests/harness/test_bigcodebench_grader_boundary.py",
+    "ruff_format": "../pr04/.venv/bin/ruff format --check eval_harness/grader_sandbox.py scripts/ci/install_bigcodebench_grader.py tests/harness/test_bigcodebench_grader_boundary.py",
+    "shell_syntax": "bash -n scripts/ci/install_bubblewrap.sh"
+  },
+  "results": {
+    "unit_methods": 11,
+    "unit_passes": 10,
+    "unit_errors": 1,
+    "unit_elapsed_seconds": 0.023,
+    "failing_test": "test_uv_suffix_and_exact_version_parser",
+    "exception": "scripts.ci.install_bigcodebench_grader.ProvisioningError: uv version mismatch",
+    "test_location": "tests/harness/test_bigcodebench_grader_boundary.py:205",
+    "exception_location": "scripts/ci/install_bigcodebench_grader.py:176",
+    "mypy": "passed: no issues in three source files",
+    "ruff_lint": "passed",
+    "ruff_format": "passed: three files already formatted",
+    "shell_syntax": "passed",
+    "batch_accepted": false,
+    "exit_status_note": "The combined shell command ended with the successful shell-syntax check. Its overall zero status does not override the explicit unittest error."
+  },
+  "repeated_defect": {
+    "official_output_fixture": "uv 0.11.29 (901092ee1 2026-07-15 aarch64-apple-darwin)\n",
+    "fixture_provenance": "Previously recorded output from the cached official pinned uv tool; no network query or new installation in this segment.",
+    "cause": "output[len(prefix):] retains the separating space, so startswith('(') rejects the official metadata suffix.",
+    "previous_correction_evidence": "reports/m2-preparation-first-correction.json additional_nonacceptance_diagnostics.remaining_uv_format_issue",
+    "failed_corrective_rounds": 2
+  },
+  "independent_review": {
+    "reviewer": "Sol (gpt-5.6-sol)",
+    "read_only": true,
+    "fixed_base": "d8e7653b704d2ba8a3b03ca966f9caf31b1f9bfc",
+    "fixed_head": "7757c8ae9cd18681c789e2294d02597bcc4c39e3",
+    "findings": [
+      {
+        "priority": "P1",
+        "function": "_verify_uv_version",
+        "defect": "The pinned official uv output is rejected because the metadata substring starts with a space, not an opening parenthesis.",
+        "status": "same issue remains after the second corrective round; independently confirmed"
+      },
+      {
+        "priority": "P1",
+        "function": "_install_nltk_package",
+        "defect": "If archive_destination.open('xb') raises FileExistsError, the shared exception cleanup unlinks the pre-existing archive.",
+        "status": "unresolved; source review finding, no destructive reproduction performed"
+      }
+    ],
+    "scope_limit": "Review stopped under the two-failure rule. Other previous findings have no additional independent closure."
+  },
+  "stop": {
+    "reason": "Same issue persists after two corrective rounds; explicit user stop rule applies without resetting the count on resume.",
+    "third_correction_started": false,
+    "further_validation_started": false,
+    "implementer_state": "stopped/completed",
+    "reviewer_state": "stopped/completed",
+    "residual_sessions": [],
+    "ci_jobs_started": [],
+    "required_next_authority": "Explicit user direction addressing the two-failure stop; do not silently continue or reset the count."
+  },
+  "real_installation_executed": false,
+  "real_linux_isolation_verified": false,
+  "native_1140_parity_executed": false,
+  "cve_acceptance": "held; known NLTK CVE remains unresolved, with no waiver or version spoofing",
+  "pr04_accepted": false,
+  "pr05_to_pr11_started": false,
+  "whole_migration_complete": false
+}

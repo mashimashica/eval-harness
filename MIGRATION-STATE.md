@@ -3,13 +3,58 @@
 
 # Migration state
 
-Updated: 2026-09-13T08:42:27Z
+Updated: 2026-09-13T08:47:25Z
 
 Control branch: `checkpoint/migration-control`.
 Procedure: [MIGRATION-WORKFLOW.md](MIGRATION-WORKFLOW.md).
 This record preserves recoverable work; it does not declare the migration accepted.
 
-## Current status: explicitly resumed; verify the saved second preparation correction
+## Current status: stopped after the second corrective failure
+
+The explicit resume at `2026-09-13T08:42:27Z` preserved the previous failure count.
+The saved second preparation correction at
+`7757c8ae9cd18681c789e2294d02597bcc4c39e3`, tree
+`dd4c83b28cbbc138236154c7aee0714f4339cec1`, was checked once in the clean detached
+review worktree. Ten of eleven preparation unit methods passed; the official fixed uv
+version output was still rejected. Strict mypy (three files), scoped Ruff lint/format
+and bubblewrap installer shell syntax passed. These are partial local checks, not a
+successful validation batch, actual Linux installation, or PR04 acceptance.
+
+Sol independently confirmed that `_verify_uv_version` retains the separating space
+in the substring tested for an opening parenthesis. The official `uv 0.11.29` build
+metadata is therefore still rejected: the same issue remains after corrective round
+two. Sol also identified that `_install_nltk_package` unlinks an existing archive after
+exclusive creation refuses it. Other prior findings have no additional independent
+closure from this stopped review. Evidence: `reports/m2-preparation-second-correction.json`.
+
+The user's two-failure stop rule is active. No third correction, further quality test,
+installation, external job or subsequent PR implementation was started. Further work
+requires explicit user direction addressing this stop; a resume must not reset the
+failure count. The original design and quality requirements remain unchanged.
+
+Durable implementation checkpoint: `checkpoint/pr-04` at
+`90dc9d17f0c10532028ace4f8657240b6e742a26`, tree
+`9512e2469b787a7f82703b050d52415a78d5022e`. This adds only the stop record in
+`contracts/pr04-work.md`; production and test sources are identical to the tested head.
+It was saved with DCO, a non-force ref update and remote ref/tree/blob/byte readback.
+This control record and the consolidated evidence are saved separately using the same
+procedure. Existing history and checkpoint branches are preserved.
+
+Luna and Sol are stopped/completed. All parent commands have returned; no residual
+process session or CI job was started by this segment. Main remains untouched and clean
+on `main` at `adb6adf4ec0113790a326a67325ced5716dc6837`. Worktrees are aligned only
+after proving their local saved bytes match the remote checkpoint.
+
+Earlier host and bootstrap component closures are retained without retesting. PR04
+fixed Linux provisioning, public preflight/launch, common evaluator/resource-server
+callers, old runner removal, real sandbox checks and all 1,140 native parity cases
+remain unfinished. PR05–11 remain unimplemented. NLTK CVE and relevant acceptance are
+still held; no audit exclusion or version spoofing is permitted. Final old-route and
+`contracts/*.md` deletion, fourth benchmark and whole-head quality gates remain pending.
+No real-model experiment, merge, release, PR04 acceptance or migration completion is
+claimed.
+
+## Previous resume record, 2026-09-13T08:42:27Z
 
 The user explicitly resumed at `2026-09-13T08:42:27Z`. The work interval ends no later
 than `2026-09-13T10:12:27Z` (90 minutes). No failure count is reset by this resumption.
