@@ -3,7 +3,7 @@
 
 # Migration state
 
-Updated: 2026-09-13T07:33:00Z
+Updated: 2026-09-13T07:50:00Z
 
 Control branch: `checkpoint/migration-control`.
 Procedure: [MIGRATION-WORKFLOW.md](MIGRATION-WORKFLOW.md).

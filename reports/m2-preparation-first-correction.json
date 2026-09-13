@@ -34,6 +34,12 @@
     "remaining": ["NLTK package-id level", "actual Ubuntu release", "exact vendor keyset", "validated build package version map", "separate full-data and prepared-content inventory hashes", "canonical installed resource paths without repository mutation", "absolute real setup paths", "required identity mutation regressions and four mypy errors"]
   },
   "failed_corrective_rounds": 1,
+  "additional_nonacceptance_diagnostics": {
+    "exact_archive_extraction_on_macos": "Not completed: case-insensitive local filesystem collides on fixed names python/share/terminfo/E/Eterm and python/share/terminfo/e/eterm. No grader interpreter executed. Do not rename paths or weaken the fixed Linux target; actual artifact extraction success remains a Linux proof.",
+    "cached_official_uv_output": "uv 0.11.29 (901092ee1 2026-07-15 aarch64-apple-darwin)",
+    "uv_command": "/opt/homebrew/bin/uvx --offline --from uv==0.11.29 uv --version",
+    "remaining_uv_format_issue": "Exact whole-line equality rejects the official fixed tool's build metadata; Luna was notified during the second correction to validate the exact version token while accepting the official metadata suffix."
+  },
   "real_installation_executed": false,
   "pr04_accepted": false,
   "whole_migration_complete": false
