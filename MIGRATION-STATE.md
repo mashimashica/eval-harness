@@ -3,7 +3,7 @@
 
 # Migration state
 
-Updated: 2026-09-13T06:12:00Z
+Updated: 2026-09-13T06:09:01Z
 
 Control branch: `checkpoint/migration-control`.
 Procedure: [MIGRATION-WORKFLOW.md](MIGRATION-WORKFLOW.md).
@@ -18,9 +18,13 @@ All remote Draft heads 38–42 and the frozen design refs were checked and match
 The previously reported local clone was absent, so a fresh clone was made; its root remains
 clean on `main`. Implementation runs in a separate worktree from the exact PR04 checkpoint.
 
-Resumption record: `checkpoint/pr-04` at `9bed63c6c3a26eb2542ce22d6cd9669a618cd8ec`,
-tree `87536f7a5862842cb29f1d675fda6a06b9464b57`; ref and changed UTF-8 bytes/Git blob
-were read back. This changes the work record only. No new implementation test is claimed.
+Current implementation checkpoint: `checkpoint/pr-04` at `64e9855b796047d351e67c2b14006eccf5ad2414`,
+tree `5361630ad13135f77c387a3c7937bc6bcf771fc4`; ref and all three changed UTF-8 files/Git blobs
+were read back. It adds the first host command/lock/supervisor batch; public attestation and
+launch remain closed. Exact-head local checks found one path-normalization fixture failure
+among 18 unittest methods, seven strict-mypy errors and scoped Ruff formatting/import issues.
+See `reports/m2-host-initial-validation.json`. Sol is independently reviewing this saved delta;
+the same Luna owner will receive consolidated corrections. No PR04 acceptance is claimed.
 Luna is the sole implementation owner; Sol reviews saved commits without source edits;
 Astra owns API checkpoints, integration and acceptance. No grandchildren are used.
 
@@ -29,7 +33,9 @@ The first bounded host-policy/supervisor batch permits only `eval_harness/grader
 and `tests/harness/test_bigcodebench_runner.py`; save before validation and within 15 minutes.
 Runtime provisioning, caller replacement, real Linux boundary/native parity and full PR04
 acceptance remain pending. The local host is macOS arm64, not the required Linux acceptance
-platform. The locked development environment is being recreated for local correctness checks.
+platform. The locked development environment was recreated successfully with uv 0.11.29 and
+CPython 3.13.14; `uv.lock` is unchanged. The attached original plan matches the control-branch
+copy exactly at SHA-256 `174f0b3d289ddffa9e9d617637e58dc2ad4198f2046a3064407ba41aa423885f`.
 
 The user explicitly requires removal of all tracked `contracts/*.md` from final implementation
 head after incorporating necessary permanent specification into formal docs. History and

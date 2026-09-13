@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "tested_commit": "64e9855b796047d351e67c2b14006eccf5ad2414",
+  "tree": "5361630ad13135f77c387a3c7937bc6bcf771fc4",
+  "tested_at": "2026-09-13T06:09:01Z",
+  "platform": "macOS arm64",
+  "python": "3.13.14",
+  "uv": "0.11.29",
+  "scope": "initial host-policy/supervisor unit and static checks; not real sandbox acceptance",
+  "unittest": {
+    "command": ".venv/bin/python -m unittest discover -s tests/harness -p test_bigcodebench_runner.py -v",
+    "methods": 18,
+    "passed": 17,
+    "failed": 1,
+    "failure": "test_bwrap_policy_is_explicit_read_only_and_credential_free compares resolved /private/var path with unresolved /var fixture path"
+  },
+  "mypy": {
+    "command": ".venv/bin/mypy --strict --explicit-package-bases --show-error-codes eval_harness/grader_sandbox.py tests/harness/test_bigcodebench_runner.py",
+    "errors": 7,
+    "details": [
+      "grader_sandbox.py:384-385: source variable reused as Path after str",
+      "grader_sandbox.py:403: value variable reused as int after str",
+      "grader_sandbox.py:599-600: events variable reused as selector result after int",
+      "test_bigcodebench_runner.py:152: imported subprocess module is not an explicit grader_sandbox export"
+    ]
+  },
+  "ruff": {
+    "version": "0.12.11",
+    "lint": "two import-sort errors in the changed files",
+    "format": "test file needs formatting"
+  },
+  "correction_rounds_completed": 0,
+  "independent_review": "in progress against this exact commit",
+  "pr04_accepted": false,
+  "real_sandbox_verified": false,
+  "native_1140_parity_verified": false,
+  "whole_migration_complete": false,
+  "known_dependency_cve": "unresolved; investigation remains closed"
+}
