@@ -30,6 +30,11 @@ not checkpoint count. No new validation has run at this record-only save.
 
 ### Test-first reproduction checkpoint
 
+Fixture refinement now drains both EOFs before the success cleanup and arms natural exit
+from the second resource sample, after the caller's alive poll but at the cleanup helper's
+poll. Tests import their own time module for strict typing. Production remains byte-identical
+to the saved defective host; parent will run only these three reproductions after this save.
+
 Luna added three fake-clock/selector, pipe-backed regressions; production is unchanged.
 No unit run has occurred yet. Parent read-through identified two fixture corrections
 before the intended red baseline: drain stdout EOF so the success-cleanup case reaches

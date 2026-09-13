@@ -15,6 +15,7 @@ import subprocess
 import sys
 import tempfile
 import threading
+import time
 import types
 import unittest
 from collections.abc import Callable
@@ -250,6 +251,9 @@ class _PipePopen:
         self.returncode = -9
         for name in ("_output_write", "_error_write", "_input_read"):
             self._close_fd(name)
+
+    def exit_after_polls(self, additional_polls: int) -> None:
+        self._exit_on_poll = self.poll_calls + additional_polls
 
     def close_all(self) -> None:
         for name in ("_output_write", "_error_write", "_input_read"):
@@ -579,8 +583,8 @@ class TestBigCodeBenchRunner(unittest.TestCase):
                 ),
                 patch.object(sandbox_module, "_sample_process_tree", return_value=(set(), 0)),
                 patch.object(sandbox_module, "_descendant_pids", return_value=set()),
-                patch.object(sandbox_module.time, "monotonic", side_effect=clock.monotonic),
-                patch.object(sandbox_module.time, "sleep", side_effect=clock.sleep),
+                patch.object(time, "monotonic", side_effect=clock.monotonic),
+                patch.object(time, "sleep", side_effect=clock.sleep),
                 patch.object(sandbox_module, "DESCENDANT_SAMPLE_SECONDS", 1.0),
             ):
                 with self.assertRaises(GraderInfrastructureError):
@@ -595,7 +599,7 @@ class TestBigCodeBenchRunner(unittest.TestCase):
             encode_start(KEY) + encode_result(KEY, NativeStatus.PASS),
         )
         fake.returncode = 0
-        selector = _ScriptedSelector(clock, ["stdout", "stderr"])
+        selector = _ScriptedSelector(clock, ["stdout", "stdout", "stderr"])
         limits = GraderSandboxLimits(teardown_seconds=1.0)
         try:
             with (
@@ -606,8 +610,8 @@ class TestBigCodeBenchRunner(unittest.TestCase):
                     return_value=cast(selectors.BaseSelector, selector),
                 ),
                 patch.object(sandbox_module, "_descendant_pids", return_value={99}),
-                patch.object(sandbox_module.time, "monotonic", side_effect=clock.monotonic),
-                patch.object(sandbox_module.time, "sleep", side_effect=clock.sleep),
+                patch.object(time, "monotonic", side_effect=clock.monotonic),
+                patch.object(time, "sleep", side_effect=clock.sleep),
                 patch.object(sandbox_module, "DESCENDANT_SAMPLE_SECONDS", 1.0),
             ):
                 with self.assertRaises(GraderInfrastructureError):
@@ -618,8 +622,16 @@ class TestBigCodeBenchRunner(unittest.TestCase):
 
     def test_supervisor_rejects_limit_when_trusted_process_exits_during_reap_poll(self) -> None:
         clock = _FakeClock()
-        fake = _PipePopen(encode_start(KEY), clock=clock, exit_on_poll=5, hold_pipes=True)
+        fake = _PipePopen(encode_start(KEY), clock=clock, hold_pipes=True)
         selector = _ScriptedSelector(clock, ["stdout"])
+        samples = iter([(set(), 0), ({99}, 0)])
+
+        def sample(_pid: int) -> tuple[set[int], int]:
+            value = next(samples)
+            if value[0]:
+                fake.exit_after_polls(2)
+            return value
+
         try:
             with (
                 patch.object(subprocess, "Popen", return_value=fake),
@@ -631,11 +643,11 @@ class TestBigCodeBenchRunner(unittest.TestCase):
                 patch.object(
                     sandbox_module,
                     "_sample_process_tree",
-                    side_effect=[(set(), 0), ({99}, 0)],
+                    side_effect=sample,
                 ),
                 patch.object(sandbox_module, "_descendant_pids", return_value=set()),
-                patch.object(sandbox_module.time, "monotonic", side_effect=clock.monotonic),
-                patch.object(sandbox_module.time, "sleep", side_effect=clock.sleep),
+                patch.object(time, "monotonic", side_effect=clock.monotonic),
+                patch.object(time, "sleep", side_effect=clock.sleep),
                 patch.object(sandbox_module, "DESCENDANT_SAMPLE_SECONDS", 0.0),
             ):
                 with self.assertRaises(GraderInfrastructureError):
