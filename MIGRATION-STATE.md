@@ -11,6 +11,14 @@ This record preserves recoverable work; it does not declare the migration accept
 
 ## Current status: autonomous continuation under revised issue-level stop rule
 
+Sol's fixed-head review and parent evidence reconciliation are complete; see
+`reports/m2-preparation-revised-correction.json`. The original official uv refusal is
+closed with its two-failure history retained. Existing archive deletion is source-closed.
+Remaining preparation corrections are partial-creation cleanup, test portability/type/
+format, and a distinct shell multiline-validation defect found by parent reproduction.
+Luna receives these in one batch, also explicitly selecting the already pinned Ninja
+build tool rather than inheriting a host executable. No dependency pins are changed.
+
 Latest implementation checkpoint: `26a87464f980ab9bf911a120f2f1cf8bceaf4008`, tree
 `8567d56333ec27a869e5bc34d01627130235afee`. Test-first checkpoint
 `64dc8d615e4d145ecfc211ea5c1bd59cd98cab5f` reproduced both uv refusal and existing

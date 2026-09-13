@@ -1,0 +1,62 @@
+{
+  "schema_version": 1,
+  "tested_commit": "26a87464f980ab9bf911a120f2f1cf8bceaf4008",
+  "tree": "8567d56333ec27a869e5bc34d01627130235afee",
+  "red_commit": "64dc8d615e4d145ecfc211ea5c1bd59cd98cab5f",
+  "red_result": "Two targeted methods errored as expected: official uv suffix rejection and pre-existing archive deletion. 0.004 seconds.",
+  "green_attempt": {
+    "owner": "Luna",
+    "unit_command": "./.venv/bin/python -m unittest tests.harness.test_bigcodebench_grader_boundary",
+    "unit_methods": 12,
+    "unit_passes": 11,
+    "unit_exit": 1,
+    "unit_remaining": "Archive test compares resolved destination with unresolved macOS /var sentinel; /private/var normalization causes false failure before partial-copy branch.",
+    "mypy": "strict over grader_sandbox.py, installer Python and preparation test: one no-implicit-reexport error at test:255 (installer.shutil)",
+    "ruff_lint": "passed",
+    "ruff_format": "failed: test module needs formatting",
+    "shell_syntax": "passed"
+  },
+  "independent_review": {
+    "reviewer": "Sol, read-only fixed head",
+    "closed": [
+      "Python official uv suffix and exact version grammar",
+      "Existing archive deletion on exclusive-create refusal",
+      "Prior source findings: NLTK category/id and VADER zip-only; Ubuntu; exact vendor keyset; build-package map; separate content/full inventory; ephemeral resource paths; physical absolute paths; candidate-only blocked manifest binding"
+    ],
+    "remaining": [
+      "Destination open succeeds but source archive open fails before created=True, leaving an empty newly created destination",
+      "macOS fixture path comparison and unit/static validation failures"
+    ],
+    "not_proven": "Actual Linux installation, frozen archive extraction, complete NLTK tree, real isolation, hosted CI and all-1140 parity"
+  },
+  "parent_evidence_corrections": [
+    {
+      "subject": "Shell uv multiline rejection is not closed",
+      "reproduction": "Feed the exact saved awk program uv 0.11.29 followed by invalid second line.",
+      "actual_exit": 0,
+      "cause": "NR > 1 exits 1, but END sees ok=1 and overrides with exit 0.",
+      "distinction": "The original official-version refusal is resolved; this is a distinct malformed-output acceptance defect. Sol was informed."
+    },
+    {
+      "subject": "Partial-copy regression remains unexercised",
+      "cause": "Mock callback accepts two arguments; production passes length keyword. Once the earlier path assertion is fixed, TypeError would prevent reaching the intended OSError cleanup branch.",
+      "evidence_type": "Fixed source call/signature comparison; not an additional test run"
+    }
+  ],
+  "failure_history": {
+    "official_uv_refusal": {"failed_corrective_rounds": 2, "authorized_extra_attempt": "passed Python regression and independent review"},
+    "archive_existing_data_deletion": "source closure; final grouped regression pending",
+    "archive_partial_creation_cleanup": "first corrective validation/review still incomplete",
+    "shell_multiline_rejection": "new malformed-output acceptance finding, not the original fixed-version refusal"
+  },
+  "next_batch": {
+    "base": "26a87464f980ab9bf911a120f2f1cf8bceaf4008",
+    "owner": "Luna",
+    "allowed_files": ["scripts/ci/install_bigcodebench_grader.py", "scripts/ci/install_bubblewrap.sh", "tests/harness/test_bigcodebench_grader_boundary.py"],
+    "scope": "Consolidated cleanup ownership, regression portability/signature/import/format, and actual shell grammar negative regression. Also bind Meson to the pinned Ninja executable as already required by fixed-environment contract; no dependency revision.",
+    "invariants": "No production accepted candidate; no audit waiver; no host/bootstrap reopening; no real candidate execution; preserve existing files and main; checkpoint before validation within 15 minutes.",
+    "done": "Saved fixed delta, grouped unit/mypy/Ruff/shell checks and independent review; no installation or PR04 acceptance implied."
+  },
+  "pr04_accepted": false,
+  "migration_complete": false
+}
