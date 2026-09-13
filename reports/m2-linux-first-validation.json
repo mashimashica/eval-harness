@@ -11,7 +11,9 @@
   "uv": "0.11.29",
   "run": "https://github.com/mashimashica/eval-harness/actions/runs/34750244430",
   "completed": true,
-  "tests": {"methods": 610, "seconds": 27.453, "unit_result": "all pass", "later_compatibility_and_inventory_steps": "not run after coverage failure"},
+  "tests": {"methods": 610, "seconds": 27.453, "unit_result": "all pass", "CLI_self_tests": ["Codex fake executor", "Claude Code fake executor", "Cursor fake executor", "local judge", "experiment condition", "generic eval", "GDPval harness"], "later_compatibility_and_inventory_steps": "not run after coverage failure"},
+  "dco": {"promoted_commits_checked": 35, "missing_signoffs": []},
+  "whitespace_diagnostic": "Full git diff --check reports preserved upstream CRLF/trailing bytes in exact vendor modules; do not rewrite vendored source. Applicable full pre-commit hooks pass.",
   "coverage": {"covered_lines": 11047, "statements": 11791, "missing_lines": 744, "percent": 93.69010262064286, "required_percent": 96, "result": "fail", "worker_missing": 180, "supervisor_missing": 163},
   "type_check": {
     "checked_files": 120,
@@ -57,8 +59,10 @@
     "run": "https://github.com/mashimashica/eval-harness/actions/runs/34750244668",
     "result": "fail",
     "observed_type": "Hex High Entropy String",
-    "paths": ["resources_servers/bigcodebench/grader-manifest.candidate.json", "resources_servers/bigcodebench/nltk-data-manifest.json", "scripts/ci/install_bigcodebench_grader.py"],
-    "classification": "Sol read-only provenance-versus-secret verification pending; no blanket exclusion authorized"
+    "detections": 62,
+    "path_counts": {"resources_servers/bigcodebench/grader-manifest.candidate.json": 7, "resources_servers/bigcodebench/index.xml": 14, "resources_servers/bigcodebench/nltk-data-manifest.json": 32, "scripts/ci/install_bigcodebench_grader.py": 7, "scripts/ci/install_bubblewrap.sh": 2},
+    "classification": "Sol source-backed classification: public package/content/tree/license hashes and Git identifiers; no credential indicated. Candidate local bindings match bytes and seven index SHA-256 values match data package manifest.",
+    "proposed_finite_scope": ".github/workflows/config/.secrets.baseline: add only exact detected value hashes; preserve two existing entries and all plugins/filters. Require zero same-hook detections plus a non-baseline synthetic entropy negative control. No blanket exclusion or detector disable. Await fixed amendment and Luna implementation."
   },
   "local_artifact_directory": "/private/tmp/pr04-ci.16xoX8",
   "artifact_content_sha256": {
