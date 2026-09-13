@@ -5,7 +5,22 @@
 
 ## User-authorized test-first continuation, 2026-09-13T06:54:57Z
 
-### Current component state: host findings closed; offline bootstrap saved
+### Current component state: host/bootstrap closed; preparation batch saved for review
+
+At `debe87e56552f073d029eb5038a102784f9d2348`, the six bootstrap tests, strict mypy
+and Ruff pass, with Sol's independent production closure. Durable evidence is control
+`reports/m2-bootstrap-local-validation.json`. This is not Linux or real NLTK acceptance.
+
+Luna's next bounded batch adds the fixed environment installer, bubblewrap build script,
+exact candidate lock, non-acceptance policy, synthetic etc files and preparation tests.
+Host additions are limited to canonical JSON/inventory/manifest helpers; the closed
+supervision loop and worker are unchanged. No installation, dependency/network action,
+CI or real sandbox execution occurred. This checkpoint is deliberately before grouped
+tests, strict typing and independent fixed-head review. Parent inspection already flags
+incomplete candidate canonical encoding, NLTK preparation layout/identity and bwrap mode
+handling; these must be consolidated with test/review results and returned to Luna.
+Runtime manifest is currently proposed below the private runtime setup root, but its
+full identity fields and resource path alignment remain unverified. PR04 remains open.
 
 At `e012ccc43d0129124efa63d14b223a1b4027d79f`, all 37 unit methods, strict mypy of
 the two changed files and Ruff lint/format pass. Sol independently closed both original

@@ -14,6 +14,8 @@ from __future__ import annotations
 
 import contextlib
 import fcntl
+import hashlib
+import json
 import math
 import os
 import selectors
@@ -23,7 +25,7 @@ import subprocess
 import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import IO, Final, Iterator, Sequence
+from typing import IO, Final, Iterator, Sequence, cast
 
 from eval_harness.bigcodebench_runner import (
     INPUT_FIXED_BYTES,
@@ -236,6 +238,141 @@ def _real_path(path: Path, field: str, *, must_exist: bool = True) -> Path:
     if not resolved.is_absolute():
         raise GraderInfrastructureError(f"{field} is not an absolute path")
     return resolved
+
+
+def canonical_json_bytes(value: object, *, final_newline: bool = False) -> bytes:
+    """Encode one trusted JSON value with the PR04 canonical JSON rules."""
+
+    try:
+        encoded = json.dumps(
+            value,
+            ensure_ascii=True,
+            sort_keys=True,
+            separators=(",", ":"),
+            allow_nan=False,
+        ).encode("utf-8")
+    except (TypeError, UnicodeError, ValueError) as exc:
+        raise GraderInfrastructureError("canonical JSON is invalid") from exc
+    return encoded + (b"\n" if final_newline else b"")
+
+
+def _hash_regular_file(path: Path, metadata: os.stat_result) -> str:
+    if metadata.st_nlink != 1:
+        raise GraderInfrastructureError("inventory contains a hard-linked regular file")
+    digest = hashlib.sha256()
+    try:
+        with path.open("rb") as stream:
+            opened = os.fstat(stream.fileno())
+            if (opened.st_dev, opened.st_ino, opened.st_size, opened.st_nlink) != (
+                metadata.st_dev,
+                metadata.st_ino,
+                metadata.st_size,
+                metadata.st_nlink,
+            ):
+                raise GraderInfrastructureError("inventory file changed during hashing")
+            for chunk in iter(lambda: stream.read(1024 * 1024), b""):
+                digest.update(chunk)
+            closed = os.fstat(stream.fileno())
+    except GraderInfrastructureError:
+        raise
+    except (OSError, UnicodeError) as exc:
+        raise GraderInfrastructureError("inventory file is unreadable") from exc
+    if (closed.st_dev, closed.st_ino, closed.st_size, closed.st_nlink) != (
+        metadata.st_dev,
+        metadata.st_ino,
+        metadata.st_size,
+        metadata.st_nlink,
+    ):
+        raise GraderInfrastructureError("inventory file changed during hashing")
+    return digest.hexdigest()
+
+
+def _inventory_entries(root: Path) -> tuple[dict[str, object], ...]:
+    """Build the exact file/symlink inventory used by trusted manifests."""
+
+    try:
+        root_metadata = os.lstat(root)
+    except OSError as exc:
+        raise GraderInfrastructureError("inventory root is unavailable") from exc
+    if not stat.S_ISDIR(root_metadata.st_mode) or stat.S_ISLNK(root_metadata.st_mode):
+        raise GraderInfrastructureError("inventory root is not a directory")
+    try:
+        root = root.resolve(strict=True)
+    except (OSError, RuntimeError) as exc:
+        raise GraderInfrastructureError("inventory root cannot be resolved") from exc
+
+    entries: list[dict[str, object]] = []
+
+    def visit(directory: Path) -> None:
+        try:
+            children = sorted(directory.iterdir(), key=lambda child: child.name)
+        except (OSError, UnicodeError) as exc:
+            raise GraderInfrastructureError("inventory directory is unreadable") from exc
+        for child in children:
+            relative = child.relative_to(root).as_posix()
+            try:
+                metadata = os.lstat(child)
+            except FileNotFoundError:
+                raise GraderInfrastructureError("inventory changed during enumeration") from None
+            except OSError as exc:
+                raise GraderInfrastructureError("inventory entry is unavailable") from exc
+            mode = metadata.st_mode
+            if stat.S_ISDIR(mode):
+                visit(child)
+            elif stat.S_ISREG(mode):
+                entries.append(
+                    {
+                        "path": relative,
+                        "type": "file",
+                        "mode": stat.S_IMODE(mode),
+                        "size": metadata.st_size,
+                        "sha256": _hash_regular_file(child, metadata),
+                    }
+                )
+            elif stat.S_ISLNK(mode):
+                try:
+                    target = os.readlink(child)
+                    target.encode("utf-8")
+                    if os.path.isabs(target):
+                        raise ValueError("absolute symlink")
+                    resolved_target = (child.parent / target).resolve(strict=True)
+                except (OSError, RuntimeError, UnicodeError, ValueError) as exc:
+                    raise GraderInfrastructureError("inventory symlink is unsafe") from exc
+                if not resolved_target.is_relative_to(root):
+                    raise GraderInfrastructureError("inventory symlink escapes root")
+                entries.append({"path": relative, "type": "symlink", "target": target})
+            else:
+                raise GraderInfrastructureError("inventory contains a special file")
+
+    visit(root)
+    return tuple(sorted(entries, key=lambda entry: cast(str, entry["path"])))
+
+
+def canonical_file_inventory(root: Path) -> bytes:
+    """Return the no-final-newline canonical inventory bytes for ``root``."""
+
+    return canonical_json_bytes(list(_inventory_entries(root)))
+
+
+def file_inventory_sha256(root: Path) -> str:
+    """Return the SHA-256 digest of a trusted tree's canonical inventory."""
+
+    return hashlib.sha256(canonical_file_inventory(root)).hexdigest()
+
+
+def load_canonical_manifest(path: Path, *, final_newline: bool = True) -> dict[str, object]:
+    """Read one canonical JSON object and reject noncanonical or nonobject data."""
+
+    try:
+        raw = path.read_bytes()
+        value = json.loads(raw.decode("utf-8"))
+    except (OSError, UnicodeError, ValueError) as exc:
+        raise GraderInfrastructureError("manifest is unreadable") from exc
+    if not isinstance(value, dict):
+        raise GraderInfrastructureError("manifest is not a JSON object")
+    if canonical_json_bytes(value, final_newline=final_newline) != raw:
+        raise GraderInfrastructureError("manifest is not canonical")
+    return cast(dict[str, object], value)
 
 
 def _venv_base_prefix(venv: Path) -> Path:

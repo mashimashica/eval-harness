@@ -1,0 +1,36 @@
+{
+  "_spdx_copyright": "Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.",
+  "_spdx_license": "Apache-2.0",
+  "acceptance_eligible": false,
+  "bootstrap_sha256": "33f328ecfa9d6d34aeb399650050e2f48b803930befe74c1cee5f7df0d1cd789",
+  "bubblewrap": {
+    "source_sha256": "9760d007363e3abba7c747489910f9f82d9fca53ba3bd3282e396fa3c97a3314",
+    "tag_commit": "2a76602a8c71f36c1527cf9fc3417d9149822e0c",
+    "version": "0.12.0"
+  },
+  "dependency_audit_state": "blocked",
+  "grader_lock_sha256": "8d62cac6880124652638ff8716532d46d459aaf5cbe6e8c36b506a4d1e4de9bd",
+  "nltk_data": {
+    "index_sha256": "27b1257a84cfec723c024c6762ed801ceb6984437d5438d4c7bed8bc6b52aafc",
+    "manifest_sha256": "8cda33ca56e34b58702a16dd6b3b9160fd2e8f38d03b1062f83550c95a435938",
+    "prepared_tree_sha256": "5a30cfb5c9d2a0353a987535b261386244abe66ac898185c514c913ac518514a",
+    "source_commit": "550b6625bcef1f2abff2ff770a5a0d272c9c6b2a",
+    "source_index_sha256": "97dce5e72320cd9850b7c20130196006710c18f9c03134c822a37da330198bf6"
+  },
+  "platform": {
+    "architecture": "x86_64",
+    "distribution": "ubuntu-24.04",
+    "system": "Linux"
+  },
+  "policy_revision": "bigcodebench-bwrap-v1",
+  "runner_sha256": "867481ab7726501710f80fb7f26d70dbfda5e9d5eb0b9cf8336d4743f00e0714",
+  "schema_version": 1,
+  "vendor_sha256": {
+    "LICENSE": "a858540b8dfd0c74db6953edaae85bde0b671643a7e2fb04a065f4dfd25fc28c",
+    "VENDORING.md": "98ac6cfbe48cf3aef65ebe0efcae7bdd8def1adc2bb217ebae0654a2d971fd37",
+    "eval/__init__.py": "d5fd553559ac1b76659ebc32ae30e3e779449ecd31c5201f2301319ceeee01fe",
+    "eval/_special_oracle.py": "0cf930163987d30f455547aec6cbc500a154bc58a2eb109aa247ef4e0962448b",
+    "eval/utils.py": "9061f74fe937c4eb7a1b2bc423f7acab547ae01804d5e25933e2aa8a3cc2d685"
+  },
+  "manifest_role": "functional-boundary-candidate"
+}
