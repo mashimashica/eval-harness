@@ -3,6 +3,37 @@
 
 # PR04 implementation work record
 
+## Timed security-correction work-in-progress save, 2026-09-13T10:26:10Z
+
+Base `1df1ef8cbf363c7e69a43d119f816a6666f79b36`. At the 15-minute persistence
+boundary parent interrupted the active edit turn to save the current two-file draft
+(grader_sandbox and resource app). This is unfinished source, not a completed correction
+or validation. No other file has changed in this editing window. Resume the same Luna
+owner on the saved head; do not reset issue histories or promote this draft.
+
+The first grouped prior-head results are control report
+`m2-public-draft-local-validation.json`: 112/114 methods pass, one undefined test variable,
+one known local filesystem failure, 27 strict-type findings including resource tests,
+9 lint findings and four format changes required. The eleven-group fixed-source review
+is `m2-public-boundary-draft-review.md`; all closure claims still require proof.
+The finite setup-root/registry/delete-only setup amendment is saved on control
+`bbca2708d4ebc5f749faed4056feb1fb52da7f55`, report
+`m2-linux-gate-correction-contract.md`. Required legacy deletion, registry fixture port,
+exact secret baseline and validated regressions remain unfinished.
+
+Separately, only the reviewed Ninja installer/test pair was copied to formal PR #43
+at `d3dc022f6eae7d2fbc12a1078ef7e8079e813782`; no public draft entered that tree.
+Hosted run `34751652088` now recognizes the exact Ninja and compiles bubblewrap 0.12.0.
+It stops later at getcap discovery; the script drops /usr/sbin from PATH. Upstream tests
+report one pass and five skips (sandbox zero subtests), not actual isolation acceptance.
+Ninja is closed by real-build progression; getcap is a separate first observed blocker.
+All hostile/parity/CVE/coverage and other failed gates remain open.
+
+Next: resume from this reachable checkpoint, close the actual security and verification
+findings, and save again before grouped checks. The current assignment ends at 10:30 UTC;
+the parent interval ends at 10:33:34 UTC, then saved/reconciled unfinished safe work may
+continue autonomously in the next interval under the user's current rule.
+
 ## Regression/legacy/Ninja draft checkpoint, 2026-09-13
 
 Base `fe23c09bedf07d51ec320373fd89f502428dff16`. Luna returns ten files covering

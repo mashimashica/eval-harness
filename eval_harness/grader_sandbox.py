@@ -21,8 +21,10 @@ import platform
 import selectors
 import secrets
 import signal
+import socket
 import stat
 import subprocess
+import tempfile
 import time
 from dataclasses import dataclass
 from pathlib import Path
@@ -51,6 +53,12 @@ VENDOR_GUEST_PATH: Final[str] = "/opt/bigcodebench/vendor"
 NLTK_DATA_GUEST_PATH: Final[str] = "/opt/bigcodebench/nltk_data"
 LOCK_PATH_TEMPLATE: Final[str] = "/tmp/nemo-gym-bigcodebench-grader-{uid}.lock"
 DESCENDANT_SAMPLE_SECONDS: Final[float] = 0.025
+SETUP_ROOT_ENV: Final[str] = "BIGCODEBENCH_GRADER_SETUP_ROOT"
+SETUP_RUNTIME_DIR: Final[str] = "pr04-bigcodebench-runtime"
+SETUP_RESOURCE_DIR: Final[str] = "pr04-bigcodebench-resources"
+SETUP_VENV_DIR: Final[str] = "pr04-bigcodebench-venv"
+SETUP_PREFIX_DIR: Final[str] = "pr04-cpython-3.11.16+20260901"
+SETUP_BWRAP_DIR: Final[str] = "pr04-bwrap-0.12.0"
 
 _FIXED_ENVIRONMENT: Final[tuple[tuple[str, str], ...]] = (
     ("LANG", "C.UTF-8"),
@@ -229,6 +237,63 @@ class _ResolvedSandboxPaths:
     sandbox_etc: Path
 
 
+def _prepared_setup_layout() -> dict[str, Path]:
+    """Resolve the one trusted provisioning root and its fixed children."""
+
+    raw_root = os.environ.get(SETUP_ROOT_ENV)
+    if not isinstance(raw_root, str) or not raw_root:
+        raise GraderInfrastructureError("BigCodeBench setup root is unavailable")
+    root = Path(raw_root)
+    if not root.is_absolute():
+        raise GraderInfrastructureError("BigCodeBench setup root is not absolute")
+    try:
+        resolved_root = root.resolve(strict=True)
+    except (OSError, RuntimeError) as exc:
+        raise GraderInfrastructureError("BigCodeBench setup root is unavailable") from exc
+    if resolved_root != root or root.is_symlink() or not root.is_dir():
+        raise GraderInfrastructureError("BigCodeBench setup root is not a physical directory")
+    layout = {
+        "root": root,
+        "runtime": root / SETUP_RUNTIME_DIR,
+        "runtime_manifest": root / SETUP_RUNTIME_DIR / _RUNTIME_MANIFEST_NAME,
+        "resource": root / SETUP_RESOURCE_DIR,
+        "venv": root / SETUP_VENV_DIR,
+        "prefix": root / SETUP_PREFIX_DIR,
+        "bwrap": root / SETUP_BWRAP_DIR / "bin" / "bwrap",
+    }
+    for name, path in layout.items():
+        if name in {"root", "runtime_manifest"}:
+            continue
+        try:
+            if path.resolve(strict=True) != path or path.is_symlink():
+                raise GraderInfrastructureError("BigCodeBench setup layout is not physical")
+        except (OSError, RuntimeError) as exc:
+            raise GraderInfrastructureError("BigCodeBench setup layout is incomplete") from exc
+    if not layout["runtime_manifest"].is_file() or layout["runtime_manifest"].is_symlink():
+        raise GraderInfrastructureError("BigCodeBench runtime manifest is unavailable")
+    return layout
+
+
+def resolve_bigcodebench_resource_dir() -> Path:
+    """Return the provisioned resource root after validating its fixed layout."""
+
+    layout = _prepared_setup_layout()
+    values = load_canonical_manifest(layout["runtime_manifest"])
+    resolved = _mapping(values.get("resolved_paths"), "runtime paths")
+    expected = {
+        "resource_dir": layout["resource"],
+        "grader_venv": layout["venv"],
+        "base_prefix": layout["prefix"],
+        "nltk_data": layout["resource"] / "nltk_data",
+        "bwrap": layout["bwrap"],
+    }
+    for name, path in expected.items():
+        value = resolved.get(name)
+        if not isinstance(value, str) or _real_path(Path(value), f"runtime {name}") != path:
+            raise GraderInfrastructureError("BigCodeBench runtime paths are stale")
+    return layout["resource"]
+
+
 def _real_path(path: Path, field: str, *, must_exist: bool = True) -> Path:
     """Resolve one trusted path, rejecting relative and unresolvable values."""
 
@@ -290,7 +355,7 @@ def _hash_regular_file(path: Path, metadata: os.stat_result) -> str:
     return digest.hexdigest()
 
 
-def _inventory_entries(root: Path) -> tuple[dict[str, object], ...]:
+def _inventory_entries(root: Path, *, excluded_paths: frozenset[str] = frozenset()) -> tuple[dict[str, object], ...]:
     """Build the exact file/symlink inventory used by trusted manifests."""
 
     try:
@@ -313,6 +378,8 @@ def _inventory_entries(root: Path) -> tuple[dict[str, object], ...]:
             raise GraderInfrastructureError("inventory directory is unreadable") from exc
         for child in children:
             relative = child.relative_to(root).as_posix()
+            if relative in excluded_paths:
+                continue
             try:
                 metadata = os.lstat(child)
             except FileNotFoundError:
@@ -351,16 +418,16 @@ def _inventory_entries(root: Path) -> tuple[dict[str, object], ...]:
     return tuple(sorted(entries, key=lambda entry: cast(str, entry["path"])))
 
 
-def canonical_file_inventory(root: Path) -> bytes:
+def canonical_file_inventory(root: Path, *, excluded_paths: frozenset[str] = frozenset()) -> bytes:
     """Return the no-final-newline canonical inventory bytes for ``root``."""
 
-    return canonical_json_bytes(list(_inventory_entries(root)))
+    return canonical_json_bytes(list(_inventory_entries(root, excluded_paths=excluded_paths)))
 
 
-def file_inventory_sha256(root: Path) -> str:
+def file_inventory_sha256(root: Path, *, excluded_paths: frozenset[str] = frozenset()) -> str:
     """Return the SHA-256 digest of a trusted tree's canonical inventory."""
 
-    return hashlib.sha256(canonical_file_inventory(root)).hexdigest()
+    return hashlib.sha256(canonical_file_inventory(root, excluded_paths=excluded_paths)).hexdigest()
 
 
 def load_canonical_manifest(path: Path, *, final_newline: bool = True) -> dict[str, object]:
@@ -421,7 +488,7 @@ def _resolve_sandbox_paths(spec: GraderSandboxSpec) -> _ResolvedSandboxPaths:
     paths = _ResolvedSandboxPaths(venv, base_prefix, runner, vendor, nltk_data, sandbox_etc)
 
     selected = (paths.venv, paths.base_prefix, paths.runner, paths.vendor, paths.nltk_data, paths.sandbox_etc)
-    forbidden = tuple(_real_path(root, "forbidden root") for root in spec.forbidden_roots)
+    forbidden = tuple(_real_path(root, "forbidden root", must_exist=False) for root in spec.forbidden_roots)
     for candidate in selected:
         for root in forbidden:
             if candidate == root or candidate.is_relative_to(root) or root.is_relative_to(candidate):
@@ -1063,17 +1130,16 @@ def _content_inventory_digest(root: Path) -> str:
 
 
 def _runtime_manifest(resource_dir: Path) -> tuple[Path, dict[str, object]] | None:
-    candidates = (
-        resource_dir / _RUNTIME_MANIFEST_NAME,
-        resource_dir.parent / "pr04-bigcodebench-runtime" / _RUNTIME_MANIFEST_NAME,
-    )
-    for candidate in candidates:
-        if not candidate.is_file():
-            continue
-        if candidate.is_symlink():
-            raise GraderInfrastructureError("runtime manifest is a symlink")
-        return candidate, load_canonical_manifest(candidate)
-    return None
+    """Load the one manifest rooted at the explicitly trusted resource root."""
+
+    try:
+        layout = _prepared_setup_layout()
+    except GraderInfrastructureError:
+        return None
+    if layout["resource"] != resource_dir:
+        raise GraderInfrastructureError("runtime resource is not the trusted prepared root")
+    candidate = layout["runtime_manifest"]
+    return candidate, load_canonical_manifest(candidate)
 
 
 def _verify_runtime_manifest(
@@ -1082,23 +1148,43 @@ def _verify_runtime_manifest(
     resource_dir: Path,
     manifest_digest: str,
     paths: _ResolvedSandboxPaths,
+    bwrap_path: Path,
 ) -> None:
     if runtime is None:
-        return
+        raise GraderInfrastructureError("runtime manifest is unavailable")
     _, values = runtime
-    if values.get("schema_version") != 1:
+    if values.get("schema_version") != 1 or values.get("manifest_role") != "functional-boundary-candidate":
         raise GraderInfrastructureError("runtime manifest schema is invalid")
-    if values.get("acceptance_eligible") is not False:
+    if values.get("acceptance_eligible") is not False or values.get("dependency_audit_state") != "blocked":
         raise GraderInfrastructureError("runtime manifest eligibility is invalid")
     if values.get("policy_manifest_sha256") != manifest_digest:
         raise GraderInfrastructureError("runtime manifest policy identity is stale")
+    candidate_manifest_digest = values.get("candidate_manifest_sha256")
+    if candidate_manifest_digest != manifest_digest:
+        raise GraderInfrastructureError("runtime candidate identity is stale")
+    for field in (
+        "bubblewrap_sha256",
+        "build_package_record_sha256",
+        "candidate_manifest_sha256",
+        "grader_lock_sha256",
+        "nltk_content_inventory_sha256",
+        "nltk_data_full_inventory_sha256",
+        "policy_manifest_sha256",
+        "prefix_inventory_sha256",
+        "grader_venv_inventory_sha256",
+        "resource_inventory_sha256",
+        "runner_bootstrap_sha256",
+        "python_executable_sha256",
+    ):
+        if not isinstance(values.get(field), str) or len(cast(str, values[field])) != 64:
+            raise GraderInfrastructureError("runtime manifest identity is incomplete")
     resolved = _mapping(values.get("resolved_paths"), "runtime paths")
     expected_paths = {
         "resource_dir": resource_dir,
         "grader_venv": paths.venv,
         "base_prefix": paths.base_prefix,
         "nltk_data": paths.nltk_data,
-        "bwrap": None,
+        "bwrap": bwrap_path,
     }
     for name, expected in expected_paths.items():
         actual = resolved.get(name)
@@ -1109,20 +1195,40 @@ def _verify_runtime_manifest(
     runtime_resource = values.get("resource_dir")
     if not isinstance(runtime_resource, str) or _real_path(Path(runtime_resource), "runtime resource") != resource_dir:
         raise GraderInfrastructureError("runtime resource identity is stale")
+    if values.get("bubblewrap_path") != resolved.get("bwrap"):
+        raise GraderInfrastructureError("runtime bubblewrap identity is stale")
 
-    checks = (
-        ("resource_inventory_sha256", resource_dir),
+    expected_resource_inventory = values.get("resource_inventory_sha256")
+    resource_inventory = values.get("resource_inventory")
+    if (
+        not isinstance(expected_resource_inventory, str)
+        or not isinstance(resource_inventory, list)
+        or canonical_file_inventory(resource_dir) != canonical_json_bytes(resource_inventory)
+        or file_inventory_sha256(resource_dir) != expected_resource_inventory
+    ):
+        raise GraderInfrastructureError("runtime inventory identity is stale")
+    for field, root in (
         ("grader_venv_inventory_sha256", paths.venv),
         ("prefix_inventory_sha256", paths.base_prefix),
         ("nltk_data_full_inventory_sha256", paths.nltk_data),
-    )
-    for field, root in checks:
+    ):
         expected = values.get(field)
-        if expected is not None and (not isinstance(expected, str) or file_inventory_sha256(root) != expected):
+        inventory_name = field.removesuffix("_sha256")
+        inventory = values.get(inventory_name)
+        if (
+            not isinstance(expected, str)
+            or not isinstance(inventory, list)
+            or canonical_file_inventory(root) != canonical_json_bytes(inventory)
+            or file_inventory_sha256(root) != expected
+        ):
             raise GraderInfrastructureError("runtime inventory identity is stale")
     expected_content = values.get("nltk_content_inventory_sha256")
-    if expected_content is not None and (
-        not isinstance(expected_content, str) or _content_inventory_digest(paths.nltk_data) != expected_content
+    content_inventory = values.get("nltk_content_inventory")
+    if (
+        not isinstance(expected_content, str)
+        or not isinstance(content_inventory, list)
+        or hashlib.sha256(canonical_json_bytes(content_inventory)).hexdigest() != expected_content
+        or _content_inventory_digest(paths.nltk_data) != expected_content
     ):
         raise GraderInfrastructureError("runtime data identity is stale")
 
@@ -1133,6 +1239,7 @@ def _verify_manifest_identities(
     manifest_digest: str,
     paths: _ResolvedSandboxPaths,
     bwrap_path: Path,
+    runtime_values: Mapping[str, object],
 ) -> dict[str, object]:
     """Recalculate all source identities that are observable at run time."""
 
@@ -1143,17 +1250,37 @@ def _verify_manifest_identities(
     if expected_runner != runner_digest or expected_bootstrap != bootstrap_digest:
         raise GraderInfrastructureError("grader source identity is stale")
 
+    python_artifact = _mapping(manifest.get("python_artifact"), "Python policy")
+    expected_python = python_artifact.get("executable_sha256")
+    if not isinstance(expected_python, str):
+        raise GraderInfrastructureError("Python policy is incomplete")
+    python_digest = _sha256_file(paths.venv / "bin" / "python")
+    if python_digest != expected_python:
+        raise GraderInfrastructureError("grader interpreter identity is stale")
+
+    expected_bwrap = runtime_values.get("bubblewrap_sha256")
+    if not isinstance(expected_bwrap, str) or _sha256_file(bwrap_path) != expected_bwrap:
+        raise GraderInfrastructureError("bubblewrap identity is stale")
+    runtime_bootstrap = runtime_values.get("runner_bootstrap_sha256")
+    if not isinstance(runtime_bootstrap, str) or runtime_bootstrap != bootstrap_digest:
+        raise GraderInfrastructureError("installed bootstrap identity is stale")
+
     vendor_policy = _mapping(manifest.get("vendor_sha256"), "vendor policy")
-    if not vendor_policy:
-        raise GraderInfrastructureError("vendor policy is empty")
+    expected_vendor_paths = {
+        "LICENSE",
+        "VENDORING.md",
+        "eval/__init__.py",
+        "eval/_special_oracle.py",
+        "eval/utils.py",
+    }
+    if set(vendor_policy) != expected_vendor_paths:
+        raise GraderInfrastructureError("vendor policy is incomplete")
     vendor_root = paths.vendor / "bigcodebench"
     actual_vendor: dict[str, str] = {}
     for relative, expected in vendor_policy.items():
         if not isinstance(expected, str) or Path(relative).is_absolute() or ".." in Path(relative).parts:
             raise GraderInfrastructureError("vendor policy is invalid")
         source = vendor_root / relative
-        if not source.is_file():
-            source = paths.vendor / relative
         actual_vendor[relative] = _sha256_file(source)
         if actual_vendor[relative] != expected:
             raise GraderInfrastructureError("vendored grader identity is stale")
@@ -1176,7 +1303,6 @@ def _verify_manifest_identities(
         raise GraderInfrastructureError("NLTK content identity is stale")
     full_digest = file_inventory_sha256(paths.nltk_data)
     bwrap_digest = _sha256_file(bwrap_path)
-    python_digest = _sha256_file(paths.venv / "bin" / "python")
     return {
         "manifest_sha256": manifest_digest,
         "runner_sha256": runner_digest,
@@ -1186,6 +1312,7 @@ def _verify_manifest_identities(
         "nltk_data_full_inventory_sha256": full_digest,
         "bubblewrap_sha256": bwrap_digest,
         "python_executable_sha256": python_digest,
+        "bubblewrap_sha256": expected_bwrap,
     }
 
 
@@ -1208,7 +1335,9 @@ def _spec_payload(
         "vendor": str(paths.vendor),
         "nltk_data": str(paths.nltk_data),
         "sandbox_etc": str(paths.sandbox_etc),
-        "forbidden_roots": sorted(str(_real_path(root, "forbidden root")) for root in spec.forbidden_roots),
+        "forbidden_roots": sorted(
+            str(_real_path(root, "forbidden root", must_exist=False)) for root in spec.forbidden_roots
+        ),
         "limits": {
             "startup_seconds": limits.startup_seconds,
             "candidate_wall_seconds": limits.candidate_wall_seconds,
@@ -1241,74 +1370,428 @@ def _digest_attestation(spec_digest: str, manifest_digest: str, facts: Mapping[s
     return hashlib.sha256(canonical_json_bytes(payload)).hexdigest()
 
 
-_PROBE_SOURCE: Final[str] = (
-    "import json,os,platform,sys\n"
-    "def _caps():\n"
-    "    rows={}\n"
-    "    for line in open('/proc/self/status',encoding='utf-8',errors='replace'):\n"
-    "        if line.startswith(('NoNewPrivs:','CapInh:','CapPrm:','CapEff:','CapAmb:')):\n"
-    "            key,val=line.split()[:2]; rows[key]=val\n"
-    "    return rows\n"
-    "def _write(path,data):\n"
-    "    try:\n"
-    "        with open(path,'wb') as f: f.write(data)\n"
-    "        return True\n"
-    "    except OSError:\n"
-    "        return False\n"
-    "namespaces={n:os.stat('/proc/self/ns/'+n).st_ino for n in ('mnt','user','pid','net','ipc','uts')}\n"
-    "tmp='/tmp/work/.bcb-preflight'\n"
-    "tmp_ok=_write(tmp,b'probe')\n"
-    "try: os.unlink(tmp)\n"
-    "except OSError: pass\n"
-    "nltk_path=[]; nltk_url=None; nltk_dir=None\n"
-    "import nltk\n"
-    "nltk_path=list(nltk.data.path)\n"
-    "downloader=__import__('nltk.downloader',fromlist=['_downloader'])._downloader\n"
-    "nltk_url=downloader._url; nltk_dir=downloader.download_dir\n"
-    "print(json.dumps({'system':platform.system(),'machine':platform.machine(),'namespaces':namespaces,'caps':_caps(),'root_write':_write('/.bcb-preflight',b'x'),'tmp_write':tmp_ok,'nltk_path':nltk_path,'nltk_url':nltk_url,'nltk_download_dir':nltk_dir,'prefix':sys.prefix},sort_keys=True,separators=(',',':')))"
-)
+_PROBE_SOURCE: Final[str] = r"""
+import ctypes
+import json
+import os
+import platform
+import resource
+import socket
+import sys
+import sysconfig
+
+_SECRET_KEY = __PR04_SECRET_KEY__
+_SENTINEL = __PR04_SENTINEL__
+_IPV4 = __PR04_IPV4__
+_IPV6 = __PR04_IPV6__
+_UNIX = __PR04_UNIX__
+_EXPECTED = __PR04_LIMITS__
+
+
+def _caps():
+    rows = {}
+    with open("/proc/self/status", encoding="utf-8", errors="replace") as stream:
+        for line in stream:
+            if line.startswith(("NoNewPrivs:", "CapInh:", "CapPrm:", "CapEff:", "CapAmb:")):
+                fields = line.split()
+                if len(fields) == 2:
+                    rows[fields[0]] = fields[1]
+    return rows
+
+
+def _write(path, data=b"probe"):
+    try:
+        with open(path, "wb") as stream:
+            stream.write(data)
+        return True
+    except OSError:
+        return False
+
+
+def _connect(address, family):
+    if not address:
+        return False
+    try:
+        with socket.socket(family, socket.SOCK_STREAM) as client:
+            client.settimeout(0.15)
+            client.connect(address)
+        return True
+    except OSError:
+        return False
+
+
+def _mounts():
+    mounts = {}
+    with open("/proc/self/mountinfo", encoding="utf-8", errors="replace") as stream:
+        for line in stream:
+            left, separator, right = line.rstrip("\n").partition(" - ")
+            fields = left.split()
+            if not separator or len(fields) < 6:
+                continue
+            mount_point = fields[4]
+            mounts[mount_point] = {
+                "readonly": "rw" not in fields[5].split(","),
+                "filesystem": right.split()[0] if right.split() else "",
+            }
+    return mounts
+
+
+def _nested_userns_disabled():
+    try:
+        libc = ctypes.CDLL(None, use_errno=True)
+        return libc.unshare(0x10000000) != 0
+    except (AttributeError, OSError):
+        return False
+
+
+def _rlimits():
+    names = {
+        "cpu": resource.RLIMIT_CPU,
+        "as": resource.RLIMIT_AS,
+        "data": resource.RLIMIT_DATA,
+        "stack": resource.RLIMIT_STACK,
+        "fsize": resource.RLIMIT_FSIZE,
+        "nofile": resource.RLIMIT_NOFILE,
+        "core": resource.RLIMIT_CORE,
+        "nproc": resource.RLIMIT_NPROC,
+    }
+    result = {}
+    for name, limit_id in names.items():
+        try:
+            result[name] = list(resource.getrlimit(limit_id))
+        except (OSError, ValueError):
+            result[name] = None
+    return result
+
+
+def _install_limits():
+    names = {
+        "cpu": resource.RLIMIT_CPU,
+        "as": resource.RLIMIT_AS,
+        "data": resource.RLIMIT_DATA,
+        "stack": resource.RLIMIT_STACK,
+        "fsize": resource.RLIMIT_FSIZE,
+        "nofile": resource.RLIMIT_NOFILE,
+        "core": resource.RLIMIT_CORE,
+        "nproc": resource.RLIMIT_NPROC,
+    }
+    for name, bound in _EXPECTED.items():
+        try:
+            resource.setrlimit(names[name], tuple(bound))
+            if list(resource.getrlimit(names[name])) != list(bound):
+                return False
+        except (OSError, ValueError, KeyError):
+            return False
+    return True
+
+
+def _nltk_facts():
+    import nltk
+
+    package_paths = {
+        "averaged_perceptron_tagger": "taggers/averaged_perceptron_tagger",
+        "averaged_perceptron_tagger_eng": "taggers/averaged_perceptron_tagger_eng",
+        "punkt": "tokenizers/punkt",
+        "punkt_tab": "tokenizers/punkt_tab",
+        "stopwords": "corpora/stopwords",
+        "vader_lexicon": "sentiment/vader_lexicon.zip",
+        "words": "corpora/words",
+    }
+    statuses = {}
+    for name, path in package_paths.items():
+        try:
+            nltk.data.find(path)
+            statuses[name] = True
+        except LookupError:
+            statuses[name] = False
+    try:
+        lookup_ok = bool(nltk.corpus.stopwords.words("english"))
+    except (LookupError, OSError):
+        lookup_ok = False
+    downloader = __import__("nltk.downloader", fromlist=["_downloader"])._downloader
+    return {
+        "path": list(nltk.data.path),
+        "url": downloader._url,
+        "download_dir": downloader.download_dir,
+        "statuses": statuses,
+        "lookup": lookup_ok,
+    }
+
+
+def _main():
+    limits_ok = _install_limits()
+    namespaces = {name: os.stat("/proc/self/ns/" + name).st_ino for name in ("mnt", "user", "pid", "net", "ipc", "uts")}
+    mounts = _mounts()
+    tmp_path = "/tmp/work/.bcb-preflight"
+    tmp_ok = _write(tmp_path)
+    try:
+        os.unlink(tmp_path)
+    except OSError:
+        pass
+    try:
+        sentinel_visible = os.path.exists(_SENTINEL)
+        sentinel_write = _write(_SENTINEL)
+    except OSError:
+        sentinel_visible = True
+        sentinel_write = True
+    try:
+        fds = [int(name) for name in os.listdir("/proc/self/fd") if name.isdecimal()]
+    except OSError:
+        fds = [-1]
+    facts = {
+        "system": platform.system(),
+        "machine": platform.machine(),
+        "os_release": {
+            "id": next((line.split("=", 1)[1].strip('"') for line in open("/etc/os-release", encoding="utf-8", errors="replace") if line.startswith("ID=")), ""),
+            "version_id": next((line.split("=", 1)[1].strip('"') for line in open("/etc/os-release", encoding="utf-8", errors="replace") if line.startswith("VERSION_ID=")), ""),
+        },
+        "namespaces": namespaces,
+        "caps": _caps(),
+        "nested_userns_disabled": _nested_userns_disabled(),
+        "pid_is_one": os.getpid() == 1,
+        "mounts": mounts,
+        "root_write": _write("/.bcb-preflight"),
+        "dev_write": _write("/dev/.bcb-preflight"),
+        "usr_write": _write("/usr/.bcb-preflight"),
+        "opt_write": _write("/opt/.bcb-preflight"),
+        "tmp_write": tmp_ok,
+        "sentinel_visible": sentinel_visible,
+        "sentinel_write": sentinel_write,
+        "secret_absent": _SECRET_KEY not in os.environ,
+        "extra_fds": any(fd > 2 for fd in fds),
+        "isolated": bool(sys.flags.isolated and sys.flags.no_user_site),
+        "prefix": sys.prefix,
+        "base_prefix": sys.base_prefix,
+        "soabi": sysconfig.get_config_var("SOABI"),
+        "listener_ipv4": _connect(_IPV4, socket.AF_INET),
+        "listener_ipv6": _connect(_IPV6, socket.AF_INET6),
+        "listener_unix": _connect(_UNIX, socket.AF_UNIX),
+        "limits_ok": limits_ok,
+        "rlimits": _rlimits(),
+        "nltk": _nltk_facts(),
+    }
+    print(json.dumps(facts, sort_keys=True, separators=(",", ":")))
+
+
+_main()
+"""
+
+
+def _run_bounded_probe(command: Sequence[str], timeout: float, output_limit: int) -> bytes:
+    """Capture one trusted probe with bounded nonblocking I/O and cleanup."""
+
+    try:
+        process = subprocess.Popen(
+            tuple(command),
+            stdin=subprocess.DEVNULL,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            bufsize=0,
+            close_fds=True,
+            pass_fds=(),
+            start_new_session=True,
+        )
+    except (OSError, ValueError) as exc:
+        raise GraderInfrastructureError("sandbox policy probe failed") from exc
+    stdout = process.stdout
+    stderr = process.stderr
+    if stdout is None or stderr is None:
+        process.kill()
+        process.wait(timeout=max(0.1, timeout))
+        raise GraderInfrastructureError("sandbox policy probe pipes are unavailable")
+    selector = selectors.DefaultSelector()
+    output = bytearray()
+    streams: dict[int, IO[bytes]] = {stdout.fileno(): stdout, stderr.fileno(): stderr}
+    try:
+        for stream in (stdout, stderr):
+            os.set_blocking(stream.fileno(), False)
+            selector.register(stream, selectors.EVENT_READ)
+        deadline = time.monotonic() + timeout
+        while selector.get_map():
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                try:
+                    if process.poll() is None:
+                        process.kill()
+                finally:
+                    process.wait(timeout=max(0.1, timeout))
+                raise GraderInfrastructureError("sandbox policy probe timed out")
+            for selected_key, _ in selector.select(remaining):
+                stream = streams.get(selected_key.fd)
+                if stream is None:
+                    raise GraderInfrastructureError("sandbox policy probe stream is invalid")
+                try:
+                    chunk = os.read(stream.fileno(), 64 * 1024)
+                except (BlockingIOError, InterruptedError):
+                    continue
+                if not chunk:
+                    selector.unregister(stream)
+                    stream.close()
+                    continue
+                if stream is stdout:
+                    if len(output) + len(chunk) > output_limit:
+                        if process.poll() is None:
+                            process.kill()
+                        process.wait(timeout=max(0.1, timeout))
+                        raise GraderInfrastructureError("sandbox policy probe output is too large")
+                    output.extend(chunk)
+        if process.wait(timeout=max(0.1, deadline - time.monotonic())) != 0:
+            raise GraderInfrastructureError("sandbox policy probe failed")
+        return bytes(output)
+    except GraderInfrastructureError:
+        raise
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        if process.poll() is None:
+            process.kill()
+        try:
+            process.wait(timeout=max(0.1, timeout))
+        except (OSError, subprocess.TimeoutExpired):
+            pass
+        raise GraderInfrastructureError("sandbox policy probe failed") from exc
+    finally:
+        selector.close()
+        for stream in (stdout, stderr):
+            try:
+                stream.close()
+            except OSError:
+                pass
 
 
 def _run_policy_probe(spec: GraderSandboxSpec, paths: _ResolvedSandboxPaths) -> dict[str, object]:
-    parent_namespaces: dict[str, int] = {}
+    namespace_names = ("mnt", "user", "pid", "net", "ipc", "uts")
     try:
-        parent_namespaces = {name: os.stat(f"/proc/self/ns/{name}").st_ino for name in ("mnt", "user", "pid", "net", "ipc", "uts")}
+        parent_namespaces = {name: os.stat(f"/proc/self/ns/{name}").st_ino for name in namespace_names}
     except OSError as exc:
         raise GraderInfrastructureError("host namespace probe is unavailable") from exc
-    program = (str(spec.grader_python.resolve()), "-I", "-B", "-c", _PROBE_SOURCE)
-    command = _build_bwrap_command(spec, program=program)
+
+    probe_temp = tempfile.mkdtemp(prefix="pr04-bcb-probe-", dir="/tmp")
+    sentinel = Path(probe_temp) / "outside-sentinel"
     try:
-        completed = subprocess.run(
-            command,
-            stdin=subprocess.DEVNULL,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.DEVNULL,
-            timeout=max(1.0, min(20.0, spec.limits.startup_seconds)),
-            check=False,
+        sentinel.write_bytes(b"sentinel")
+        ipv4_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        ipv4_socket.bind(("127.0.0.1", 0))
+        ipv4_socket.listen(1)
+        ipv4 = ipv4_socket.getsockname()
+    except OSError as exc:
+        raise GraderInfrastructureError("sandbox listener probe is unavailable") from exc
+    ipv6_socket: socket.socket | None = None
+    ipv6: tuple[str, int, int, int] | None = None
+    try:
+        try:
+            ipv6_socket = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
+            ipv6_socket.bind(("::1", 0))
+            ipv6_socket.listen(1)
+            ipv6 = ipv6_socket.getsockname()
+        except OSError:
+            if ipv6_socket is not None:
+                ipv6_socket.close()
+                ipv6_socket = None
+        unix_path = Path(probe_temp) / "listener.sock"
+        unix_socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        unix_socket.bind(str(unix_path))
+        unix_socket.listen(1)
+        secret_key = f"PR04_PROBE_{secrets.token_hex(8)}"
+        previous_secret = os.environ.get(secret_key)
+        os.environ[secret_key] = secrets.token_hex(16)
+        process_limit = _count_real_uid_processes() + spec.limits.process_headroom
+        expected_limits = {
+            "cpu": [spec.limits.cpu_soft_seconds, spec.limits.cpu_hard_seconds],
+            "as": [spec.limits.address_space_bytes, spec.limits.address_space_bytes],
+            "data": [spec.limits.data_bytes, spec.limits.data_bytes],
+            "stack": [spec.limits.stack_bytes, spec.limits.stack_bytes],
+            "fsize": [spec.limits.file_bytes, spec.limits.file_bytes],
+            "nofile": [spec.limits.open_files, spec.limits.open_files],
+            "core": [0, 0],
+            "nproc": [process_limit, process_limit],
+        }
+        source = (
+            _PROBE_SOURCE.replace("__PR04_SECRET_KEY__", repr(secret_key))
+            .replace("__PR04_SENTINEL__", repr(str(sentinel)))
+            .replace("__PR04_IPV4__", repr(ipv4))
+            .replace("__PR04_IPV6__", repr(ipv6))
+            .replace("__PR04_UNIX__", repr(str(unix_path)))
+            .replace("__PR04_LIMITS__", repr(expected_limits))
         )
-    except (OSError, subprocess.TimeoutExpired) as exc:
-        raise GraderInfrastructureError("sandbox policy probe failed") from exc
-    if completed.returncode != 0 or len(completed.stdout) > _PROBE_OUTPUT_BYTES:
-        raise GraderInfrastructureError("sandbox policy probe failed")
-    try:
-        facts_value = json.loads(completed.stdout.decode("utf-8"))
-    except (UnicodeError, ValueError) as exc:
-        raise GraderInfrastructureError("sandbox policy probe returned invalid facts") from exc
+        program = (str(spec.grader_python), "-I", "-B", "-c", source)
+        command = _build_bwrap_command(spec, process_limit=process_limit, program=program)
+        output = _run_bounded_probe(command, max(1.0, min(20.0, spec.limits.startup_seconds)), _PROBE_OUTPUT_BYTES)
+        finally:
+            if previous_secret is None:
+                os.environ.pop(secret_key, None)
+            else:
+                os.environ[secret_key] = previous_secret
+        try:
+            facts_value = json.loads(output.decode("utf-8", errors="replace"))
+        except (UnicodeError, ValueError) as exc:
+            raise GraderInfrastructureError("sandbox probe returned invalid facts") from exc
+    finally:
+        unix_socket.close()
+        if ipv6_socket is not None:
+            ipv6_socket.close()
+        ipv4_socket.close()
+        shutil.rmtree(probe_temp, ignore_errors=True)
+
     facts = _mapping(facts_value, "sandbox probe facts")
     if facts.get("system") != "Linux" or facts.get("machine") != "x86_64":
         raise GraderInfrastructureError("sandbox platform identity is invalid")
+    os_release = _mapping(facts.get("os_release"), "sandbox operating system")
+    if os_release.get("id") != "ubuntu" or os_release.get("version_id") != "24.04":
+        raise GraderInfrastructureError("sandbox operating system identity is invalid")
     namespaces = _mapping(facts.get("namespaces"), "sandbox namespaces")
     for name, parent in parent_namespaces.items():
         child = namespaces.get(name)
         if type(child) is not int or child == parent:
             raise GraderInfrastructureError("sandbox namespace isolation is unavailable")
     caps = _mapping(facts.get("caps"), "sandbox capabilities")
-    if caps.get("NoNewPrivs:") != "1" or any(caps.get(name) != "0000000000000000" for name in ("CapInh:", "CapPrm:", "CapEff:", "CapAmb:")):
+    if caps.get("NoNewPrivs:") != "1" or any(
+        caps.get(name) != "0000000000000000" for name in ("CapInh:", "CapPrm:", "CapEff:", "CapAmb:")
+    ):
         raise GraderInfrastructureError("sandbox capability isolation is unavailable")
-    if facts.get("root_write") is not False or facts.get("tmp_write") is not True:
+    if facts.get("nested_userns_disabled") is not True or facts.get("pid_is_one") is not True:
+        raise GraderInfrastructureError("sandbox nested namespace policy is unavailable")
+    if any(facts.get(name) is not False for name in ("root_write", "dev_write", "usr_write", "opt_write")):
+        raise GraderInfrastructureError("sandbox read-only mount policy is invalid")
+    if facts.get("tmp_write") is not True or facts.get("sentinel_visible") is not False or facts.get("sentinel_write") is not False:
         raise GraderInfrastructureError("sandbox writable-root policy is invalid")
-    if facts.get("nltk_path") != [NLTK_DATA_GUEST_PATH] or facts.get("nltk_url") != "file:///opt/bigcodebench/nltk_data/index.xml" or facts.get("nltk_download_dir") != NLTK_DATA_GUEST_PATH:
+    if facts.get("secret_absent") is not True or facts.get("extra_fds") is not False:
+        raise GraderInfrastructureError("sandbox environment or descriptor policy is invalid")
+    if facts.get("isolated") is not True or facts.get("prefix") != str(paths.venv):
+        raise GraderInfrastructureError("sandbox interpreter isolation is invalid")
+    if facts.get("listener_ipv4") is not False or facts.get("listener_ipv6") is not False or facts.get("listener_unix") is not False:
+        raise GraderInfrastructureError("sandbox network isolation is unavailable")
+    rlimits = _mapping(facts.get("rlimits"), "sandbox resource limits")
+    for name, expected in expected_limits.items():
+        observed = rlimits.get(name)
+        if observed != expected:
+            raise GraderInfrastructureError("sandbox resource limits are not active")
+    mounts = _mapping(facts.get("mounts"), "sandbox mount facts")
+    for path in ("/", "/dev", "/usr", VENDOR_GUEST_PATH, NLTK_DATA_GUEST_PATH):
+        mount = _mapping(mounts.get(path), f"sandbox mount {path}")
+        if mount.get("readonly") is not True:
+            raise GraderInfrastructureError("sandbox read-only mounts are incomplete")
+    for path in ("/tmp", "/dev/shm"):
+        if not isinstance(mounts.get(path), dict):
+            raise GraderInfrastructureError("sandbox scratch mounts are incomplete")
+    nltk = _mapping(facts.get("nltk"), "sandbox NLTK facts")
+    if (
+        nltk.get("path") != [NLTK_DATA_GUEST_PATH]
+        or nltk.get("url") != "file:///opt/bigcodebench/nltk_data/index.xml"
+        or nltk.get("download_dir") != NLTK_DATA_GUEST_PATH
+        or nltk.get("lookup") is not True
+    ):
         raise GraderInfrastructureError("sandbox NLTK bootstrap is invalid")
+    statuses = _mapping(nltk.get("statuses"), "sandbox NLTK package statuses")
+    expected_ids = {
+        "averaged_perceptron_tagger",
+        "averaged_perceptron_tagger_eng",
+        "punkt",
+        "punkt_tab",
+        "stopwords",
+        "vader_lexicon",
+        "words",
+    }
+    if set(statuses) != expected_ids or any(statuses.get(name) is not True for name in expected_ids):
+        raise GraderInfrastructureError("sandbox NLTK package set is incomplete")
     return dict(facts)
 
 
@@ -1361,10 +1844,17 @@ def _verify_bwrap_metadata(path: Path) -> None:
         raise GraderInfrastructureError("bubblewrap capabilities are present")
 
 
-def resolve_bigcodebench_sandbox_spec(resource_dir: Path) -> GraderSandboxSpec:
+def resolve_bigcodebench_sandbox_spec(
+    resource_dir: Path,
+    *,
+    forbidden_roots: tuple[Path, ...] = (),
+) -> GraderSandboxSpec:
     """Resolve an installed runtime manifest without creating or mutating it."""
 
     resource = _real_path(resource_dir, "resource directory")
+    layout = _prepared_setup_layout()
+    if resource != layout["resource"]:
+        raise GraderInfrastructureError("resource directory is not the trusted prepared root")
     runtime = _runtime_manifest(resource)
     if runtime is None:
         raise GraderInfrastructureError("installed grader runtime manifest is unavailable")
@@ -1378,11 +1868,35 @@ def resolve_bigcodebench_sandbox_spec(resource_dir: Path) -> GraderSandboxSpec:
     if _real_path(Path(runtime_resource), "runtime resource") != resource:
         raise GraderInfrastructureError("installed grader runtime resource is stale")
     venv = _real_path(Path(venv_value), "grader virtual environment")
+    if not isinstance(forbidden_roots, tuple):
+        raise GraderInfrastructureError("forbidden roots are invalid")
     return GraderSandboxSpec(
         resource_dir=resource,
         bwrap_path=_real_path(Path(bwrap_value), "bubblewrap executable"),
         grader_python=_real_path(venv / "bin" / "python", "grader interpreter"),
+        forbidden_roots=forbidden_roots,
     )
+
+
+def sandbox_provenance(preflight: GraderSandboxPreflight) -> dict[str, object]:
+    """Return durable, independent provenance for a successful sandbox run."""
+
+    if not isinstance(preflight, GraderSandboxPreflight) or not preflight.ok:
+        raise GraderInfrastructureError("sandbox provenance requires successful preflight")
+    if any(
+        not isinstance(value, str) or not value
+        for value in (preflight.sandbox_version, preflight.spec_sha256, preflight.manifest_sha256, preflight.attestation_sha256)
+    ):
+        raise GraderInfrastructureError("sandbox provenance is incomplete")
+    return {
+        "policy_revision": preflight.policy_revision,
+        "sandbox_version": preflight.sandbox_version,
+        "spec_sha256": preflight.spec_sha256,
+        "manifest_sha256": preflight.manifest_sha256,
+        "attestation_sha256": preflight.attestation_sha256,
+        "lock_path": LOCK_PATH_TEMPLATE.format(uid=os.getuid()),
+        "lock_scope": "exclusive-real-uid-grader-launch",
+    }
 
 
 def preflight_bigcodebench_sandbox(spec: GraderSandboxSpec) -> GraderSandboxPreflight:
@@ -1393,20 +1907,35 @@ def preflight_bigcodebench_sandbox(spec: GraderSandboxSpec) -> GraderSandboxPref
         if platform.system() != "Linux" or platform.machine() != "x86_64":
             raise GraderInfrastructureError("Ubuntu Linux x86-64 is required")
         paths = _resolve_sandbox_paths(spec)
-        _verify_bwrap_metadata(_real_path(spec.bwrap_path, "bubblewrap executable"))
-        sandbox_version = _bwrap_version(_real_path(spec.bwrap_path, "bubblewrap executable"))
+        bwrap_path = _real_path(spec.bwrap_path, "bubblewrap executable")
         manifest_path, manifest = _manifest_file(spec, paths)
         manifest_digest = _manifest_digest(manifest_path)
         resource_dir = _real_path(spec.resource_dir, "resource directory")
         runtime = _runtime_manifest(resource_dir)
-        _verify_runtime_manifest(runtime, resource_dir=resource_dir, manifest_digest=manifest_digest, paths=paths)
+        if runtime is None:
+            raise GraderInfrastructureError("runtime manifest is unavailable")
+        _verify_runtime_manifest(
+            runtime,
+            resource_dir=resource_dir,
+            manifest_digest=manifest_digest,
+            paths=paths,
+            bwrap_path=bwrap_path,
+        )
         identities = _verify_manifest_identities(
             manifest,
             manifest_digest=manifest_digest,
             paths=paths,
-            bwrap_path=_real_path(spec.bwrap_path, "bubblewrap executable"),
+            bwrap_path=bwrap_path,
+            runtime_values=runtime[1],
         )
-        facts = _run_policy_probe(spec, paths)
+        if manifest_path.name == _ACCEPTED_MANIFEST_NAME and spec.limits != PRODUCTION_GRADER_LIMITS:
+            raise GraderInfrastructureError("accepted manifest requires production limits")
+        # Version and metadata commands are executions of a trusted binary, so
+        # all file identities are checked before either command is allowed.
+        _verify_bwrap_metadata(bwrap_path)
+        sandbox_version = _bwrap_version(bwrap_path)
+        with _exclusive_grader_lock():
+            facts = _run_policy_probe(spec, paths)
         facts["identities"] = identities
         facts["bubblewrap_version"] = sandbox_version
         payload = _spec_payload(spec, paths=paths, manifest_path=manifest_path)
@@ -1446,38 +1975,50 @@ def run_bigcodebench_sandbox(
         raise GraderInfrastructureError("successful sandbox preflight is required")
     if preflight.policy_revision != POLICY_REVISION:
         raise GraderInfrastructureError("sandbox policy revision is stale")
-    paths = _resolve_sandbox_paths(spec)
-    manifest_path, manifest = _manifest_file(spec, paths)
-    manifest_digest = _manifest_digest(manifest_path)
-    spec_digest = hashlib.sha256(
-        canonical_json_bytes(_spec_payload(spec, paths=paths, manifest_path=manifest_path))
-    ).hexdigest()
-    if preflight.spec_sha256 != spec_digest or preflight.manifest_sha256 != manifest_digest:
-        raise GraderInfrastructureError("sandbox attestation is stale")
-    cached = _ATTESTATION_CACHE.get((spec_digest, manifest_digest))
-    if cached is None or cached[0] != preflight.attestation_sha256:
-        raise GraderInfrastructureError("sandbox attestation is not trusted")
-    resource_dir = _real_path(spec.resource_dir, "resource directory")
-    _verify_runtime_manifest(
-        _runtime_manifest(resource_dir),
-        resource_dir=resource_dir,
-        manifest_digest=manifest_digest,
-        paths=paths,
-    )
-    _verify_manifest_identities(
-        manifest,
-        manifest_digest=manifest_digest,
-        paths=paths,
-        bwrap_path=_real_path(spec.bwrap_path, "bubblewrap executable"),
-    )
-    if spec.manifest_path is None and spec.limits != PRODUCTION_GRADER_LIMITS:
-        raise GraderInfrastructureError("production limits cannot be overridden")
-    key = secrets.token_bytes(KEY_SIZE)
-    try:
-        input_bytes = encode_bcbi(request, key)
-    except ProtocolError as exc:
-        raise GraderInfrastructureError("grader request is invalid") from exc
     with _exclusive_grader_lock():
+        # The lock covers every run-time observation, request encoding, command
+        # construction and child launch.  A preflight can never be reused
+        # across a concurrent identity change.
+        paths = _resolve_sandbox_paths(spec)
+        manifest_path, manifest = _manifest_file(spec, paths)
+        manifest_digest = _manifest_digest(manifest_path)
+        spec_digest = hashlib.sha256(
+            canonical_json_bytes(_spec_payload(spec, paths=paths, manifest_path=manifest_path))
+        ).hexdigest()
+        if preflight.spec_sha256 != spec_digest or preflight.manifest_sha256 != manifest_digest:
+            raise GraderInfrastructureError("sandbox attestation is stale")
+        cached = _ATTESTATION_CACHE.get((spec_digest, manifest_digest))
+        if cached is None or cached[0] != preflight.attestation_sha256:
+            raise GraderInfrastructureError("sandbox attestation is not trusted")
+        resource_dir = _real_path(spec.resource_dir, "resource directory")
+        runtime = _runtime_manifest(resource_dir)
+        if runtime is None:
+            raise GraderInfrastructureError("runtime manifest is unavailable")
+        bwrap_path = _real_path(spec.bwrap_path, "bubblewrap executable")
+        _verify_runtime_manifest(
+            runtime,
+            resource_dir=resource_dir,
+            manifest_digest=manifest_digest,
+            paths=paths,
+            bwrap_path=bwrap_path,
+        )
+        identities = _verify_manifest_identities(
+            manifest,
+            manifest_digest=manifest_digest,
+            paths=paths,
+            bwrap_path=bwrap_path,
+            runtime_values=runtime[1],
+        )
+        cached_identities = _mapping(cached[1].get("identities"), "cached identities")
+        if dict(cached_identities) != identities:
+            raise GraderInfrastructureError("sandbox identities changed since preflight")
+        if manifest_path.name == _ACCEPTED_MANIFEST_NAME and spec.limits != PRODUCTION_GRADER_LIMITS:
+            raise GraderInfrastructureError("accepted manifest requires production limits")
+        key = secrets.token_bytes(KEY_SIZE)
+        try:
+            input_bytes = encode_bcbi(request, key)
+        except ProtocolError as exc:
+            raise GraderInfrastructureError("grader request is invalid") from exc
         command = _build_bwrap_command(spec)
         return _run_bounded_supervisor(command, input_bytes, key, spec.limits)
 
@@ -1495,7 +2036,9 @@ __all__ = [
     "POLICY_REVISION",
     "PRODUCTION_GRADER_LIMITS",
     "preflight_bigcodebench_sandbox",
+    "resolve_bigcodebench_resource_dir",
     "resolve_bigcodebench_sandbox_spec",
+    "sandbox_provenance",
     "parse_grader_output",
     "run_bigcodebench_sandbox",
 ]

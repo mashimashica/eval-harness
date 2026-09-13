@@ -2,8 +2,10 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import asyncio
+from typing import cast
 from pathlib import Path
 
+from fastapi import FastAPI
 from resources_servers.bigcodebench.code_extraction import preprocess_code_completion
 
 from eval_harness.bigcodebench_runner import BigCodeBenchGradeRequest, NativeStatus
@@ -12,8 +14,10 @@ from eval_harness.grader_sandbox import (
     GraderSandboxPreflight,
     GraderSandboxSpec,
     preflight_bigcodebench_sandbox,
+    resolve_bigcodebench_resource_dir,
     resolve_bigcodebench_sandbox_spec,
     run_bigcodebench_sandbox,
+    sandbox_provenance,
 )
 
 from nemo_gym.base_resources_server import (
@@ -22,20 +26,20 @@ from nemo_gym.base_resources_server import (
     BaseVerifyResponse,
     SimpleResourcesServer,
 )
+from nemo_gym.judge import judge_failsafe
+from nemo_gym.rollout_correlation import RolloutContextMiddleware
 from nemo_gym.reward_profile import (
     compute_pass_majority_metrics,
     highest_k_metrics,
 )
+from nemo_gym.telemetry.endpoints import traced_verify_endpoint
 
 
 _BIGCODEBENCH_SEMAPHORE = asyncio.Semaphore(1)
 
 
 class BigCodeBenchResourcesServerConfig(BaseResourcesServerConfig):
-    # This is a trusted, absolute path emitted by the provisioning job.  It
-    # contains the read-only runtime manifest and never selects a candidate
-    # policy or causes installation.
-    resource_dir: Path | None = None
+    """Configuration for the fixed, pre-provisioned BigCodeBench runtime."""
 
 
 class BigCodeBenchVerifyRequest(BaseVerifyRequest):
@@ -56,17 +60,29 @@ class BigCodeBenchResourcesServer(SimpleResourcesServer):
     def model_post_init(self, context: object) -> None:
         del context
         self._semaphore = _BIGCODEBENCH_SEMAPHORE
-        self._sandbox_spec: GraderSandboxSpec | None = None
-        self._sandbox_preflight: GraderSandboxPreflight | None = None
-        self._sandbox_error: GraderInfrastructureError | None = None
-        try:
-            resource_dir = self.config.resource_dir or Path(__file__).parent
-            self._sandbox_spec = resolve_bigcodebench_sandbox_spec(resource_dir)
-            self._sandbox_preflight = preflight_bigcodebench_sandbox(self._sandbox_spec)
-            if not self._sandbox_preflight.ok:
-                self._sandbox_error = GraderInfrastructureError("BigCodeBench sandbox preflight failed")
-        except GraderInfrastructureError as exc:
-            self._sandbox_error = exc
+        resource_dir = resolve_bigcodebench_resource_dir()
+        self._sandbox_spec = resolve_bigcodebench_sandbox_spec(resource_dir)
+        self._sandbox_preflight = preflight_bigcodebench_sandbox(self._sandbox_spec)
+        if not self._sandbox_preflight.ok:
+            detail = "; ".join(self._sandbox_preflight.details)
+            raise GraderInfrastructureError(f"BigCodeBench sandbox preflight failed: {detail}")
+
+    def setup_webserver(self) -> FastAPI:
+        """Register the typed BigCodeBench request model on the verify route."""
+
+        app = FastAPI()
+        self.setup_session_middleware(app)
+        app.add_middleware(RolloutContextMiddleware)
+        app.post("/seed_session")(self.seed_session)
+        app.post("/verify")(
+            traced_verify_endpoint(
+                judge_failsafe(self._verify_endpoint),
+                static_attributes={"nemo.gym.server.name": self.config.name},
+            )
+        )
+        app.post("/aggregate_metrics")(self.aggregate_metrics)
+        app.get("/reverify_mode")(self.get_reverify_mode)
+        return app
 
     @staticmethod
     def _score_fn(r: dict[str, object]) -> dict[str, float]:
@@ -90,7 +106,13 @@ class BigCodeBenchResourcesServer(SimpleResourcesServer):
         key.update(highest_k_metrics(agent_metrics, "majority@{k}", score_names=["accuracy"]))
         return key
 
-    async def verify(self, body: BigCodeBenchVerifyRequest) -> BigCodeBenchVerifyResponse:
+    async def verify(self, body: BaseVerifyRequest) -> BaseVerifyResponse:
+        """Satisfy the common server contract; the route uses the typed endpoint."""
+
+        typed_body = body if isinstance(body, BigCodeBenchVerifyRequest) else BigCodeBenchVerifyRequest.model_validate(body.model_dump())
+        return await self._verify_endpoint(typed_body)
+
+    async def _verify_endpoint(self, body: BigCodeBenchVerifyRequest) -> BigCodeBenchVerifyResponse:
         model_out = body.response.output_text or ""
         meta = body.verifier_metadata or {}
         task_value = meta.get("task_id")
@@ -126,29 +148,39 @@ class BigCodeBenchResourcesServer(SimpleResourcesServer):
         calibrated = code_prompt + "\n    pass\n" + extracted
 
         async with self._semaphore:
-            result = await asyncio.to_thread(
-                self._run_sandbox,
-                code=calibrated,
-                test_code=test_code,
-                entry_point=entry_point,
-                task_id=str(task_id or "BigCodeBench"),
+            worker = asyncio.create_task(
+                asyncio.to_thread(
+                    self._run_sandbox,
+                    code=calibrated,
+                    test_code=test_code,
+                    entry_point=entry_point,
+                    task_id=task_id or "BigCodeBench",
+                )
             )
+            try:
+                result = await asyncio.shield(worker)
+            except asyncio.CancelledError:
+                await worker
+                raise
 
-        status = result.get("status")
+        status_value = result.get("status")
+        status = status_value if isinstance(status_value, str) else None
+        details_value = result.get("details")
+        details = details_value if isinstance(details_value, dict) else None
         return BigCodeBenchVerifyResponse(
             **body.model_dump(),
-            reward=1.0 if status == "pass" else 0.0,
+            reward=1.0 if status == "passed" else 0.0,
             extracted_model_output=model_out,
             extracted_model_code=extracted,
             status=status,
-            details=result.get("details"),
+            details=cast(dict[str, object] | None, details),
             task_id=task_id,
         )
 
     def _run_sandbox(self, code: str, test_code: str, entry_point: str, task_id: str) -> dict[str, object]:
-        if self._sandbox_error is not None:
-            raise self._sandbox_error
-        if self._sandbox_spec is None or self._sandbox_preflight is None or not self._sandbox_preflight.ok:
+        sandbox_spec = self._sandbox_spec
+        sandbox_preflight = self._sandbox_preflight
+        if sandbox_spec is None or sandbox_preflight is None or not sandbox_preflight.ok:
             raise GraderInfrastructureError("successful BigCodeBench sandbox preflight is required")
         native = run_bigcodebench_sandbox(
             BigCodeBenchGradeRequest(
@@ -158,17 +190,17 @@ class BigCodeBenchResourcesServer(SimpleResourcesServer):
                 entry_point=entry_point,
                 task_id=task_id,
             ),
-            spec=self._sandbox_spec,
-            preflight=self._sandbox_preflight,
+            spec=sandbox_spec,
+            preflight=sandbox_preflight,
         )
         if native.limit_kind is not None:
             return {"status": "candidate_resource_limit", "details": {"limit_kind": native.limit_kind.value}}
         if native.native_status is NativeStatus.PASS:
-            return {"status": "pass", "details": None}
+            return {"status": "passed", "details": None, "grader_provenance": sandbox_provenance(sandbox_preflight)}
         if native.native_status is NativeStatus.FAIL:
-            return {"status": "fail", "details": None}
+            return {"status": "failed_tests", "details": None, "grader_provenance": sandbox_provenance(sandbox_preflight)}
         if native.native_status is NativeStatus.TIMEOUT:
-            return {"status": "timeout", "details": None}
+            return {"status": "candidate_timeout", "details": None, "grader_provenance": sandbox_provenance(sandbox_preflight)}
         raise GraderInfrastructureError("sandbox returned an unknown native outcome")
 
 
