@@ -1,0 +1,374 @@
+{
+  "expected": {
+    "repeated_matchup": {
+      "anchor_id": "qwen36_35b",
+      "anchor_repeat_id": "repeat_0",
+      "combined_votes": {
+        "judged": 8,
+        "losses": 8,
+        "ties": 0,
+        "wins": 0
+      },
+      "deduplication_would_incorrectly_produce": {
+        "judged": 4,
+        "losses": 4,
+        "ties": 0,
+        "wins": 0
+      },
+      "distinct_battle_semantic_sha256": true,
+      "distinct_evaluation_job_ids": true,
+      "distinct_planner_occurrence_ids": true,
+      "distinct_trial_ids": true,
+      "num_evaluation_input_digests": 1,
+      "num_evaluation_jobs": 2,
+      "num_planner_occurrences": 2,
+      "num_trial_records": 8,
+      "occurrences": [
+        {
+          "anchor_candidate_bundle_sha256": "b11764a72e1e03fdf917c1c2789d4904af32ab8174ce877a6e93f6fc99f539b8",
+          "evaluation_candidate_bundle_sha256": "41053ae431273cf18c70ad7853c91d659f91e62282980279c9c03dbf2988010a",
+          "evaluation_input_sha256": "8e3489fa0e209f799f16f407be567769f94b282b9e03193d520493f985bd51bd",
+          "evaluation_job_id": "sha256:75792fc49763a217351b89249b710743e75eafa5e50f003d83cd01c7e5a0bffb",
+          "planner_occurrence_id": "sha256:c558b55b059c15e410c679e7c5eea9daba5f361af7dd793e6ee7113faa016cd0",
+          "stage_index": 0,
+          "trial_records": [
+            {
+              "battle_semantic_sha256": "5ed4f3c7139337c32864dd1524ca2a66f72ac159160e70f242c59901778166ba",
+              "evaluation_input_sha256": "8e3489fa0e209f799f16f407be567769f94b282b9e03193d520493f985bd51bd",
+              "evaluation_job_id": "sha256:75792fc49763a217351b89249b710743e75eafa5e50f003d83cd01c7e5a0bffb",
+              "judge_member_id": "claude-opus-4.8",
+              "normalized_winner": "anchor",
+              "planner_occurrence_id": "sha256:c558b55b059c15e410c679e7c5eea9daba5f361af7dd793e6ee7113faa016cd0",
+              "position_token": "BOXED[A]",
+              "slot_a": "anchor",
+              "slot_b": "evaluation",
+              "trial_id": "sha256:06962392f998981318e6fef9d056c75c2b89e4bdab4d54c3290e33fe02ef6e1b",
+              "trial_index": 0
+            },
+            {
+              "battle_semantic_sha256": "a626798921c303f078424ec39fdd2cbeaafcc0b999b0478cdad7661def5a6b4d",
+              "evaluation_input_sha256": "8e3489fa0e209f799f16f407be567769f94b282b9e03193d520493f985bd51bd",
+              "evaluation_job_id": "sha256:75792fc49763a217351b89249b710743e75eafa5e50f003d83cd01c7e5a0bffb",
+              "judge_member_id": "gemini-3.1-pro",
+              "normalized_winner": "anchor",
+              "planner_occurrence_id": "sha256:c558b55b059c15e410c679e7c5eea9daba5f361af7dd793e6ee7113faa016cd0",
+              "position_token": "BOXED[B]",
+              "slot_a": "evaluation",
+              "slot_b": "anchor",
+              "trial_id": "sha256:53c46e67daa33745c44fe9ec18cf3c289b6330b57aabea53576fe15a239d756e",
+              "trial_index": 1
+            },
+            {
+              "battle_semantic_sha256": "9a7e45e1c07a861ce600098fb9a0319e8b6de965a56b3b5a5ea80e349b53b3ca",
+              "evaluation_input_sha256": "8e3489fa0e209f799f16f407be567769f94b282b9e03193d520493f985bd51bd",
+              "evaluation_job_id": "sha256:75792fc49763a217351b89249b710743e75eafa5e50f003d83cd01c7e5a0bffb",
+              "judge_member_id": "gemini-3.1-pro",
+              "normalized_winner": "anchor",
+              "planner_occurrence_id": "sha256:c558b55b059c15e410c679e7c5eea9daba5f361af7dd793e6ee7113faa016cd0",
+              "position_token": "BOXED[A]",
+              "slot_a": "anchor",
+              "slot_b": "evaluation",
+              "trial_id": "sha256:5370d9b052a85da7a4be1555138e8ff75225e45ce594dcf2d4c4f06541951797",
+              "trial_index": 2
+            },
+            {
+              "battle_semantic_sha256": "3c6778b065b2c4629bcc752c64625a01dc4e9486bde7ab176da443094a7952e2",
+              "evaluation_input_sha256": "8e3489fa0e209f799f16f407be567769f94b282b9e03193d520493f985bd51bd",
+              "evaluation_job_id": "sha256:75792fc49763a217351b89249b710743e75eafa5e50f003d83cd01c7e5a0bffb",
+              "judge_member_id": "claude-opus-4.8",
+              "normalized_winner": "anchor",
+              "planner_occurrence_id": "sha256:c558b55b059c15e410c679e7c5eea9daba5f361af7dd793e6ee7113faa016cd0",
+              "position_token": "BOXED[B]",
+              "slot_a": "evaluation",
+              "slot_b": "anchor",
+              "trial_id": "sha256:cd8c3bda7e2c0f2874203dfc4641a927368a2c2dda57dc8470bf39a8ffccf617",
+              "trial_index": 3
+            }
+          ],
+          "votes": {
+            "judged": 4,
+            "losses": 4,
+            "ties": 0,
+            "wins": 0
+          }
+        },
+        {
+          "anchor_candidate_bundle_sha256": "b11764a72e1e03fdf917c1c2789d4904af32ab8174ce877a6e93f6fc99f539b8",
+          "evaluation_candidate_bundle_sha256": "41053ae431273cf18c70ad7853c91d659f91e62282980279c9c03dbf2988010a",
+          "evaluation_input_sha256": "8e3489fa0e209f799f16f407be567769f94b282b9e03193d520493f985bd51bd",
+          "evaluation_job_id": "sha256:166676bb217ee0c647806fde7977c307f7a09dd3a819d03a7d632aaf80bdc194",
+          "planner_occurrence_id": "sha256:90e8b5d93bac197cd58b860eb70955fe91aa9dfd2dea50c283e046a50d8a6db5",
+          "stage_index": 1,
+          "trial_records": [
+            {
+              "battle_semantic_sha256": "fb54550acc263c8fd27e152e24ca56b1e1f5dece3e79eca5d071c89a3efa5a79",
+              "evaluation_input_sha256": "8e3489fa0e209f799f16f407be567769f94b282b9e03193d520493f985bd51bd",
+              "evaluation_job_id": "sha256:166676bb217ee0c647806fde7977c307f7a09dd3a819d03a7d632aaf80bdc194",
+              "judge_member_id": "claude-opus-4.8",
+              "normalized_winner": "anchor",
+              "planner_occurrence_id": "sha256:90e8b5d93bac197cd58b860eb70955fe91aa9dfd2dea50c283e046a50d8a6db5",
+              "position_token": "BOXED[A]",
+              "slot_a": "anchor",
+              "slot_b": "evaluation",
+              "trial_id": "sha256:b6d84abd36bee1a2904857551620d835ee26aea889c8a01ce02bbd58ffe82d7a",
+              "trial_index": 0
+            },
+            {
+              "battle_semantic_sha256": "c87945cda333f1647782d8408dec8d10de3a76fe8da6d02bfec70a811dcf2cba",
+              "evaluation_input_sha256": "8e3489fa0e209f799f16f407be567769f94b282b9e03193d520493f985bd51bd",
+              "evaluation_job_id": "sha256:166676bb217ee0c647806fde7977c307f7a09dd3a819d03a7d632aaf80bdc194",
+              "judge_member_id": "gemini-3.1-pro",
+              "normalized_winner": "anchor",
+              "planner_occurrence_id": "sha256:90e8b5d93bac197cd58b860eb70955fe91aa9dfd2dea50c283e046a50d8a6db5",
+              "position_token": "BOXED[B]",
+              "slot_a": "evaluation",
+              "slot_b": "anchor",
+              "trial_id": "sha256:45cd166caacb3794a90fec585860a1a42f60efdfc34afeac9ff8be538c44e9b3",
+              "trial_index": 1
+            },
+            {
+              "battle_semantic_sha256": "c6667b58201f00abab5d896d10489b151f8e589681f405292c07f5cd07cc94ea",
+              "evaluation_input_sha256": "8e3489fa0e209f799f16f407be567769f94b282b9e03193d520493f985bd51bd",
+              "evaluation_job_id": "sha256:166676bb217ee0c647806fde7977c307f7a09dd3a819d03a7d632aaf80bdc194",
+              "judge_member_id": "gemini-3.1-pro",
+              "normalized_winner": "anchor",
+              "planner_occurrence_id": "sha256:90e8b5d93bac197cd58b860eb70955fe91aa9dfd2dea50c283e046a50d8a6db5",
+              "position_token": "BOXED[A]",
+              "slot_a": "anchor",
+              "slot_b": "evaluation",
+              "trial_id": "sha256:87bfcc0a6391811568ea75a4a6e58a829d83611a417f8294b51b52627ce34834",
+              "trial_index": 2
+            },
+            {
+              "battle_semantic_sha256": "11dd1cca51cab4f36d648e573d64fce0f6d0b7971150f9db6ee1add13f169a59",
+              "evaluation_input_sha256": "8e3489fa0e209f799f16f407be567769f94b282b9e03193d520493f985bd51bd",
+              "evaluation_job_id": "sha256:166676bb217ee0c647806fde7977c307f7a09dd3a819d03a7d632aaf80bdc194",
+              "judge_member_id": "claude-opus-4.8",
+              "normalized_winner": "anchor",
+              "planner_occurrence_id": "sha256:90e8b5d93bac197cd58b860eb70955fe91aa9dfd2dea50c283e046a50d8a6db5",
+              "position_token": "BOXED[B]",
+              "slot_a": "evaluation",
+              "slot_b": "anchor",
+              "trial_id": "sha256:ad4a53f5b56c259e97e983d2ba3b83c0010a633417bb5a4898972cdf601b3cc7",
+              "trial_index": 3
+            }
+          ],
+          "votes": {
+            "judged": 4,
+            "losses": 4,
+            "ties": 0,
+            "wins": 0
+          }
+        }
+      ],
+      "position_tokens_each_occurrence": [
+        "BOXED[A]",
+        "BOXED[B]",
+        "BOXED[A]",
+        "BOXED[B]"
+      ],
+      "same_anchor_candidate_bundle": true,
+      "same_evaluation_candidate_bundle": true,
+      "task_id": "t5",
+      "trial_judges_each_occurrence": [
+        "claude-opus-4.8",
+        "gemini-3.1-pro",
+        "gemini-3.1-pro",
+        "claude-opus-4.8"
+      ]
+    },
+    "stages": [
+      {
+        "aggregate": {
+          "elo": 1053.4023880716363,
+          "elo_float_hex": "0x1.0759c0b9e5feap+10",
+          "judged": 16,
+          "losses": 7,
+          "normalized_elo": 0.27670119403581817,
+          "normalized_elo_float_hex": "0x1.1b578ecc978a8p-2",
+          "num_references": 3,
+          "ties": 2,
+          "wins": 7
+        },
+        "per_anchor": {
+          "glm51_fp8": {
+            "losses": 0,
+            "ties": 0,
+            "wins": 4
+          },
+          "qwen35_397b": {
+            "losses": 3,
+            "ties": 2,
+            "wins": 3
+          },
+          "qwen36_35b": {
+            "losses": 4,
+            "ties": 0,
+            "wins": 0
+          }
+        },
+        "reference_ids": [
+          "deepseek_v4_pro",
+          "gemma4_26b",
+          "glm51_fp8",
+          "gptoss_120b",
+          "kimi_k26",
+          "nemotron3_ultra",
+          "qwen35_397b",
+          "qwen36_35b",
+          "qwen3_30b_thinking"
+        ],
+        "stage_index": 0,
+        "task_anchor_assignment": {
+          "t1": "qwen35_397b",
+          "t2": "qwen35_397b",
+          "t4": "glm51_fp8",
+          "t5": "qwen36_35b"
+        },
+        "task_ids": [
+          "t4",
+          "t2",
+          "t1",
+          "t5"
+        ]
+      },
+      {
+        "aggregate": {
+          "elo": 1057.149571213491,
+          "elo_float_hex": "0x1.0849929323978p+10",
+          "judged": 24,
+          "losses": 11,
+          "normalized_elo": 0.27857478560674553,
+          "normalized_elo_float_hex": "0x1.1d42b566af4acp-2",
+          "num_references": 2,
+          "ties": 3,
+          "wins": 10
+        },
+        "per_anchor": {
+          "kimi_k26": {
+            "losses": 1,
+            "ties": 0,
+            "wins": 3
+          },
+          "qwen36_35b": {
+            "losses": 10,
+            "ties": 3,
+            "wins": 7
+          }
+        },
+        "reference_ids": [
+          "kimi_k26",
+          "nemotron3_ultra",
+          "qwen35_397b",
+          "qwen36_35b"
+        ],
+        "stage_index": 1,
+        "task_anchor_assignment": {
+          "t0": "kimi_k26",
+          "t1": "qwen36_35b",
+          "t2": "qwen36_35b",
+          "t3": "qwen36_35b",
+          "t4": "qwen36_35b",
+          "t5": "qwen36_35b"
+        },
+        "task_ids": [
+          "t3",
+          "t5",
+          "t0",
+          "t4",
+          "t1",
+          "t2"
+        ]
+      }
+    ]
+  },
+  "hashes": {
+    "expected_sha256": "b38205b021d4410410585c10d7a3a6a03af172300d386dc632eb422e613dcd44",
+    "fixture_payload_sha256": "2cfd7b11e40bce0f5974b4c86d06e57aaae6a6d1dd1464158e74532a3a07c3a5",
+    "repeated_matchup_semantic_sha256": "bb9ea796f17a2d274f530e5e8aa01d4e2dffa3c8db117fd65e5d5752f088e330"
+  },
+  "identity_derivation": {
+    "canonical_hash_algorithm": "SHA-256 over UTF-8 json.dumps(value, sort_keys=True, separators=(',', ':'), ensure_ascii=False, allow_nan=False)",
+    "evaluation_input_sha256_payload": {
+      "anchor_candidate_bundle_sha256": "b11764a72e1e03fdf917c1c2789d4904af32ab8174ce877a6e93f6fc99f539b8",
+      "anchor_candidate_id": "anchor:qwen36_35b:t5:repeat_0",
+      "evaluation_candidate_bundle_sha256": "41053ae431273cf18c70ad7853c91d659f91e62282980279c9c03dbf2988010a",
+      "evaluation_candidate_id": "evaluation:t5:repeat_0",
+      "evaluation_view_sha256": "357b87b750a68478f03195827b316d46af28b5ec717a25e24e87920b12ab367e",
+      "evaluator_spec_sha256": "6f61520a9bcc074c2e57904a2126f52aa423e7da8012f1e7c0a6d24792062de0",
+      "snapshot_task_sha256": "3eb7e580b70d99b2c9cbee13616aaefd2cff0e23db9a2ad9ec03d3a0eb9275aa",
+      "task_id": "t5"
+    },
+    "evaluation_job_payload_fields": [
+      "planner_occurrence_id",
+      "evaluation_input_sha256"
+    ],
+    "evaluator_spec": {
+      "evaluator_id": "gdpval-pairwise-strict",
+      "evaluator_revision": "characterization-v1",
+      "judge_seed": 42,
+      "num_trials": 4,
+      "panel_sha256": "cdb5252fcb938a3db3b68dc790e0581f7fb528521df58b5272539a56fc7891ba",
+      "position_order": [
+        {
+          "slot_a": "anchor",
+          "slot_b": "evaluation",
+          "trial_index": 0
+        },
+        {
+          "slot_a": "evaluation",
+          "slot_b": "anchor",
+          "trial_index": 1
+        },
+        {
+          "slot_a": "anchor",
+          "slot_b": "evaluation",
+          "trial_index": 2
+        },
+        {
+          "slot_a": "evaluation",
+          "slot_b": "anchor",
+          "trial_index": 3
+        }
+      ],
+      "verdict_policy": "exactly-one-standalone-final-boxed-token-or-invalid"
+    },
+    "evaluator_spec_sha256": "6f61520a9bcc074c2e57904a2126f52aa423e7da8012f1e7c0a6d24792062de0",
+    "note": "Conceptual characterization names; production spellings align with accepted PR-05/06 contracts.",
+    "planner_occurrence_payload_fields": [
+      "resolved_profile_sha256",
+      "stage_index",
+      "task_id",
+      "evaluation_repeat_index",
+      "anchor_id",
+      "anchor_repeat_id"
+    ],
+    "resolved_profile_sha256": "a658cb98a3b0d4cd729a50a8348a5f226b03e8ccea205b11c2aae35bad1fecb6",
+    "trial_id_payload_fields": [
+      "evaluation_job_id",
+      "trial_index"
+    ]
+  },
+  "profile_id": "gdpval-aa-v2-characterization-occurrence-fixture-v1",
+  "purpose": "Numeric characterization proving candidate reuse does not deduplicate a repeated cross-stage comparison occurrence.",
+  "schema": "pr08-aa-v2-cross-stage-occurrence-fixture-v1",
+  "source": {
+    "baseline_commit": "d5ce0c10162cad788a17cb90f34b8f60574e7f75",
+    "computed_with": [
+      "plan_stage_task_ids",
+      "select_references",
+      "stage_assignment_rng",
+      "assign_task_references",
+      "make_rng",
+      "sample_judge",
+      "tally_result",
+      "fit_stage_elo"
+    ],
+    "judge_seed": 42,
+    "main_fixture_inputs_sha256": "64484e76c0c28fcd008565b4498cfdb7db15b071ea6399ec2f1b472bf0034187",
+    "model_calls": 0,
+    "run_seed": 0
+  },
+  "spdx_copyright_text": "Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.",
+  "spdx_license_identifier": "Apache-2.0"
+}
