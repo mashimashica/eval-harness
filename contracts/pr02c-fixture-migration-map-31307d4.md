@@ -61,7 +61,7 @@ No other experiment change and no snapshot, candidate-bundle, manifest, evaluato
 3. Validate a supplied task by exact `TaskSpec` value: `task.execution == self._selected.execution`. This binds both canonical task ID and canonical prompt. Object identity is invalid because the common runner intentionally reconstructs `BenchmarkTask(execution=canonical_task)` from the verified snapshot. A mismatched ID or prompt raises the existing stable `ValueError("selected benchmark wrapper received a different task")` before calling the original adapter.
 4. `snapshot_task(task, workspace)` validates the task, then calls `self._original.snapshot_task(self._selected, workspace)`. Passing the stored original task is required because concrete snapshot hooks consume its materialization/evaluation metadata and may publish distinct execution and evaluation file sets.
 5. Retain `materialize` for the abstract benchmark surface, but apply the same value validation and delegate `self._original.materialize(self._selected, workspace)`.
-6. `execution_task(task, workspace, *, network_policy)` applies the same value validation and delegates with `self._selected`, preserving original benchmark metadata while accepting the snapshot-reconstructed minimal task.
+6. `execution_task(task, workspace, *, network_policy)` applies the same value validation, constructs `BenchmarkTask(execution=task.execution)`, and delegates that fresh canonical minimal task to `self._original.execution_task(...)`. It must not reattach the selected task's materialization or evaluation mappings; the fixed execution-wrapper boundary deliberately strips both.
 7. Keep `is_prepared`, `prepare`, and the exact `limit == 1` rule unchanged. Do not reload tasks, reacquire a source, rebuild evaluation data, or branch on benchmark name.
 
 Add a focused regression in `test_builder_experiment_runner.py` using a fixture benchmark with an existing source file and a custom `snapshot_task`. The custom hook must return different execution and evaluation file projections plus private evaluation data, and record that it received the stored original task. Through a real `_SelectedTaskBenchmark.acquire_snapshot(...)`, assert:
@@ -69,7 +69,7 @@ Add a focused regression in `test_builder_experiment_runner.py` using a fixture 
 - source and revision values and both `Availability.AVAILABLE` states survive;
 - the original `snapshot_source_paths` and `snapshot_task` hooks are called;
 - execution and evaluation views contain only their respective exact files/data;
-- `execution_task(BenchmarkTask(execution=snapshot_task.task_spec()), ...)` succeeds and delegates the stored task;
+- `execution_task(BenchmarkTask(execution=snapshot_task.task_spec()), ...)` succeeds and the original execution wrapper receives a fresh task with the equal canonical `TaskSpec` and empty materialization/evaluation mappings;
 - a changed ID or changed prompt fails before either original materialization/execution hook runs.
 
 This regression must use real snapshot acquisition and verification. It must not mock acquisition, binding, source fingerprinting, or view construction.
@@ -98,14 +98,14 @@ The corresponding fixed evidence pairs remain exact:
 ### `tests/harness/test_builder_experiment_runner.py`
 
 1. Give `_ApplicationExecutor` the exact capability contract above.
-2. Keep `_Benchmark.revision == "revision-1"`; give it a stable nonempty `source`, `source_availability = Availability.AVAILABLE`, and `revision_availability = Availability.AVAILABLE`. Preserve the outer experiment assertion `revision_status == "available"` and add the corresponding source-status assertion. Its existing default `snapshot_task` must bind the same `benchmark.txt` bytes previously produced by `materialize`, now under `task_inputs/benchmark.txt`.
+2. Keep `_Benchmark.revision == "revision-1"` and declare `revision_availability = Availability.AVAILABLE`. It has no declared source, so retain inherited `source = None` and `source_availability = Availability.UNAVAILABLE`. Preserve the outer experiment assertion `revision_status == "available"`; where source status is asserted, require `"unavailable"`. Its existing default `snapshot_task` must bind the same `benchmark.txt` bytes previously produced by `materialize`, now under `task_inputs/benchmark.txt`.
 3. Preserve every existing schedule, task-order, intervention application ID, artifact, source-input, fingerprint, metric, and stop-on-failure assertion.
 4. Where a successful application already reads nested `run-metadata.json` and legacy `results.jsonl`, additionally use the real `load_run_manifest`, `VerifiedSnapshotBinding.load`, and `load_run_results`. Assert one identity/path-conformant indexed candidate for that application, the exact snapshot task/reference, final text, intervention provenance, and completed evaluation. Retain the existing `accuracy == 1.0` and outer aggregation checks.
 5. For the typed failed application case, strictly load the indexed failed bundle and assert `PROCESS/test_failure/RUN`, no output channels/text, and skipped evaluation. The following schedule entry remains unbuilt. For a direct exception or `KeyboardInterrupt` thrown before a valid `ExecutionResult`, accept a created manifest/index with zero indexed candidates; never fabricate a candidate.
 
 ### `tests/harness/test_experiment_reliability.py`
 
-1. Keep `ReliabilityBenchmark.revision == "revision"`; give it a stable nonempty `source`, `source_availability = Availability.AVAILABLE`, and `revision_availability = Availability.AVAILABLE`. Its empty default snapshot content remains valid. Where metadata is asserted, require available source and revision status.
+1. Keep `ReliabilityBenchmark.revision == "revision"` and declare `revision_availability = Availability.AVAILABLE`. It has no declared source, so retain `source = None` and `source_availability = Availability.UNAVAILABLE`. Its empty default snapshot content remains valid. Where metadata is asserted, require unavailable source and available revision status.
 2. Add the exact application and builder capability contracts above. Preserve Builder artifact bytes, manifest/source evidence, application task provenance, `score == 1.0`, outer counts, and evaluator-call counts.
 3. Map typed application terminal failures exactly:
    - `INTERRUPTED` -> `Failure(INTERRUPTED, "interrupted", RUN)`;
@@ -115,7 +115,7 @@ The corresponding fixed evidence pairs remain exact:
 
 ### `tests/harness/test_reasoning_effort.py`
 
-1. Keep `_FakeBenchmark.revision == "reasoning-revision"`; give it a stable nonempty `source`, `source_availability = Availability.AVAILABLE`, and `revision_availability = Availability.AVAILABLE`. The fixture is shared by direct and legacy experiment tests, and both paths must preserve the same available metadata.
+1. Keep `_FakeBenchmark.revision == "reasoning-revision"` and declare `revision_availability = Availability.AVAILABLE`. It has no declared source, so retain `source = None` and `source_availability = Availability.UNAVAILABLE`. The fixture is shared by direct and legacy experiment tests, and both paths must preserve the same unavailable-source/available-revision metadata.
 2. Add `_FakeExecutor.capabilities` and align its successful `available_outputs` to both `FINAL_TEXT` and `ARTIFACT_FILES` as specified above. Keep requested reasoning effort identical in configured executor and `ExecutionResult`.
 3. In the direct-run configuration assertion, remove `runtime_layout` from the exact `configuration` key set and assert it is absent. Continue to assert top-level `run-metadata.json["runtime_layout"] == "run-output"` for the default layout.
 4. The nested executor configuration has a stable `reasoning_effort_requested` field even when unset. Change the baseline nested assertion to `is None`; keep the top-level baseline metadata field absent. Preserve all requested-effort, configuration-digest, fingerprint, legacy resume, old-Codex `max`, process-exit, and stopped-evaluation assertions.
