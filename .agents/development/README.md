@@ -51,6 +51,47 @@ stated consequential reason. This budget never permits ignoring a serious findin
 criterion. Optional improvements do not need unanimous agreement. Whole-plan design review belongs at milestone boundaries
 or when new evidence invalidates an important assumption, not at every PR.
 
+## Development standards and quality gates
+
+These owner-approved rules govern development quality in this fork, including the five Skills. They supersede inherited
+requirements for a universal coverage percentage or all-file validation before every PR. They do not waive product
+requirements, authorization, or active branch protection. The controller selects the affected scope and acceptance
+criteria; implementation performs the checks, verification assesses evidence, and control decides acceptance.
+
+1. **uv, typed Python, and Ruff.** Use uv with `pyproject.toml` and `uv.lock`; keep local and CI environments and check
+   settings aligned. Write new owned code in typed Python and run static type checking and Ruff lint/format checks on
+   new or changed owned code and affected interfaces. Do not make unrelated upstream-wide typing or formatting cleanup
+   a prerequisite for the current increment. Use existing tool capabilities rather than building redundant gate machinery.
+2. **Tests and coverage.** Require behavior-based tests for acceptance criteria and consequential failure paths. Measure
+   coverage to identify missing evidence, but do not impose 96% or another arbitrary percentage as a universal progression
+   gate. Judge gaps by the affected behavior and risk; a high percentage alone is not sufficient. Do not remove meaningful
+   assertions or disguise failures to obtain a passing result. Content-only changes need applicable content checks.
+3. **GitHub Actions.** Establish repository-owned CI checks as PR merge gates. Run targeted checks during local iteration;
+   full CI success is not a prerequisite for each edit, local save, or PR creation. Required checks for the merge candidate
+   must succeed before merging; never bypass active branch protection. Keep ordinary CI independent of real-model calls
+   and personal subscription credentials. Introduce scoped CI/tool configuration with the first implementation PR rather
+   than requiring an upstream-wide cleanup first. This Skills PR states the policy; it does not implement those gates.
+4. **Vulnerability and secret checks.** Retain dependency vulnerability and secret scanning for the relevant execution,
+   development, and grading environments and publication surface. Fix genuine danger or disable the affected capability,
+   holding its unsafe execution or acceptance while independent authorized development continues. Record grounded,
+   narrowly scoped false-positive dispositions separately from true vulnerabilities; do not suppress a real finding to
+   make a gate pass. A failed or unavailable scan is unconfirmed evidence, not a clean result.
+5. **Real CLI and large-scale verification.** Use small, authorized real CLI trials early, alongside deterministic tests,
+   instead of waiting for the entire lifecycle implementation. Record the tested version, conditions, and result. Full
+   grading-parity suites and broad hostile tests belong to acceptance of the affected grader or security boundary, not
+   every change or unrelated benchmark. Do not execute untrusted code through an unverified required safety boundary.
+6. **Model review.** The controller accepts ordinary changes from applicable evidence. Use Sol or another specialist for
+   consequential boundaries or uncertainty, not mandatory approval of every PR. Mechanically settled issues and design
+   preferences must not create independent approval waits. Apply the existing scoped review budget and finding rules.
+7. **Persistence and evidence.** Use local Git, logs, and one working record for continuity. Use the authorized Git/gh or
+   API publication routes below; do not require remote checkpoints and byte-by-byte readback after every local edit.
+   Identify the candidate and conditions each result concerns, revalidate affected evidence, and retain unaffected evidence.
+   An uncertain remote write still requires state inspection before retrying.
+
+A gate must identify the action or claim it governs. An unmet criterion holds that dependent action or acceptance, not
+all development. Do not rename failed work as accepted; retain its status and continue independent work. Changes to CI
+configuration or required checks need the applicable authorization and review, not an ad hoc bypass of a red check.
+
 ## Local execution configuration
 
 | Role | Initial preference | Authority |

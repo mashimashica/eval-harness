@@ -16,13 +16,17 @@ execution routes to the local CLI harness. Development-process records live unde
 retain the documentation conventions below. Apply the shared authority, evidence, and remote-write rules. These Skills
 are not implicit instructions or interventions for benchmark participants.
 
+The [shared development standards and quality gates](.agents/development/README.md#development-standards-and-quality-gates)
+govern this fork's quality scope and supersede inherited universal coverage and pre-PR all-file requirements.
+Active branch protection, authorization, license obligations, and DCO remain applicable.
+
 ## Quality bar
 
 - Prefer focused changes. Do not make unrelated "drive-by" edits. If a drive-by fix is worth keeping, open a separate issue or PR.
 - Intentional synthetic scaling of environments is fine when scoped via an issue or focused PR; do not dump unreviewed bulk diffs.
 - You (the human author) own every line submitted. Treat model output as untrusted until reviewed.
-- For environment or agent changes: run real rollouts with a model and inspect agent and verifier behavior. Green unit tests alone are not enough.
-- Before opening a PR, run the local checks that mirror CI: tests (skip or N/A for docs-only), `pre-commit run --all-files`, and DCO sign-off (`git commit -s`). Cryptographic `-S` signing is optional and not required.
+- For changed runtime or agent behavior, use early, bounded, authorized real CLI checks. Full-benchmark and hostile suites belong to the affected component's acceptance, not every edit.
+- Run targeted local checks during development and report their actual status when opening a PR. Required applicable CI checks must pass before merge, not before every edit or save. Preserve DCO sign-off (`git commit -s`); cryptographic `-S` signing is optional.
 - AI-generated tests must assert real behavior; avoid vacuous pass-through tests.
 - Prefer the vetted skills under `.agents/skills/` (see [Agent Skills](https://docs.nvidia.com/nemo/gym/latest/contribute/agent-skills)).
 - Docs live under `fern/versions/latest/pages/`. Bleeding-edge nav is `fern/versions/main.yml`. See `fern/README.md` and the `nemo-gym-docs` skill.
@@ -146,8 +150,10 @@ gym env resolve --config ...
 
 - Line length: 119
 - Python 3.13.14+, async-first
+- Use uv and the project lock for environment and dependency management.
+- Write new owned code in typed Python and statically check the changed scope and affected interfaces.
 - Ruff for linting and formatting (double quotes, isort)
-- Test coverage must be >= 96%
+- Measure coverage to expose untested behavior; use the shared risk-based test policy rather than a universal percentage gate.
 - All commits require DCO sign-off (`-s`). Cryptographic signing (`-S`) is optional and not enforced by CI.
 
 ## Pre-commit Hooks
