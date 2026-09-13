@@ -1,0 +1,55 @@
+{
+  "checkpoint_branch": "checkpoint/pr-04",
+  "independent_review": {
+    "findings_closed": 3,
+    "open_findings_in_reviewed_delta": 0,
+    "reviewer": "Sol"
+  },
+  "known_dependency_cve": "unresolved; no further investigation or exemption",
+  "logs": {
+    "mypy": "Success: no issues found in 3 source files\n",
+    "python311": "test_bcbi_normalizes_recursion_errors (test_bigcodebench_runner.TestBigCodeBenchRunner.test_bcbi_normalizes_recursion_errors) ... ok\ntest_bcbi_rejects_duplicate_unknown_noncanonical_and_invalid_utf8 (test_bigcodebench_runner.TestBigCodeBenchRunner.test_bcbi_rejects_duplicate_unknown_noncanonical_and_invalid_utf8) ... ok\ntest_bcbi_rejects_truncation_and_trailing_bytes (test_bigcodebench_runner.TestBigCodeBenchRunner.test_bcbi_rejects_truncation_and_trailing_bytes) ... ok\ntest_bcbi_round_trip_is_canonical_and_bounded (test_bigcodebench_runner.TestBigCodeBenchRunner.test_bcbi_round_trip_is_canonical_and_bounded) ... ok\ntest_bcbo_enforces_protocol_byte_bound (test_bigcodebench_runner.TestBigCodeBenchRunner.test_bcbo_enforces_protocol_byte_bound) ... ok\ntest_bcbo_hmac_and_partial_feed (test_bigcodebench_runner.TestBigCodeBenchRunner.test_bcbo_hmac_and_partial_feed) ... ok\ntest_bcbo_rejects_duplicate_unknown_and_noncanonical_body_keys (test_bigcodebench_runner.TestBigCodeBenchRunner.test_bcbo_rejects_duplicate_unknown_and_noncanonical_body_keys) ... ok\ntest_bcbo_rejects_invalid_sequences_duplicates_and_trailing_data (test_bigcodebench_runner.TestBigCodeBenchRunner.test_bcbo_rejects_invalid_sequences_duplicates_and_trailing_data) ... ok\ntest_bcbo_signal_union_and_authenticated_error (test_bigcodebench_runner.TestBigCodeBenchRunner.test_bcbo_signal_union_and_authenticated_error) ... ok\ntest_bounded_reader_overflow_with_key_emits_input_error_without_native (test_bigcodebench_runner.TestBigCodeBenchRunner.test_bounded_reader_overflow_with_key_emits_input_error_without_native) ... ok\ntest_main_orders_dumpability_limits_input_and_fd_setup (test_bigcodebench_runner.TestBigCodeBenchRunner.test_main_orders_dumpability_limits_input_and_fd_setup) ... ok\ntest_native_hook_emits_authenticated_start_and_result_without_key_args (test_bigcodebench_runner.TestBigCodeBenchRunner.test_native_hook_emits_authenticated_start_and_result_without_key_args) ... ok\ntest_non_whole_native_limit_rejects_before_native_import (test_bigcodebench_runner.TestBigCodeBenchRunner.test_non_whole_native_limit_rejects_before_native_import) ... ok\ntest_public_types_are_frozen_and_have_contract_defaults (test_bigcodebench_runner.TestBigCodeBenchRunner.test_public_types_are_frozen_and_have_contract_defaults) ... ok\n\n----------------------------------------------------------------------\nRan 14 tests in 0.021s\n\nOK\n",
+    "python313": "test_bcbi_normalizes_recursion_errors (test_bigcodebench_runner.TestBigCodeBenchRunner.test_bcbi_normalizes_recursion_errors) ... ok\ntest_bcbi_rejects_duplicate_unknown_noncanonical_and_invalid_utf8 (test_bigcodebench_runner.TestBigCodeBenchRunner.test_bcbi_rejects_duplicate_unknown_noncanonical_and_invalid_utf8) ... ok\ntest_bcbi_rejects_truncation_and_trailing_bytes (test_bigcodebench_runner.TestBigCodeBenchRunner.test_bcbi_rejects_truncation_and_trailing_bytes) ... ok\ntest_bcbi_round_trip_is_canonical_and_bounded (test_bigcodebench_runner.TestBigCodeBenchRunner.test_bcbi_round_trip_is_canonical_and_bounded) ... ok\ntest_bcbo_enforces_protocol_byte_bound (test_bigcodebench_runner.TestBigCodeBenchRunner.test_bcbo_enforces_protocol_byte_bound) ... ok\ntest_bcbo_hmac_and_partial_feed (test_bigcodebench_runner.TestBigCodeBenchRunner.test_bcbo_hmac_and_partial_feed) ... ok\ntest_bcbo_rejects_duplicate_unknown_and_noncanonical_body_keys (test_bigcodebench_runner.TestBigCodeBenchRunner.test_bcbo_rejects_duplicate_unknown_and_noncanonical_body_keys) ... ok\ntest_bcbo_rejects_invalid_sequences_duplicates_and_trailing_data (test_bigcodebench_runner.TestBigCodeBenchRunner.test_bcbo_rejects_invalid_sequences_duplicates_and_trailing_data) ... ok\ntest_bcbo_signal_union_and_authenticated_error (test_bigcodebench_runner.TestBigCodeBenchRunner.test_bcbo_signal_union_and_authenticated_error) ... ok\ntest_bounded_reader_overflow_with_key_emits_input_error_without_native (test_bigcodebench_runner.TestBigCodeBenchRunner.test_bounded_reader_overflow_with_key_emits_input_error_without_native) ... ok\ntest_main_orders_dumpability_limits_input_and_fd_setup (test_bigcodebench_runner.TestBigCodeBenchRunner.test_main_orders_dumpability_limits_input_and_fd_setup) ... ok\ntest_native_hook_emits_authenticated_start_and_result_without_key_args (test_bigcodebench_runner.TestBigCodeBenchRunner.test_native_hook_emits_authenticated_start_and_result_without_key_args) ... ok\ntest_non_whole_native_limit_rejects_before_native_import (test_bigcodebench_runner.TestBigCodeBenchRunner.test_non_whole_native_limit_rejects_before_native_import) ... ok\ntest_public_types_are_frozen_and_have_contract_defaults (test_bigcodebench_runner.TestBigCodeBenchRunner.test_public_types_are_frozen_and_have_contract_defaults) ... ok\n\n----------------------------------------------------------------------\nRan 14 tests in 0.021s\n\nOK\n"
+  },
+  "pr04_acceptance": false,
+  "python311": {
+    "methods": 14,
+    "status": "passed",
+    "subcases": true,
+    "version": "3.11.16"
+  },
+  "python313": {
+    "methods": 14,
+    "status": "passed",
+    "subcases": true,
+    "version": "3.13.14"
+  },
+  "real_model_experiments": false,
+  "remaining_pr04": [
+    "host sandbox policy, attestation, locking and bounded supervision",
+    "pinned runtime provisioning and explicit candidate-only manifests/CI",
+    "replace evaluator and resource-server old grader route; delete old runner",
+    "real sandbox boundary probes and all-1140 native parity",
+    "whole-head lint/types/96% coverage/audit/CI and independent acceptance"
+  ],
+  "repository": "mashimashica/eval-harness",
+  "ruff": {
+    "files": 3,
+    "format": "passed",
+    "lint": "passed"
+  },
+  "schema_version": 1,
+  "scope": "Protocol and inner-worker unit correctness only",
+  "security_acceptance": false,
+  "segment_stop_reason": "User requested immediate progress report due excessive elapsed time; finish only current correction, verification and durable checkpoint.",
+  "strict_mypy": {
+    "files": 3,
+    "status": "passed"
+  },
+  "tested_at": "2026-09-13T05:36:54.228Z",
+  "tested_commit": "aa7e2cc9df25795be50559ea5c5d986af020c933",
+  "tree": "b55c6d32c394f25d1ba77467e5d8cc68a6fb0590",
+  "whole_migration_complete": false,
+  "worker_blob": "a141c9e70253cc5bef399add25136c6167cd3451",
+  "worktree_clean": true
+}

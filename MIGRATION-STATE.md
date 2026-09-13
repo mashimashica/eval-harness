@@ -3,48 +3,70 @@
 
 # Migration state
 
-Updated: 2026-09-13T05:09:46.819Z
+Updated: 2026-09-13T05:37:43.728Z
 
 Control branch: `checkpoint/migration-control`.
 Procedure: [MIGRATION-WORKFLOW.md](MIGRATION-WORKFLOW.md).
-This file records durable state; it does not declare the entire migration accepted.
+This record preserves recoverable work; it does not declare the migration accepted.
 
-## M1 accepted; next active slice M2 / PR04
+## Current status: M1 accepted; M2 partial and paused after user progress report
 
-The user approved purpose-first execution. The known NLTK CVE remains an acceptance blocker for PR04
-and affected later heads without stopping independent implementation. Its M0 investigation is closed.
-All quality gates and the prohibition on real-model experiments, merge, release and publish remain.
+The user's latest steering requested an immediate intermediate report because elapsed time was excessive.
+Root reported progress and limited the remaining segment to the existing worker correction, verification
+and durable save, ending no later than 2026-09-13T05:41:18.195Z. No host supervisor or later slice was started.
+This segment is now stopped after saving the result below. The overall migration goal is unchanged.
 
-M1 is accepted at unmerged Draft [#42](https://github.com/mashimashica/eval-harness/pull/42), branch
-`migration/02c-generation-handoff`, head `6038a7828d62247ad98d000bc6e71c706f6d14a4`, tree
-`4f7fc21be5195611ba7df8feeefe3a5cc962c2cb`, base `d5ce0c10162cad788a17cb90f34b8f60574e7f75`.
-All four required workflows pass; the hosted synthetic merge has the identical tree. Hosted coverage
-is 10070/10469 (96.18874773139746%), with 553 Python, six shell, 45 compatibility and five inventory
-tests passing. Review and DCO are closed. Checkpoint `272092f26948bdce763c185333ca417898eef88d`
-has the same tree. See `reports/m1-acceptance.md` and `reports/m1-evidence/acceptance.json`.
+| Logical scope | Durable state | Next completion work |
+| --- | --- | --- |
+| PR01–03 and additional PR02c / M1 | Implementation gates passed; five Draft PRs remain unmerged | Revalidate affected behavior at final migration head |
+| PR04 / M2 | Protocol and inner-worker source corrected, reviewed and locally validated | Host supervisor, provisioning, caller replacement, real boundary/parity and PR gates |
+| PR05–09 / M3–M5 | Exact design checkpoints preserved; implementation not started in this recovery | Independent evaluation, benchmark and experiment-path integration |
+| PR10–11 / M6–M7 | Not implemented | Old-path deletion, documentation, fourth benchmark and final acceptance |
 
-M2 / PR04 is active from 2026-09-13T04:30:56.162Z (first 90-minute working allowance).
-Checkpoint branch `checkpoint/pr-04` is saved/read back at `03791275ade265013e1efb9c1d96c49df34be610`.
-Implementation base: accepted PR02c `6038a782`. Exact contracts, finite amendments and the work record
-are on this branch. Frozen vendor/build/data input hashes and interpreter executable/license hashes match.
+M1 accepted unmerged Draft [#42](https://github.com/mashimashica/eval-harness/pull/42):
+branch `migration/02c-generation-handoff`, head `6038a7828d62247ad98d000bc6e71c706f6d14a4`,
+tree `4f7fc21be5195611ba7df8feeefe3a5cc962c2cb`, base `d5ce0c10162cad788a17cb90f34b8f60574e7f75`.
+All four required hosted workflows pass; synthetic merge tree matches. Coverage is 10070/10469
+(96.18874773139746%), with 553 Python, six shell, 45 compatibility and five inventory tests passing,
+strict typing, DCO and a clean locked main dependency audit. See `reports/m1-acceptance.md`.
+M1 elapsed approximately 34 minutes, starting 2026-09-13T03:56:46Z and accepted 04:30:56.162Z.
 
-The pure request/result protocol foundation is reviewed and validated: all 10 unittest methods and
-subcases pass under exact Python 3.13.14 and 3.11.16; strict mypy of three files and scoped Ruff pass.
-Sol's three findings (identifier-only NUL rejection, cumulative stream cap, recursion error mapping)
-are closed in that immutable head. Seven unused aliases were removed and new tests join the existing
-unittest coverage driver. See `reports/m2-codec-validation.json` for the decisive local summary.
+M2 started 2026-09-13T04:30:56.162Z. Its saved and tested checkpoint is
+`aa7e2cc9df25795be50559ea5c5d986af020c933` on `checkpoint/pr-04`, tree
+`b55c6d32c394f25d1ba77467e5d8cc68a6fb0590`. The local worktree is clean.
+The implementation base is accepted PR02c. Frozen vendor/build/data inputs and interpreter hashes match.
+Exact contracts, reviewed finite amendments and the work record are on that branch.
 
-Luna now owns the next two-file inner-worker batch: trusted dumpability/rlimits/input/FD setup,
-forced-spawn native call and authenticated status/signal/error output. It is not yet saved or validated.
-No host supervisor, real sandbox/provisioning/parity evidence, final caller replacement or PR04 CI exists.
-Root saves the returned coherent batch before tests and Sol reviews its immutable delta.
+At this head, all 14 unittest methods and subcases pass on exact Python 3.13.14 and 3.11.16;
+strict mypy of three authored files and scoped Ruff lint/format pass. Sol verified the immutable
+worker blob and closed all three worker findings: exact default Process interception, native limits
+derived from trusted whole-MiB values before import, and authenticated overflow failure after a key.
+Production and smaller-limit native regressions are both retained. The seven initial typing errors
+and failing mock callback are fixed in this consolidated corrective validation round.
+See `reports/m2-worker-validation.json` for exact source identity, local logs and evidence limits.
 
-The known NLTK CVE remains unresolved. The approved candidate-only functional environment/manifest/CI
-sequence may produce evidence but cannot satisfy acceptance or a production constructor. No repeated
-NLTK investigation, rejected patch, real-model run or concurrent future implementation is permitted.
-All existing stop conditions and the 90-minute working allowance remain in effect.
+These are unit correctness results. No real sandbox security, host supervision, provisioning,
+all-1,140 parity, final caller replacement, whole PR04 coverage or hosted PR04 CI is claimed.
+PR04 has no formal Draft PR yet. Old grader routes still remain and must be deleted before completion.
 
-## Last durable implementation base
+The known NLTK CVE remains an acceptance blocker for PR04 and affected later heads; it does not
+block independent authorized implementation. M0 investigation remains closed: no repeated investigation,
+rejected patch, audit ignore, false version or sandbox-based exemption. Candidate-only functional
+preparation is explicitly non-acceptance and cannot be selected by production constructors.
+All quality gates remain unchanged. No real-model experiments, merge, release or publish.
+
+Before resuming, use this exact checkpoint and its existing contracts; do not repeat closed codec/worker
+reviews or dependency research. The next coherent implementation target is the host supervisor and its
+callable path, followed by provisioning and caller integration. Keep one Luna implementation owner,
+Sol review and Astra acceptance; report exceptions early, save within the checkpoint interval, and
+do not silently extend the agreed working allowance.
+
+## Historical records
+
+The following sections preserve earlier recovery states. Their pending-state wording is historical
+and superseded by the current status above.
+
+## Historical implementation base at PR03
 
 Repository: `mashimashica/eval-harness`.
 
