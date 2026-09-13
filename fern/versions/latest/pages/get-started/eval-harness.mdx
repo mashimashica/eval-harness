@@ -20,8 +20,9 @@ they are not automatically given to the agents participating in experiments.
 ## Install from a checkout
 
 The verified local runtime is macOS with Python 3.13.14, uv 0.12.13, standalone Codex CLI 0.154.0 and Claude Code
-2.1.270. Node.js/npm is needed to install the two CLIs. The harness checks the CLI versions because its isolation
-configuration depends on their behavior. Use the standalone Codex installation below for experimental participants.
+2.1.270. Node.js/npm is needed to install the two CLIs. Existing installations of these exact standalone CLI versions
+may also be placed on PATH. The harness checks the CLI versions because its isolation configuration depends on their
+behavior. Use the standalone Codex installation below for experimental participants.
 
 These commands install tools inside the checkout and do not change global configuration:
 
@@ -33,7 +34,7 @@ python3 -m venv .venv-tools
 .venv-tools/bin/python -m pip uninstall --yes pip setuptools
 export PATH="$PWD/.venv-tools/bin:$PWD/.tools/codex/node_modules/.bin:$PWD/.tools/claude/node_modules/.bin:$PATH"
 export UV_PYTHON_INSTALL_DIR="$PWD/.tools/python"
-uv python install 3.13.14
+uv python install --no-bin 3.13.14
 uv sync --project harness --python 3.13.14 --locked --no-editable
 npm install --prefix .tools/codex @openai/codex@0.154.0
 npm install --prefix .tools/claude @anthropic-ai/claude-code@2.1.270

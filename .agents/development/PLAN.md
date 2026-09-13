@@ -33,7 +33,8 @@ Development Skill discovery is distinct from participant isolation and benchmark
 
 Acceptance is evidence-based; implementation alone does not satisfy live-evidence requirements.
 Real evidence: [GDPval](evidence/gdpval-pilot-01.json), [Claude GSM8K](evidence/claude-gsm8k-01.json),
-[discovery and boundaries](evidence/2026-09-13.md). Other rows remain open until their full criteria are verified.
+[discovery and boundaries](evidence/2026-09-13.md). The ledger reflects the latest accepted evidence; earlier trial
+notes below retain the history of excluded attempts and corrections.
 
 | Criterion | Required evidence | Status / evidence |
 | --- | --- | --- |
@@ -199,3 +200,22 @@ audit scanned52installed distributions with no known vulnerabilities. Fern check
 Controller accepts R01–R10 and all six commands against the listed evidence. Outstanding project acceptance is now
 fresh-checkout reproduction, submitted-change secret scan, fork CI and authorized main integration. Luna performed
 implementation/self-verification; Sol's independent review was limited to runtime boundaries, not a blanket approval.
+
+### Fresh checkout and PR acceptance
+
+Candidate `3849a49134bdf4061fabf91329e5bd66fde307ba`, PR46, passed all Harness quality steps on GitHub Actions
+run34768555001. Secret scanning of the actual submitted commits passed, along with tests, typing, lint, dependency
+audit and documentation checks. main now requires the GitHub Actions Harness quality check against an up-to-date
+branch, including for administrators; force pushes and deletion are disabled. No bypass was used.
+
+A detached fresh checkout installed its own uv0.12.13, Python3.13.14 and locked noneditable package, without PYTHONPATH
+or global installation. The documented one-task GSM8K run completed using the existing pinned Codex0.154.0 executable:
+run `d2fd94341ac843f6be32d79f9394a52c`, one attempt, mechanical score1.0. Separate mechanical re-evaluation and both
+comparison commands succeeded with nonexistent CLI paths. Completed resume retained the original state and execution
+journals, and every deliverable matches its original recorded hash. Two evaluation IDs still aggregate to one generation.
+[Fresh-checkout evidence](evidence/fresh-checkout-01.json) records setup, exact source/config hashes, commands and results.
+
+The setup instructions now use `uv python install --no-bin` so Python stays project-local; existing pinned standalone
+CLI installations can be reused. Only documentation/evidence changed after the reproduced candidate. Next: run CI for
+this final PR revision, merge through the required check, verify main CI, and record the actual integration receipt.
+All mandatory product behavior and fresh-checkout acceptance are met; main integration is still pending.
