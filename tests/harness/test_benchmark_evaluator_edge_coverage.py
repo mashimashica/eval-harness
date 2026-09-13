@@ -339,14 +339,12 @@ class BenchmarkPreparationCoverageTests(unittest.TestCase):
             empty_workspace = root / "empty-workspace"
             empty_workspace.mkdir()
             self.assertEqual(gdpval_benchmark._reference_listing(empty_workspace), "None")
-            reference = empty_workspace / "reference_files"
+            reference = empty_workspace / "task_inputs"
             reference.mkdir()
             self.assertEqual(gdpval_benchmark._reference_listing(empty_workspace), "None")
             (reference / "nested").mkdir()
             (reference / "nested" / "input.txt").write_text("input", encoding="utf-8")
-            self.assertEqual(
-                gdpval_benchmark._reference_listing(empty_workspace), "- reference_files/nested/input.txt"
-            )
+            self.assertEqual(gdpval_benchmark._reference_listing(empty_workspace), "- task_inputs/nested/input.txt")
 
             benchmark.dataset_path.write_text(
                 json.dumps(

@@ -106,8 +106,8 @@ if capture:
     Path(capture).write_text(json.dumps(dict(os.environ), sort_keys=True), encoding="utf-8")
 mode = os.environ.get("GDPVAL_FAKE_MODE", "success")
 if mode == "mutate":
-    reference = Path.cwd().parent / "cursor-reference-files-readonly" / "input.txt"
-    reference.write_text("mutated\\n", encoding="utf-8")
+    task_input = Path.cwd().parent / "cursor-task-inputs-readonly" / "input.txt"
+    task_input.write_text("mutated\\n", encoding="utf-8")
 if mode == "timeout":
     emit(sys.stdout, b"partial stdout \\xff\\n")
     emit(sys.stderr, b"partial stderr \\xfe\\n")
@@ -235,16 +235,38 @@ class ExecutorReliabilityTests(unittest.TestCase):
                 patch.object(Path, "read_text", side_effect=OSError("unreadable")),
             ):
                 self.assertIsNone(codex_executor_module._read_output_text(directory / "output.txt"))
-            self.assertEqual(
-                cursor_executor_module._tree_digest(Path(tmp) / "absent"),
-                cursor_executor_module._tree_digest(Path(tmp) / "also-absent"),
-            )
-            empty_tree = Path(tmp) / "empty-tree" / "nested"
-            empty_tree.mkdir(parents=True)
-            self.assertEqual(
-                cursor_executor_module._tree_digest(empty_tree.parent),
-                cursor_executor_module._tree_digest(Path(tmp) / "absent"),
-            )
+            missing = Path(tmp) / "missing"
+            with self.assertRaisesRegex(
+                cursor_executor_module._TreeDigestError,
+                "task input tree root cannot be inspected",
+            ):
+                cursor_executor_module._tree_digest(missing)
+
+            symlink_target = Path(tmp) / "symlink-target"
+            symlink_target.mkdir()
+            symlink_root = Path(tmp) / "symlink-root"
+            symlink_root.symlink_to(symlink_target, target_is_directory=True)
+            with self.assertRaisesRegex(
+                cursor_executor_module._TreeDigestError,
+                "task input tree root must be a real directory",
+            ):
+                cursor_executor_module._tree_digest(symlink_root)
+
+            non_directory = Path(tmp) / "regular-file"
+            non_directory.write_bytes(b"file")
+            with self.assertRaisesRegex(
+                cursor_executor_module._TreeDigestError,
+                "task input tree root must be a real directory",
+            ):
+                cursor_executor_module._tree_digest(non_directory)
+
+            empty_tree = Path(tmp) / "empty-tree"
+            empty_tree.mkdir()
+            empty_digest = cursor_executor_module._tree_digest(empty_tree)
+            self.assertIsInstance(empty_digest, str)
+            self.assertTrue(empty_digest)
+            (empty_tree / "nested").mkdir()
+            self.assertNotEqual(empty_digest, cursor_executor_module._tree_digest(empty_tree))
 
         codex_env = codex_executor_module.subscription_environment(
             {"OPENAI_API_KEY": "secret", "CODEX_ACCESS_TOKEN": "token", "KEEP_ME": "yes"}
@@ -511,9 +533,9 @@ class ExecutorReliabilityTests(unittest.TestCase):
                     )
                     request = _execution_request(case_root, environment)
                     if name == "cursor":
-                        references = request.workspace / "reference_files"
-                        references.mkdir(parents=True)
-                        (references / "input.txt").write_text("reference\n", encoding="utf-8")
+                        task_inputs = request.workspace / "task_inputs"
+                        task_inputs.mkdir(parents=True)
+                        (task_inputs / "input.txt").write_text("reference\n", encoding="utf-8")
                     executor = executor_factory(command=str(command))
                     executor._version = "fake-version"
                     result = executor.execute(request)
@@ -538,8 +560,12 @@ class ExecutorReliabilityTests(unittest.TestCase):
                         self.assertEqual(result.output_text, "final response\n")
                         self.assertEqual(result.metadata["forced_login_method"], "chatgpt")
                     if name == "cursor":
-                        self.assertTrue(result.metadata["reference_integrity_verified"])
-                        self.assertFalse((request.workspace / "reference_files").is_symlink())
+                        self.assertTrue(result.metadata["task_inputs_integrity_verified"])
+                        self.assertFalse((request.workspace / "task_inputs").is_symlink())
+                        self.assertEqual(
+                            (request.workspace / "task_inputs" / "input.txt").read_text(encoding="utf-8"),
+                            "reference\n",
+                        )
 
     def test_executors_fail_closed_for_no_deliverable_and_nonzero_exit(self) -> None:
         cases: list[tuple[str, ExecutorClass]] = [
@@ -581,14 +607,14 @@ class ExecutorReliabilityTests(unittest.TestCase):
                     self.assertEqual(result.failure.impact, FailureImpact.RUN)
                     self.assertIsNone(result.output_text)
 
-    def test_cursor_reference_mutation_fails_closed_and_restores_isolation(self) -> None:
+    def test_cursor_task_input_mutation_fails_closed_and_restores_isolation(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             command = _make_fake_cli(root)
             request = _execution_request(root / "mutation", _local_environment(GDPVAL_FAKE_MODE="mutate"))
-            references = request.workspace / "reference_files"
-            references.mkdir(parents=True)
-            (references / "input.txt").write_text("reference\n", encoding="utf-8")
+            task_inputs = request.workspace / "task_inputs"
+            task_inputs.mkdir(parents=True)
+            (task_inputs / "input.txt").write_text("reference\n", encoding="utf-8")
             executor = CursorExecutor(command=str(command))
             executor._version = "fake-version"
             result = executor.execute(request)
@@ -599,43 +625,47 @@ class ExecutorReliabilityTests(unittest.TestCase):
             self.assertEqual(result.failure.kind, FailureKind.INTEGRITY)
             self.assertEqual(result.failure.impact, FailureImpact.RUN)
             self.assertIsNone(result.output_text)
-            self.assertFalse(result.metadata["reference_integrity_verified"])
+            self.assertFalse(result.metadata["task_inputs_integrity_verified"])
             self.assertIn("mutation", (request.executor_dir / "stderr.log").read_text(encoding="utf-8"))
-            self.assertEqual((references / "input.txt").read_text(encoding="utf-8"), "mutated\n")
+            self.assertTrue(task_inputs.is_dir())
+            self.assertFalse(task_inputs.is_symlink())
+            self.assertEqual((task_inputs / "input.txt").read_text(encoding="utf-8"), "mutated\n")
 
-    def test_cursor_isolation_cleanup_and_symlink_failure_restore_original_tree(self) -> None:
+    def test_cursor_task_input_isolation_cleanup_and_symlink_failure_restore_original_tree(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             workspace = root / "workspace"
-            references = workspace / "reference_files"
-            references.mkdir(parents=True)
-            (references / "input.txt").write_text("original\n", encoding="utf-8")
-            protected = workspace.parent / "cursor-reference-files-readonly"
+            task_inputs = workspace / "task_inputs"
+            task_inputs.mkdir(parents=True)
+            (task_inputs / "input.txt").write_text("original\n", encoding="utf-8")
+            protected = workspace.parent / "cursor-task-inputs-readonly"
             protected.write_text("stale\n", encoding="utf-8")
             executor = CursorExecutor(command="agent")
-            moved, digest = executor._isolate_reference_files(workspace)
+            moved, digest = executor._isolate_task_inputs(workspace)
             self.assertIsNotNone(moved)
             self.assertIsNotNone(digest)
-            executor._restore_reference_files(workspace, moved)
-            self.assertEqual((references / "input.txt").read_text(encoding="utf-8"), "original\n")
+            executor._restore_task_inputs(workspace, moved)
+            self.assertEqual((task_inputs / "input.txt").read_text(encoding="utf-8"), "original\n")
 
-            shutil_target = workspace.parent / "cursor-reference-files-readonly"
+            shutil_target = workspace.parent / "cursor-task-inputs-readonly"
             shutil_target.mkdir()
             (shutil_target / "stale.txt").write_text("stale\n", encoding="utf-8")
-            moved, _ = executor._isolate_reference_files(workspace)
-            executor._restore_reference_files(workspace, moved)
-            executor._restore_reference_files(workspace, None)
+            moved, _ = executor._isolate_task_inputs(workspace)
+            executor._restore_task_inputs(workspace, moved)
+            executor._restore_task_inputs(workspace, None)
 
             protected.mkdir()
             (protected / "input.txt").write_text("restored\n", encoding="utf-8")
-            executor._restore_reference_files(workspace, protected)
-            self.assertEqual((references / "input.txt").read_text(encoding="utf-8"), "restored\n")
+            executor._restore_task_inputs(workspace, protected)
+            self.assertEqual((task_inputs / "input.txt").read_text(encoding="utf-8"), "restored\n")
 
             with patch.object(Path, "symlink_to", side_effect=OSError("symlinks disabled")):
                 with self.assertRaisesRegex(RuntimeError, "symlink support"):
-                    executor._isolate_reference_files(workspace)
-            self.assertTrue(references.is_dir())
-            self.assertEqual((references / "input.txt").read_text(encoding="utf-8"), "restored\n")
+                    executor._isolate_task_inputs(workspace)
+            self.assertTrue(task_inputs.is_dir())
+            self.assertFalse(task_inputs.is_symlink())
+            self.assertEqual((task_inputs / "input.txt").read_text(encoding="utf-8"), "restored\n")
+            self.assertFalse(protected.exists())
 
     def test_executor_timeout_interrupt_and_oserror_persist_durable_logs(self) -> None:
         cases: list[tuple[str, ExecutorClass]] = [
@@ -650,9 +680,9 @@ class ExecutorReliabilityTests(unittest.TestCase):
                 executor._version = "fake-version"
                 request = _execution_request(root / "timeout")
                 if name == "cursor":
-                    references = request.workspace / "reference_files"
-                    references.mkdir(parents=True)
-                    (references / "input.txt").write_text("reference\n", encoding="utf-8")
+                    task_inputs = request.workspace / "task_inputs"
+                    task_inputs.mkdir(parents=True)
+                    (task_inputs / "input.txt").write_text("reference\n", encoding="utf-8")
                 timeout = subprocess.TimeoutExpired(["fake-agent"], 1, output=b"out \xff\n", stderr=b"err \xfe\n")
                 with patch.object(subprocess, "run", side_effect=timeout) as run:
                     result = executor.execute(request)
@@ -670,6 +700,10 @@ class ExecutorReliabilityTests(unittest.TestCase):
                 executor = executor_factory(command="fake-agent")
                 executor._version = "fake-version"
                 request = _execution_request(interrupted_root)
+                if name == "cursor":
+                    task_inputs = request.workspace / "task_inputs"
+                    task_inputs.mkdir(parents=True)
+                    (task_inputs / "input.txt").write_text("reference\n", encoding="utf-8")
                 with patch.object(subprocess, "run", side_effect=KeyboardInterrupt):
                     result = executor.execute(request)
                 self.assertEqual(result.status, ExecutionStatus.INTERRUPTED)
@@ -685,6 +719,10 @@ class ExecutorReliabilityTests(unittest.TestCase):
                 executor = executor_factory(command="fake-agent")
                 executor._version = "fake-version"
                 request = _execution_request(failed_root)
+                if name == "cursor":
+                    task_inputs = request.workspace / "task_inputs"
+                    task_inputs.mkdir(parents=True)
+                    (task_inputs / "input.txt").write_text("reference\n", encoding="utf-8")
                 with patch.object(subprocess, "run", side_effect=OSError("launch failed")):
                     result = executor.execute(request)
                 self.assertEqual(result.status, ExecutionStatus.FAILED)

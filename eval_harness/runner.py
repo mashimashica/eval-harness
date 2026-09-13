@@ -8,13 +8,24 @@ from __future__ import annotations
 import json
 import os
 import secrets
+import tempfile
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from numbers import Real
 from pathlib import Path
-from typing import Mapping, TextIO
+from typing import Mapping, Sequence, TextIO
 
-from eval_harness.benchmarks.base import Benchmark
+from eval_harness.benchmarks.base import Benchmark, BenchmarkTask
+from eval_harness.benchmarks.snapshot import BenchmarkSnapshot
+from eval_harness.candidate_bundle import (
+    CandidateBundleError,
+    ExecutorEvidence,
+    InterventionEvidence,
+    SnapshotReference,
+    VerifiedSnapshotBinding,
+    seal_candidate_bundle,
+)
+from eval_harness.capabilities import ExecutorCapabilities, ExecutorOutput
 from eval_harness.evaluators.base import (
     EvaluationCandidate,
     EvaluationPlan,
@@ -30,19 +41,21 @@ from eval_harness.failures import FailureImpact, FailureKind, RunAbort
 from eval_harness.interventions.base import (
     Intervention,
     InterventionApplication,
+    InterventionBundle,
+    InterventionManifest,
     InterventionPreflightResult,
     ensure_source_output_separation,
 )
 from eval_harness.interventions.none import NoneIntervention
-from eval_harness.layout import safe_task_id, task_layout
+from eval_harness.layout import TaskLayout, candidate_layout, safe_task_id, task_layout
 from eval_harness.provenance import (
     RepositoryProvenance,
-    canonical_json_sha256,
     execution_record,
     repository_provenance,
     task_sha256,
 )
 from eval_harness.reasoning import ReasoningEffortOption, validate_executor_reasoning_effort
+from eval_harness.run_manifest import RunManifest, RunResultRow, RunResultWriter, write_run_manifest
 
 
 _LEGACY_CONDITION_ENVIRONMENT_KEYS = frozenset(
@@ -99,11 +112,20 @@ def _executor_environment() -> dict[str, str]:
 
 
 def _executor_reasoning_effort(executor: Executor) -> ReasoningEffortOption:
-    return validate_executor_reasoning_effort(executor, getattr(executor, "reasoning_effort", None))
+    return validate_executor_reasoning_effort(executor, executor.reasoning_effort)
 
 
 def _value(value: object) -> object:
     return value.value if hasattr(value, "value") else value
+
+
+def _capabilities_payload(capabilities: ExecutorCapabilities) -> dict[str, list[str]]:
+    if type(capabilities) is not ExecutorCapabilities:
+        raise TypeError("executor capabilities must be an ExecutorCapabilities")
+    return {
+        "inputs": sorted(item.value for item in capabilities.inputs),
+        "outputs": sorted(item.value for item in capabilities.outputs),
+    }
 
 
 def _evaluation_payload(evaluation: EvaluationResult) -> dict[str, object]:
@@ -437,14 +459,16 @@ def run_benchmark(
     intervention: Intervention | None = None,
     runtime_root: Path | None = None,
 ) -> RunSummary:
-    """Run benchmark tasks using the injected evaluator and executor."""
+    """Run benchmark tasks and publish the durable generation handoff first."""
 
     if intervention is None:
         intervention = NoneIntervention()
-    if limit <= 0:
-        raise ValueError("--limit must be positive")
+    if type(limit) is not int or limit <= 0:
+        raise ValueError("--limit must be a positive integer")
     if timeout_seconds <= 0:
         raise ValueError("--executor-timeout must be positive")
+
+    run_id = secrets.token_hex(16)
     reasoning_effort = _executor_reasoning_effort(executor)
     out_root = _canonical_planned_root(
         out_dir,
@@ -473,8 +497,13 @@ def run_benchmark(
     if not intervention_preflight.ok:
         raise _preflight_failure(getattr(intervention, "name", "intervention"), intervention_preflight.details)
     intervention_bundle = intervention_preflight.bundle
-    if intervention_bundle is not None and isinstance(intervention_bundle.root, Path):
-        ensure_source_output_separation(intervention_bundle, out_dir)
+    if type(intervention_bundle) is not InterventionBundle:
+        raise TypeError("successful intervention preflight must include an InterventionBundle")
+    intervention_manifest = intervention_bundle.manifest
+    if type(intervention_manifest) is not InterventionManifest:
+        raise TypeError("successful intervention preflight must include an InterventionManifest")
+    if isinstance(intervention_bundle.root, Path):
+        ensure_source_output_separation(intervention_bundle, out_root)
         if runtime_root is not None:
             ensure_source_output_separation(intervention_bundle, effective_runtime_root)
 
@@ -484,72 +513,130 @@ def run_benchmark(
     if executor_preflight.executor != executor.name:
         raise ValueError("executor preflight returned a mismatched executor")
 
+    # These are fixed executor contracts.  Validate them before benchmark
+    # preparation so malformed implementations cannot create a partial run.
+    network_access_enabled = executor.network_access_enabled
+    if type(network_access_enabled) is not bool:
+        raise TypeError("executor network_access_enabled must be a bool")
+    capabilities = executor.capabilities
+    if type(capabilities) is not ExecutorCapabilities:
+        raise TypeError("executor capabilities must be an ExecutorCapabilities")
+    network_policy = "enabled" if network_access_enabled else "disabled"
+
     benchmark.prepare()
-    tasks = list(benchmark.load_tasks(limit))
-    seen_task_ids: set[str] = set()
-    safe_task_ids: dict[str, str] = {}
-    for task in tasks:
-        task_id = task.execution.task_id
-        if task_id in seen_task_ids:
-            raise ValueError(f"duplicate task_id loaded: {task_id!r}")
-        seen_task_ids.add(task_id)
-        safe_id = safe_task_id(task_id)
-        previous_task_id = safe_task_ids.get(safe_id)
-        if previous_task_id is not None:
-            raise ValueError(f"task ids {previous_task_id!r} and {task_id!r} collide after safe normalization")
-        safe_task_ids[safe_id] = task_id
-    task_hashes = {task.execution.task_id: task_sha256(task.execution) for task in tasks}
-    # Validate every task plan before creating the run directory or allowing
-    # any executor to consume a model call.  An evaluator such as the explicit
-    # pairwise adapter can reject the generic runner's one-candidate plan, and
-    # a later invalid task must not leave an earlier task partially executed.
-    plans: list[EvaluationPlan] = []
-    for task in tasks:
-        layout = task_layout(
-            out_dir,
-            task.execution.task_id,
-            runtime_root=runtime_layout_root,
-        )
-        plan = EvaluationPlan(
-            task_id=task.execution.task_id,
-            task_prompt=task.execution.prompt,
-            metadata=task.evaluation,
-            candidate_count=1,
-            artifact_dir=layout.judge_deliverables,
-        )
-        evaluator.validate_plan(plan)
-        intervention.validate_task(task.execution)
-        plans.append(plan)
     repository_info = _repository_record(repository_provenance(Path(__file__).resolve().parents[1]))
-    out_dir.mkdir(parents=True, exist_ok=False)
+
+    # Snapshot acquisition is the only benchmark task load.  The temporary
+    # sibling lets all plan/intervention validation complete while both planned
+    # roots remain absent; the sealed snapshot is then moved into the run root.
+    out_root.parent.mkdir(parents=True, exist_ok=True)
+    with tempfile.TemporaryDirectory(prefix=f".{out_root.name}.staging-", dir=str(out_root.parent)) as controller_name:
+        controller_root = Path(controller_name)
+        snapshot_destination = controller_root / "snapshot"
+        snapshot = benchmark.acquire_snapshot(limit, snapshot_destination)
+        if type(snapshot) is not BenchmarkSnapshot:
+            raise TypeError("benchmark snapshot acquisition returned an invalid snapshot")
+        snapshot_tasks = tuple(snapshot.tasks)
+        if not snapshot_tasks:
+            raise ValueError("benchmark snapshot returned no tasks")
+        returned_snapshot_sha256 = snapshot.compute_snapshot_sha256()
+        snapshot_sha256 = snapshot.snapshot_sha256
+        if type(snapshot_sha256) is not str or not snapshot_sha256:
+            raise ValueError("benchmark snapshot returned an empty snapshot digest")
+        temporary_binding = VerifiedSnapshotBinding.load(snapshot_destination)
+        first_reference = temporary_binding.reference(snapshot_tasks[0].task_id)
+        if returned_snapshot_sha256 != snapshot_sha256 or snapshot_sha256 != first_reference.snapshot_sha256:
+            raise ValueError("benchmark snapshot metadata/digest disagrees with its sealed binding")
+
+        seen_task_ids: set[str] = set()
+        safe_task_ids: dict[str, str] = {}
+        ordered_references: list[SnapshotReference] = []
+        plans: list[tuple[SnapshotReference, EvaluationPlan]] = []
+        legacy_task_hashes: dict[str, str] = {}
+        for snapshot_task in snapshot_tasks:
+            reference = temporary_binding.reference(snapshot_task.task_id)
+            resolved_task = temporary_binding.resolve(reference)
+            if resolved_task != snapshot_task:
+                raise ValueError("benchmark snapshot task does not match its verified binding")
+            task = resolved_task.task_spec()
+            task_id = task.task_id
+            if task_id in seen_task_ids:
+                raise ValueError(f"duplicate task_id loaded: {task_id!r}")
+            seen_task_ids.add(task_id)
+            safe_id = safe_task_id(task_id)
+            previous_task_id = safe_task_ids.get(safe_id)
+            if previous_task_id is not None:
+                raise ValueError(f"task ids {previous_task_id!r} and {task_id!r} collide after safe normalization")
+            safe_task_ids[safe_id] = task_id
+
+            bound_view = temporary_binding.bind_evaluation_view(reference)
+            plan_layout = task_layout(out_root, task_id, runtime_root=runtime_layout_root)
+            plan = EvaluationPlan(
+                task_id=task_id,
+                task_prompt=bound_view.canonical_task_prompt,
+                metadata=bound_view.evaluation_data,
+                candidate_count=1,
+                artifact_dir=plan_layout.judge_deliverables,
+            )
+            evaluator.validate_plan(plan)
+            intervention.validate_task(task)
+            ordered_references.append(reference)
+            plans.append((reference, plan))
+            legacy_task_hashes[task_id] = task_sha256(task)
+
+        # ``acquire_snapshot`` has published a fully verified directory at the
+        # temporary destination.  Move that directory exactly once and reopen
+        # its binding so no pre-rename path capability survives publication.
+        out_root.mkdir(parents=True, exist_ok=False)
+        published_snapshot = out_root / "snapshot"
+        os.rename(snapshot_destination, published_snapshot)
+        _fsync_directory(out_root)
+
+    binding = VerifiedSnapshotBinding.load(out_root / "snapshot")
+    reopened_references = tuple(binding.reference(reference.task_id) for reference in ordered_references)
+    if reopened_references != tuple(ordered_references):
+        raise ValueError("published snapshot references do not match the acquired snapshot")
+
+    # The external runtime is created only after the durable snapshot has been
+    # published and all plans have passed validation.
     if runtime_root is not None:
         effective_runtime_root.mkdir(parents=True, exist_ok=False)
+
     started_at = _now()
-    metadata_path = out_dir / "run-metadata.json"
-    results_path = out_dir / "results.jsonl"
-    network_policy = "enabled" if bool(getattr(executor, "network_enabled", False)) else "disabled"
+    metadata_path = out_root / "run-metadata.json"
+    legacy_results_path = out_root / "results.jsonl"
+    candidate_results_path = out_root / "candidate-results.jsonl"
     evaluator_info = _evaluator_metadata(evaluator, evaluator_preflight)
     intervention_info = _intervention_metadata(intervention, intervention_preflight)
-    benchmark_revision = getattr(benchmark, "revision", None)
-    benchmark_revision_status = _revision_status(benchmark_revision)
+    snapshot_source = snapshot.source
+    snapshot_source_availability = _value(snapshot.source_availability)
+    snapshot_revision = snapshot.revision
+    snapshot_revision_availability = _value(snapshot.revision_availability)
     executor_descriptor: dict[str, object] = {
         "id": executor.name,
         "version": executor_preflight.version,
-        "invocation_mode": getattr(executor, "invocation_mode", None),
+        "invocation_mode": executor.invocation_mode,
         "auth_mode": executor_preflight.auth_mode,
         "model": model,
         "network_policy": network_policy,
+        "reasoning_effort_requested": reasoning_effort,
+        "capabilities": _capabilities_payload(capabilities),
     }
-    if reasoning_effort is not None:
-        executor_descriptor["reasoning_effort_requested"] = reasoning_effort
     ordered_task_records = [
-        {"task_id": task.execution.task_id, "task_sha256": task_hashes[task.execution.task_id]} for task in tasks
+        {
+            "task_id": reference.task_id,
+            "task_sha256": legacy_task_hashes[reference.task_id],
+            "snapshot_sha256": reference.snapshot_sha256,
+        }
+        for reference in ordered_references
     ]
     configuration: dict[str, object] = {
         "benchmark": {
-            "id": benchmark.name,
-            "revision": benchmark_revision,
-            "revision_status": benchmark_revision_status,
+            "id": snapshot.benchmark_id,
+            "source": snapshot_source,
+            "source_availability": snapshot_source_availability,
+            "revision": snapshot_revision,
+            "revision_availability": snapshot_revision_availability,
         },
         "executor": executor_descriptor,
         "evaluator": _configuration_evaluator(evaluator_info),
@@ -558,21 +645,32 @@ def run_benchmark(
         "network_policy": network_policy,
         "limit": limit,
         "timeout_seconds": timeout_seconds,
-        "runtime_layout": runtime_layout,
     }
-    configuration_sha256 = canonical_json_sha256(configuration)
-    run_fingerprint_sha256 = canonical_json_sha256(
-        {
-            "configuration_sha256": configuration_sha256,
-            "repository": repository_info,
-            "tasks": ordered_task_records,
-        }
+    snapshot_sha256 = ordered_references[0].snapshot_sha256
+    manifest = RunManifest(
+        run_id=run_id,
+        snapshot_path="snapshot",
+        snapshot_sha256=snapshot_sha256,
+        results_path="candidate-results.jsonl",
+        configuration=configuration,
+        configuration_sha256=None,
+        ordered_tasks=tuple(ordered_references),
+        run_fingerprint_sha256=None,
+        root=out_root,
     )
+    candidate_writer = RunResultWriter.create(candidate_results_path)
+    manifest = write_run_manifest(out_root, manifest)
+
     base_metadata: dict[str, object] = {
         "schema_version": 4,
-        "benchmark": benchmark.name,
-        "benchmark_revision": benchmark_revision,
-        "benchmark_revision_status": benchmark_revision_status,
+        "run_id": run_id,
+        "benchmark": snapshot.benchmark_id,
+        "benchmark_source": snapshot_source,
+        "benchmark_source_availability": snapshot_source_availability,
+        "benchmark_revision": snapshot_revision,
+        "benchmark_revision_status": snapshot_revision_availability,
+        "snapshot_path": "snapshot",
+        "snapshot_sha256": snapshot_sha256,
         "evaluator_id": evaluator_info["id"],
         "evaluator_type": evaluator_info["type"],
         "evaluator_version": evaluator_info["version"],
@@ -599,8 +697,8 @@ def run_benchmark(
         "repository": repository_info,
         "tasks": ordered_task_records,
         "configuration": configuration,
-        "configuration_sha256": configuration_sha256,
-        "run_fingerprint_sha256": run_fingerprint_sha256,
+        "configuration_sha256": manifest.configuration_sha256,
+        "run_fingerprint_sha256": manifest.run_fingerprint_sha256,
     }
     if reasoning_effort is not None:
         base_metadata["reasoning_effort_requested"] = reasoning_effort
@@ -620,30 +718,59 @@ def run_benchmark(
 
     run_status = "completed"
     try:
-        with results_path.open("x", encoding="utf-8", newline="\n") as results_handle:
-            for task, plan in zip(tasks, plans):
+        with legacy_results_path.open("x", encoding="utf-8", newline="\n") as results_handle:
+
+            def persist_legacy_row(
+                task_id: str,
+                task_layout_value: TaskLayout,
+                materialized: Sequence[str],
+                intervention_payload: Mapping[str, object],
+                result: ExecutionResult | None,
+                evaluation_payload: Mapping[str, object] | None,
+            ) -> dict[str, object]:
+                execution_payload = _execution_payload(result) if result is not None else None
+                row: dict[str, object] = {
+                    "task_id": task_id,
+                    "task_sha256": legacy_task_hashes[task_id],
+                    "materialized": list(materialized),
+                    "intervention": dict(intervention_payload),
+                    "execution": execution_payload,
+                    "evaluation": dict(evaluation_payload) if evaluation_payload is not None else None,
+                }
+                executor_dir = task_layout_value.executor_dir
+                _write_json(executor_dir.parent / "result.json", row)
+                _append_jsonl(results_handle, row)
+                rows.append(row)
+                record_application_run_id(row)
+                return row
+
+            for sequence, (reference, plan) in enumerate(plans):
+                snapshot_task = binding.resolve(reference)
+                canonical_task = snapshot_task.task_spec()
                 layout = task_layout(
-                    out_dir,
-                    task.execution.task_id,
+                    out_root,
+                    reference.task_id,
                     runtime_root=runtime_layout_root,
                 )
-                layout.workspace.mkdir(parents=True, exist_ok=False)
-                layout.executor_dir.mkdir(parents=True, exist_ok=False)
-                layout.workspace_deliverables.mkdir(parents=True, exist_ok=True)
-                materialized = list(benchmark.materialize(task, layout.workspace))
+                task_root = layout.workspace.parent
+                task_root.mkdir(parents=True, exist_ok=False)
+                layout.executor_dir.mkdir(exist_ok=False)
+                materialized = binding.materialize_execution(reference, layout.workspace)
+                layout.workspace_deliverables.mkdir(parents=False, exist_ok=False)
                 execution_task = benchmark.execution_task(
-                    task,
+                    BenchmarkTask(execution=canonical_task),
                     layout.workspace,
                     network_policy=network_policy,
                 )
-                # local_judge_runner._candidate_task_prompt consumes this exact
-                # canonical raw task prompt.  The executor wrapper is kept in
-                # TaskSpec for the model, but is never used as provenance.
+                # Keep the legacy prompt file for staged consumers.  It is
+                # written from the bound canonical view and is not a handoff
+                # input for the new candidate ledger.
                 canonical_path = layout.executor_dir / "task-prompt.txt"
                 canonical_path.write_text(plan.task_prompt, encoding="utf-8")
                 with canonical_path.open("rb") as canonical_handle:
                     canonical_handle.flush()
                     os.fsync(canonical_handle.fileno())
+
                 application_run_id = secrets.token_urlsafe(24)
                 try:
                     application = intervention.apply(
@@ -653,7 +780,7 @@ def run_benchmark(
                     )
                     if application.application_run_id != application_run_id:
                         raise ValueError("intervention returned a mismatched application_run_id")
-                    if application.task.task_id != task.execution.task_id:
+                    if application.task.task_id != reference.task_id:
                         raise ValueError("intervention returned a mismatched task_id")
                     if application.bundle_sha256 != intervention_info["bundle_sha256"]:
                         raise ValueError("intervention returned a mismatched bundle_sha256")
@@ -674,18 +801,14 @@ def run_benchmark(
                         phase="intervention_apply",
                         interrupted=True,
                     )
-                    failure_row: dict[str, object] = {
-                        "task_id": task.execution.task_id,
-                        "task_sha256": task_hashes[task.execution.task_id],
-                        "materialized": materialized,
-                        "intervention": intervention_payload,
-                        "execution": None,
-                        "evaluation": None,
-                    }
-                    _write_json(layout.executor_dir.parent / "result.json", failure_row)
-                    _append_jsonl(results_handle, failure_row)
-                    rows.append(failure_row)
-                    record_application_run_id(failure_row)
+                    persist_legacy_row(
+                        reference.task_id,
+                        layout,
+                        materialized,
+                        intervention_payload,
+                        None,
+                        None,
+                    )
                     base_metadata["failure"] = {
                         "phase": "intervention_apply",
                         "exception_type": type(exc).__name__,
@@ -700,18 +823,14 @@ def run_benchmark(
                         application_run_id=application_run_id,
                         phase="intervention_apply",
                     )
-                    row: dict[str, object] = {
-                        "task_id": task.execution.task_id,
-                        "task_sha256": task_hashes[task.execution.task_id],
-                        "materialized": materialized,
-                        "intervention": intervention_payload,
-                        "execution": None,
-                        "evaluation": None,
-                    }
-                    _write_json(layout.executor_dir.parent / "result.json", row)
-                    _append_jsonl(results_handle, row)
-                    rows.append(row)
-                    record_application_run_id(row)
+                    persist_legacy_row(
+                        reference.task_id,
+                        layout,
+                        materialized,
+                        intervention_payload,
+                        None,
+                        None,
+                    )
                     base_metadata["failure"] = {
                         "phase": "intervention_apply",
                         "exception_type": type(exc).__name__,
@@ -719,6 +838,7 @@ def run_benchmark(
                     run_status = "failed"
                     _write_run_metadata(metadata_path, base_metadata, status=run_status, rows=rows)
                     raise
+
                 request = ExecutionRequest(
                     task=application.task,
                     workspace=layout.workspace,
@@ -730,59 +850,128 @@ def run_benchmark(
                 )
                 result = executor.execute(request)
 
-                def persist_row(evaluation_payload: dict[str, object]) -> dict[str, object]:
-                    row: dict[str, object] = {
-                        "task_id": task.execution.task_id,
-                        "task_sha256": task_hashes[task.execution.task_id],
-                        "materialized": materialized,
-                        "intervention": intervention_payload,
-                        "execution": _execution_payload(result),
-                        "evaluation": evaluation_payload,
-                    }
-                    _write_json(layout.executor_dir.parent / "result.json", row)
-                    _append_jsonl(results_handle, row)
-                    rows.append(row)
-                    record_application_run_id(row)
-                    return row
-
                 try:
-                    if result.task_id != task.execution.task_id:
+                    if type(result) is not ExecutionResult:
+                        raise TypeError("executor must return an ExecutionResult")
+                    if result.task_id != reference.task_id:
                         raise ValueError("executor returned a mismatched task_id")
                     if result.executor != executor.name:
                         raise ValueError("executor returned a mismatched executor")
-                    expected_invocation_mode = getattr(executor, "invocation_mode", None)
-                    if expected_invocation_mode is not None and result.invocation_mode != expected_invocation_mode:
+                    if result.invocation_mode != executor.invocation_mode:
                         raise ValueError("executor returned a mismatched invocation_mode")
                     if (
                         executor_preflight.version is not None
-                        and result.executor_version is not None
                         and result.executor_version != executor_preflight.version
                     ):
                         raise ValueError("executor returned a mismatched executor_version")
-                    if (
-                        executor_preflight.auth_mode is not None
-                        and result.auth_mode is not None
-                        and result.auth_mode != executor_preflight.auth_mode
-                    ):
+                    if executor_preflight.auth_mode is not None and result.auth_mode != executor_preflight.auth_mode:
                         raise ValueError("executor returned a mismatched auth_mode")
+                    if result.reasoning_effort_requested != reasoning_effort:
+                        raise ValueError("executor returned a mismatched reasoning_effort_requested")
+                    if result.runtime != executor.runtime:
+                        raise ValueError("executor returned a mismatched runtime")
                     if not _path_matches(result.workspace, layout.workspace):
                         raise ValueError("executor returned a workspace outside the assigned task workspace")
                     if not _path_matches(result.deliverables_dir, layout.workspace_deliverables):
                         raise ValueError("executor returned deliverables outside the assigned task directory")
+                    if not result.available_outputs <= capabilities.outputs:
+                        raise CandidateBundleError("executor returned an undeclared output channel")
                 except Exception as exc:
-                    persist_row(_evaluation_error_payload(exc, phase="executor_result_validation"))
+                    legacy_result = result if type(result) is ExecutionResult else None
+                    persist_legacy_row(
+                        reference.task_id,
+                        layout,
+                        materialized,
+                        intervention_payload,
+                        legacy_result,
+                        _evaluation_error_payload(exc, phase="executor_result_validation"),
+                    )
+                    run_status = "failed"
+                    _write_run_metadata(metadata_path, base_metadata, status=run_status, rows=rows)
+                    raise
+
+                executor_evidence = ExecutorEvidence(
+                    executor_id=result.executor,
+                    executor_version=result.executor_version,
+                    runtime=result.runtime,
+                    invocation_mode=result.invocation_mode,
+                    auth_mode=result.auth_mode,
+                    requested_model=model,
+                    model_id=result.model_id,
+                    reasoning_effort_requested=result.reasoning_effort_requested,
+                    effective_reasoning_effort=result.effective_reasoning_effort,
+                    effective_reasoning_effort_available=result.effective_reasoning_effort_available,
+                    declared_capabilities=capabilities,
+                    started_at=result.started_at,
+                    finished_at=result.finished_at,
+                    exit_code=result.exit_code,
+                )
+                intervention_evidence = InterventionEvidence(
+                    manifest=intervention_manifest,
+                    application=application,
+                )
+                candidate_name = f"candidate-{sequence:08d}"
+                candidate_id = f"{run_id}:{candidate_name}"
+                candidate_path = candidate_layout(out_root, sequence)
+                try:
+                    bundle = seal_candidate_bundle(
+                        destination=candidate_path.root,
+                        candidate_id=candidate_id,
+                        snapshot_binding=binding,
+                        snapshot_reference=reference,
+                        effective_executor_prompt=application.task.prompt,
+                        executor_evidence=executor_evidence,
+                        intervention_evidence=intervention_evidence,
+                        status=result.status,
+                        output_text=result.output_text,
+                        available_outputs=result.available_outputs,
+                        failure=result.failure,
+                        artifacts_root=(
+                            result.deliverables_dir
+                            if ExecutorOutput.ARTIFACT_FILES in result.available_outputs
+                            else None
+                        ),
+                    )
+                    bundle_sha256 = bundle.bundle_sha256
+                    if type(bundle_sha256) is not str or not bundle_sha256:
+                        raise CandidateBundleError("sealed candidate bundle has no digest")
+                    candidate_writer.append(
+                        RunResultRow(
+                            sequence=sequence,
+                            candidate_id=candidate_id,
+                            snapshot_reference=reference,
+                            bundle_path=candidate_path.relative_path,
+                            bundle_sha256=bundle_sha256,
+                        )
+                    )
+                except Exception as exc:
+                    persist_legacy_row(
+                        reference.task_id,
+                        layout,
+                        materialized,
+                        intervention_payload,
+                        result,
+                        _evaluation_error_payload(exc, phase="candidate_handoff"),
+                    )
                     run_status = "failed"
                     _write_run_metadata(metadata_path, base_metadata, status=run_status, rows=rows)
                     raise
 
                 if result.failure is not None and result.failure.impact is FailureImpact.RUN:
-                    persist_row(_execution_failure_evaluation_payload())
+                    persist_legacy_row(
+                        reference.task_id,
+                        layout,
+                        materialized,
+                        intervention_payload,
+                        result,
+                        _execution_failure_evaluation_payload(),
+                    )
                     run_status = "interrupted" if result.status is ExecutionStatus.INTERRUPTED else "failed"
                     _write_run_metadata(metadata_path, base_metadata, status=run_status, rows=rows)
                     raise RunAbort(result.failure)
 
                 candidate = EvaluationCandidate(
-                    candidate_id="candidate",
+                    candidate_id=candidate_id,
                     execution=result,
                     artifacts_dir=result.deliverables_dir,
                 )
@@ -795,29 +984,45 @@ def run_benchmark(
                 )
                 try:
                     evaluation = evaluator.evaluate(evaluation_request)
-                    if evaluation.task_id != task.execution.task_id:
+                    if evaluation.task_id != reference.task_id:
                         raise ValueError(
-                            f"evaluator returned task id {evaluation.task_id!r}; expected {task.execution.task_id!r}"
+                            f"evaluator returned task id {evaluation.task_id!r}; expected {reference.task_id!r}"
                         )
                     evaluation_payload = _evaluation_payload(evaluation)
                 except KeyboardInterrupt as exc:
-                    persist_row(_evaluation_interrupt_payload(exc))
+                    persist_legacy_row(
+                        reference.task_id,
+                        layout,
+                        materialized,
+                        intervention_payload,
+                        result,
+                        _evaluation_interrupt_payload(exc),
+                    )
                     run_status = "interrupted"
                     _write_run_metadata(metadata_path, base_metadata, status=run_status, rows=rows)
                     raise
                 except Exception as exc:
                     evaluation_payload = _evaluation_error_payload(exc)
-                    persist_row(evaluation_payload)
-                    run_status = "failed"
-                    _write_run_metadata(
-                        metadata_path,
-                        base_metadata,
-                        status=run_status,
-                        rows=rows,
+                    persist_legacy_row(
+                        reference.task_id,
+                        layout,
+                        materialized,
+                        intervention_payload,
+                        result,
+                        evaluation_payload,
                     )
+                    run_status = "failed"
+                    _write_run_metadata(metadata_path, base_metadata, status=run_status, rows=rows)
                     raise
 
-                persist_row(evaluation_payload)
+                persist_legacy_row(
+                    reference.task_id,
+                    layout,
+                    materialized,
+                    intervention_payload,
+                    result,
+                    evaluation_payload,
+                )
 
     except RunAbort as exc:
         if exc.failure.kind is FailureKind.INTERRUPTED:
@@ -838,7 +1043,7 @@ def run_benchmark(
     metrics = _aggregate_metrics(rows)
     _write_run_metadata(metadata_path, base_metadata, status=run_status, rows=rows, metrics=metrics)
     return RunSummary(
-        benchmark=benchmark.name,
+        benchmark=snapshot.benchmark_id,
         executor=executor.name,
         out_dir=out_dir,
         runtime_root=effective_runtime_root,

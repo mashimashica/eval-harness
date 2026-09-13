@@ -5,12 +5,18 @@ from __future__ import annotations
 
 import json
 import os
+import shutil
+import subprocess
 import tempfile
 import unittest
+from collections.abc import Iterator
+from contextlib import contextmanager
 from pathlib import Path
+from unittest.mock import patch
 
-from eval_harness.executors.base import ExecutionRequest, TaskSpec
-from eval_harness.executors.cursor import CursorExecutor, subscription_environment
+from eval_harness.executors.base import ExecutionRequest, ExecutionStatus, TaskSpec
+from eval_harness.executors.cursor import CursorExecutor, _tree_digest, subscription_environment
+from eval_harness.failures import FailureKind
 
 
 class CursorExecutorTests(unittest.TestCase):
@@ -49,10 +55,10 @@ class CursorExecutorTests(unittest.TestCase):
             self.assertNotIn("--auth-token", command)
             self.assertNotIn("--worktree", command)
 
-    def test_workspace_policy_denies_network_mcp_and_adds_readonly_reference_path(self) -> None:
+    def test_workspace_policy_denies_network_mcp_and_adds_readonly_task_input_path(self) -> None:
         with tempfile.TemporaryDirectory() as root:
             workspace = Path(root) / "workspace"
-            readonly = Path(root) / "readonly-refs"
+            readonly = Path(root) / "readonly-inputs"
             workspace.mkdir()
             readonly.mkdir()
             CursorExecutor(network_enabled=False)._write_workspace_policy(workspace, readonly)
@@ -64,24 +70,750 @@ class CursorExecutorTests(unittest.TestCase):
             self.assertIn(str(readonly.resolve()), sandbox["additionalReadonlyPaths"])
             self.assertIn("Mcp(*:*)", config["permissions"]["deny"])
             self.assertIn("WebFetch(*)", config["permissions"]["deny"])
-            self.assertIn("Write(reference_files/**)", config["permissions"]["deny"])
+            self.assertIn("Write(task_inputs/**)", config["permissions"]["deny"])
+            self.assertNotIn("Write(reference_files/**)", config["permissions"]["deny"])
             self.assertIn("Shell(*)", config["permissions"]["allow"])
 
-    def test_reference_tree_is_moved_outside_workspace_then_restored(self) -> None:
+    def test_task_input_tree_is_moved_outside_workspace_then_restored(self) -> None:
         with tempfile.TemporaryDirectory() as root:
             workspace = Path(root) / "task" / "workspace"
-            refs = workspace / "reference_files"
-            refs.mkdir(parents=True)
-            (refs / "input.txt").write_text("original\n", encoding="utf-8")
+            inputs = workspace / "task_inputs"
+            inputs.mkdir(parents=True)
+            (inputs / "input.txt").write_text("original\n", encoding="utf-8")
             executor = CursorExecutor()
-            protected, digest = executor._isolate_reference_files(workspace)
+            protected, digest = executor._isolate_task_inputs(workspace)
             self.assertIsNotNone(protected)
             self.assertIsNotNone(digest)
-            self.assertTrue(refs.is_symlink())
+            self.assertTrue(inputs.is_symlink())
             self.assertFalse(str(protected).startswith(str(workspace) + os.sep))
-            executor._restore_reference_files(workspace, protected)
-            self.assertFalse(refs.is_symlink())
-            self.assertEqual((refs / "input.txt").read_text(encoding="utf-8"), "original\n")
+            executor._restore_task_inputs(workspace, protected)
+            self.assertFalse(inputs.is_symlink())
+            self.assertEqual((inputs / "input.txt").read_text(encoding="utf-8"), "original\n")
+
+    def test_tree_digest_rejects_special_entries(self) -> None:
+        with tempfile.TemporaryDirectory() as root:
+            tree = Path(root) / "tree"
+            tree.mkdir()
+            os.mkfifo(tree / "pipe")
+            with self.assertRaisesRegex(OSError, "only directories and regular files"):
+                _tree_digest(tree)
+
+    def test_tree_digest_rejects_observed_directory_stat_change(self) -> None:
+        with tempfile.TemporaryDirectory() as root:
+            tree = Path(root) / "tree"
+            tree.mkdir()
+            (tree / "input.txt").write_bytes(b"input")
+            original_scandir = os.scandir
+
+            @contextmanager
+            def mutating_scandir(path: Path) -> Iterator[list[os.DirEntry[str]]]:
+                with original_scandir(path) as scanner:
+                    entries = list(scanner)
+                if path == tree:
+                    (tree / "added.txt").write_bytes(b"added")
+                yield entries
+
+            with patch("eval_harness.executors.cursor.os.scandir", side_effect=mutating_scandir):
+                with self.assertRaisesRegex(OSError, "directory changed"):
+                    _tree_digest(tree)
+
+    def test_tree_digest_rejects_observed_file_stat_change(self) -> None:
+        with tempfile.TemporaryDirectory() as root:
+            tree = Path(root) / "tree"
+            tree.mkdir()
+            input_path = tree / "input.txt"
+            input_path.write_bytes(b"input")
+            original_read = os.read
+            changed = False
+
+            def mutating_read(descriptor: int, size: int) -> bytes:
+                nonlocal changed
+                chunk = original_read(descriptor, size)
+                if not changed:
+                    input_path.write_bytes(b"changed")
+                    changed = True
+                return chunk
+
+            with patch("eval_harness.executors.cursor.os.read", side_effect=mutating_read):
+                with self.assertRaisesRegex(OSError, "file changed during read"):
+                    _tree_digest(tree)
+
+    def test_tree_digest_frames_paths_lengths_content_and_empty_directories(self) -> None:
+        with tempfile.TemporaryDirectory() as root:
+            base = Path(root)
+            first = base / "first"
+            second = base / "second"
+            first.mkdir()
+            second.mkdir()
+            (first / "a").write_bytes(b"X")
+            (first / "b").write_bytes(b"Y")
+            (second / "a").write_bytes(b"X" + (1).to_bytes(8, "big") + b"bY")
+            self.assertNotEqual(_tree_digest(first), _tree_digest(second))
+
+            with_empty_directory = base / "with-empty-directory"
+            without_empty_directory = base / "without-empty-directory"
+            (with_empty_directory / "empty").mkdir(parents=True)
+            without_empty_directory.mkdir()
+            self.assertNotEqual(_tree_digest(with_empty_directory), _tree_digest(without_empty_directory))
+
+            symlink_tree = base / "symlink-tree"
+            symlink_tree.mkdir()
+            target = symlink_tree / "target"
+            target.write_bytes(b"target")
+            (symlink_tree / "link").symlink_to(target)
+            with self.assertRaisesRegex(OSError, "cannot contain symlinks"):
+                _tree_digest(symlink_tree)
+
+            missing = base / "missing"
+            with self.assertRaisesRegex(OSError, "root"):
+                _tree_digest(missing)
+            regular = base / "regular"
+            regular.write_bytes(b"file")
+            with self.assertRaisesRegex(OSError, "root"):
+                _tree_digest(regular)
+
+    def test_restore_rejects_missing_or_symlink_protected_tree(self) -> None:
+        for replacement in ("missing", "symlink"):
+            with self.subTest(replacement=replacement), tempfile.TemporaryDirectory() as root:
+                workspace = Path(root) / "task" / "workspace"
+                inputs = workspace / "task_inputs"
+                inputs.mkdir(parents=True)
+                original = inputs / "input.txt"
+                original.write_text("original", encoding="utf-8")
+                executor = CursorExecutor()
+                protected, _digest = executor._isolate_task_inputs(workspace)
+                self.assertIsNotNone(protected)
+                assert protected is not None
+                if replacement == "missing":
+                    shutil.rmtree(protected)
+                else:
+                    shutil.rmtree(protected)
+                    target = Path(root) / "replacement"
+                    target.mkdir()
+                    protected.symlink_to(target, target_is_directory=True)
+                with self.assertRaisesRegex(RuntimeError, "protected real directory"):
+                    executor._restore_task_inputs(workspace, protected)
+                self.assertTrue(inputs.is_symlink())
+
+    def test_symlink_creation_interrupt_restores_task_inputs(self) -> None:
+        with tempfile.TemporaryDirectory() as root:
+            workspace = Path(root) / "task" / "workspace"
+            inputs = workspace / "task_inputs"
+            inputs.mkdir(parents=True)
+            original = inputs / "input.txt"
+            original.write_text("original", encoding="utf-8")
+            protected = workspace.parent / "cursor-task-inputs-readonly"
+            with patch.object(Path, "symlink_to", side_effect=KeyboardInterrupt):
+                with self.assertRaises(KeyboardInterrupt):
+                    CursorExecutor()._isolate_task_inputs(workspace)
+            self.assertTrue(inputs.is_dir())
+            self.assertFalse(inputs.is_symlink())
+            self.assertEqual(original.read_text(encoding="utf-8"), "original")
+            self.assertFalse(protected.exists())
+
+    def test_execute_rejects_real_input_tree_mutations_and_restores_when_possible(self) -> None:
+        success = json.dumps(
+            {
+                "type": "result",
+                "subtype": "success",
+                "is_error": False,
+                "duration_ms": 1,
+                "duration_api_ms": 1,
+                "result": "answer",
+                "session_id": "session",
+            }
+        )
+        mutations = ("empty_deleted", "protected_symlink", "internal_symlink", "framed_content")
+        for mutation in mutations:
+            with self.subTest(mutation=mutation), tempfile.TemporaryDirectory() as root:
+                request = self.request(root)
+                inputs = request.workspace / "task_inputs"
+                inputs.mkdir()
+                if mutation == "framed_content":
+                    (inputs / "a").write_bytes(b"X")
+                    (inputs / "b").write_bytes(b"Y")
+                elif mutation != "empty_deleted":
+                    (inputs / "input.txt").write_bytes(b"original")
+                protected = request.workspace.parent / "cursor-task-inputs-readonly"
+                replacement = Path(root) / "replacement"
+                replacement.mkdir()
+                external = Path(root) / "external.txt"
+                external.write_bytes(b"external")
+                executor = CursorExecutor(command="agent")
+                executor._version = "fake-cursor"
+
+                def run_agent(*_args: object, **_kwargs: object) -> subprocess.CompletedProcess[str]:
+                    if mutation == "empty_deleted":
+                        shutil.rmtree(protected)
+                    elif mutation == "protected_symlink":
+                        shutil.rmtree(protected)
+                        protected.symlink_to(replacement, target_is_directory=True)
+                    elif mutation == "internal_symlink":
+                        (protected / "link").symlink_to(external)
+                    else:
+                        (protected / "b").unlink()
+                        (protected / "a").write_bytes(b"X" + (1).to_bytes(8, "big") + b"bY")
+                    return subprocess.CompletedProcess([], 0, stdout=success, stderr="")
+
+                with patch("eval_harness.executors.cursor.subprocess.run", side_effect=run_agent):
+                    result = executor.execute(request)
+                self.assertEqual(result.status, ExecutionStatus.FAILED)
+                self.assertIsNotNone(result.failure)
+                assert result.failure is not None
+                self.assertEqual(result.failure.kind, FailureKind.INTEGRITY)
+                self.assertEqual(
+                    result.failure.code,
+                    "task_input_mutation" if mutation == "framed_content" else "task_input_integrity",
+                )
+                self.assertIsNone(result.output_text)
+                self.assertEqual(result.available_outputs, frozenset())
+                if mutation in {"empty_deleted", "protected_symlink"}:
+                    self.assertEqual(result.metadata["task_inputs_restore_error"], "RuntimeError")
+                    self.assertTrue(inputs.is_symlink())
+                else:
+                    self.assertTrue(inputs.is_dir())
+                    self.assertFalse(inputs.is_symlink())
+                    if mutation == "internal_symlink":
+                        self.assertTrue((inputs / "link").is_symlink())
+
+    def test_execute_restores_valid_real_input_tree_after_success(self) -> None:
+        success = json.dumps(
+            {
+                "type": "result",
+                "subtype": "success",
+                "is_error": False,
+                "duration_ms": 1,
+                "duration_api_ms": 1,
+                "result": "answer",
+                "session_id": "session",
+            }
+        )
+        with tempfile.TemporaryDirectory() as root:
+            request = self.request(root)
+            inputs = request.workspace / "task_inputs"
+            inputs.mkdir()
+            original = inputs / "input.txt"
+            original.write_bytes(b"original")
+            executor = CursorExecutor(command="agent")
+            executor._version = "fake-cursor"
+            with patch(
+                "eval_harness.executors.cursor.subprocess.run",
+                return_value=subprocess.CompletedProcess([], 0, stdout=success, stderr=""),
+            ):
+                result = executor.execute(request)
+            self.assertEqual(result.status, ExecutionStatus.COMPLETED)
+            self.assertIsNone(result.failure)
+            self.assertTrue(inputs.is_dir())
+            self.assertFalse(inputs.is_symlink())
+            self.assertEqual(original.read_bytes(), b"original")
+
+    def test_legacy_reference_namespace_is_rejected_before_execution(self) -> None:
+        with tempfile.TemporaryDirectory() as root:
+            workspace = Path(root) / "workspace"
+            (workspace / "reference_files").mkdir(parents=True)
+            with self.assertRaisesRegex(ValueError, "does not accept the legacy reference_files input namespace"):
+                CursorExecutor()._isolate_task_inputs(workspace)
+
+    def test_task_input_symlink_and_non_directory_are_rejected(self) -> None:
+        with tempfile.TemporaryDirectory() as root:
+            workspace = Path(root) / "workspace"
+            workspace.mkdir()
+            target = Path(root) / "target"
+            target.mkdir()
+            (workspace / "task_inputs").symlink_to(target, target_is_directory=True)
+            with self.assertRaisesRegex(ValueError, "task_inputs input must be a real directory"):
+                CursorExecutor()._isolate_task_inputs(workspace)
+
+            (workspace / "task_inputs").unlink()
+            (workspace / "task_inputs").write_text("input", encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "task_inputs input must be a real directory"):
+                CursorExecutor()._isolate_task_inputs(workspace)
+
+    def test_policy_write_failure_restores_task_inputs_without_invoking_agent(self) -> None:
+        with tempfile.TemporaryDirectory() as root:
+            request = self.request(root)
+            inputs = request.workspace / "task_inputs"
+            inputs.mkdir()
+            original = inputs / "input.txt"
+            original.write_text("original", encoding="utf-8")
+            executor = CursorExecutor(command="agent")
+            with (
+                patch.object(executor, "_write_workspace_policy", side_effect=OSError("policy denied")),
+                patch("eval_harness.executors.cursor.subprocess.run") as run,
+            ):
+                with self.assertRaisesRegex(OSError, "policy denied"):
+                    executor.execute(request)
+            run.assert_not_called()
+            self.assertTrue(inputs.is_dir())
+            self.assertFalse(inputs.is_symlink())
+            self.assertEqual(original.read_text(encoding="utf-8"), "original")
+
+    def test_prompt_write_failure_or_interrupt_restores_task_inputs_without_invoking_agent(self) -> None:
+        prompt_path_error = "prompt write denied"
+        for name, prompt_error in (("error", OSError(prompt_path_error)), ("interrupt", KeyboardInterrupt())):
+            with self.subTest(name=name), tempfile.TemporaryDirectory() as root:
+                request = self.request(root)
+                inputs = request.workspace / "task_inputs"
+                inputs.mkdir()
+                original = inputs / "input.txt"
+                original.write_text("original", encoding="utf-8")
+                prompt_path = request.executor_dir / "prompt.txt"
+                executor = CursorExecutor(command="agent")
+                original_write_text = Path.write_text
+
+                def write_text(
+                    path: Path,
+                    data: str,
+                    encoding: str | None = None,
+                    errors: str | None = None,
+                    newline: str | None = None,
+                ) -> int:
+                    if path == prompt_path:
+                        raise prompt_error
+                    return original_write_text(path, data, encoding=encoding, errors=errors, newline=newline)
+
+                with (
+                    patch.object(Path, "write_text", autospec=True, side_effect=write_text),
+                    patch("eval_harness.executors.cursor.subprocess.run") as run,
+                ):
+                    if isinstance(prompt_error, KeyboardInterrupt):
+                        with self.assertRaises(KeyboardInterrupt):
+                            executor.execute(request)
+                    else:
+                        with self.assertRaisesRegex(OSError, prompt_path_error):
+                            executor.execute(request)
+                run.assert_not_called()
+                self.assertTrue(inputs.is_dir())
+                self.assertFalse(inputs.is_symlink())
+                self.assertEqual(original.read_text(encoding="utf-8"), "original")
+
+    def test_isolation_digest_failure_restores_task_inputs_without_invoking_agent(self) -> None:
+        with tempfile.TemporaryDirectory() as root:
+            request = self.request(root)
+            inputs = request.workspace / "task_inputs"
+            inputs.mkdir()
+            original = inputs / "input.txt"
+            original.write_text("original", encoding="utf-8")
+            executor = CursorExecutor(command="agent")
+            with (
+                patch("eval_harness.executors.cursor._tree_digest", side_effect=OSError("digest unavailable")),
+                patch("eval_harness.executors.cursor.subprocess.run") as run,
+            ):
+                with self.assertRaisesRegex(OSError, "digest unavailable"):
+                    executor.execute(request)
+            run.assert_not_called()
+            self.assertTrue(inputs.is_dir())
+            self.assertFalse(inputs.is_symlink())
+            self.assertEqual(original.read_text(encoding="utf-8"), "original")
+
+    def test_late_task_input_mutation_discards_parsed_output(self) -> None:
+        with tempfile.TemporaryDirectory() as root:
+            request = self.request(root)
+            (request.workspace / "task_inputs").mkdir()
+            (request.workspace / "task_inputs" / "input.txt").write_text("original", encoding="utf-8")
+            executor = CursorExecutor(command="agent")
+            executor._version = "fake-cursor"
+            success = json.dumps(
+                {
+                    "type": "result",
+                    "subtype": "success",
+                    "is_error": False,
+                    "duration_ms": 1,
+                    "duration_api_ms": 1,
+                    "result": "answer",
+                    "session_id": "session",
+                }
+            )
+            with (
+                patch(
+                    "eval_harness.executors.cursor.subprocess.run",
+                    return_value=subprocess.CompletedProcess([], 0, stdout=success, stderr=""),
+                ),
+                patch(
+                    "eval_harness.executors.cursor._tree_digest",
+                    side_effect=["baseline", "mutated"],
+                ),
+            ):
+                result = executor.execute(request)
+            self.assertEqual(result.status.value, "failed")
+            self.assertIsNotNone(result.failure)
+            assert result.failure is not None
+            self.assertEqual(result.failure.kind, FailureKind.INTEGRITY)
+            self.assertEqual(result.failure.code, "task_input_mutation")
+            self.assertIsNone(result.output_text)
+            self.assertEqual(result.available_outputs, frozenset())
+
+    def test_final_tree_digest_failure_is_integrity_and_preserves_primary_failure(self) -> None:
+        success = json.dumps(
+            {
+                "type": "result",
+                "subtype": "success",
+                "is_error": False,
+                "duration_ms": 1,
+                "duration_api_ms": 1,
+                "result": "answer",
+                "session_id": "session",
+            }
+        )
+        cases = (
+            (
+                "success",
+                subprocess.CompletedProcess([], 0, stdout=success, stderr=""),
+                FailureKind.INTEGRITY,
+                "task_input_integrity",
+            ),
+            (
+                "timeout",
+                subprocess.TimeoutExpired([], 1, output=b"partial", stderr=b"error"),
+                FailureKind.TIMEOUT,
+                "timeout",
+            ),
+            (
+                "process",
+                subprocess.CompletedProcess([], 7, stdout="", stderr="error"),
+                FailureKind.PROCESS,
+                "process_exit",
+            ),
+            (
+                "protocol",
+                subprocess.CompletedProcess([], 0, stdout="malformed", stderr=""),
+                FailureKind.PROTOCOL,
+                "output_protocol",
+            ),
+            ("interrupted", KeyboardInterrupt(), FailureKind.INTERRUPTED, "interrupted"),
+        )
+        for name, process_result, expected_kind, expected_code in cases:
+            with self.subTest(name=name), tempfile.TemporaryDirectory() as root:
+                request = self.request(root)
+                inputs = request.workspace / "task_inputs"
+                inputs.mkdir()
+                (inputs / "input.txt").write_bytes(b"original")
+                executor = CursorExecutor(command="agent")
+                executor._version = "fake-cursor"
+                with (
+                    patch(
+                        "eval_harness.executors.cursor.subprocess.run",
+                        side_effect=process_result if isinstance(process_result, BaseException) else None,
+                        return_value=process_result if not isinstance(process_result, BaseException) else None,
+                    ),
+                    patch(
+                        "eval_harness.executors.cursor._tree_digest",
+                        side_effect=["baseline", OSError("digest unavailable")],
+                    ),
+                ):
+                    result = executor.execute(request)
+                self.assertIsNotNone(result.failure)
+                assert result.failure is not None
+                self.assertEqual(result.failure.kind, expected_kind)
+                self.assertEqual(result.failure.code, expected_code)
+                self.assertIsNone(result.output_text)
+                self.assertEqual(result.available_outputs, frozenset())
+
+    def test_restore_failure_discards_successful_output(self) -> None:
+        with tempfile.TemporaryDirectory() as root:
+            request = self.request(root)
+            (request.workspace / "task_inputs").mkdir()
+            (request.workspace / "task_inputs" / "input.txt").write_text("original", encoding="utf-8")
+            executor = CursorExecutor(command="agent")
+            executor._version = "fake-cursor"
+            success = json.dumps(
+                {
+                    "type": "result",
+                    "subtype": "success",
+                    "is_error": False,
+                    "duration_ms": 1,
+                    "duration_api_ms": 1,
+                    "result": "answer",
+                    "session_id": "session",
+                }
+            )
+            with (
+                patch(
+                    "eval_harness.executors.cursor.subprocess.run",
+                    return_value=subprocess.CompletedProcess([], 0, stdout=success, stderr=""),
+                ),
+                patch("eval_harness.executors.cursor._tree_digest", return_value="baseline"),
+                patch.object(CursorExecutor, "_restore_task_inputs", side_effect=OSError("restore denied")),
+            ):
+                result = executor.execute(request)
+            self.assertEqual(result.status.value, "failed")
+            self.assertIsNotNone(result.failure)
+            assert result.failure is not None
+            self.assertEqual(result.failure.kind, FailureKind.INTEGRITY)
+            self.assertEqual(result.failure.code, "task_input_restore")
+            self.assertIsNone(result.output_text)
+            self.assertEqual(result.available_outputs, frozenset())
+
+    def test_existing_failures_remain_primary_when_cleanup_fails(self) -> None:
+        cases = (
+            (
+                "timeout",
+                subprocess.TimeoutExpired([], 1, output=b"partial", stderr=b"error"),
+                FailureKind.TIMEOUT,
+                "timed_out",
+            ),
+            ("process", subprocess.CompletedProcess([], 7, stdout="", stderr="error"), FailureKind.PROCESS, "failed"),
+            ("interrupted", KeyboardInterrupt(), FailureKind.INTERRUPTED, "interrupted"),
+        )
+        for name, process_result, expected_kind, expected_status in cases:
+            with self.subTest(name=name), tempfile.TemporaryDirectory() as root:
+                request = self.request(root)
+                (request.workspace / "task_inputs").mkdir()
+                (request.workspace / "task_inputs" / "input.txt").write_text("original", encoding="utf-8")
+                executor = CursorExecutor(command="agent")
+                executor._version = "fake-cursor"
+                with (
+                    patch(
+                        "eval_harness.executors.cursor.subprocess.run",
+                        side_effect=process_result if isinstance(process_result, BaseException) else None,
+                        return_value=process_result if not isinstance(process_result, BaseException) else None,
+                    ),
+                    patch("eval_harness.executors.cursor._tree_digest", return_value="baseline"),
+                    patch.object(CursorExecutor, "_restore_task_inputs", side_effect=OSError("restore denied")),
+                ):
+                    result = executor.execute(request)
+                self.assertEqual(result.status.value, expected_status)
+                self.assertIsNotNone(result.failure)
+                assert result.failure is not None
+                self.assertEqual(result.failure.kind, expected_kind)
+                self.assertIsNone(result.output_text)
+                self.assertEqual(result.available_outputs, frozenset())
+
+    def test_cleanup_interrupt_is_typed_as_interrupted(self) -> None:
+        with tempfile.TemporaryDirectory() as root:
+            request = self.request(root)
+            (request.workspace / "task_inputs").mkdir()
+            (request.workspace / "task_inputs" / "input.txt").write_text("original", encoding="utf-8")
+            executor = CursorExecutor(command="agent")
+            executor._version = "fake-cursor"
+            success = json.dumps(
+                {
+                    "type": "result",
+                    "subtype": "success",
+                    "is_error": False,
+                    "duration_ms": 1,
+                    "duration_api_ms": 1,
+                    "result": "answer",
+                    "session_id": "session",
+                }
+            )
+            with (
+                patch(
+                    "eval_harness.executors.cursor.subprocess.run",
+                    return_value=subprocess.CompletedProcess([], 0, stdout=success, stderr=""),
+                ),
+                patch("eval_harness.executors.cursor._tree_digest", return_value="baseline"),
+                patch.object(CursorExecutor, "_restore_task_inputs", side_effect=KeyboardInterrupt),
+            ):
+                result = executor.execute(request)
+            self.assertEqual(result.status.value, "interrupted")
+            self.assertIsNotNone(result.failure)
+            assert result.failure is not None
+            self.assertEqual(result.failure.kind, FailureKind.INTERRUPTED)
+            self.assertEqual(result.failure.code, "interrupted")
+            self.assertIsNone(result.output_text)
+            self.assertEqual(result.available_outputs, frozenset())
+
+    def test_log_persistence_failure_preserves_primary_failure_and_channels(self) -> None:
+        success = json.dumps(
+            {
+                "type": "result",
+                "subtype": "success",
+                "is_error": False,
+                "duration_ms": 1,
+                "duration_api_ms": 1,
+                "result": "answer",
+                "session_id": "session",
+            }
+        )
+        cases = (
+            (
+                "success",
+                subprocess.CompletedProcess([], 0, stdout=success, stderr=""),
+                FailureKind.PROCESS,
+                "log_persistence",
+            ),
+            (
+                "timeout",
+                subprocess.TimeoutExpired([], 1, output=b"partial", stderr=b"error"),
+                FailureKind.TIMEOUT,
+                "timeout",
+            ),
+            (
+                "process",
+                subprocess.CompletedProcess([], 7, stdout="", stderr="error"),
+                FailureKind.PROCESS,
+                "process_exit",
+            ),
+            ("interrupted", KeyboardInterrupt(), FailureKind.INTERRUPTED, "interrupted"),
+            (
+                "protocol",
+                subprocess.CompletedProcess([], 0, stdout="malformed", stderr=""),
+                FailureKind.PROTOCOL,
+                "output_protocol",
+            ),
+            (
+                "integrity",
+                subprocess.CompletedProcess([], 0, stdout=success, stderr=""),
+                FailureKind.INTEGRITY,
+                "task_input_mutation",
+            ),
+        )
+        for name, process_result, expected_kind, expected_code in cases:
+            for failed_log in ("stdout.log", "stderr.log"):
+                with self.subTest(name=name, failed_log=failed_log), tempfile.TemporaryDirectory() as root:
+                    request = self.request(root)
+                    inputs = request.workspace / "task_inputs"
+                    inputs.mkdir()
+                    (inputs / "input.txt").write_text("original", encoding="utf-8")
+                    executor = CursorExecutor(command="agent")
+                    executor._version = "fake-cursor"
+                    original_write_text = Path.write_text
+
+                    def write_text(
+                        path: Path,
+                        data: str,
+                        encoding: str | None = None,
+                        errors: str | None = None,
+                        newline: str | None = None,
+                    ) -> int:
+                        if path == request.executor_dir / failed_log:
+                            raise OSError("disk full")
+                        return original_write_text(path, data, encoding=encoding, errors=errors, newline=newline)
+
+                    digest_side_effect = ["baseline", "mutated"] if name == "integrity" else None
+                    digest_return_value = None if name == "integrity" else "baseline"
+                    with (
+                        patch(
+                            "eval_harness.executors.cursor.subprocess.run",
+                            side_effect=process_result if isinstance(process_result, BaseException) else None,
+                            return_value=process_result if not isinstance(process_result, BaseException) else None,
+                        ),
+                        patch(
+                            "eval_harness.executors.cursor._tree_digest",
+                            side_effect=digest_side_effect,
+                            return_value=digest_return_value,
+                        ),
+                        patch.object(Path, "write_text", autospec=True, side_effect=write_text),
+                    ):
+                        result = executor.execute(request)
+
+                    self.assertEqual(
+                        result.status,
+                        ExecutionStatus.FAILED
+                        if name != "timeout" and name != "interrupted"
+                        else (ExecutionStatus.TIMED_OUT if name == "timeout" else ExecutionStatus.INTERRUPTED),
+                    )
+                    self.assertIsNotNone(result.failure)
+                    assert result.failure is not None
+                    self.assertEqual(result.failure.kind, expected_kind)
+                    self.assertEqual(result.failure.code, expected_code)
+                    self.assertIsNone(result.output_text)
+                    self.assertEqual(result.available_outputs, frozenset())
+                    self.assertEqual(result.metadata["log_persistence_errors"], [failed_log])
+                    self.assertNotIn("disk full", json.dumps(result.metadata))
+                    other_log = "stderr.log" if failed_log == "stdout.log" else "stdout.log"
+                    self.assertTrue((request.executor_dir / other_log).is_file())
+
+    def test_log_persistence_interrupt_preserves_primary_failure_and_other_log(self) -> None:
+        success = json.dumps(
+            {
+                "type": "result",
+                "subtype": "success",
+                "is_error": False,
+                "duration_ms": 1,
+                "duration_api_ms": 1,
+                "result": "answer",
+                "session_id": "session",
+            }
+        )
+        cases = (
+            (
+                "success",
+                subprocess.CompletedProcess([], 0, stdout=success, stderr=""),
+                FailureKind.INTERRUPTED,
+                "interrupted",
+            ),
+            (
+                "timeout",
+                subprocess.TimeoutExpired([], 1, output=b"partial", stderr=b"error"),
+                FailureKind.TIMEOUT,
+                "timeout",
+            ),
+            (
+                "process",
+                subprocess.CompletedProcess([], 7, stdout="", stderr="error"),
+                FailureKind.PROCESS,
+                "process_exit",
+            ),
+            (
+                "protocol",
+                subprocess.CompletedProcess([], 0, stdout="malformed", stderr=""),
+                FailureKind.PROTOCOL,
+                "output_protocol",
+            ),
+            ("interrupted", KeyboardInterrupt(), FailureKind.INTERRUPTED, "interrupted"),
+            (
+                "integrity",
+                subprocess.CompletedProcess([], 0, stdout=success, stderr=""),
+                FailureKind.INTEGRITY,
+                "task_input_mutation",
+            ),
+        )
+        for name, process_result, expected_kind, expected_code in cases:
+            for failed_log in ("stdout.log", "stderr.log"):
+                with self.subTest(name=name, failed_log=failed_log), tempfile.TemporaryDirectory() as root:
+                    request = self.request(root)
+                    inputs = request.workspace / "task_inputs"
+                    inputs.mkdir()
+                    (inputs / "input.txt").write_bytes(b"original")
+                    executor = CursorExecutor(command="agent")
+                    executor._version = "fake-cursor"
+                    original_write_text = Path.write_text
+
+                    def write_text(
+                        path: Path,
+                        data: str,
+                        encoding: str | None = None,
+                        errors: str | None = None,
+                        newline: str | None = None,
+                    ) -> int:
+                        if path == request.executor_dir / failed_log:
+                            raise KeyboardInterrupt
+                        return original_write_text(path, data, encoding=encoding, errors=errors, newline=newline)
+
+                    with (
+                        patch(
+                            "eval_harness.executors.cursor.subprocess.run",
+                            side_effect=process_result if isinstance(process_result, BaseException) else None,
+                            return_value=process_result if not isinstance(process_result, BaseException) else None,
+                        ),
+                        patch(
+                            "eval_harness.executors.cursor._tree_digest",
+                            side_effect=["baseline", "mutated"] if name == "integrity" else None,
+                            return_value=None if name == "integrity" else "baseline",
+                        ),
+                        patch.object(Path, "write_text", autospec=True, side_effect=write_text),
+                    ):
+                        result = executor.execute(request)
+
+                    self.assertIsNotNone(result.failure)
+                    assert result.failure is not None
+                    self.assertEqual(result.failure.kind, expected_kind)
+                    self.assertEqual(result.failure.code, expected_code)
+                    self.assertEqual(
+                        result.status,
+                        ExecutionStatus.INTERRUPTED
+                        if name in {"success", "interrupted"}
+                        else ExecutionStatus.TIMED_OUT
+                        if name == "timeout"
+                        else ExecutionStatus.FAILED,
+                    )
+                    self.assertIsNone(result.output_text)
+                    self.assertEqual(result.available_outputs, frozenset())
+                    self.assertEqual(result.metadata["log_persistence_errors"], [failed_log])
+                    other_log = "stderr.log" if failed_log == "stdout.log" else "stdout.log"
+                    self.assertTrue((request.executor_dir / other_log).is_file())
 
     def test_subscription_environment_removes_api_auth(self) -> None:
         env = subscription_environment(

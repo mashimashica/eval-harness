@@ -96,6 +96,7 @@ class CLIRegistryTests(unittest.TestCase):
             "model": None,
             "reasoning_effort": None,
             "out": None,
+            "runtime_root": None,
             "executor_timeout": 12600.0,
             "network": False,
             "claude_max_turns": 250,
@@ -318,6 +319,19 @@ class CLIRegistryTests(unittest.TestCase):
         parsed = parser.parse_args(["run", "gdpval", "--limit", "1"])
         self.assertEqual(parsed.command, "run")
         self.assertEqual(parsed.benchmark, "gdpval")
+        self.assertIsNone(parsed.runtime_root)
+
+        configured = parser.parse_args(["run", "gdpval", "--limit", "1", "--runtime-root", "runtime/place"])
+        self.assertEqual(configured.runtime_root, Path("runtime/place"))
+        help_stdout = io.StringIO()
+        with self.assertRaises(SystemExit) as help_exit, contextlib.redirect_stdout(help_stdout):
+            parser.parse_args(["run", "gdpval", "--help"])
+        self.assertEqual(help_exit.exception.code, 0)
+        self.assertIn("--runtime-root", help_stdout.getvalue())
+        self.assertIn(
+            "Store disposable executor workspaces and logs outside the durable run output",
+            " ".join(help_stdout.getvalue().split()),
+        )
 
     def test_cli_prints_stable_registry_rows(self) -> None:
         benchmarks = io.StringIO()
@@ -390,6 +404,7 @@ class CLIRegistryTests(unittest.TestCase):
                         reasoning_effort="high",
                         network=True,
                         intervention="none",
+                        runtime_root=Path("runtime/place"),
                     )
                 )
         self.assertEqual(result, 0)
@@ -403,6 +418,7 @@ class CLIRegistryTests(unittest.TestCase):
         )
         self.assertEqual(run_benchmark_mock.call_args.kwargs["model"], "model-id")
         self.assertTrue(str(run_benchmark_mock.call_args.kwargs["out_dir"]).startswith("results/eval/gdpval/"))
+        self.assertEqual(run_benchmark_mock.call_args.kwargs["runtime_root"], Path("runtime/place"))
 
         failed = SimpleNamespace(**{**summary.__dict__, "status": "failed"})
         with (
@@ -412,10 +428,11 @@ class CLIRegistryTests(unittest.TestCase):
             patch.object(cli, "create_benchmark", return_value=object()),
             patch.object(cli, "create_evaluator", return_value=object()),
             patch.object(cli, "create_executor", return_value=executor),
-            patch.object(cli, "run_benchmark", return_value=failed),
+            patch.object(cli, "run_benchmark", return_value=failed) as run_benchmark_default,
         ):
             with contextlib.redirect_stdout(io.StringIO()):
                 self.assertEqual(cli._run(self.run_args(out=Path("explicit-out"))), 1)
+        self.assertIsNone(run_benchmark_default.call_args.kwargs["runtime_root"])
 
     def test_experiment_validation_and_fake_reasoning_routes(self) -> None:
         profile = SimpleNamespace(profile=SimpleNamespace(profile_id="profile", benchmark="gdpval"))

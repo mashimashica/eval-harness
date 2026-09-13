@@ -9,6 +9,7 @@ import os
 import platform
 import re
 import shutil
+import stat
 import subprocess
 import sys
 from datetime import datetime, timezone
@@ -55,6 +56,10 @@ _VERSION_PATTERN = re.compile(r"(?<![A-Za-z0-9])2026\.09\.10-fd3934a(?![A-Za-z0-
 _CURSOR_AUTH_STORE_RELATIVE_PATH = Path("cursor") / "auth.json"
 
 
+class _TreeDigestError(OSError):
+    """Stable local error raised when the protected input tree is not verifiable."""
+
+
 def _utc_now() -> str:
     return datetime.now(timezone.utc).isoformat()
 
@@ -66,18 +71,109 @@ def _text(value: str | bytes | None) -> str:
 
 
 def _tree_digest(root: Path) -> str:
+    if not isinstance(root, Path):
+        raise TypeError("task input tree root must be a Path")
     digest = hashlib.sha256()
-    if not root.is_dir():
-        return digest.hexdigest()
-    for path in sorted(root.rglob("*")):
-        if not path.is_file():
-            continue
-        relative = str(path.relative_to(root)).encode()
-        digest.update(len(relative).to_bytes(8, "big"))
-        digest.update(relative)
-        with path.open("rb") as handle:
-            for chunk in iter(lambda: handle.read(1024 * 1024), b""):
-                digest.update(chunk)
+    try:
+        root_info = root.lstat()
+    except OSError as exc:
+        raise _TreeDigestError("task input tree root cannot be inspected") from exc
+    if stat.S_ISLNK(root_info.st_mode) or not stat.S_ISDIR(root_info.st_mode):
+        raise _TreeDigestError("task input tree root must be a real directory")
+
+    def stat_signature(info: os.stat_result) -> tuple[int, int, int, int, int, int, int]:
+        return (
+            info.st_mode,
+            info.st_dev,
+            info.st_ino,
+            info.st_size,
+            info.st_mtime_ns,
+            info.st_ctime_ns,
+            stat.S_IFMT(info.st_mode),
+        )
+
+    def frame(entry_type: bytes, logical: bytes, content_length: int) -> None:
+        digest.update(entry_type)
+        digest.update(len(logical).to_bytes(8, "big"))
+        digest.update(logical)
+        digest.update(content_length.to_bytes(8, "big"))
+
+    def visit(directory: Path, prefix: str) -> None:
+        try:
+            before = directory.lstat()
+            if stat.S_ISLNK(before.st_mode) or not stat.S_ISDIR(before.st_mode):
+                raise _TreeDigestError("task input tree contains a non-directory node")
+            with os.scandir(directory) as scanner:
+                entries = sorted(scanner, key=lambda entry: entry.name)
+        except OSError as exc:
+            if isinstance(exc, _TreeDigestError):
+                raise
+            raise _TreeDigestError("task input tree cannot be traversed") from exc
+        for entry in entries:
+            logical_text = f"{prefix}/{entry.name}" if prefix else entry.name
+            logical = os.fsencode(logical_text)
+            entry_path = Path(entry.path)
+            try:
+                info = entry_path.lstat()
+            except OSError as exc:
+                raise _TreeDigestError("task input tree entry cannot be inspected") from exc
+            mode = info.st_mode
+            if stat.S_ISLNK(mode):
+                raise _TreeDigestError("task input tree cannot contain symlinks")
+            if stat.S_ISDIR(mode):
+                frame(b"D", logical, 0)
+                visit(entry_path, logical_text)
+                continue
+            if not stat.S_ISREG(mode):
+                raise _TreeDigestError("task input tree can contain only directories and regular files")
+
+            frame(b"F", logical, info.st_size)
+            descriptor: int | None = None
+            total = 0
+            try:
+                descriptor = os.open(entry_path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
+                opened = os.fstat(descriptor)
+                if not stat.S_ISREG(opened.st_mode) or stat_signature(opened) != stat_signature(info):
+                    raise _TreeDigestError("task input tree file changed during read")
+                while True:
+                    chunk = os.read(descriptor, 1024 * 1024)
+                    if not chunk:
+                        break
+                    total += len(chunk)
+                    digest.update(chunk)
+                after = os.fstat(descriptor)
+                try:
+                    after_path = entry_path.lstat()
+                except OSError as exc:
+                    raise _TreeDigestError("task input tree file changed during read") from exc
+                if (
+                    not stat.S_ISREG(after.st_mode)
+                    or stat_signature(after) != stat_signature(opened)
+                    or stat_signature(after_path) != stat_signature(after)
+                    or total != info.st_size
+                ):
+                    raise _TreeDigestError("task input tree file changed during read")
+            except OSError as exc:
+                if isinstance(exc, _TreeDigestError):
+                    raise
+                raise _TreeDigestError("task input tree file cannot be read") from exc
+            finally:
+                if descriptor is not None:
+                    os.close(descriptor)
+
+        try:
+            after = directory.lstat()
+        except OSError as exc:
+            raise _TreeDigestError("task input tree directory changed during traversal") from exc
+        if (
+            stat.S_ISLNK(after.st_mode)
+            or not stat.S_ISDIR(after.st_mode)
+            or stat_signature(after) != stat_signature(before)
+        ):
+            raise _TreeDigestError("task input tree directory changed during traversal")
+
+    frame(b"D", b"", 0)
+    visit(root, "")
     return digest.hexdigest()
 
 
@@ -267,14 +363,14 @@ class CursorExecutor(Executor):
             details=("Cursor account login detected with alternate provider environment variables removed",),
         )
 
-    def _write_workspace_policy(self, workspace: Path, readonly_reference_path: Path | None = None) -> None:
+    def _write_workspace_policy(self, workspace: Path, readonly_task_inputs_path: Path | None = None) -> None:
         cursor_dir = workspace / ".cursor"
         cursor_dir.mkdir(parents=True, exist_ok=True)
         network_default = "allow" if self.network_access_enabled else "deny"
         sandbox = {
             "type": "workspace_readwrite",
             "additionalReadwritePaths": [],
-            "additionalReadonlyPaths": [str(readonly_reference_path.resolve())] if readonly_reference_path else [],
+            "additionalReadonlyPaths": [str(readonly_task_inputs_path.resolve())] if readonly_task_inputs_path else [],
             "disableTmpWrite": True,
             "enableSharedBuildCache": False,
             "networkPolicy": {"default": network_default, "allow": [], "deny": []},
@@ -286,7 +382,7 @@ class CursorExecutor(Executor):
 
         deny = [
             "Mcp(*:*)",
-            "Write(reference_files/**)",
+            "Write(task_inputs/**)",
             "Read(.env*)",
             "Write(.env*)",
         ]
@@ -305,38 +401,68 @@ class CursorExecutor(Executor):
             encoding="utf-8",
         )
 
-    def _isolate_reference_files(self, workspace: Path) -> tuple[Path | None, str | None]:
-        visible = workspace / "reference_files"
-        if not visible.is_dir():
-            return None, None
+    def _isolate_task_inputs(self, workspace: Path) -> tuple[Path | None, str | None]:
+        legacy = workspace / "reference_files"
+        if legacy.is_symlink() or legacy.exists():
+            raise ValueError("Cursor executor does not accept the legacy reference_files input namespace")
 
-        protected = workspace.parent / "cursor-reference-files-readonly"
+        visible = workspace / "task_inputs"
+        if visible.is_symlink():
+            raise ValueError("Cursor task_inputs input must be a real directory")
+        if not visible.exists():
+            return None, None
+        if not visible.is_dir():
+            raise ValueError("Cursor task_inputs input must be a real directory")
+
+        protected = workspace.parent / "cursor-task-inputs-readonly"
         if protected.is_symlink() or protected.is_file():
             protected.unlink()
         elif protected.is_dir():
             shutil.rmtree(protected)
         visible.rename(protected)
-        digest = _tree_digest(protected)
+        try:
+            digest = _tree_digest(protected)
+        except BaseException:
+            try:
+                self._restore_task_inputs(workspace, protected)
+            except BaseException as restore_error:
+                raise RuntimeError("Cursor task input isolation could not restore task_inputs") from restore_error
+            raise
         try:
             visible.symlink_to(protected.resolve(), target_is_directory=True)
-        except OSError:
-            protected.rename(visible)
-            raise RuntimeError(
-                "Cursor reference isolation requires directory symlink support; refusing to run with writable references"
-            )
+        except BaseException as exc:
+            try:
+                self._restore_task_inputs(workspace, protected)
+            except BaseException as restore_error:
+                raise RuntimeError(
+                    "Cursor task input isolation requires directory symlink support; refusing to run with writable inputs"
+                ) from restore_error
+            if isinstance(exc, OSError):
+                raise RuntimeError(
+                    "Cursor task input isolation requires directory symlink support; refusing to run with writable inputs"
+                ) from exc
+            raise
         return protected, digest
 
     @staticmethod
-    def _restore_reference_files(workspace: Path, protected: Path | None) -> None:
+    def _restore_task_inputs(workspace: Path, protected: Path | None) -> None:
         if protected is None:
             return
-        visible = workspace / "reference_files"
+        visible = workspace / "task_inputs"
+        try:
+            protected_info = protected.lstat()
+        except OSError as exc:
+            raise RuntimeError("Cursor task input restoration requires a protected real directory") from exc
+        if stat.S_ISLNK(protected_info.st_mode) or not stat.S_ISDIR(protected_info.st_mode):
+            raise RuntimeError("Cursor task input restoration requires a protected real directory")
         if visible.is_symlink() or visible.is_file():
             visible.unlink()
         elif visible.is_dir():
             shutil.rmtree(visible)
-        if protected.is_dir():
+        try:
             protected.rename(visible)
+        except OSError as exc:
+            raise RuntimeError("Cursor task input restoration could not restore the protected directory") from exc
 
     def build_command(self, request: ExecutionRequest) -> list[str]:
         command = [
@@ -358,9 +484,7 @@ class CursorExecutor(Executor):
         request.workspace.mkdir(parents=True, exist_ok=True)
         request.deliverables_dir.mkdir(parents=True, exist_ok=True)
         request.executor_dir.mkdir(parents=True, exist_ok=True)
-        protected_references, reference_digest = self._isolate_reference_files(request.workspace)
-        self._write_workspace_policy(request.workspace, protected_references)
-        (request.executor_dir / "prompt.txt").write_text(request.task.prompt, encoding="utf-8")
+        protected_task_inputs, task_inputs_digest = self._isolate_task_inputs(request.workspace)
 
         started_at = _utc_now()
         stdout_path = request.executor_dir / "stdout.log"
@@ -369,13 +493,21 @@ class CursorExecutor(Executor):
         status = ExecutionStatus.FAILED
         stdout = ""
         stderr = ""
-        reference_integrity_ok = True
+        task_inputs_integrity_ok = True
+        task_inputs_integrity_error: str | None = None
+        restore_error: BaseException | None = None
         has_deliverable = False
         output_text: str | None = None
         protocol_error: str | None = None
         failure: Failure | None = None
+        cleanup_interrupted = False
+        preparation_complete = False
+        log_persistence_errors: list[str] = []
 
         try:
+            self._write_workspace_policy(request.workspace, protected_task_inputs)
+            (request.executor_dir / "prompt.txt").write_text(request.task.prompt, encoding="utf-8")
+            preparation_complete = True
             completed = subprocess.run(
                 self.build_command(request),
                 input=request.task.prompt,
@@ -390,14 +522,9 @@ class CursorExecutor(Executor):
             exit_code = completed.returncode
             stdout = _text(completed.stdout)
             stderr = _text(completed.stderr)
-            if protected_references is not None and reference_digest is not None:
-                reference_integrity_ok = _tree_digest(protected_references) == reference_digest
-                if not reference_integrity_ok:
-                    stderr += "\nCursor executor detected reference-file mutation; failing closed.\n"
-                    failure = Failure(FailureKind.INTEGRITY, "reference_mutation", FailureImpact.RUN)
             if exit_code != 0 and failure is None:
                 failure = Failure(FailureKind.PROCESS, "process_exit", FailureImpact.RUN)
-            if exit_code == 0 and reference_integrity_ok:
+            if exit_code == 0 and failure is None:
                 try:
                     parsed = parse_cursor_output(stdout)
                 except OutputProtocolError as exc:
@@ -419,16 +546,83 @@ class CursorExecutor(Executor):
             status = ExecutionStatus.TIMED_OUT
             failure = Failure(FailureKind.TIMEOUT, "timeout", FailureImpact.RUN)
         except KeyboardInterrupt:
+            if not preparation_complete:
+                raise
             status = ExecutionStatus.INTERRUPTED
             failure = Failure(FailureKind.INTERRUPTED, "interrupted", FailureImpact.RUN)
         except OSError as exc:
+            if not preparation_complete:
+                raise
             stderr = str(exc) + "\n"
             status = ExecutionStatus.FAILED
             failure = Failure(FailureKind.PROCESS, "process_spawn", FailureImpact.RUN)
         finally:
-            self._restore_reference_files(request.workspace, protected_references)
-            stdout_path.write_text(stdout, encoding="utf-8")
-            stderr_path.write_text(stderr, encoding="utf-8")
+            if protected_task_inputs is not None and task_inputs_digest is not None:
+                try:
+                    observed_digest = _tree_digest(protected_task_inputs)
+                except KeyboardInterrupt:
+                    cleanup_interrupted = True
+                    task_inputs_integrity_ok = False
+                    task_inputs_integrity_error = "task input integrity check was interrupted"
+                    if failure is None:
+                        failure = Failure(FailureKind.INTERRUPTED, "interrupted", FailureImpact.RUN)
+                        status = ExecutionStatus.INTERRUPTED
+                    else:
+                        task_inputs_integrity_error = "task input integrity check was interrupted after execution"
+                except Exception:
+                    task_inputs_integrity_ok = False
+                    task_inputs_integrity_error = "task input integrity could not be verified"
+                    if failure is None:
+                        failure = Failure(FailureKind.INTEGRITY, "task_input_integrity", FailureImpact.RUN)
+                        status = ExecutionStatus.FAILED
+                    else:
+                        task_inputs_integrity_error = "task input integrity check failed after execution"
+                else:
+                    task_inputs_integrity_ok = observed_digest == task_inputs_digest
+                    if not task_inputs_integrity_ok:
+                        task_inputs_integrity_error = "task input tree changed during execution"
+                        stderr += "\nCursor executor detected task-input mutation; failing closed.\n"
+                        if failure is None:
+                            failure = Failure(FailureKind.INTEGRITY, "task_input_mutation", FailureImpact.RUN)
+                            status = ExecutionStatus.FAILED
+                        else:
+                            task_inputs_integrity_error = "task input tree changed after execution"
+            try:
+                self._restore_task_inputs(request.workspace, protected_task_inputs)
+            except KeyboardInterrupt as exc:
+                cleanup_interrupted = True
+                restore_error = exc
+                if failure is None:
+                    failure = Failure(FailureKind.INTERRUPTED, "interrupted", FailureImpact.RUN)
+                    status = ExecutionStatus.INTERRUPTED
+            except Exception as exc:
+                restore_error = exc
+                if failure is None:
+                    failure = Failure(FailureKind.INTEGRITY, "task_input_restore", FailureImpact.RUN)
+                    status = ExecutionStatus.FAILED
+            for log_path, log_name, content in (
+                (stdout_path, "stdout.log", stdout),
+                (stderr_path, "stderr.log", stderr),
+            ):
+                try:
+                    log_path.write_text(content, encoding="utf-8")
+                except KeyboardInterrupt:
+                    cleanup_interrupted = True
+                    log_persistence_errors.append(log_name)
+                    if failure is None:
+                        failure = Failure(FailureKind.INTERRUPTED, "interrupted", FailureImpact.RUN)
+                        status = ExecutionStatus.INTERRUPTED
+                except Exception:
+                    log_persistence_errors.append(log_name)
+            if log_persistence_errors and failure is None:
+                failure = Failure(FailureKind.PROCESS, "log_persistence", FailureImpact.RUN)
+                status = ExecutionStatus.FAILED
+
+        # Cleanup can discover a failure after the executor has parsed a valid
+        # response.  Preserve the typed failure boundary by discarding every
+        # output channel before constructing ExecutionResult.
+        if failure is not None:
+            output_text = None
 
         available_outputs: frozenset[ExecutorOutput] = (
             frozenset(
@@ -449,10 +643,19 @@ class CursorExecutor(Executor):
             "cloud_execution": False,
             "structured_output": "json",
             "usage_mode": "cursor-account-usage",
-            "reference_files_isolation": "outside-workspace + additionalReadonlyPaths",
-            "reference_integrity_verified": reference_integrity_ok,
+            "task_inputs_isolation": "outside-workspace + additionalReadonlyPaths"
+            if protected_task_inputs is not None
+            else "none",
+            "task_inputs_integrity_verified": task_inputs_integrity_ok,
+            "task_inputs_cleanup_interrupted": cleanup_interrupted,
             "api_environment_removed": sorted(_API_ENV_VARS),
         }
+        if task_inputs_integrity_error is not None:
+            metadata["task_inputs_integrity_detail"] = task_inputs_integrity_error
+        if restore_error is not None:
+            metadata["task_inputs_restore_error"] = type(restore_error).__name__
+        if log_persistence_errors:
+            metadata["log_persistence_errors"] = list(log_persistence_errors)
         if protocol_error is not None:
             metadata["protocol_error"] = protocol_error
         return ExecutionResult(

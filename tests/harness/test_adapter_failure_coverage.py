@@ -190,21 +190,22 @@ class ExecutorAdapterFailureTests(unittest.TestCase):
             self.assertFalse(logged_out.ok)
             self.assertEqual(logged_out.details, ("Claude Code is not logged in",))
 
-    def test_cursor_reference_isolation_restores_on_symlink_failure_and_replaces_stale_protection(self) -> None:
+    def test_cursor_task_input_isolation_restores_on_symlink_failure_and_replaces_stale_protection(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             workspace = root / "workspace"
-            references = workspace / "reference_files"
-            references.mkdir(parents=True)
-            (references / "input.txt").write_text("source\n", encoding="utf-8")
-            protected = workspace.parent / "cursor-reference-files-readonly"
+            inputs = workspace / "task_inputs"
+            inputs.mkdir(parents=True)
+            (inputs / "input.txt").write_text("source\n", encoding="utf-8")
+            protected = workspace.parent / "cursor-task-inputs-readonly"
             protected.write_text("stale", encoding="utf-8")
             executor = CursorExecutor()
             with patch.object(Path, "symlink_to", side_effect=OSError("symlinks disabled")):
                 with self.assertRaisesRegex(RuntimeError, "symlink support"):
-                    executor._isolate_reference_files(workspace)
-            self.assertTrue(references.is_dir())
-            self.assertEqual((references / "input.txt").read_text(encoding="utf-8"), "source\n")
+                    executor._isolate_task_inputs(workspace)
+            self.assertTrue(inputs.is_dir())
+            self.assertFalse(inputs.is_symlink())
+            self.assertEqual((inputs / "input.txt").read_text(encoding="utf-8"), "source\n")
             self.assertFalse(protected.exists())
 
     def test_cursor_execution_handles_no_deliverable_interrupt_and_replacement_decoding(self) -> None:
@@ -239,9 +240,9 @@ class ExecutorAdapterFailureTests(unittest.TestCase):
             self.assertFalse(no_deliverable.effective_reasoning_effort_available)
             self.assertEqual(run.call_args.kwargs["errors"], "replace")
 
-            references = request.workspace / "reference_files"
-            references.mkdir(parents=True)
-            (references / "source.txt").write_text("source", encoding="utf-8")
+            inputs = request.workspace / "task_inputs"
+            inputs.mkdir(parents=True)
+            (inputs / "source.txt").write_text("source", encoding="utf-8")
             with patch("eval_harness.executors.cursor.subprocess.run", side_effect=_raise_interrupt):
                 interrupted = executor.execute(request)
             self.assertEqual(interrupted.status, ExecutionStatus.INTERRUPTED)
@@ -249,10 +250,12 @@ class ExecutorAdapterFailureTests(unittest.TestCase):
             self.assertIsNone(interrupted.output_text)
             self.assertIsNotNone(interrupted.failure)
             assert interrupted.failure is not None
-            self.assertEqual(interrupted.failure.kind, FailureKind.INTERRUPTED)
-            self.assertEqual(interrupted.failure.impact, FailureImpact.RUN)
-            self.assertTrue(references.is_dir())
-            self.assertEqual((references / "source.txt").read_text(encoding="utf-8"), "source")
+            self.assertEqual(interrupted.failure, Failure(FailureKind.INTERRUPTED, "interrupted", FailureImpact.RUN))
+            self.assertTrue((request.executor_dir / "stdout.log").is_file())
+            self.assertTrue((request.executor_dir / "stderr.log").is_file())
+            self.assertTrue(inputs.is_dir())
+            self.assertFalse(inputs.is_symlink())
+            self.assertEqual((inputs / "source.txt").read_text(encoding="utf-8"), "source")
 
     def test_exit_zero_with_malformed_structured_output_is_a_run_protocol_failure(self) -> None:
         cases: tuple[tuple[str, object, str], ...] = (
@@ -660,7 +663,7 @@ class ExecutorAdapterFailureTests(unittest.TestCase):
                 fallback = executor.preflight()
             self.assertTrue(fallback.ok)
 
-    def test_cursor_execution_restores_references_and_fails_on_mutation_or_timeout(self) -> None:
+    def test_cursor_execution_restores_task_inputs_and_fails_on_mutation_or_timeout(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             command = _write_command(
@@ -671,7 +674,7 @@ class ExecutorAdapterFailureTests(unittest.TestCase):
                 if [ "$1" = "-p" ]; then
                     case "${FAKE_MODE:-success}" in
                         success) mkdir -p deliverables; printf 'artifact\n' > deliverables/result.txt ;;
-                        mutate) printf 'tampered\n' > reference_files/input.txt ;;
+                        mutate) printf 'tampered\n' > task_inputs/input.txt ;;
                         nonzero) printf 'failed\n' >&2; exit 9 ;;
                     esac
                     printf '%s\n' '{"type":"result","subtype":"success","is_error":false,"duration_ms":1,"duration_api_ms":1,"result":"answer","session_id":"session"}'
@@ -681,24 +684,31 @@ class ExecutorAdapterFailureTests(unittest.TestCase):
             executor = CursorExecutor(command=str(command))
             executor._version = "2026.09.10-fd3934a"
             request = _execution_request(root, {"FAKE_MODE": "success"})
-            (request.workspace / "reference_files").mkdir(parents=True)
-            (request.workspace / "reference_files" / "input.txt").write_text("source\n", encoding="utf-8")
+            inputs = request.workspace / "task_inputs"
+            inputs.mkdir(parents=True)
+            (inputs / "input.txt").write_text("source\n", encoding="utf-8")
             success = executor.execute(request)
             self.assertEqual(success.status, ExecutionStatus.COMPLETED)
-            self.assertTrue(success.metadata["reference_integrity_verified"])
-            self.assertEqual((request.workspace / "reference_files" / "input.txt").read_text(), "source\n")
+            self.assertTrue(success.metadata["task_inputs_integrity_verified"])
+            self.assertTrue(inputs.is_dir())
+            self.assertFalse(inputs.is_symlink())
+            self.assertEqual((inputs / "input.txt").read_text(), "source\n")
 
             mutated = executor.execute(_execution_request(root, {"FAKE_MODE": "mutate"}))
             self.assertEqual(mutated.status, ExecutionStatus.FAILED)
             self.assertEqual(mutated.available_outputs, frozenset())
-            self.assertEqual(mutated.failure, Failure(FailureKind.INTEGRITY, "reference_mutation", FailureImpact.RUN))
-            self.assertFalse(mutated.metadata["reference_integrity_verified"])
+            self.assertEqual(mutated.failure, Failure(FailureKind.INTEGRITY, "task_input_mutation", FailureImpact.RUN))
+            self.assertFalse(mutated.metadata["task_inputs_integrity_verified"])
+            self.assertIsNone(mutated.output_text)
+            self.assertTrue(inputs.is_dir())
+            self.assertFalse(inputs.is_symlink())
+            self.assertEqual((inputs / "input.txt").read_text(), "tampered\n")
             self.assertIn("mutation", (root / "executor" / "stderr.log").read_text())
 
-            no_reference = request.workspace / "no-reference"
-            no_reference.mkdir()
-            self.assertEqual(executor._isolate_reference_files(no_reference), (None, None))
-            self.assertEqual(executor._restore_reference_files(no_reference, None), None)
+            no_inputs = request.workspace / "no-task-inputs"
+            no_inputs.mkdir()
+            self.assertEqual(executor._isolate_task_inputs(no_inputs), (None, None))
+            self.assertEqual(executor._restore_task_inputs(no_inputs, None), None)
 
             timeout_request = _execution_request(root)
             with patch("eval_harness.executors.cursor.subprocess.run", side_effect=_raise_timeout):
@@ -706,6 +716,23 @@ class ExecutorAdapterFailureTests(unittest.TestCase):
             self.assertEqual(timed_out.status, ExecutionStatus.TIMED_OUT)
             self.assertEqual(timed_out.available_outputs, frozenset())
             self.assertEqual(timed_out.failure, Failure(FailureKind.TIMEOUT, "timeout", FailureImpact.RUN))
+            self.assertIsNone(timed_out.output_text)
+            self.assertTrue(inputs.is_dir())
+            self.assertFalse(inputs.is_symlink())
+
+            interrupted_request = _execution_request(root)
+            with patch("eval_harness.executors.cursor.subprocess.run", side_effect=_raise_interrupt):
+                interrupted = executor.execute(interrupted_request)
+            self.assertEqual(interrupted.status, ExecutionStatus.INTERRUPTED)
+            self.assertEqual(interrupted.available_outputs, frozenset())
+            self.assertEqual(
+                interrupted.failure,
+                Failure(FailureKind.INTERRUPTED, "interrupted", FailureImpact.RUN),
+            )
+            self.assertIsNone(interrupted.output_text)
+            self.assertTrue(inputs.is_dir())
+            self.assertFalse(inputs.is_symlink())
+
             failed_executor = CursorExecutor(command=str(root / "missing"))
             failed = failed_executor.execute(timeout_request)
             self.assertEqual(failed.status, ExecutionStatus.FAILED)
