@@ -3,13 +3,59 @@
 
 # Migration state
 
-Updated: 2026-09-13T08:47:25Z
+Updated: 2026-09-13T09:03:34Z
 
 Control branch: `checkpoint/migration-control`.
 Procedure: [MIGRATION-WORKFLOW.md](MIGRATION-WORKFLOW.md).
 This record preserves recoverable work; it does not declare the migration accepted.
 
-## Current status: stopped after the second corrective failure
+## Current status: autonomous continuation under revised issue-level stop rule
+
+The user explicitly changes the two-failure rule. Two failures end that correction
+approach, not all migration work. Preserve the failure history, save, analyze the cause
+and revise the approach. One additional correction/validation is authorized without
+confirmation when its specific cause and verification can be stated. If that extra
+attempt fails, hold the issue and dependent acceptance; continue independent in-plan
+work. Stop the whole task only when no safe work remains or new authority/requirements
+need user judgment. Do not reset counts at a new interval or owner. This supersedes
+the stop instructions retained below as history and applies to the current uv issue.
+
+The current interval begins `2026-09-13T09:03:34Z` and ends no later than
+`2026-09-13T10:33:34Z`. After saving, readback, state update and a concise progress
+report, continue another interval without user confirmation unless the revised stop
+conditions apply. Save each coherent batch before validation and within 15 minutes.
+
+Recovery verified remote implementation `90dc9d17f0c10532028ace4f8657240b6e742a26`
+and control `271a2a0e3e19ef818705e5ecfb626cfbfc4cce54`. Main is clean and unchanged.
+Reuse Luna as sole source writer and Sol as read-only fixed-commit reviewer. Parent
+owns scope, routine checkpoint transport, consolidated evidence and acceptance.
+No grandchildren, no simultaneous PR implementation, no real-model experiments,
+merge or release. Preserve all quality, CVE hold and final contract-deletion requirements.
+
+### Revised preparation correction: explicit cause and verification
+
+Uv failure history remains two failed corrective rounds. Root cause: prefix slicing
+retains a delimiter space while the next predicate requires an opening parenthesis.
+Retire the contradictory chained prefix/suffix checks. Validate the complete version
+output against one explicit exact-version grammar: bare `uv 0.11.29` or that exact
+version followed by a well-formed nonempty parenthesized official build suffix. Reject
+near versions, extra tokens, missing/empty/malformed suffixes and embedded newlines.
+Reuse the already saved official-output regression and add boundary cases before
+the one authorized additional correction. Do not fetch or research the fixed tool again.
+
+Bundle the independent archive cleanup defect with this correction. Exclusive-create
+failure must not delete pre-existing bytes or symlinks. Reproduce in a private temporary
+fixture first; cleanup may remove only files created by this invocation. Test refusal
+and partial-write cleanup without touching real user data. Then save the source/test
+delta before the grouped unit/strict-mypy/Ruff/shell checks and Sol fixed-head review.
+
+Luna's bounded assignment uses base `90dc9d17f0c10532028ace4f8657240b6e742a26`,
+only installer Python/shell and preparation tests, plus parent-owned work records.
+Deadline `2026-09-13T09:32:00Z`; parent will independently prepare the existing Linux
+validation workflow path, without reviewing mutable implementation or repeating closed
+host/bootstrap/dependency work. The preparation module is not real sandbox acceptance.
+
+## Previous stop record: second corrective failure, 2026-09-13T08:47:25Z
 
 The explicit resume at `2026-09-13T08:42:27Z` preserved the previous failure count.
 The saved second preparation correction at
