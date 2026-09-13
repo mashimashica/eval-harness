@@ -3,7 +3,7 @@
 
 # Migration state
 
-Updated: 2026-09-13T06:35:00Z
+Updated: 2026-09-13T06:31:58Z
 
 Control branch: `checkpoint/migration-control`.
 Procedure: [MIGRATION-WORKFLOW.md](MIGRATION-WORKFLOW.md).
@@ -18,15 +18,16 @@ All remote Draft heads 38–42 and the frozen design refs were checked and match
 The previously reported local clone was absent, so a fresh clone was made; its root remains
 clean on `main`. Implementation runs in a separate worktree from the exact PR04 checkpoint.
 
-Current implementation checkpoint: `checkpoint/pr-04` at `058a5878cef8014ff3d8598118cbaa6f2e68962d`,
-tree `c893c2ff752da79477e2b5f6135fbdff0cc7a4af`; ref and all changed UTF-8 files/Git blobs
+Current implementation checkpoint: `checkpoint/pr-04` at `5678340634362d155a5b98f296b1a75a34c8dc07`,
+tree `55941cbeba7255823d4b6a5b64d907e238231871`; ref and all changed UTF-8 files/Git blobs
 were read back. Host lifecycle/procfs corrections are saved; public attestation and launch
 remain closed. Exact-head tests in the detached review worktree pass all 31 unit methods.
-Host strict typing and both scoped Ruff checks pass, resolving the previous import-sort
-failure. One new direct cleanup fixture needs explicit test-double typing and closure of
-its own pipe objects; the same Luna owner is correcting only that fixture before retest.
-See `reports/m2-host-lifecycle-validation.json`; prior evidence remains preserved. Sol is
-reviewing this fixed-head delta. Root approved and source-verified the finite read-only
+Strict typing of both files and both scoped Ruff checks pass, with no ResourceWarnings.
+See `reports/m2-host-local-validation.json`; prior evidence remains preserved. Sol is
+reviewing the unchanged host blob at fixed 058a5878. Luna now owns only the independent
+new bootstrap and bootstrap unit-test files for an eight-minute bounded batch. Root is
+recording evidence and preparing the next manifest/provisioning handoff, not editing source.
+Root approved and source-verified the finite read-only
 implicit-root clarification, saved in the amended contract. No PR04 acceptance is claimed.
 Luna is the sole implementation owner; Sol reviews saved commits without source edits;
 Astra owns API checkpoints, integration and acceptance. No grandchildren are used.
