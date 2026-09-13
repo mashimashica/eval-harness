@@ -3,6 +3,22 @@
 
 # PR04 implementation work record
 
+## Exact provenance-only secret baseline checkpoint
+
+Base `240d5d37d58c4456db936c6ea8a3b8bc65d4138a`. With detect-secrets 1.5.0,
+Luna scanned only the five previously classified source files and obtained the same
+62 public digest findings (7 candidate manifest, 14 index, 32 NLTK metadata, 7 grader
+installer, 2 bubblewrap installer). The baseline now adds only these 62 entries and
+retains the existing two golden-vector entries, for 64 total. Parent independently
+compared version, every plugin/filter and the existing two complete entries to HEAD:
+all unchanged. Paths/counts match the finite approval; entries contain only value hashes.
+
+Diff whitespace passes. Full tracked-file same-version hook, the private non-baseline
+negative control and the outstanding complete strict/static diagnostic scope have not
+yet run. Those checks are next on this saved head. No new detector exclusion or CVE
+exception is added. Public source still has unclosed fixed-head review findings; this
+baseline change does not accept public runtime/sandbox behavior or any PR.
+
 ## Preparation fixture correction saved before remaining grouped checks
 
 Fixed `833df6b9b5484f7fe4882259d93b30c518a81182` ran
