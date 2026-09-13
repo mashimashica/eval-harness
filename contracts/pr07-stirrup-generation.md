@@ -35,7 +35,7 @@ Ray is not part of the generic PR07 route. The current generic runner is synchro
 
 The executor is constructed with a parsed Stirrup configuration. At execution it must:
 
-1. require a non-empty `request.model` and use that exact string in every policy request;
+1. require a non-empty `request.model` plus a finite positive, non-boolean `request.timeout_seconds`, and use the exact model string in every policy request;
 2. send `request.task.prompt` unchanged as the Stirrup user task;
 3. stage `request.workspace` without the assigned `deliverables_dir`, preserving relative paths and rejecting symlinks, irregular files, unsafe names, and collisions;
 4. resolve only the credential environment names declared by config from `request.environment`;
@@ -101,7 +101,7 @@ The only non-null JSON shape is:
 
 The generic dataclass rejects booleans as the integer version, non-positive versions, empty/control-bearing strings, and malformed digests. The Stirrup config parser alone requires its schema/version/protocol constants. CandidateBundle decoding requires these exact five keys. The core equality check compares the typed object directly; it does not parse `runtime_id`, switch on protocol/provider, or accept metadata as a substitute.
 
-The evidence contains no URL, header, environment-variable name, secret value, prompt, or arbitrary mapping. The top-level run configuration hash changes because it includes this fixed object. Requested model remains in existing executor evidence; `ExecutionResult.model_id` is the exact non-empty `model` returned by the provider on every turn. All turns must report one identical value. A missing or mixed returned model is a protocol failure. A returned versioned model may differ from the requested alias; both are persisted and the harness does not pretend they are equal.
+The evidence contains no URL, header, environment-variable name, secret value, prompt, or arbitrary mapping. The top-level run configuration hash changes because it includes this fixed object. Requested model remains in existing executor evidence; `ExecutionResult.model_id` is the exact non-empty `model` returned by the provider on every validated turn. All turns must report one identical value. A completed/no-deliverable result, or a later sandbox failure, carries that value when at least one valid response was received; a failure before any valid response carries `None`. A missing or mixed returned model is a protocol failure and carries `None` rather than partial or ambiguous model evidence. A returned versioned model may differ from the requested alias; both are persisted and the harness does not pretend they are equal.
 
 `enable_thinking` or reasoning-token usage is a requested provider option, not proof of an effective reasoning-effort tier. PR07 leaves `effective_reasoning_effort_available=False` and `effective_reasoning_effort=None` unless the configured protocol later supplies an authoritative typed field. The existing generic reasoning-effort CLI remains rejected for Stirrup; the non-fallback rule is satisfied by sending the explicit config value once and failing a rejected request.
 
@@ -149,6 +149,7 @@ Version 1 is strict JSON with duplicate keys, non-finite numbers, unknown fields
   "sandbox": {
     "kind": "apptainer",
     "executable": "/usr/bin/apptainer",
+    "runtime_version": "1.5.3",
     "image": "/absolute/path/policy-tools.sif",
     "image_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
     "working_directory": "/workspace"
@@ -159,7 +160,7 @@ Version 1 is strict JSON with duplicate keys, non-finite numbers, unknown fields
 }
 ```
 
-String fields are valid non-empty UTF-8 without control characters and integer fields reject booleans. `provider.id` matches `[a-z][a-z0-9-]{0,63}`. `max_turns` is 1 through 1,000; token counts are positive, `minimum_completion_tokens <= maximum_completion_tokens < context_window_tokens`, and `completion_token_buffer + minimum_completion_tokens < context_window_tokens`. `temperature` is finite in `[0, 2]` and `top_p` is finite in `(0, 1]`. `sandbox.executable` and `sandbox.image` are absolute regular non-symlink files, the image digest is lowercase SHA-256, and schema v1 requires `working_directory="/workspace"`. Paths and files are rechecked at execution.
+String fields are valid non-empty UTF-8 without control characters and integer fields reject booleans. `provider.id` matches `[a-z][a-z0-9-]{0,63}`. `max_turns` is 1 through 1,000; token counts are positive, `minimum_completion_tokens <= maximum_completion_tokens < context_window_tokens`, and `completion_token_buffer + minimum_completion_tokens < context_window_tokens`. `temperature` is finite in `[0, 2]` and `top_p` is finite in `(0, 1]`. `sandbox.executable` and `sandbox.image` are absolute regular non-symlink files, the image digest is lowercase SHA-256, and schema v1 requires `runtime_version="1.5.3"` and `working_directory="/workspace"`. Preflight executes the configured binary without a shell and requires its normalized version output to equal that literal. Paths, version, and files are rechecked at execution.
 
 For deterministic mock tests, `tokenizer` may instead be exactly `{"mode":"utf8-bytes-v1"}`. That is an explicit conservative estimator and is hashed. It is never an automatic fallback. AA-v2 requires `huggingface-local`: `model_id` is a syntactically valid repository identity, `revision` is a full lowercase 40-hex commit, and `snapshot_path` is an absolute regular non-symlink directory whose recursively safe file tree matches `snapshot_sha256`. The digest is SHA-256 over each NFC relative POSIX path, NUL, decimal byte length, NUL, and file bytes, in bytewise path order; symlinks, irregular files, unsafe/colliding names, and mutation during hashing fail closed.
 
@@ -201,13 +202,34 @@ def preflight_role_policy(
 ) -> RolePolicyPreflightResult: ...
 ```
 
-This is a `StirrupExecutor` method; it requires `policy_request.workspace == execution_request.workspace`, uses the executor's already parsed sandbox config, and runs the internal async probe once. It launches the real configured SIF with the same arguments as execution and proves that the assigned staged input is readable, sandbox work/output is writable, protected-root sentinels and unlisted sibling/source roots are absent, `runtime_read_paths` are mounted read-only only when explicitly non-empty, disallowed environment values are absent, and network policy is effective. For contained Stirrup, `runtime_read_paths=()` unless a trusted path is demonstrably mounted. The policy credential is permitted for controller transport only and is deliberately absent inside the sandbox. PR09 evidence records canonical assigned workspace/executor/deliverables roots, policy revision, access/network fields, and literal allowed key names; operational environment values are redacted and excluded from all semantic hashes.
+This is a `StirrupExecutor` method; it requires `policy_request.workspace == execution_request.workspace`, uses the executor's already parsed sandbox config, and runs the internal async probe once. It launches the real configured SIF with the same arguments as execution and proves that the staged copy inside `/workspace` is readable and writable, that the authoritative workspace plus assigned executor/deliverables/protected/unlisted sibling/source roots are absent, that sandbox-work is the sole controller host-root bind, that explicitly non-empty `runtime_read_paths` are read-only, that disallowed environment values are absent, and that network policy is effective. For contained Stirrup, `runtime_read_paths=()` unless a trusted path is demonstrably mounted. The policy credential is permitted for controller transport only and is deliberately absent inside the sandbox. PR09 evidence records canonical assigned workspace/executor/deliverables roots, policy revision, access/network fields, and literal allowed key names; operational environment values are redacted and excluded from all semantic hashes.
 
-The production launch uses Apptainer containment flags including `--containall`, `--no-home`, and `--cleanenv`, sets subprocess `cwd` under `executor_dir`, and supplies only fixed safe container variables. Before launch, the controller makes a race-checked copy from read-only `input-stage` into `sandbox-work`; only `sandbox-work` is bound read/write at `/workspace`. This lets tools edit working copies while neither the assigned workspace nor `input-stage` is mounted. The configured SIF is the execution image, not a browsable host bind. A failed mount-denial/environment/network probe makes preflight fail closed.
+The production launch uses Apptainer containment flags including `--containall`, `--no-home`, `--cleanenv`, and `--no-mount home,cwd,hostfs,bind-paths`, sets subprocess `cwd` under `executor_dir`, and supplies only fixed safe container variables with no `APPTAINER_BIND`, `APPTAINER_BINDPATH`, or `APPTAINER_MOUNT`. Before launch, the controller makes a race-checked copy from read-only `input-stage` into `sandbox-work`; only `sandbox-work` is bound read/write at `/workspace`. This lets tools edit working copies while neither the assigned workspace nor `input-stage` is mounted. The configured SIF is the execution image, not a browsable host bind. The probe inspects its own mount table and rejects every controller-data mount other than `/workspace`; contained pseudo-filesystems and fixed runtime-generated identity/config files are not treated as role data roots. A failed mount-denial/environment/network probe makes preflight fail closed.
+
+A fake/local `SandboxFactory`, disjoint directory spelling, or a fake-LLM `LocalCodeExec` session cannot produce protected-role containment evidence. Those tests prove adapter, session, transport, and artifact behavior only. `RolePolicyPreflightResult.ok=True` is eligible for PR09 only when the production `preflight_role_policy()` above completes against the pinned real Apptainer runtime and SIF in the supported job described in section 8.1. An unsupported host may run mock tests, but it cannot substitute a mock result, infer isolation from argv, or mark a Stirrup role protected.
 
 ## 4. Provider transport and async lifecycle
 
 `eval_harness.executors.stirrup_runtime.StirrupProviderTransport` implements Stirrup's `LLMClient` protocol and calls `nemo_gym.server_utils.request`; it does not instantiate the OpenAI SDK client, `httpx.AsyncClient`, `requests`, or a second aiohttp session. The request is non-streaming JSON and is parsed with `NeMoGymChatCompletion.model_validate`. Only a 2xx body is JSON-decoded. The response context is always closed; non-2xx bodies are drained and discarded and are never attached to an exception or log.
+
+Its upstream-facing surface is the exact structural protocol required by Stirrup 0.1.12:
+
+```python
+class StirrupProviderTransport:
+    @property
+    def model_slug(self) -> str: ...  # exact requested model alias
+
+    @property
+    def max_tokens(self) -> int: ...  # configured context_window_tokens
+
+    async def generate(
+        self,
+        messages: list[ChatMessage],
+        tools: dict[str, Tool],
+    ) -> AssistantMessage: ...
+```
+
+`generate()` alone serializes messages/tools, computes the configured budget, performs the one request, validates the response, records bounded per-turn evidence, and returns the upstream message. Constructor inputs are the frozen provider/session config, exact requested model, role-scoped credential resolver, and monotonic deadline. No benchmark object, evaluator, arbitrary provider mapping, or output directory crosses this boundary.
 
 Generation POSTs are not replayed after an uncertain connection failure. The shared boundary is frozen as `nemo_gym.server_utils.request(..., connection_attempts=1, attempts=1)` plus `async def close_client_session() -> None`. PR07 implements and directly tests those narrow `server_utils` additions; PR05 records the dependency and does not create another transport/session helper. Existing callers that omit the new keyword-only counts retain the current `MAX_NUM_TRIES` and connection-retry defaults. The existing private `_max_connection_retries` argument remains accepted with its old meaning and is mutually exclusive with `connection_attempts`. Both new count parameters mean total attempts, including the initial request, reject booleans/non-positive values, and are forwarded unchanged through the tracing wrapper. Stirrup always passes one for both, so every connection/general exception exits after the initial attempt. Boundary tests pin this off-by-one behavior.
 
@@ -223,7 +245,7 @@ The runtime constructs upstream Stirrup 0.1.12 `Agent` directly around the local
 
 The runtime passes a fresh typed Apptainer provider and explicit finish tools to `Agent`. `finish_mode="coercing"` exposes a local `COERCING_FINISH_TOOL`; `finish_mode="coercing-with-abandon"` also exposes a local `ABANDON_FINISH_TOOL`. The coercer accepts only a JSON list of strings or the one characterized JSON-string encoding of such a list and validates every result; it does not guess comma-separated paths. This is a generic, hashed session choice rather than `is_gdpval`. An abandon call is a valid no-deliverable model outcome.
 
-Fixed upstream session options are part of runtime version 1: `resume=False`, `cache_on_interrupt=False`, `output_dir=None`, `input_files=None`, `skills_dir=None`, `recover_from_context_overflow=False`, `share_parent_exec_env=False`, and the configured `max_turns`/`system_prompt`. A silent typed `AgentLoggerBase` implementation records only bounded counters and stable diagnostics under `executor_dir`; Stirrup's rich console logger is not used. Input staging is uploaded by the typed sandbox provider during its own enter lifecycle, so Stirrup does not generate a file listing or flatten inputs. Output recovery happens inside the active `async with agent.session(...)` block before provider teardown. Cache, resume, subagents, summarization retries, and upstream automatic output copying are disabled.
+Fixed upstream session options are part of runtime version 1: `resume=False`, `cache_on_interrupt=False`, `clear_cache_on_success=True`, `output_dir=None`, `input_files=None`, `skills_dir=None`, `recover_from_context_overflow=False`, `context_summarization_cutoff=1.0`, `turns_remaining_warning_threshold=0`, `share_parent_exec_env=False`, and the configured `max_turns`/`system_prompt`. Validated provider usage must remain below `context_window_tokens`, so the cutoff cannot initiate a summary turn. A silent typed `AgentLoggerBase` implementation records only bounded counters and stable diagnostics under `executor_dir`; Stirrup's rich console logger is not used. Input staging is uploaded by the typed sandbox provider during its own enter lifecycle, so Stirrup does not generate a file listing or flatten inputs. Output recovery happens inside the active `async with agent.session(...)` block before provider teardown. Cache, resume, subagents, automatic summarization, context-overflow retries, and upstream automatic output copying are disabled.
 
 The dynamic completion budget is retained without fallback:
 
@@ -239,7 +261,9 @@ The non-streaming request body has one closed shape: `model`, `messages`, `tempe
 
 The transport keeps typed per-turn side evidence next to the `AssistantMessage`: exact provider `model`, whether `message.content` was a JSON string, that string when present, and bounded token counts. Exactly one choice, a supported finish reason, unique non-empty tool-call IDs, string function names/arguments, non-negative integer usage fields, and one identical non-empty provider model across all turns are required. Reasoning content may drive the agent but is never final text or persisted candidate evidence.
 
-The adapter creates fresh executor-private `input-stage`, `sandbox-work`, and `output-stage` roots. It copies the execution view to `input-stage`, excluding the assigned `deliverables_dir`, then initializes the writable `sandbox-work` copy before launch. Model code never operates on authoritative snapshot/workspace inputs. The measured sandbox provider launches Apptainer with `asyncio.create_subprocess_exec()` and a typed argument tuple, a fresh process session/group, `--containall`, `--no-home`, `--cleanenv`, the configured working directory, a contained home, and only the writable executor-private sandbox-work bind. It does not invoke a host shell to construct or launch Apptainer, inherit ambient environment, expose the host workspace/input stage, or accept arbitrary mounts. Code requested by the model is still the explicit `code_exec` tool payload interpreted by the persistent shell inside the container. Timeout/cancellation sends termination to the process group, waits a bounded interval, escalates to kill, waits again, and reports cleanup failure without leaving a child.
+`ApptainerCodeExecToolProvider` is the one upstream compatibility class. It subclasses Stirrup 0.1.12 `CodeExecToolProvider` and implements its exact abstract lifecycle and primitives: `__aenter__`, `__aexit__`, `run_command`, `read_file_bytes`, `write_file_bytes`, `file_exists`, `is_directory`, and `list_files`. It overrides `save_output_files` only to return the safe nested one-to-one mapping below instead of upstream basename flattening. `stirrup_sandbox.py` owns frozen `SandboxLaunchRequest(sandbox_work: Path, deadline_monotonic: float, network_access_enabled: bool)` and the private alias `SandboxFactory = Callable[[ResolvedSandboxConfig, SandboxLaunchRequest], CodeExecToolProvider]`. The public executor accepts that factory only through a private constructor seam for deterministic unit tests; production construction always supplies `ApptainerCodeExecToolProvider`, and the JSON schema cannot select another class.
+
+The adapter creates fresh executor-private `input-stage`, `sandbox-work`, and `output-stage` roots. It copies the execution view to `input-stage`, excluding the assigned `deliverables_dir`, then initializes the writable `sandbox-work` copy before launch. Model code never operates on authoritative snapshot/workspace inputs. The measured sandbox provider launches Apptainer with `asyncio.create_subprocess_exec()` and a typed argument tuple, a fresh process session/group, `--containall`, `--no-home`, `--cleanenv`, `--no-mount home,cwd,hostfs,bind-paths`, the configured working directory, a contained home, and only the writable executor-private sandbox-work bind. It does not invoke a host shell to construct or launch Apptainer, inherit ambient environment, expose the host workspace/input stage, or accept arbitrary mounts. Code requested by the model is still the explicit `code_exec` tool payload interpreted by the persistent shell inside the container. Timeout/cancellation sends termination to the process group, waits a bounded interval, escalates to kill, waits again, and reports cleanup failure without leaving a child.
 
 `output-stage` contains only files recovered from `sandbox-work` by a successful finish. Bounded session counters, token counts, finish reason, bounded stderr, and patches may remain under `executor_dir` as secret-safe runtime diagnostics and never enter deliverables. Full prompts, provider bodies, Authorization headers, tool argument payloads, file contents, and raw transcripts are not persisted.
 
@@ -278,6 +302,7 @@ All codes are static and contain no exception text, provider body, URL, path, ta
 | Wall-clock deadline | `TIMED_OUT` | `TIMEOUT` | `stirrup.session_timeout` |
 | Keyboard interruption | `INTERRUPTED` | `INTERRUPTED` | `stirrup.interrupted` |
 | Missing/wrong locked runtime dependency | `FAILED` | `PROCESS` | `stirrup.runtime_dependency` |
+| Missing/invalid model, timeout, or assigned request root | `FAILED` | `INTERNAL` | `stirrup.execution_request_invalid` |
 | Active event loop at synchronous entry | `FAILED` | `INTERNAL` | `stirrup.event_loop_active` |
 | Role-policy mismatch or failed containment probe | `FAILED` | `INTEGRITY` | `stirrup.role_policy` |
 | Apptainer/session startup or teardown failure | `FAILED` | `PROCESS` | `stirrup.sandbox_process` |
@@ -327,7 +352,7 @@ The implementation places the cases in `tests/harness/test_stirrup_config.py`, `
 
 | Test | Required assertion |
 |---|---|
-| Strict config round trip | Exact raw-byte SHA, fixed evidence, duplicate/unknown/nonfinite/inline-secret/query/userinfo/encoded-delimiter/unapproved-env-reference rejection; no rejected value appears in error text. Candidate schema is exactly 2 and nested config schema is exactly 1. |
+| Strict config round trip | Exact raw-byte SHA, fixed evidence, exact Apptainer 1.5.3 version, and duplicate/unknown/nonfinite/inline-secret/query/userinfo/encoded-delimiter/unapproved-env-reference rejection; no rejected value appears in error text. Candidate schema is exactly 2 and nested config schema is exactly 1. |
 | Auth preflight/header | Application accepts only `MODEL_API_KEY` and builder only `BUILDER_MODEL_API_KEY`; preflight fails when its scoped ambient value is absent and makes zero requests. Mock server sees exact `Authorization: Bearer <fixture secret>` at execute; `none` sees no Authorization header. Fixture secret is absent from result, run metadata, CandidateBundle bytes, config/digest inputs, sandbox environment, stdout/stderr, and exception text. |
 | Endpoint ownership | Mock server accepts only `POST /v1/chat/completions`; every other path fails the test. Captured requests contain no `/verify`, `/run`, resource-server name, rubric, reference answer, judge flag, or benchmark name. |
 | Real Stirrup session with mock provider | Typed response 1 calls `code_exec` to create `nested/result.txt`; response 2 calls `finish`. Actual locked Stirrup `Agent` and measured sandbox interface recover exact bytes/nested path, last assistant content, and provider-returned model ID. The prompt bytes match `TaskSpec.prompt`; no real model service is used. |
@@ -345,10 +370,62 @@ The implementation places the cases in `tests/harness/test_stirrup_config.py`, `
 | Pillow/MoviePy override | Actual Stirrup image decode/downscale/re-encode and video decode/downscale/re-encode/reopen calls pass under Pillow 12.3.0 and MoviePy distribution 2.2.1; exact installed versions are asserted. |
 | Local tokenizer | Exact Transformers/tokenizers/Jinja versions load a digested three-file local snapshot with network access disabled and render/count serialized messages plus tool schema. Mutation, missing template, remote-only ID, wrong revision/hash, or load/template failure makes zero provider calls and never selects byte counting. |
 | Network policy | Disabled mode omits web tools and uses tested Apptainer no-network arguments or fails preflight; enabled mode is explicit. No test claims no-network merely because the provider is mocked. |
-| Role policy | Application config cannot name `BUILDER_MODEL_API_KEY`; builder config cannot name `MODEL_API_KEY`; extra allowlist names fail. A no-model real-container probe sees only its staged/work/output roots, cannot read protected/sibling/source sentinels, and sees no host credential value. Canonical root/policy evidence contains no credential values. |
-| Supported sandbox lifecycle | Dedicated supported CI uses the real measured Apptainer provider and a pinned synthetic SIF with a fake local policy endpoint. Success recovers exact bytes; cancellation/timeout after a child and grandchild start proves both PIDs are gone, binds/stages are removed, and the aiohttp singleton is closed. No process test is skipped or deselected. |
+| Role policy | Application config cannot name `BUILDER_MODEL_API_KEY`; builder config cannot name `MODEL_API_KEY`; extra allowlist names fail. The separate no-model production `preflight_role_policy()` probe sees the staged copy through the sole sandbox-work bind, cannot see authoritative workspace/executor/deliverables/protected/sibling/repository-source roots, sees no host credential or disallowed environment value, and proves the configured network policy. Only this real-container result can report protected-role eligibility; canonical root/policy evidence contains no credential values. |
+| Supported sandbox lifecycle | Dedicated supported CI uses the production measured Apptainer provider and the section 8.1 SIF. A fake local policy endpoint plus real upstream Agent proves successful artifact recovery separately from the no-model containment probe. Cancellation/timeout after a child and grandchild start proves both PIDs are absent through `/proc/<pid>` and `os.kill(pid, 0)`, binds/stages are removed, and the aiohttp singleton is closed. It does not depend on host `ps`. No process or containment test is skipped or deselected. |
 
 Fixtures belong under `tests/harness/fixtures/executor_protocol/stirrup/` and contain only synthetic keys marked for the repository's secret scanner. Actual runtime integration must use the installed Stirrup package, not a fake module tree; narrow backend injection is used only for filesystem/failure unit cases.
+
+### 8.1 Supported Apptainer provisioning and containment gate
+
+The dedicated `stirrup-supported-runtime` job runs on Linux x86-64 with a runner that permits the setuid Apptainer network namespace. It installs no floating Apptainer package. The runtime is Apptainer 1.5.3, tag object `12054fb7faf9414667f42b6daf3f5c2259db46d0`, commit `6a76317a87c4eae10f52c7805965756a919291d7`, tree `9e9486c6facce4805dd11d70ee1fb1331ca0594b`. Provisioning downloads these two official release artifacts, verifies their bytes before installation, installs both local files, and asserts `apptainer version` is exactly `1.5.3`:
+
+| Artifact | SHA-256 |
+|---|---|
+| `apptainer_1.5.3_amd64.deb` | `82b0bdddf459087d202383360b8318d526ad6826c748a2f669913cc6aef9ee40` |
+| `apptainer-suid_1.5.3_amd64.deb` | `118d40f0b94225a078c769422c98be72a98fb2a6423616481eb34a64cfc7b222` |
+
+The workflow spells the download, verification, and installation directly:
+
+```text
+curl --fail --location --proto '=https' --tlsv1.2 -o apptainer_1.5.3_amd64.deb https://github.com/apptainer/apptainer/releases/download/v1.5.3/apptainer_1.5.3_amd64.deb
+curl --fail --location --proto '=https' --tlsv1.2 -o apptainer-suid_1.5.3_amd64.deb https://github.com/apptainer/apptainer/releases/download/v1.5.3/apptainer-suid_1.5.3_amd64.deb
+printf '%s  %s\n' 82b0bdddf459087d202383360b8318d526ad6826c748a2f669913cc6aef9ee40 apptainer_1.5.3_amd64.deb 118d40f0b94225a078c769422c98be72a98fb2a6423616481eb34a64cfc7b222 apptainer-suid_1.5.3_amd64.deb | sha256sum --check --strict -
+sudo apt-get install --yes ./apptainer_1.5.3_amd64.deb ./apptainer-suid_1.5.3_amd64.deb
+test "$(/usr/bin/apptainer version)" = '1.5.3'
+test "$(stat --format='%U:%G:%a' /usr/libexec/apptainer/bin/starter-suid)" = 'root:root:4755'
+```
+
+The job also requires `/usr/libexec/apptainer/bin/starter-suid` to be owned by `root:root` with mode `4755`, requires the installed `none` CNI definition, records the runner image identifier, kernel, Apptainer config, and installed-package manifest as artifacts, and fails setup if those conditions are unavailable. It does not install from a PPA, apt package name, mutable latest URL, or alternate Singularity binary.
+
+The committed `tests/harness/fixtures/executor_protocol/stirrup/containment-v1.def` has these exact LF-terminated UTF-8 bytes and SHA-256 `ebff319e990b886400098f2e36411ddca6f6585c7d73e3f2d32e2dec80684a2a`:
+
+```text
+# SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
+
+Bootstrap: docker
+From: docker.io/library/busybox@sha256:7a3ebe5bfd1a4a19797d20b0c0bb39d44393e9a03fd852c0865b0f540d868df0
+
+%labels
+    org.opencontainers.image.title pr07-containment-v1
+    org.opencontainers.image.base.digest sha256:7a3ebe5bfd1a4a19797d20b0c0bb39d44393e9a03fd852c0865b0f540d868df0
+```
+
+That base is the Linux/amd64 OCI manifest, not a mutable tag; its parent multi-platform index is `sha256:9db7b59979c38555a39def84a31fb98b5296952f9e3afd4f6f11f05b07adfab0`. Provisioning builds the definition twice with `SOURCE_DATE_EPOCH=0` under Apptainer 1.5.3, requires the two SIF SHA-256 values and bytes to match, verifies the embedded label/base digest, and then uses the first read-only SIF. The strict test config receives that exact computed SIF SHA-256 before it is parsed; the hash and build transcript are retained as CI artifacts. Apptainer 1.5 added `SOURCE_DATE_EPOCH` support for reproducible SIF creation. OCI/deb downloads occur only in the provisioning step; all tests execute the local verified SIF and local mock endpoint.
+
+```text
+mkdir -p ci-artifacts/stirrup-runtime
+printf '%s  %s\n' ebff319e990b886400098f2e36411ddca6f6585c7d73e3f2d32e2dec80684a2a tests/harness/fixtures/executor_protocol/stirrup/containment-v1.def | sha256sum --check --strict -
+sudo env SOURCE_DATE_EPOCH=0 /usr/bin/apptainer build --force ci-artifacts/stirrup-runtime/containment-a.sif tests/harness/fixtures/executor_protocol/stirrup/containment-v1.def
+sudo env SOURCE_DATE_EPOCH=0 /usr/bin/apptainer build --force ci-artifacts/stirrup-runtime/containment-b.sif tests/harness/fixtures/executor_protocol/stirrup/containment-v1.def
+cmp ci-artifacts/stirrup-runtime/containment-a.sif ci-artifacts/stirrup-runtime/containment-b.sif
+sha256sum ci-artifacts/stirrup-runtime/containment-a.sif > ci-artifacts/stirrup-runtime/containment-v1.sif.sha256
+chmod 0444 ci-artifacts/stirrup-runtime/containment-a.sif
+```
+
+The containment case calls the production `StirrupExecutor.preflight_role_policy()` with bearer auth present only in the controller, network disabled, `runtime_read_paths=()`, and canonical temporary workspace/executor/deliverables roots. It creates fixed sentinels in the authoritative workspace, a protected repository/source root, and an unlisted sibling. Inside the real SIF, the production sandbox provider must read only the staged copy, write only `/workspace`, fail to resolve every host sentinel path, show through `/proc/self/mountinfo` that no other controller-data root is mounted, omit the credential and a disallowed host variable from `env`, expose no non-loopback route, and fail to contact a host loopback listener; the listener must observe zero connections. The result must contain the exact policy revision and stable success detail codes, with literal allowlist key names but no values. The separate production cancellation case starts a child and grandchild, then verifies their absence without `/usr/bin/ps` after cancellation and timeout.
+
+Any missing version, digest mismatch, non-reproducible SIF, failed prerequisite, unexpected mount/environment/connection, surviving PID, or inability to create the `none` network makes this required job fail. Its pytest invocation has no conditional skip, xfail, deselection, marker exclusion, or fake-provider replacement for containment. Mock-only jobs still exercise the same executor and shared HTTP lifecycle on ordinary hosts, but their result is never PR09 protection evidence.
 
 Required validation on the implementation head:
 
@@ -458,7 +535,9 @@ The characterized upstream runtime selection passed 61 tests. One process-reapin
 
 The host group contains packages imported by the host Stirrup/session runtime. Document/PDF/data/ML tools advertised to the model remain in the hashed Apptainer image.
 
-The remaining handoff values are operational inputs, not open architecture choices: the migration owner supplies the exact implementation base commit; PR08 supplies the AA-v2 policy endpoint, requested model alias, system prompt, tokenizer repository/revision/local snapshot digest, SIF path/digest, and network policy; CI supplies a supported Apptainer runner and pinned synthetic SIF. The only capability still requiring an owner before PR10 deletion is AA-v2 web search if its accepted profile requires it. PR07 schema v1 deliberately reports that capability unavailable.
+The remaining handoff values are operational inputs, not open architecture choices: the migration owner supplies the exact implementation base commit; PR08 supplies the AA-v2 policy endpoint, requested model alias, system prompt, tokenizer repository/revision/local snapshot digest, production SIF path/digest, and network policy; CI supplies a Linux x86-64 runner on which the section 8.1 pinned setuid runtime and `none` network can execute. The synthetic SIF source, build, and per-run exact image digest are already fixed in section 8.1. The only capability still requiring an owner before PR10 deletion is AA-v2 web search if its accepted profile requires it. PR07 schema v1 deliberately reports that capability unavailable.
+
+No PR07 architecture or dependency decision remains open. Absence of a supported containment runner blocks acceptance of protected Stirrup roles; it does not authorize a mock substitute or weaken the contract.
 
 ## 11. Luna handoff
 
@@ -508,6 +587,8 @@ Inspected baseline blobs include:
 | `uv.lock` | `d35adbb6a5792de03406fc3538f3f8acbaf7b344` |
 
 Dependency characterization used only temporary source checkouts/venvs. The final root-resolution probe is identified in section 10. Its real fake-client session log SHA-256 is `3c1e454332f82644719699531acfbc052c726bbc00288a93a00d367e81d54c8b`; image/video log SHA-256 is `7dbf64734d6e01007be2b0950df3c93489af6c0da1d37fbb008e0ae949559139`. The local tokenizer fixture exercised files `chat_template.jinja`, `tokenizer.json`, and `tokenizer_config.json` and produced the tree digest recorded in section 10. No provider, model, judge, Tavily, or public inference endpoint was called.
+
+Apptainer release/tag metadata and official artifact hashes were inspected for section 8.1. This managed local host had no installed Apptainer/Singularity runtime and could not create a mount namespace, so no local result is presented as containment evidence. That is why the real production probe is a mandatory failing gate on the explicitly supported CI runner rather than a local skip.
 
 PR04 confirmed its grader isolation introduces no HTTP transport. PR05/PR02c froze `eval_harness.execution_policy` as the shared role-policy owner and confirmed `nemo_gym.server_utils.request(..., connection_attempts=1, attempts=1)` plus `close_client_session()` as the one shared HTTP/session seam; PR07 owns that narrow implementation and tests. PR06 keeps judge HTTP behind `JudgeRuntime` and introduces no competing transport. PR09 consumes PR07's contained role-policy probe and must not treat another executor's disjoint directories as equivalent OS containment.
 
