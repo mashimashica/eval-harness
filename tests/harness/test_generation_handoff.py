@@ -1177,6 +1177,8 @@ class GenerationHandoffTests(unittest.TestCase):
                         return 1
 
                     arguments = sys.argv[1:]
+                    if any(name in os.environ for name in FORBIDDEN_ENVIRONMENT):
+                        raise SystemExit(fail("Cursor API/provider environment was not removed"))
                     if arguments == ["--version"]:
                         record("version")
                         print("2026.09.10-fd3934a")
@@ -1193,8 +1195,6 @@ class GenerationHandoffTests(unittest.TestCase):
                         raise SystemExit(0)
                     if not arguments or arguments[0] != "-p":
                         raise SystemExit(fail("unexpected Cursor invocation"))
-                    if any(name in os.environ for name in FORBIDDEN_ENVIRONMENT):
-                        raise SystemExit(fail("Cursor API/provider environment was not removed"))
                     try:
                         workspace = Path(arguments[arguments.index("--workspace") + 1])
                     except (ValueError, IndexError):
@@ -1256,7 +1256,7 @@ class GenerationHandoffTests(unittest.TestCase):
             fake_command.chmod(fake_command.stat().st_mode | stat.S_IXUSR)
 
             benchmark = CursorFixtureBenchmark(task_count=1)
-            evaluator = FixtureEvaluator()
+            evaluator = FixtureEvaluator(handoff_root=out_root)
             executor = CursorExecutor(command=str(fake_command))
             environment = {
                 "XDG_CONFIG_HOME": str(config_root),
@@ -1343,6 +1343,7 @@ class GenerationHandoffTests(unittest.TestCase):
             loaded = load_run_results(manifest, snapshot_binding=binding)
             self.assertEqual(len(loaded), 1)
             row, bundle = loaded[0]
+            self.assertEqual(evaluator.durability_checks, [row.candidate_id])
             self.assertEqual(row.sequence, 0)
             self.assertEqual(row.candidate_id, f"{manifest.run_id}:candidate-00000000")
             self.assertEqual(row.bundle_path, "candidates/candidate-00000000")

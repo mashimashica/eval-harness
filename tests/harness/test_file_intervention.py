@@ -127,7 +127,11 @@ class FileInterventionTests(unittest.TestCase):
                 reserved_input = root / f"reserved-input-{index}"
                 (reserved_input / name).mkdir(parents=True)
                 (reserved_input / name / "x").write_text("x", encoding="utf-8")
-                cases.append((f"reserved-{name}", lambda path=reserved_input: FilesIntervention(path).preflight()))
+
+                def reserved_preflight(path: Path = reserved_input) -> InterventionPreflightResult:
+                    return FilesIntervention(path).preflight()
+
+                cases.append((f"reserved-{name}", reserved_preflight))
 
             if os.name == "posix":
                 special_source = root / "special-source"
