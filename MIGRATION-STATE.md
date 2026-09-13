@@ -3,7 +3,7 @@
 
 # Migration state
 
-Updated: 2026-09-13T06:56:34Z
+Updated: 2026-09-13T07:26:00Z
 
 Control branch: `checkpoint/migration-control`.
 Procedure: [MIGRATION-WORKFLOW.md](MIGRATION-WORKFLOW.md).
@@ -16,8 +16,8 @@ before the two P1 corrections. Verified recovery is implementation
 `7be35da9fae98c5e56ba14bf13a15a4cdbb9a8e7` and control
 `2d36c56c8056bd34186ed11da5004e0e01188dc8`; no local edits needed protection beyond
 keeping the clean main root untouched. Current implementation checkpoint is
-`cc9e246ea305249acc6f97524972f9d2bfaac62b`, tree
-`436f91da3b7e47f78b17ced7085f9b80e312ed11`, saved and read back.
+`debe87e56552f073d029eb5038a102784f9d2348`, tree
+`d597e9694d7ebd31a62493b5e93b41815eec8ca8`, saved and read back.
 
 All three new reproductions fail as intended against the unchanged host: simulated
 terminal/exit teardown lasts 6 instead of 5 seconds, success/exception cleanup lasts 2
@@ -28,10 +28,14 @@ the final batch passes all 37 unit methods, strict mypy and Ruff on the saved he
 Sol's fixed-head independent delta review has no remaining actionable finding: shared
 absolute deadlines and actual reaped termination outcomes close both P1 issues. Parent
 accepts this component closure only, not PR04. See `reports/m2-host-closure-validation.json`.
-The separate bootstrap initial four unit methods and Ruff pass; a test-only import typing
-error was fixed. Sol found one automatic-startup issue: CPython swallows ordinary
-sitecustomize exceptions. Luna is making automatic failure fatal and adding fresh isolated
-interpreter regressions; this component is not yet accepted. Host source remains unchanged.
+The separate offline bootstrap now passes six unit methods, strict mypy and Ruff at this
+head. Its fresh stdlib venv tests execute actual isolated interpreter startup and establish
+fatal failure before user code for missing/malformed NLTK, without leaking an exception's
+secret-bearing message. Policy-absent startup needs no NLTK. Sol independently closed the
+automatic-startup finding on the identical production source at `8699bcee`; see
+`reports/m2-bootstrap-local-validation.json`. This is component closure, not actual NLTK,
+Linux sandbox or PR04 acceptance. Luna now implements fixed-environment provisioning in
+one bounded batch. Host source remains unchanged except allowed preparation helpers.
 Parent also verified the immutable v0.1.4 parity Parquet hash, size, all 1,140 unique IDs and
 required canonical fields without running any solution. See `reports/m2-parity-input-identity.json`.
 This is input identity evidence, not executed parity. No other PR is implemented in parallel.

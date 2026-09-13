@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "tested_commit": "debe87e56552f073d029eb5038a102784f9d2348",
+  "tree": "d597e9694d7ebd31a62493b5e93b41815eec8ca8",
+  "tested_at": "2026-09-13T07:21:51Z",
+  "platform": "macOS arm64",
+  "python": "3.13.14",
+  "source_isolation": "idle implementation worktree at saved head; only test typing and work record differ from independently reviewed production source",
+  "unittest": {
+    "command": ".venv/bin/python -m unittest discover -s tests/harness -p test_bigcodebench_sitecustomize.py -v",
+    "methods": 6,
+    "passed": 6,
+    "failed": 0,
+    "elapsed_seconds": 2.582,
+    "exit_code": 0,
+    "real_subprocess_checks": "Fresh stdlib venv, byte-copied sitecustomize, absolute interpreter -I -B; dependency exceptions fail before candidate code and suppress exception messages; no-policy startup succeeds without NLTK"
+  },
+  "mypy": {
+    "command": ".venv/bin/mypy --strict --explicit-package-bases --show-error-codes eval_harness/bigcodebench_sitecustomize.py tests/harness/test_bigcodebench_sitecustomize.py",
+    "checked_files": 2,
+    "errors": 0,
+    "exit_code": 0
+  },
+  "ruff": {"lint": "passed", "format": "passed", "checked_files": 2},
+  "review": {
+    "reviewer": "Sol",
+    "reviewed_production_commit": "8699bceee99d9a8179cbe09e5107d49f152466cd",
+    "mode": "read-only fixed-head review",
+    "closed": "CPython site import swallowing ordinary exceptions; automatic bootstrap now fails fatally with a fixed non-secret diagnostic",
+    "remaining_actionable_findings": 0,
+    "parent_decision": "bootstrap component closure only"
+  },
+  "actual_nltk_3103_seven_package_validation": false,
+  "real_linux_sandbox_verified": false,
+  "native_1140_parity_verified": false,
+  "pr04_accepted": false,
+  "whole_migration_complete": false
+}
