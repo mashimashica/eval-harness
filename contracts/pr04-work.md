@@ -3,6 +3,33 @@
 
 # PR04 implementation work record
 
+## Attested public boundary and shared callers assigned, 2026-09-13
+
+Reviewed CI head `0c919a5cd1256af121a912bef5a42cf41d5e360b` is promoted unchanged
+to Draft PR #43, `migration/04-isolated-grader`, based on accepted/unmerged PR #42
+at `6038a7828d62247ad98d000bc6e71c706f6d14a4`. Full pre-commit is clean. Both CI
+source findings and grouped syntax/path/true-false-exception checks are closed by Sol.
+The initial heredoc validation extractor failed by including a pipeline line; correcting
+that local validator passed without a source change. This is not Linux or PR04 acceptance.
+
+Next owner Luna implements the frozen public preflight/run seam and then equivalent
+evaluator/resource-server calls, readonly fixed environment resolution and legacy runner
+deletion. Allowed source paths are the grader_sandbox/runner/bootstrap modules, BigCodeBench
+evaluator, resource app/setup/config/README, registry descriptor wording only, candidate
+manifest source hash updates, and the existing six authorized BigCodeBench/orchestration
+test files. No central runner, other evaluator, accepted manifest, dependency pin or vendor
+source change is allowed. The frozen contract/appendix and saved code-start amendments
+remain the specification, not a redesign opportunity.
+
+Preserve authenticated frame schemas, production limits, single builder/supervisor/lock,
+real probes, secret-free infrastructure failures, no runtime installation and candidate-only
+explicit trusted selection. Attestation binds every manifest/path/limit/probe identity and
+run rehashes before launch. Ordinary production constructors cannot select a candidate.
+Save coherent source batches before validation and within 15 minutes; return fixed source
+for grouped tests/strict typing/Ruff and Sol review. Deadline for this assignment is
+2026-09-13T10:30:00Z. Parent collects actual Linux preparation and quality-gate evidence.
+Real hostile acceptance and all-1,140 parity follow; existing CVE and 96% gates stay open.
+
 ## CI path and preflight correction ready, 2026-09-13
 
 Base `92408b9d506f6b287598616b7ac58e9e145713c7`; Luna changes only the
