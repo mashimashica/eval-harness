@@ -3,6 +3,27 @@
 
 # PR04 implementation work record
 
+## Revised correction ready for grouped verification, 2026-09-13T09:09:31Z
+
+Luna ran two targeted red reproductions on saved test-first head
+`64dc8d615e4d145ecfc211ea5c1bd59cd98cab5f`: official uv suffix raised
+`ProvisioningError("uv version mismatch")`; the existing archive read raised
+`FileNotFoundError` after exclusive-create refusal deleted it. Two methods, two errors,
+0.004 seconds. Command: `./.venv/bin/python -m unittest
+tests.harness.test_bigcodebench_grader_boundary.BigCodeBenchBoundaryPreparationTests.test_uv_suffix_and_exact_version_parser
+tests.harness.test_bigcodebench_grader_boundary.BigCodeBenchBoundaryPreparationTests.test_nltk_archive_install_preserves_existing_and_cleans_partial_output`.
+These expected red reproductions are not additional failed corrective rounds.
+
+This checkpoint contains the one authorized extra uv correction and bundled archive fix:
+explicit full-version/suffix checks in the Python and shell installers; exclusive-create
+ownership tracked for archive cleanup; writing through the open descriptor; and the
+partial-copy test seam adapted to descriptor copying. Allowed source paths are exactly
+the two installers and preparation test module. Green validation is not run yet.
+Next: Luna runs all preparation unit methods, strict mypy of grader_sandbox/installer/test,
+scoped Ruff lint/format and shell syntax, recording each result. Sol independently reviews
+this fixed saved source and the prior preparation findings that have no closure yet.
+Uv retains two historical failed corrections. PR04/CVE/real-boundary acceptance remains open.
+
 ## Authorized revised correction: test-first checkpoint, 2026-09-13
 
 Base: `90dc9d17f0c10532028ace4f8657240b6e742a26`. Owner Luna, with parent-owned

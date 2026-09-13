@@ -168,11 +168,21 @@ def _resolve_uv(value: str) -> Path:
 
 
 def _verify_uv_version(uv: Path) -> None:
-    output = _run_checked([str(uv), "--version"]).stdout.strip()
+    output = _run_checked([str(uv), "--version"]).stdout
+    if output.endswith("\n"):
+        output = output[:-1]
+    if "\n" in output or "\r" in output:
+        raise ProvisioningError("uv version mismatch")
     prefix = "uv 0.11.29"
     if output == prefix:
         return
-    if not output.startswith(f"{prefix} ") or not output[len(prefix) :].startswith("(") or not output.endswith(")"):
+    if not output.startswith(f"{prefix} "):
+        raise ProvisioningError("uv version mismatch")
+    suffix = output[len(prefix) + 1 :]
+    if len(suffix) < 3 or not suffix.startswith("(") or not suffix.endswith(")"):
+        raise ProvisioningError("uv version mismatch")
+    inner = suffix[1:-1]
+    if not inner.strip() or any(character in "()\r\n" for character in inner):
         raise ProvisioningError("uv version mismatch")
 
 
@@ -673,12 +683,15 @@ def _install_nltk_package(archive: Path, data_root: Path, *, subdir: str, packag
         raise ProvisioningError("NLTK package identity is invalid")
     category_root = _nltk_category_root(data_root, subdir)
     archive_destination = category_root / f"{package_id}.zip"
+    created = False
     try:
-        archive_destination.open("xb").close()
-        shutil.copyfile(archive, archive_destination)
+        with archive_destination.open("xb") as destination_file, archive.open("rb") as source_file:
+            created = True
+            shutil.copyfileobj(source_file, destination_file, length=1024 * 1024)
         archive_destination.chmod(0o600)
     except OSError as exc:
-        archive_destination.unlink(missing_ok=True)
+        if created and not archive_destination.is_symlink():
+            archive_destination.unlink(missing_ok=True)
         raise ProvisioningError("NLTK package archive could not be installed") from exc
     if not unzip:
         return archive_destination

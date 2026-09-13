@@ -16,7 +16,7 @@ import tempfile
 import unittest
 import zipfile
 from pathlib import Path
-from typing import cast
+from typing import IO, cast
 from unittest import mock
 
 from scripts.ci import install_bigcodebench_grader as installer
@@ -248,11 +248,11 @@ class BigCodeBenchBoundaryPreparationTests(unittest.TestCase):
 
             destination.unlink()
 
-            def partial_copy(_source: Path, target: Path) -> None:
-                target.write_bytes(b"partial")
+            def partial_copy(_source: IO[bytes], target: IO[bytes]) -> None:
+                target.write(b"partial")
                 raise OSError("simulated partial copy")
 
-            with mock.patch.object(installer.shutil, "copyfile", side_effect=partial_copy):
+            with mock.patch.object(installer.shutil, "copyfileobj", side_effect=partial_copy):
                 with self.assertRaises(installer.ProvisioningError):
                     installer._install_nltk_package(archive, data_root, subdir="corpora", package_id="stopwords", unzip=True)
             self.assertFalse(destination.exists())

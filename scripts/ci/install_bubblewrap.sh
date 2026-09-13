@@ -58,9 +58,13 @@ grep -q '^ID=ubuntu$' /etc/os-release || die "Ubuntu is required"
 grep -q '^VERSION_ID="24.04"$' /etc/os-release || die "Ubuntu 24.04 is required"
 uv_version="$($uv_bin --version)"
 if ! printf '%s\n' "$uv_version" | awk '
-    $1 == "uv" && $2 == "0.11.29" {
-        suffix = substr($0, length($1) + length($2) + 3)
-        if (NF == 2 || suffix ~ /^\(.*\)$/) ok = 1
+    NR > 1 { exit 1 }
+    $0 == "uv 0.11.29" { ok = 1; next }
+    $0 ~ /^uv 0\.11\.29 \([^()]*\)$/ {
+        suffix = substr($0, length("uv 0.11.29") + 2)
+        inner = substr(suffix, 2, length(suffix) - 2)
+        gsub(/[[:space:]]/, "", inner)
+        if (inner != "") ok = 1
     }
     END { exit(ok ? 0 : 1) }
 '; then
