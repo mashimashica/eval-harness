@@ -23,6 +23,7 @@ from pathlib import Path, PurePosixPath
 from typing import Mapping, Sequence, TypeVar
 
 from eval_harness.benchmarks.base import Benchmark, BenchmarkTask
+from eval_harness.benchmarks.snapshot import SnapshotTaskContent
 from eval_harness.builders.base import (
     Builder,
     BuilderInputBundle,
@@ -379,7 +380,10 @@ class _SelectedTaskBenchmark(Benchmark):
         self._original = original
         self._selected = selected
         self.name = original.name
-        self.revision = getattr(original, "revision", None)
+        self.source = original.source
+        self.source_availability = original.source_availability
+        self.revision = original.revision
+        self.revision_availability = original.revision_availability
 
     def is_prepared(self) -> bool:
         return True
@@ -392,15 +396,25 @@ class _SelectedTaskBenchmark(Benchmark):
             raise ValueError("selected benchmark wrapper only supports limit=1")
         return [self._selected]
 
-    def materialize(self, task: BenchmarkTask, workspace: Path) -> Sequence[str]:
-        if task is not self._selected:
+    def snapshot_source_paths(self) -> Sequence[Path]:
+        return self._original.snapshot_source_paths()
+
+    def _validate_selected_task(self, task: BenchmarkTask) -> None:
+        if task.execution != self._selected.execution:
             raise ValueError("selected benchmark wrapper received a different task")
+
+    def snapshot_task(self, task: BenchmarkTask, workspace: Path) -> SnapshotTaskContent:
+        self._validate_selected_task(task)
+        return self._original.snapshot_task(self._selected, workspace)
+
+    def materialize(self, task: BenchmarkTask, workspace: Path) -> Sequence[str]:
+        self._validate_selected_task(task)
         return self._original.materialize(self._selected, workspace)
 
     def execution_task(self, task: BenchmarkTask, workspace: Path, *, network_policy: str) -> TaskSpec:
-        if task is not self._selected:
-            raise ValueError("selected benchmark wrapper received a different task")
-        return self._original.execution_task(self._selected, workspace, network_policy=network_policy)
+        self._validate_selected_task(task)
+        execution_task = BenchmarkTask(execution=task.execution)
+        return self._original.execution_task(execution_task, workspace, network_policy=network_policy)
 
 
 def _manifest_payload(manifest: BuilderInputManifest) -> dict[str, object]:

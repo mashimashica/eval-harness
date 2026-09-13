@@ -10,6 +10,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 from eval_harness.benchmarks.base import Benchmark, BenchmarkTask
+from eval_harness.benchmarks.snapshot import Availability, SnapshotTaskContent
 from eval_harness.builders.base import (
     Builder,
     BuilderInputBundle,
@@ -20,7 +21,8 @@ from eval_harness.builders.base import (
     BuildStatus,
 )
 from eval_harness.builders.inputs import load_builder_input_bundle
-from eval_harness.capabilities import ExecutorOutput
+from eval_harness.candidate_bundle import VerifiedSnapshotBinding
+from eval_harness.capabilities import ExecutorCapabilities, ExecutorInput, ExecutorOutput
 from eval_harness.evaluators.base import (
     EvaluationPlan,
     EvaluationRequest,
@@ -46,17 +48,24 @@ from eval_harness.experiments.base import (
     ExperimentRunSummary,
     LoadedExperimentProfile,
 )
-from eval_harness.experiments.runner import _make_schedule, _validate_build_result, run_builder_experiment
+from eval_harness.experiments.runner import (
+    _make_schedule,
+    _SelectedTaskBenchmark,
+    _validate_build_result,
+    run_builder_experiment,
+)
 from eval_harness.failures import Failure, FailureImpact, FailureKind, RunAbort
 from eval_harness.interventions.agent_skill import load_agent_skill_bundle
 from eval_harness.interventions.base import InterventionBundle
 from eval_harness.provenance import canonical_json_sha256
 from eval_harness.reasoning import ReasoningEffortOption
+from eval_harness.run_manifest import load_run_manifest, load_run_results
 
 
 class _Benchmark(Benchmark):
     name = "generic-benchmark"
     revision = "revision-1"
+    revision_availability = Availability.AVAILABLE
 
     def __init__(self, task_count: int = 2) -> None:
         self.tasks = tuple(
@@ -87,6 +96,59 @@ class _Benchmark(Benchmark):
     def execution_task(self, task: BenchmarkTask, workspace: Path, *, network_policy: str) -> TaskSpec:
         del workspace, network_policy
         self.execution_task_calls += 1
+        return task.execution
+
+
+class _SnapshotHookBenchmark(Benchmark):
+    name = "snapshot-hook-benchmark"
+    source = "fixture-source"
+    source_availability = Availability.AVAILABLE
+    revision = "fixture-revision"
+    revision_availability = Availability.AVAILABLE
+
+    def __init__(self, source_path: Path) -> None:
+        self.source_path = source_path
+        self.task = BenchmarkTask(
+            TaskSpec("snapshot-task", "snapshot prompt"),
+            materialization={"execution": "private"},
+            evaluation={"evaluation": "private"},
+        )
+        self.snapshot_source_calls = 0
+        self.snapshot_tasks: list[BenchmarkTask] = []
+        self.materialize_calls = 0
+        self.execution_tasks: list[BenchmarkTask] = []
+
+    def is_prepared(self) -> bool:
+        return True
+
+    def prepare(self) -> None:
+        return None
+
+    def load_tasks(self, limit: int) -> list[BenchmarkTask]:
+        return [self.task][:limit]
+
+    def materialize(self, task: BenchmarkTask, workspace: Path) -> list[str]:
+        self.materialize_calls += 1
+        workspace.mkdir(parents=True, exist_ok=True)
+        (workspace / "fallback.txt").write_text("fallback", encoding="utf-8")
+        return ["fallback.txt"]
+
+    def snapshot_source_paths(self) -> tuple[Path, ...]:
+        self.snapshot_source_calls += 1
+        return (self.source_path,)
+
+    def snapshot_task(self, task: BenchmarkTask, workspace: Path) -> SnapshotTaskContent:
+        del workspace
+        self.snapshot_tasks.append(task)
+        return SnapshotTaskContent(
+            evaluation_data={"private": "evaluation-only"},
+            files=(("task_inputs/execution.txt", b"execution bytes"),),
+            evaluation_files=(("task_inputs/evaluation.txt", b"evaluation bytes"),),
+        )
+
+    def execution_task(self, task: BenchmarkTask, workspace: Path, *, network_policy: str) -> TaskSpec:
+        del workspace, network_policy
+        self.execution_tasks.append(task)
         return task.execution
 
 
@@ -124,6 +186,10 @@ class _ApplicationExecutor(Executor):
     invocation_mode = "fake"
     network_access_enabled: bool = False
     reasoning_effort: ReasoningEffortOption = None
+    capabilities = ExecutorCapabilities(
+        inputs=frozenset({ExecutorInput.PROMPT_TEXT, ExecutorInput.WORKSPACE_FILES}),
+        outputs=frozenset({ExecutorOutput.FINAL_TEXT}),
+    )
 
     def __init__(
         self,
@@ -388,6 +454,68 @@ class BuilderExperimentRunnerTests(unittest.TestCase):
             input_loader.assert_called_once_with(profile.profile, {"input-guide": root / "input-source"})
         return summary, benchmark, evaluator, builder, application, source_bundle
 
+    def test_selected_task_adapter_preserves_snapshot_hooks_and_strips_execution_metadata(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            source = root / "source.json"
+            source.write_text("stable source", encoding="utf-8")
+            original = _SnapshotHookBenchmark(source)
+            selected = _SelectedTaskBenchmark(original, original.task)
+            destination = root / "snapshot"
+
+            snapshot = selected.acquire_snapshot(1, destination)
+            self.assertEqual(snapshot.source, "fixture-source")
+            self.assertIs(snapshot.source_availability, Availability.AVAILABLE)
+            self.assertEqual(snapshot.revision, "fixture-revision")
+            self.assertIs(snapshot.revision_availability, Availability.AVAILABLE)
+            self.assertEqual(original.snapshot_source_calls, 1)
+            self.assertEqual(selected.snapshot_source_paths(), (source,))
+            self.assertEqual(original.snapshot_source_calls, 2)
+            self.assertEqual(original.snapshot_tasks, [original.task])
+            self.assertIs(original.snapshot_tasks[0], original.task)
+            self.assertEqual(original.materialize_calls, 0)
+
+            binding = VerifiedSnapshotBinding.load(destination)
+            reference = binding.reference(original.task.execution.task_id)
+            snapshot_task = binding.resolve(reference)
+            self.assertEqual(
+                tuple(item.path for item in snapshot_task.execution_view.files),
+                ("task_inputs/execution.txt",),
+            )
+            self.assertEqual(dict(snapshot_task.execution_view.data), {})
+            self.assertEqual(
+                tuple(item.path for item in snapshot_task.evaluation_view.files),
+                ("task_inputs/evaluation.txt",),
+            )
+            self.assertEqual(dict(snapshot_task.evaluation_view.data), {"private": "evaluation-only"})
+
+            execution = selected.execution_task(
+                BenchmarkTask(execution=snapshot_task.task_spec()),
+                root / "execution-workspace",
+                network_policy="disabled",
+            )
+            self.assertEqual(execution, original.task.execution)
+            self.assertEqual(len(original.execution_tasks), 1)
+            self.assertEqual(original.execution_tasks[0].execution, original.task.execution)
+            self.assertEqual(original.execution_tasks[0].materialization, {})
+            self.assertEqual(original.execution_tasks[0].evaluation, {})
+
+            for different in (
+                BenchmarkTask(TaskSpec("different-task", original.task.execution.prompt)),
+                BenchmarkTask(TaskSpec(original.task.execution.task_id, "different prompt")),
+            ):
+                with self.subTest(task=different.execution):
+                    with self.assertRaisesRegex(ValueError, "different task"):
+                        selected.materialize(different, root / "materialize-workspace")
+                    with self.assertRaisesRegex(ValueError, "different task"):
+                        selected.execution_task(
+                            different,
+                            root / "execution-workspace-2",
+                            network_policy="disabled",
+                        )
+            self.assertEqual(original.materialize_calls, 0)
+            self.assertEqual(len(original.execution_tasks), 1)
+
     def test_generic_profile_runs_fixed_tasks_with_ordered_inputs_and_sealed_handoff(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
@@ -504,11 +632,39 @@ class BuilderExperimentRunnerTests(unittest.TestCase):
                 nested_metadata = json.loads(
                     (Path(entry["output_root"]) / "run-metadata.json").read_text(encoding="utf-8")
                 )
+                self.assertIsNone(nested_metadata["benchmark_source"])
+                self.assertEqual(nested_metadata["benchmark_source_availability"], "unavailable")
+                self.assertEqual(nested_metadata["benchmark_revision"], "revision-1")
+                self.assertEqual(nested_metadata["benchmark_revision_status"], "available")
                 nested_row = json.loads(
                     (Path(entry["output_root"]) / "results.jsonl").read_text(encoding="utf-8").splitlines()[0]
                 )
+                nested_root = Path(entry["output_root"])
+                nested_manifest = load_run_manifest(nested_root)
+                nested_binding = VerifiedSnapshotBinding.load(nested_root / "snapshot")
+                indexed = load_run_results(nested_manifest, snapshot_binding=nested_binding)
+                self.assertEqual(len(indexed), 1)
+                indexed_row, candidate = indexed[0]
+                self.assertEqual(indexed_row.snapshot_reference, nested_manifest.ordered_tasks[0])
+                self.assertEqual(candidate.root, nested_root / indexed_row.bundle_path)
+                self.assertEqual(candidate.snapshot_reference, indexed_row.snapshot_reference)
+                self.assertEqual(
+                    nested_binding.resolve(indexed_row.snapshot_reference).task_id,
+                    entry["task_id"],
+                )
+                self.assertEqual(candidate.outcome.status, ExecutionStatus.COMPLETED)
+                self.assertEqual(candidate.outcome.output_text, "private output sentinel")
+                self.assertEqual(candidate.outcome.available_outputs, frozenset({ExecutorOutput.FINAL_TEXT}))
                 actual_application_run_id = nested_row["intervention"]["application_run_id"]
                 self.assertNotEqual(entry["schedule_id"], actual_application_run_id)
+                self.assertEqual(
+                    candidate.intervention_evidence.application.application_run_id,
+                    actual_application_run_id,
+                )
+                self.assertEqual(
+                    candidate.intervention_evidence.application.task.task_id,
+                    entry["task_id"],
+                )
                 matching_entry = next(
                     candidate for candidate in metadata["entries"] if candidate["schedule_id"] == entry["schedule_id"]
                 )
@@ -524,6 +680,7 @@ class BuilderExperimentRunnerTests(unittest.TestCase):
                     Path(entry["output_root"]) / "results.jsonl",
                 )
                 self.assertEqual(nested_row["evaluation"]["metrics"]["accuracy"], 1.0)
+                self.assertEqual(nested_row["evaluation"]["status"], "completed")
                 self.assertEqual(nested_metadata["status"], "completed")
 
             for request in application.requests:
@@ -874,6 +1031,10 @@ class BuilderExperimentRunnerTests(unittest.TestCase):
             self.assertEqual(entry["application_run_id_status"], "unavailable")
             self.assertTrue(Path(entry["run_metadata_path"]).is_file())
             self.assertTrue(Path(entry["results_path"]).is_file())
+            interrupted_output = Path(entry["output_root"])
+            interrupted_manifest = load_run_manifest(interrupted_output)
+            interrupted_binding = VerifiedSnapshotBinding.load(interrupted_output / "snapshot")
+            self.assertEqual(load_run_results(interrupted_manifest, snapshot_binding=interrupted_binding), ())
 
     def test_application_failure_stops_remaining_schedule_and_persists_partial_state(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
@@ -927,6 +1088,18 @@ class BuilderExperimentRunnerTests(unittest.TestCase):
             failed_row = json.loads((failed_output / "results.jsonl").read_text(encoding="utf-8").splitlines()[0])
             self.assertEqual(failed_row["execution"]["failure"]["code"], "test_failure")
             self.assertEqual(failed_row["evaluation"]["status"], "skipped")
+            failed_manifest = load_run_manifest(failed_output)
+            failed_binding = VerifiedSnapshotBinding.load(failed_output / "snapshot")
+            failed_index = load_run_results(failed_manifest, snapshot_binding=failed_binding)
+            self.assertEqual(len(failed_index), 1)
+            _, failed_candidate = failed_index[0]
+            self.assertEqual(failed_candidate.outcome.status, ExecutionStatus.FAILED)
+            self.assertEqual(failed_candidate.outcome.available_outputs, frozenset())
+            self.assertIsNone(failed_candidate.outcome.output_text)
+            self.assertEqual(
+                failed_candidate.outcome.failure,
+                Failure(FailureKind.PROCESS, "test_failure", FailureImpact.RUN),
+            )
 
     def test_loader_and_namespace_failures_precede_builder_and_root_creation(self) -> None:
         cases = ("loader", "overlap", "existing-output")
