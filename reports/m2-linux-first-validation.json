@@ -1,0 +1,72 @@
+{
+  "schema_version": 1,
+  "evidence_class": "first-real-linux-ci-partial-not-pr04-acceptance",
+  "pr": 43,
+  "head": "0c919a5cd1256af121a912bef5a42cf41d5e360b",
+  "ci_checkout": "e855de4debe05ccbe58e496cd0d6927d1f3b88ef",
+  "ci_checkout_parents": ["6038a7828d62247ad98d000bc6e71c706f6d14a4", "0c919a5cd1256af121a912bef5a42cf41d5e360b"],
+  "head_and_checkout_tree": "28ef134a48c04a783e98277c09bc6770d121996e",
+  "platform": "GitHub hosted Ubuntu 24.04 x86_64",
+  "harness_python": "3.13.14",
+  "uv": "0.11.29",
+  "run": "https://github.com/mashimashica/eval-harness/actions/runs/34750244430",
+  "completed": true,
+  "tests": {"methods": 610, "seconds": 27.453, "unit_result": "all pass", "later_compatibility_and_inventory_steps": "not run after coverage failure"},
+  "coverage": {"covered_lines": 11047, "statements": 11791, "missing_lines": 744, "percent": 93.69010262064286, "required_percent": 96, "result": "fail", "worker_missing": 180, "supervisor_missing": 163},
+  "type_check": {
+    "checked_files": 120,
+    "result": "fail",
+    "errors": [
+      "resources_servers/bigcodebench/app.py:10 import-not-found code_extraction",
+      "resources_servers/bigcodebench/app.py:11 import-not-found setup_bcb_venv",
+      "resources_servers/bigcodebench/app.py:52 no-untyped-def",
+      "resources_servers/bigcodebench/app.py:62 type-arg",
+      "resources_servers/bigcodebench/app.py:82 override BaseVerifyRequest incompatibility",
+      "resources_servers/bigcodebench/app.py:162 no-any-return"
+    ],
+    "next": "replace legacy caller under already assigned PR04 scope; do not exclude app from strict typing"
+  },
+  "passed_jobs": ["Eval Harness Lint", "Code linting", "Copyright check", "Harness dependency audit"],
+  "grader_audit": {"result": "fail", "vulnerable_packages": 1, "package": "nltk", "version": "3.10.3", "id": "PYSEC-2026-3740", "aliases": ["CVE-2026-81726", "GHSA-8mgp-746c-j5xp"], "fix_versions": [], "hold": "unchanged; no dependency investigation or audit exception"},
+  "build_lock_audit": "pass; ran despite grader audit failure",
+  "functional_candidate": {
+    "result": "fail",
+    "failure_step": "Build pinned bubblewrap",
+    "passed_before_failure": ["physical resource resolution", "locked harness sync", "Ubuntu build packages", "verified bubblewrap archive", "hash-locked Meson 1.9.1 and Ninja 1.13.0 installation"],
+    "diagnostic": "install_bubblewrap: Ninja 1.13.0 is required",
+    "not_run": ["bubblewrap compile and tests", "grader preparation", "runtime manifest", "public preflight", "hostile fixtures", "1140 parity"],
+    "artifacts_uploaded": true,
+    "acceptance_eligible": false
+  },
+  "ninja_failure_analysis": {
+    "issue": "distribution version incorrectly treated as exact binary version output",
+    "observed_failed_runs": 1,
+    "corrective_attempts": 0,
+    "distribution_version": "1.13.0",
+    "binary_version": "1.13.0.git.kitware.jobserver-pipe-1",
+    "linux_wheel": "ninja-1.13.0-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl",
+    "linux_wheel_size": 180716,
+    "linux_wheel_sha256": "fb46acf6b93b8dd0322adc3a4945452a4e774b75b91293bafcc7b7f8e6517dfa",
+    "evidence": "official PyPI metadata, saved build-lock hash match, downloaded Linux binary version string, actual macOS same-version locked wheel --version and metadata readback",
+    "source": "https://pypi.org/pypi/ninja/1.13.0/json",
+    "local_diagnostic_caveat": "macOS probe used older Homebrew uv and warned on project settings; it is package-output evidence only, not supported build acceptance. Initial Linux archive member guess missed; listing found the exact wheel script member. No source corrective attempt occurred.",
+    "proposed_correction": "retain distribution 1.13.0 and complete lock, verify metadata and the exact official binary version string; no open-ended prefix/suffix acceptance",
+    "verification": "actual fixed-wheel output plus strict negative near-version/extra-line cases, then real Ubuntu build; send through Luna and fixed-SHA Sol review"
+  },
+  "secret_scan": {
+    "run": "https://github.com/mashimashica/eval-harness/actions/runs/34750244668",
+    "result": "fail",
+    "observed_type": "Hex High Entropy String",
+    "paths": ["resources_servers/bigcodebench/grader-manifest.candidate.json", "resources_servers/bigcodebench/nltk-data-manifest.json", "scripts/ci/install_bigcodebench_grader.py"],
+    "classification": "Sol read-only provenance-versus-secret verification pending; no blanket exclusion authorized"
+  },
+  "local_artifact_directory": "/private/tmp/pr04-ci.16xoX8",
+  "artifact_content_sha256": {
+    "coverage.json": "2fad99a0171636a5a8d6266457eba2c3b0273298ee94d665496003ad8302e424",
+    "test-gdpval-cli.log": "1f3cb3de4f38daca7803428237766628500f0e88ef7119cb0b446b5b0e4d9aec",
+    "grader-lock-audit.json": "5ed871b95e368ce48b5f72463ef79c0b003a72884d75243a2c792d0d1d64217f",
+    "bwrap-build-lock-audit.json": "5dd36e1ae54a2f49d6547cdd54c2bdfa556756e729ccc465a1db388b388aff0d",
+    "mypy.log": "07825cd574eb1f26c4dd66e87b2c38941dcf00c57310c95e3dc2e9abd47f23d0"
+  },
+  "acceptance": "not accepted; all failed or unrun gates remain open"
+}

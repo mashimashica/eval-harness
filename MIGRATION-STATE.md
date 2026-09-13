@@ -3,7 +3,7 @@
 
 # Migration state
 
-Updated: 2026-09-13T09:44:20Z
+Updated: 2026-09-13T09:50:33Z
 
 Control branch: `checkpoint/migration-control`.
 Procedure: [MIGRATION-WORKFLOW.md](MIGRATION-WORKFLOW.md).
@@ -27,7 +27,18 @@ findings with no remaining delta defects. Parent ran
 all applicable hooks pass and the worktree remains clean. See
 `reports/m2-ci-preparation-validation.json`. Reviewed source was promoted unchanged to
 Draft PR #43 (`migration/04-isolated-grader`, head `0c919a5c`, base PR #42 at
-`6038a7828d62247ad98d000bc6e71c706f6d14a4`) to run real Linux checks; results are pending.
+`6038a7828d62247ad98d000bc6e71c706f6d14a4`) to run real Linux checks. First hosted
+run `34750244430` is complete: all 610 unit methods pass; coverage 11047/11791 = 93.69%
+fails the 96% gate. Lint/copyright/harness audit and build-tool audit pass. Strict typing
+has six legacy resource-app errors, within the already planned caller replacement.
+Candidate preparation stops at Ninja version validation before bubblewrap compilation:
+locked distribution 1.13.0 actually emits `1.13.0.git.kitware.jobserver-pipe-1`.
+Parent verified the exact Linux wheel hash and binary string; no corrective attempt yet.
+Secret scan reports entropy matches in two provenance manifests and installer hashes;
+Sol is classifying them read-only before any narrow false-positive treatment. Grader
+audit still reports the one known NLTK finding, with no fixed release. Full evidence,
+synthetic merge/tree relationship and failure history are recorded in
+`reports/m2-linux-first-validation.json`. Nothing skipped or failed is accepted.
 Luna is assigned public attestation/run followed by shared callers/readonly environment
 resolution/old runner deletion, deadline 10:30 UTC, with coherent saves before validation
 and within 15 minutes. Parent collects CI evidence. No other PR is being implemented.
