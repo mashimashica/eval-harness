@@ -3,6 +3,24 @@
 
 # PR04 implementation work record
 
+## CI path and preflight correction ready, 2026-09-13
+
+Base `92408b9d506f6b287598616b7ac58e9e145713c7`; Luna changes only the
+existing eval-harness workflow, plus this parent-owned record. Sol found that a relative
+resource directory failed the installer's absolute physical-path contract, and that the
+unconditional post-preflight exception would also reject a future successful result.
+Luna reproduced both conditions before correcting the workflow: resolve the checkout
+resource path physically, and continue only when the returned preflight result is ok.
+The current NotImplementedError remains a real failure. Strict audits, non-acceptance
+candidate labeling, always artifacts, credentials/data exclusions and triggers are unchanged.
+
+The preceding fixed CI batch passed YAML/TOML parsing, added shell syntax, exact vendor
+selector checks and scoped vendor pre-commit checks. The two review findings prevent its
+closure. This correction has only diff-whitespace validation before saving; grouped YAML,
+embedded Python, shell and true/false/exception checks plus fixed-SHA Sol review follow.
+Parent will promote the reviewed result for real Linux evidence, not PR04 acceptance.
+No Linux installation, boundary test or native parity has yet run; known CVE hold remains.
+
 ## Fixed Ubuntu CI preparation path ready for review, 2026-09-13
 
 Base `e2a5a6a74c14a6577900859c7a4cc33d98482562` completed 14 preparation tests,

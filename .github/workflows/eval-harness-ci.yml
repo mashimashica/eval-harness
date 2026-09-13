@@ -356,8 +356,6 @@ jobs:
     if: ${{ always() }}
     runs-on: ubuntu-24.04
     timeout-minutes: 90
-    env:
-      BCB_RESOURCE_DIR: resources_servers/bigcodebench
     steps:
       - name: Checkout repository
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
@@ -374,6 +372,15 @@ jobs:
             'dependency_audit_state=blocked' \
             'evidence_class=preparation-only; not PR04 acceptance' \
             > ci-artifacts/bigcodebench-candidate/evidence-class.txt
+
+      - name: Resolve physical candidate resource path
+        run: |
+          set -euo pipefail
+          resource_dir="$(cd resources_servers/bigcodebench && pwd -P)"
+          test -d "${resource_dir}"
+          test "${resource_dir}" = "$(readlink -f resources_servers/bigcodebench)"
+          test ! -L "${resource_dir}"
+          printf 'BCB_RESOURCE_DIR=%s\n' "${resource_dir}" >> "${GITHUB_ENV}"
 
       - name: Set up uv
         uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7
@@ -516,8 +523,10 @@ jobs:
               grader_python=Path(paths["grader_venv"]) / "bin" / "python",
               manifest_path=Path(paths["resource_dir"]) / "grader-manifest.candidate.json",
           )
-          preflight_bigcodebench_sandbox(spec)
-          raise RuntimeError("candidate preflight unexpectedly returned; acceptance remains blocked")
+          preflight = preflight_bigcodebench_sandbox(spec)
+          if not preflight.ok:
+              raise RuntimeError("candidate preflight reported failure; acceptance remains blocked")
+          print("candidate preflight reported success; preparation-only evidence remains non-acceptance")
           PY
 
       - name: Upload candidate preparation artifacts (always; non-acceptance evidence)
