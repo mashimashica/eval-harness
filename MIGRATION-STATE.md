@@ -9,25 +9,27 @@ Control branch: `checkpoint/migration-control`.
 Procedure: [MIGRATION-WORKFLOW.md](MIGRATION-WORKFLOW.md).
 This record preserves recoverable work; it does not declare the migration accepted.
 
-## Current status: M1 accepted; M2 test-first continuation authorized
+## Current status: M1 accepted; M2 host findings closed, remaining PR04 implementation active
 
 The user explicitly resumed from the saved implementation head and requires reproductions
 before the two P1 corrections. Verified recovery is implementation
 `7be35da9fae98c5e56ba14bf13a15a4cdbb9a8e7` and control
 `2d36c56c8056bd34186ed11da5004e0e01188dc8`; no local edits needed protection beyond
 keeping the clean main root untouched. Current implementation checkpoint is
-`5c0b1a8439f334dc4bb44b3e6e90c58c20df3728`, tree
-`fcd96dc5005fa98e16d95cf3635ede1e7abdfb72`, saved and read back.
+`e012ccc43d0129124efa63d14b223a1b4027d79f`, tree
+`42c3ddaa365fe6df24ad66fdb15f52103c942cbc`, saved and read back.
 
 All three new reproductions fail as intended against the unchanged host: simulated
 terminal/exit teardown lasts 6 instead of 5 seconds, success/exception cleanup lasts 2
 instead of 1 second, and the natural-exit race returns a resource result without raising
 infrastructure error. See `reports/m2-host-red-reproductions.json`. These are expected-red
-baseline results, not failed corrections. Parent review of the first combined correction
-found two remaining details: Popen's internal no-op kill race and helper deadline restart
-after termination latency. Luna is correcting these in the same two files and adding exact
-regressions, with all original reproductions preserved. One corrective review failed to
-close the findings; the next same-problem failure triggers the user's stop condition.
+baseline results, not failed corrections. After one incomplete parent corrective review,
+the final batch passes all 37 unit methods, strict mypy and Ruff on the saved head.
+Sol's fixed-head independent delta review has no remaining actionable finding: shared
+absolute deadlines and actual reaped termination outcomes close both P1 issues. Parent
+accepts this component closure only, not PR04. See `reports/m2-host-closure-validation.json`.
+Luna is now implementing only the separate offline bootstrap and its unit tests; parent
+records evidence and integration boundaries. No other PR is being implemented in parallel.
 
 New allowance: `2026-09-13T06:54:57Z`–`2026-09-13T08:24:57Z`, maximum 90 minutes.
 Luna first edits only the existing runner test file to reproduce late-exit/cleanup budget

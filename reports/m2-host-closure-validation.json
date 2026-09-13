@@ -1,0 +1,49 @@
+{
+  "schema_version": 1,
+  "tested_commit": "e012ccc43d0129124efa63d14b223a1b4027d79f",
+  "tree": "42c3ddaa365fe6df24ad66fdb15f52103c942cbc",
+  "tested_at": "2026-09-13T07:11:58Z",
+  "platform": "macOS arm64",
+  "python": "3.13.14",
+  "source_isolation": "clean detached review worktree; import path asserted beneath that root",
+  "reproduction_baseline": {
+    "commit": "3081b86a71c8a0e11838cb4d4834dd0c038dda9f",
+    "expected_failures": 3,
+    "report": "m2-host-red-reproductions.json"
+  },
+  "unittest": {
+    "command": "../pr04/.venv/bin/python -m unittest discover -s tests/harness -p test_bigcodebench_runner.py -v",
+    "methods": 37,
+    "passed": 37,
+    "failed": 0,
+    "elapsed_seconds": 0.104,
+    "exit_code": 0
+  },
+  "mypy": {
+    "command": "../pr04/.venv/bin/mypy --strict --explicit-package-bases --show-error-codes eval_harness/grader_sandbox.py tests/harness/test_bigcodebench_runner.py",
+    "checked_files": 2,
+    "errors": 0,
+    "exit_code": 0
+  },
+  "ruff": {
+    "lint": "passed",
+    "format": "passed",
+    "exit_code": 0
+  },
+  "review": {
+    "reviewer": "Sol",
+    "mode": "read-only fixed-head delta review",
+    "remaining_actionable_findings": 0,
+    "closed": [
+      "shared absolute phase/terminal/drain/cleanup deadline; no duplicate cleanup wait",
+      "kill-call and reaped SIGKILL outcome required; natural-exit/no-op races remain infrastructure"
+    ],
+    "parent_decision": "two saved host findings closed; partial component validation only"
+  },
+  "local_python311": "uv 0.11.29 has no matching macOS aarch64 3.11.16 download; no alternate version substituted. Fixed Linux asset 539915682 exists and matches saved 30778779 bytes and SHA256 64427febea27864d136db46c8efe968eb6fa5ca2813ce1dca4bb95aec31cb2e4; Linux validation still required",
+  "pr04_accepted": false,
+  "real_sandbox_verified": false,
+  "native_1140_parity_verified": false,
+  "whole_migration_complete": false,
+  "next": "Luna implements offline bootstrap; then fixed provisioning/manifest/preflight, shared callers, legacy runner deletion and real Linux gates; CVE acceptance remains held"
+}
