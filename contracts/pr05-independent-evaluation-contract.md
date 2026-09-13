@@ -116,7 +116,20 @@ class EvaluatorRegistry:
 
 Registration rejects duplicate/case- or Unicode-colliding IDs. `create` deep-validates the config, invokes exactly the registered factory, and requires the returned evaluator's ID, type, version, revision, cardinality, runtime requirement, canonical configuration, and `configuration_sha256` to match the descriptor/request. Factories are config-only: output roots, runtime instances, auth values, snapshots, bundles, and sinks are never captured in them.
 
-`BenchmarkDescriptor` gains `default_evaluator_id: str | None`; benchmark factories live in an equivalently injectable `BenchmarkRegistry`. A default is only a reference to an exact evaluator ID and is validated against the selected evaluator registry before preparation. A benchmark may have no default. A native default cannot silently change to a judge evaluator. GDPval has no selectable default until PR-06 registers its completed evaluator; execution therefore requires explicit `--execution-only` in this stage. The old `gdpval-external` implementation may remain physically present until PR-06, but the new registry/runner must not select it or accept its `external` result as completed evaluation.
+The existing `BenchmarkDescriptor` fields remain and it gains `default_evaluator_id: str | None`. Benchmark construction becomes equivalently injectable rather than retaining benchmark-name branches:
+
+```python
+class BenchmarkFactory(Protocol):
+    def __call__(self, *, root: Path | None = None) -> Benchmark: ...
+
+class BenchmarkRegistry:
+    def register(self, descriptor: BenchmarkDescriptor, factory: BenchmarkFactory) -> None: ...
+    def descriptor(self, benchmark_id: str) -> BenchmarkDescriptor: ...
+    def create(self, benchmark_id: str, *, root: Path | None = None) -> Benchmark: ...
+    def list(self) -> tuple[BenchmarkDescriptor, ...]: ...
+```
+
+Registration applies the same exact/case/Unicode collision rules; creation invokes only the registered factory and requires returned `Benchmark.name` to equal the selected descriptor name. A default evaluator is only a reference to an exact evaluator ID and is validated against the selected evaluator registry before preparation. A benchmark may have no default. A native default cannot silently change to a judge evaluator. GDPval has no selectable default until PR-06 registers its completed evaluator; execution therefore requires explicit `--execution-only` in this stage. The old `gdpval-external` implementation may remain physically present until PR-06, but the new registry/runner must not select it or accept its `external` result as completed evaluation.
 
 The default registry contains AIME `aime26-native` and BigCode `bigcodebench-tests` under their exact IDs. Module-level create/list functions may delegate to the default registry as the primary API, but benchmark-key aliases and compatibility lookup loops are removed. Tests use fresh registry instances; they do not mutate global registries or monkeypatch orchestration.
 
@@ -368,7 +381,42 @@ The PR-04 BigCode mapping is preserved exactly. Completed outcomes use only `nat
 
 AIME uses the real `math-verify==0.8.0` library only, never its LLM fallback. Correct, wrong, empty/no-deliverable results are completed with exact named `accuracy` semantics. Import/version/verifier-shape/runtime infrastructure faults are failed with no metric and stop; they are never converted to `accuracy=0`.
 
-Aggregation is evaluator-owned and pure. `EvaluationAggregate` records evaluator ID/revision/config hash, planned and per-status job counts, named metrics with explicit numerator/denominator where the evaluator defines them, structured outcomes, coverage, and a semantic digest. The common runner validates count/digest coherence and groups outputs; it never averages arbitrary metric maps. AIME and BigCode retain separate `accuracy` and `pass_rate` values and denominators. Pairwise outcome aggregation remains PR-06/08 and no generic Elo or universal score is added.
+Aggregation is evaluator-owned and pure through these exact common envelopes:
+
+```python
+@dataclass(frozen=True, slots=True)
+class EvaluationMetricAggregate:
+    value: float
+    numerator: int | float | None
+    denominator: int | None
+
+@dataclass(frozen=True, slots=True)
+class EvaluationAggregateRequest:
+    jobs: tuple[EvaluationJob, ...]
+    records: tuple[EvaluationJobRecord, ...]
+    evaluator_events: Mapping[str, tuple[EvaluatorEvent, ...]]
+
+@dataclass(frozen=True, slots=True)
+class EvaluationAggregate:
+    evaluator_id: str
+    evaluator_revision: str | None
+    evaluator_config_sha256: str
+    planned_job_count: int
+    status_counts: Mapping[str, int]
+    metrics: Mapping[str, EvaluationMetricAggregate]
+    outcomes: Mapping[str, JSONValue]
+    coverage: Mapping[str, JSONValue]
+    aggregate_sha256: str
+
+@dataclass(frozen=True, slots=True)
+class EvaluationRunSummary:
+    status: EvaluationStatus
+    records: tuple[EvaluationJobRecord, ...]
+    aggregate: EvaluationAggregate | None
+    result_root: Path
+```
+
+Job and record IDs/order must agree exactly, and the event mapping has exactly those job-ID keys. The aggregate records evaluator ID/revision/config hash, planned and per-status job counts, named metrics with explicit numerator/denominator where the evaluator defines them, structured outcomes, coverage, and a semantic digest. The common runner validates count/digest coherence and groups outputs; it never averages arbitrary metric maps. AIME and BigCode retain separate `accuracy` and `pass_rate` values and denominators. Pairwise outcome aggregation remains PR-06/08 and no generic Elo or universal score is added. Failed/interrupted runs have no aggregate unless the evaluator's already hash-bound partial policy permits one; operational `result_root` is excluded from the aggregate digest.
 
 ## Blind judge runtime boundary
 
@@ -519,19 +567,79 @@ Construction revalidates the view/job/candidate order, identity and content. A r
 `eval_harness.evaluation_records.EvaluationRecordSink` is the sole evaluation plan/attempt/result store. Public constructors are `EvaluationRecordSink.create(result_root, *, resume_policy: EvaluationResumePolicy)` for a fresh root and `EvaluationRecordSink.resume(result_root, *, resume_policy: EvaluationResumePolicy)` for explicit resume. Both exclusively require the exact evaluator-owned policy whose canonical payload and digest are present in the evaluator configuration. Resume rejects a changed policy even when every job input is otherwise equal. Its operation names remain exactly:
 
 ```python
-save_plan(job: EvaluationJob) -> None
-append_attempt_started(record: EvaluationAttemptStarted) -> None
-append_attempt_terminal(record: EvaluationAttemptTerminal) -> None
-append_result(job: EvaluationJob, result: EvaluationResult) -> EvaluationJobRecord
-load_job(
-    job: EvaluationJob,
-    *,
-    view: BoundEvaluationView,
-    candidates: tuple[CandidateBundle, ...],
-) -> EvaluationJobRecord | None
+@dataclass(frozen=True, slots=True)
+class EvaluationEvidenceReference:
+    logical_path: str
+    size: int
+    sha256: str
+
+@dataclass(frozen=True, slots=True)
+class EvaluationAttemptStarted:
+    evaluation_job_id: str
+    attempt_id: str
+    attempt_number: int
+    started_at: str
+    previous_attempt_event_sha256: str | None
+    attempt_event_sha256: str
+
+@dataclass(frozen=True, slots=True)
+class EvaluationAttemptTerminal:
+    evaluation_job_id: str
+    attempt_id: str
+    attempt_number: int
+    status: EvaluationStatus
+    finished_at: str
+    evidence: tuple[EvaluationEvidenceReference, ...]
+    failure: EvaluationFailure | None
+    previous_attempt_event_sha256: str
+    attempt_event_sha256: str
+
+@dataclass(frozen=True, slots=True)
+class EvaluationAttemptRecord:
+    started: EvaluationAttemptStarted
+    terminal: EvaluationAttemptTerminal | None
+
+@dataclass(frozen=True, slots=True)
+class EvaluatorEvent:
+    evaluation_job_id: str
+    event_id: str
+    event_type: str
+    payload: Mapping[str, JSONValue]
+    evidence: tuple[EvaluationEvidenceReference, ...]
+    previous_event_sha256: str | None
+    event_sha256: str
+
+class EvaluationRecordSink:
+    @classmethod
+    def create(
+        cls, result_root: Path, *, resume_policy: EvaluationResumePolicy
+    ) -> Self: ...
+
+    @classmethod
+    def resume(
+        cls, result_root: Path, *, resume_policy: EvaluationResumePolicy
+    ) -> Self: ...
+
+    def save_plan(self, job: EvaluationJob) -> None: ...
+    def append_attempt_started(self, record: EvaluationAttemptStarted) -> None: ...
+    def append_attempt_terminal(self, record: EvaluationAttemptTerminal) -> None: ...
+    def append_evaluator_event(self, event: EvaluatorEvent) -> None: ...
+    def append_result(self, job: EvaluationJob, result: EvaluationResult) -> EvaluationJobRecord: ...
+    def load_evaluator_events(self, job: EvaluationJob) -> tuple[EvaluatorEvent, ...]: ...
+    def load_job(
+        self,
+        job: EvaluationJob,
+        *,
+        view: BoundEvaluationView,
+        candidates: tuple[CandidateBundle, ...],
+    ) -> EvaluationJobRecord | None: ...
 ```
 
 Each job has an immutable canonical plan, append-only attempt history, immutable result revisions, and content-addressed evidence. The root has one append-only authoritative result index. `save_plan` for every planned job completes before the first evaluator call. Attempt-start is appended/flushed/fsynced before invocation; terminal evidence is appended/flushed/fsynced immediately after. `append_result` occurs only after terminal evidence for an invoked attempt, except that an unstarted `skipped` revision records a causal stop without inventing an attempt.
+
+Outer attempt numbers start at one and are contiguous; attempt IDs are fresh opaque IDs. Start/terminal events form one previous-hash chain, and a terminal must match its open start exactly. Terminal status may be `completed`, `partial`, `failed`, `interrupted`, or `invalid`, but never `skipped`; its failure/status invariants match the result revision that follows. A crash may leave exactly one final start with `terminal=None`.
+
+The evaluator-event stream is the only durable sub-operation seam. A plan must already be saved before its first event. Each `append_evaluator_event` publishes and fsyncs one strict event/evidence link before returning; IDs/types are stable safe strings, paths are logical and confined to the sink-assigned evidence root, and every payload is deep-frozen JSON. One per-job previous-hash chain rejects missing events, duplicate IDs, forks, changed payload/evidence, path collision, and cross-job reuse. `load_evaluator_events` revalidates the whole exact chain and evidence bytes. PR-05 never interprets evaluator event types/payloads. PR-06 encodes its versioned trial/BattleRecord starts and terminals here, so a process loss during one evaluator call preserves a reloadable trial prefix; it does not create a second PR-06 filesystem journal.
 
 ```python
 @dataclass(frozen=True, slots=True)
@@ -556,7 +664,7 @@ Revision numbers start at one and are contiguous. Every revision is canonical an
 
 Create mode rejects any existing root. Resume mode rejects an absent, symlinked, malformed, forked, truncated, unknown, or conflicting record. It never truncates, repairs, overwrites, follows path discovery, or falls back to legacy records. The same job with a different plan hash, same path with another job, unexpected result, duplicate same-attempt result, noncontiguous attempts/revisions, or occupied evidence path is a hard conflict. Temporary files are never accepted as records.
 
-`current_result` is the latest valid revision. `semantic_result_sha256` binds job ID plus only that normalized current semantic payload and excludes revision/attempt numbers, times, run-local paths, raw judge output/reasoning, and superseded failures. It is `None` before any result. The history digest binds the immutable plan, resume policy, every start/terminal event, evidence file digest, and every result revision/link. Equal normalized successful results after a retry have equal semantic result digests and different history digests.
+`current_result` is the latest valid revision. `semantic_result_sha256` binds job ID plus only that normalized current semantic payload and excludes revision/attempt numbers, times, run-local paths, raw judge output/reasoning, evaluator-event history, and superseded failures. It is `None` before any result. The history digest binds the immutable plan, resume policy, every outer attempt event, evaluator event, evidence file digest, and every result revision/link. Equal normalized successful results after a retry have equal semantic result digests and different history digests.
 
 A `completed` or eligible `partial` current result is final and can only be skipped after `load_job` revalidates the exact job/input/plan/config/view/snapshot/candidate/current-result/evidence bytes and hashes. It is never invoked again. A `failed` or `invalid` result can start a later attempt only when its `EvaluationFailure.retryable` is true, its exact inner `Failure` occurs in the stored policy, and the attempt bound is not exhausted. An `interrupted` result requires the same retryable bit, `retry_interrupted=True`, and an available attempt. A skipped result becomes eligible only when it copied a retryable causal interruption or exact policy-listed failure, `resume_skipped_after_retryable_run_stop=True`, the source stop is successfully cleared on the same exact resume, and its content/plan still revalidate. Policy/config change, non-retryable state, or exhausted attempts makes zero new calls.
 
@@ -611,8 +719,8 @@ PR-07 owns the one shared async HTTP lifecycle addition; PR-05 records and freez
 1. **Identity goldens.** Pin canonical bytes and SHA-256 for unary and pairwise jobs. Changing snapshot/task/view/candidate order or digest/evaluator ID/revision/config changes input and job IDs. Changing only occurrence changes job ID, not input. Changing only evaluator plan changes plan hash but neither input nor job; reuse then rejects the conflict. Paths/timestamps/attempts/raw evidence do not change semantic IDs.
 2. **Strict unary reevaluation.** Generate a candidate through `prepare_generation_plan`/`run_generation_plan`, load it only with `RunManifest`, `VerifiedSnapshotBinding`, and `load_run_results`, delete runtime, evaluate from another working directory, move the complete run tree, rebind/reload, and obtain the same native result digest. No runtime/legacy file is read.
 3. **Explicit pairwise/N planning.** One candidate with a unary evaluator and two with a pairwise evaluator pass. Wrong cardinality, duplicate candidate, mixed task/snapshot, missing/changed bundle, mismatched view, N candidates without explicit matches, undeclared pair, duplicate occurrence, and implicit fallback all reject before evaluator/judge calls. An explicit ordered N plan emits exactly its supplied jobs in order.
-4. **Generation reuse/barrier/reopen.** One plan uses repeated references for multiple interventions while `ordered_tasks` remains unique. The snapshot is neither acquired nor loaded through a benchmark twice. All candidates seal/index before a counting evaluator is called. Occurrence IDs never appear in prompts/workspaces/bundles/paths or raw manifest configuration. Changing only run/occurrence IDs preserves `generation_semantics_sha256`, configuration, and run fingerprint but changes `generation_plan_record_sha256`. In one process generate a strict prefix, then in a new process call `resume_generation_plan`; expect exact reconstructed `completed`, ordered suffix, preserved old bytes/IDs/sequences, a fresh runtime, and a full ordered return. Complete reopen makes zero executor calls. Changed plan/config/environment/intervention, truncated/noncanonical index, tampered/missing bundle, unindexed/orphan/partial candidate, symlink, or indexed run-impact stop rejects without reacquisition, deletion, repair, evaluator call, or append.
-5. **Evaluation durability/revisions/reuse.** Assert plan-before-call, fsynced start-before-invoke, terminal-before-result, monotonic attempts/revisions/index, and immutable old bytes. In one process persist an interrupted result and causally skipped suffix; discard every live object, then in a new process reopen with the exact policy, append a second attempt/completed revision, and run the skipped job. Expect the same final semantic result digests as an uninterrupted fixture, distinct history digests, and all old failure/result bytes retained. Completed/eligible-partial jobs make zero calls. Repeat for an explicitly policy-listed retryable run-impact source failure. Changed policy/config, non-retryable/exhausted source, create-on-occupied, resume-on-fresh, plan conflict, corruption, unexpected file, symlink/path escape/collision, truncated JSONL, fork, duplicate same-attempt result, and missing evidence fail closed without overwrite/fallback.
+4. **Generation reuse/barrier/reopen.** One plan uses repeated references for multiple interventions while `ordered_tasks` remains unique. The snapshot is neither acquired nor loaded through a benchmark twice. Every candidate required by a dispatched run/group/stage seals and indexes first: `./eval run` and PR-09 require the full ready plan, while adaptive PR-08 requires its exact stage prefix. Occurrence IDs never appear in prompts/workspaces/bundles/paths or raw manifest configuration. Changing only run/occurrence IDs preserves `generation_semantics_sha256`, configuration, and run fingerprint but changes `generation_plan_record_sha256`. In one process generate a strict prefix, then in a new process call `resume_generation_plan`; expect exact reconstructed `completed`, ordered suffix, preserved old bytes/IDs/sequences, a fresh runtime, and a full ordered return. Complete reopen makes zero executor calls. Changed plan/config/environment/intervention, truncated/noncanonical index, tampered/missing bundle, unindexed/orphan/partial candidate, symlink, or indexed run-impact stop rejects without reacquisition, deletion, repair, evaluator call, or append.
+5. **Evaluation durability/revisions/reuse.** Assert plan-before-call, fsynced start-before-invoke, every evaluator sub-event immediately durable, terminal-before-result, monotonic attempts/revisions/index, and immutable old bytes. Crash a fake evaluator after a completed trial event and prove a new process reloads that exact prefix without replaying the trial. In one process persist an interrupted job result and causally skipped suffix; discard every live object, then in a new process reopen with the exact policy, append a second attempt/completed revision, and run the skipped job. Expect the same final semantic result digests as an uninterrupted fixture, distinct history digests, and all old event/failure/result bytes retained. Completed/eligible-partial jobs make zero calls. Repeat for an explicitly policy-listed retryable run-impact source failure. Changed policy/config, non-retryable/exhausted source, create-on-occupied, resume-on-fresh, plan conflict, corruption, unexpected file, symlink/path escape/collision, truncated JSONL, evaluator-event fork, duplicate same-attempt result, and missing evidence fail closed without overwrite/fallback.
 6. **Failure semantics.** Completed wrong answers stay evaluator outcomes and alone have no failure. Eligible partial carries a non-retryable TASK summary failure. `INVALID_RESPONSE/TASK` can be retried/continued only under explicit exact policy. A task-impact evaluation failure continues; auth/quota/runtime-protocol/integrity run-impact stops and marks remaining jobs skipped/no metric. On exact resume a retryable listed source must clear before policy-enabled causal skips run; another stop preserves the existing skips. Interrupt stays interrupted. Failed/invalid/interrupted/skipped require failure and cannot carry metrics. A partial metric fails unless its bound `valid_only` threshold is satisfied.
 7. **Role-policy, content delivery, and blind isolation.** Pin canonical root-deny overrides for read-only and read-write workspaces and prove environment-key equality, allowed/protected overlap rejection, network/web flags, and the common production no-model probe. Using fake local CLI processes and randomized sentinels, prove anonymous workspace readability and denial of snapshot, bundles, output, source, home/auth, sibling runtime, and unrelated env; isolated HOME/TMP; no network/web; bounded output; logical evidence digests; and cleanup. Verify exact block file-set/size/hash/media order reaches fake CLI and HTTP transports, and missing/extra/changed/unsupported AV bytes fail before invocation. Codex judge preflight delegates to the common probe. Claude with valid fake subscription status still fails before invocation because confinement cannot be proved. Prompt-only anonymity or a capability label without block delivery is insufficient.
 8. **AIME actual verifier.** In the locked CI environment, call the real `math-verify==0.8.0` path with deterministic correct, wrong, empty, and no-deliverable candidates. Expect named `accuracy` 1/0/0/0 with denominator one and no LLM call. Inject import/version/invalid-shape/runtime infrastructure faults and expect failed/no metric plus remaining-job stop, never accuracy zero.
