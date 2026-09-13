@@ -543,10 +543,7 @@ def run_benchmark(
             raise ValueError("benchmark snapshot returned an empty snapshot digest")
         temporary_binding = VerifiedSnapshotBinding.load(snapshot_destination)
         first_reference = temporary_binding.reference(snapshot_tasks[0].task_id)
-        if (
-            returned_snapshot_sha256 != snapshot_sha256
-            or snapshot_sha256 != first_reference.snapshot_sha256
-        ):
+        if returned_snapshot_sha256 != snapshot_sha256 or snapshot_sha256 != first_reference.snapshot_sha256:
             raise ValueError("benchmark snapshot metadata/digest disagrees with its sealed binding")
 
         seen_task_ids: set[str] = set()
@@ -861,7 +858,10 @@ def run_benchmark(
                         raise ValueError("executor returned a mismatched executor")
                     if result.invocation_mode != executor.invocation_mode:
                         raise ValueError("executor returned a mismatched invocation_mode")
-                    if executor_preflight.version is not None and result.executor_version != executor_preflight.version:
+                    if (
+                        executor_preflight.version is not None
+                        and result.executor_version != executor_preflight.version
+                    ):
                         raise ValueError("executor returned a mismatched executor_version")
                     if executor_preflight.auth_mode is not None and result.auth_mode != executor_preflight.auth_mode:
                         raise ValueError("executor returned a mismatched auth_mode")
@@ -931,13 +931,16 @@ def run_benchmark(
                             else None
                         ),
                     )
+                    bundle_sha256 = bundle.bundle_sha256
+                    if type(bundle_sha256) is not str or not bundle_sha256:
+                        raise CandidateBundleError("sealed candidate bundle has no digest")
                     candidate_writer.append(
                         RunResultRow(
                             sequence=sequence,
                             candidate_id=candidate_id,
                             snapshot_reference=reference,
                             bundle_path=candidate_path.relative_path,
-                            bundle_sha256=bundle.bundle_sha256,
+                            bundle_sha256=bundle_sha256,
                         )
                     )
                 except Exception as exc:

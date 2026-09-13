@@ -55,6 +55,7 @@ from eval_harness.judges.pairwise import discover_tasks
 from eval_harness.local_judge_runner import _candidate_task_prompt
 from eval_harness.provenance import RepositoryProvenance, canonical_json_sha256
 from eval_harness.reasoning import ReasoningEffortOption
+from eval_harness.run_manifest import load_run_manifest
 from eval_harness.runner import run_benchmark
 
 
@@ -81,7 +82,7 @@ def _load_json_object(path: Path) -> JsonObject:
 
 class FakeBenchmark(Benchmark):
     name = "fake"
-    revision = "test-revision"
+    revision: str | None = "test-revision"
     revision_availability = Availability.AVAILABLE
 
     def __init__(
@@ -476,13 +477,15 @@ class GenericRunnerTests(unittest.TestCase):
 
             digest = hashlib.sha256(content).hexdigest()
             metadata = _load_json_object(out / "run-metadata.json")
+            metadata_intervention = _json_object(metadata["intervention"])
             self.assertEqual(
-                metadata["intervention"]["files"],
+                metadata_intervention["files"],
                 [{"path": "guide.txt", "size": len(content), "sha256": digest}],
             )
             row = _load_json_object(out / "results.jsonl")
+            row_intervention = _json_object(row["intervention"])
             self.assertEqual(
-                row["intervention"]["materialized_files"],
+                row_intervention["materialized_files"],
                 [{"path": "guide.txt", "size": len(content), "sha256": digest}],
             )
             self.assertEqual(
@@ -1304,13 +1307,20 @@ class GenericRunnerTests(unittest.TestCase):
                 metadata["configuration_sha256"],
                 canonical_json_sha256(metadata["configuration"]),
             )
+            manifest_reference = load_run_manifest(out).ordered_tasks[0]
             self.assertEqual(
                 metadata["run_fingerprint_sha256"],
                 canonical_json_sha256(
                     {
                         "configuration_sha256": metadata["configuration_sha256"],
-                        "repository": metadata["repository"],
-                        "tasks": metadata["tasks"],
+                        "snapshot_sha256": metadata["snapshot_sha256"],
+                        "ordered_tasks": [
+                            {
+                                "snapshot_sha256": manifest_reference.snapshot_sha256,
+                                "task_id": manifest_reference.task_id,
+                                "task_sha256": manifest_reference.task_sha256,
+                            }
+                        ],
                     }
                 ),
             )
@@ -1347,7 +1357,7 @@ class GenericRunnerTests(unittest.TestCase):
             metadata = json.loads((out / "run-metadata.json").read_text(encoding="utf-8"))
             self.assertEqual(metadata["benchmark_revision_status"], "unavailable")
             self.assertIsNone(metadata["benchmark_revision"])
-            self.assertEqual(metadata["configuration"]["benchmark"]["revision_status"], "unavailable")
+            self.assertEqual(metadata["configuration"]["benchmark"]["revision_availability"], "unavailable")
             self.assertEqual(
                 metadata["judge"],
                 {
