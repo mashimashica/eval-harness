@@ -48,8 +48,14 @@ Luna may change only these paths. A need outside this list returns to Sol for a 
 - `.github/workflows/eval-harness-ci.yml`
 - `tests/harness/test_eval_cli.sh`
 - existing `tests/harness/test_*evaluator*.py`, `test_*runner*.py`, `test_*registry*.py`, and `test_local_judge*.py` files whose assertions exercise a changed contract
+- `tests/harness/test_aime26_benchmark.py`
+- `tests/harness/test_bigcodebench_benchmark.py`
+- `tests/harness/test_boundary_failure_coverage.py`, only for assertions over the changed evaluation/failure boundary
+- `tests/harness/test_executor_judge_reliability.py`, only for the shared guarded-runtime assertions
+- `tests/harness/test_local_judge_executor.sh`
 - new `tests/harness/test_evaluation_runner.py`
 - new `tests/harness/test_evaluation_records.py`
+- new `tests/harness/test_execution_policy.py`
 - new `tests/harness/test_generation_runner.py`
 - new `tests/harness/test_registry_extension.py`
 - deterministic fixture files below `tests/harness/fixtures/evaluation/`
@@ -279,7 +285,21 @@ def aggregate(self, request: EvaluationAggregateRequest) -> EvaluationAggregate:
 
 The default judge-preflight hook returns empty. A judge evaluator returns one request for every configured member that could be selected for the bound view. Every request must pass; the runner never removes a failed member and resamples a different panel. Candidate-artifact capability filtering occurs later in `plan` against that exact preflighted panel and rejects an insufficient panel before a judge invocation.
 
-`EvaluationResult` remains the one public type `eval_harness.evaluators.base.EvaluationResult`; PR-05 does not introduce an alias or second result type. Its terminal statuses for the new runner are `completed`, `partial`, `failed`, `interrupted`, `invalid`, and `skipped`. The staged `external` status may exist only for the old GDPval class until PR-06 and is rejected by all new runner/sink/aggregate paths.
+`EvaluationResult` remains the one public type `eval_harness.evaluators.base.EvaluationResult`; PR-05 does not introduce an alias or second result type. Its exact extended envelope is:
+
+```python
+@dataclass(frozen=True, slots=True)
+class EvaluationResult:
+    evaluation_job_id: str
+    task_id: str
+    status: EvaluationStatus
+    failure: EvaluationFailure | None = None
+    metrics: Mapping[str, float] = field(default_factory=dict)
+    outcomes: Mapping[str, JSONValue] = field(default_factory=dict)
+    details: Mapping[str, JSONValue] = field(default_factory=dict)
+```
+
+The new-run `EvaluationStatus` literals are exactly `completed`, `partial`, `failed`, `interrupted`, `invalid`, and `skipped`. The staged `external` member may exist only for the old GDPval class until PR-06 and is rejected by all new runner/sink/aggregate paths; `deferred` is not a supported alias in the new contract. Evaluators echo `EvaluationJobRequest.job.evaluation_job_id` exactly.
 
 An `EvaluationResult` binds `evaluation_job_id`, task ID, status, metrics, outcomes, semantic details, and `EvaluationFailure | None`. Mappings are deep-frozen strict JSON; metric values are finite. `completed` has no failure. `partial` requires an explicit task-impact failure and may contain metrics only when the evaluator's hash-bound plan names a `valid_only` threshold and the recorded valid count satisfies it. `failed`, `interrupted`, `invalid`, and `skipped` contain no metrics; failed/invalid require a failure, interrupted requires `INTERRUPTED`, and skipped identifies the prior stop without manufacturing evaluator output. Raw judge output, reasoning, timestamps, attempts, absolute paths, auth/env data, and prior failures are not semantic details.
 
