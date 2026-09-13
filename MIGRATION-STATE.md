@@ -83,17 +83,19 @@ Sol design/review proceeds independently; drafts below are saved work, not imple
 
 | Slice | Checkpoint branch | Saved commit | Saved contract / state |
 | --- | --- | --- | --- |
-| 02c | `checkpoint/pr-02c` | `6e7bc240de3a3ad0faaf05c4e2b4bde787314c4b` | GDPval task_inputs wrapper saved/read back; 31 snapshot/boundary tests, scoped strict typing and Ruff pass on exact clean head; handoff/fixture/full gates remain |
-| 04 | `checkpoint/design-pr04` | `a2a9f9adcc60a117ddafb5c58e8449936a76e793` | Grader contract plus exact rejected locks/audit evidence; draft, dependency CVE closure and real sandbox proof remain |
-| 05 | `checkpoint/design-pr05` | `a6a1e6b43819fbf4bf7be2e7b55001d7a899ea16` | Common evaluation/generation/role policy contract and PR02c review saved; Astra found generation and result resume gaps, amendments pending |
-| 06 | `checkpoint/design-pr06` | `5a35d85d0c6af63fd95c672fda2584d26be4ba70` | GDPval semantic contract and exact characterization fixtures saved; 26 baseline fake tests passed; implementation appendix pending |
+| 02c | `checkpoint/pr-02c` | `f972a82558609255f84723b9d4c060503eef894a` | Real handoff tests saved/read back; exact clean head passes all 8 integrations, scoped strict typing and Ruff; negative cases/fixture/full gates remain |
+| 04 | `checkpoint/design-pr04` | `28d759b24e1e0a3ff50c1771f97aaba03dd33926` | Exact runtime/source/worker/CI design saved; strict NLTK audit red and initial patch independently rejected; replacement/proof pending |
+| 05 | `checkpoint/design-pr05` | `129daf7a50652afdf9faaf144e359b71f6c2b6b2` | Independent evaluation, protected roles, semantic/full plan identity and verified generation/result resume contracts saved; implementation pending |
+| 06 | `checkpoint/design-pr06` | `7815a113d46e2fd9a98cc8575668183372f3ff3e` | GDPval semantic/fixture/implementation appendix saved; final resume alignment pending; initial NLTK patch reviewed/rejected |
 | 07 | `checkpoint/design-pr07` | `4ab6f321be221e5e8b393d6c905fbcd72512dc5b` | Stirrup generation contract draft saved; exact dependency resolution/audit pending |
-| 08 | `checkpoint/design-pr08` | `34138592e05959ff46e6234ae6fa7fa9654715ab` | Protocol/fixtures and one bound lazy generation plan aligned with PR05/06; design saved, implementation pending |
+| 08 | `checkpoint/design-pr08` | `4579b77f14cb0b66e0fcdb207b6fe8b7af210686` | Final protocol/fixtures and 45+175 verified-prefix generation/resume contract saved; implementation pending |
 
 PR02c contract SHA-256: `a755aa7ef611238258308146ac8d602e4b9debd1e644a1e9b795616c95ce86fc`.
 Its two files and ref were read back and matched the saved bytes/Git blobs before implementation started.
-PR09 draft is also reachable on `checkpoint/design-pr09` at `2d9883a07598b74d73e3cb4e3dbb26c7cdb2660c`
-(`contracts/pr09-builder-experiment-contract.md`); exact API/source mapping is still being completed.
+PR09 contract is reachable on `checkpoint/design-pr09` at `a26a92a31a7657799573337dc8c9876b440b5842`
+(`contracts/pr09-builder-experiment-contract.md`), with frozen input/barrier/namespace/protection/resume semantics.
+PR10/11 bounded deletion/acceptance task contracts are started on `checkpoint/design-pr10-11` at
+`3eb2d84ed8dafd8284abebfea695be61e04b98f9`; exact final source inventory is still being completed.
 Sol also owns bounded PR05 design work; no source implementation is running for those slices.
 New design documents are reconstructions from the original plan and accepted APIs, not recovered lost files.
 
@@ -129,15 +131,22 @@ The next bounded fix is saved/read back at `621be5d6b43ef65b0f4c75d3c414aca0bb05
 head, all 48 focused tests, strict mypy of three changed files, and Ruff lint/format pass. Full-suite/coverage and
 acceptance are not claimed. The minimal GDPval `task_inputs` execution wrapper change is saved/read back at
 `6e7bc240de3a3ad0faaf05c4e2b4bde787314c4b`; that exact clean head passes all 31 snapshot and benchmark-boundary
-tests, scoped strict mypy of its three source/test files, and Ruff lint/format. Luna is adding the first bounded
-real generation handoff test file. Remaining failure/tamper handoff cases, fixture ports and full gates are open.
+tests, scoped strict mypy of its three source/test files, and Ruff lint/format. The first real generation handoff
+file was saved at `9a9f144537f4dc276e18c029666be229547e371c` and passed all eight integration tests. Its five
+static type/import issues were fixed at `f972a82558609255f84723b9d4c060503eef894a`; this exact clean head passes
+all eight integrations, scoped strict mypy and Ruff lint/format. Luna is adding systemic-failure and seal/index/path
+cases next; Sol independently reviews the saved production source. Tamper cases, fixture ports and full gates remain open.
 
 PR04 dependency audit identified an unresolved official NLTK advisory
 [GHSA-8mgp-746c-j5xp / CVE-2026-81726](https://github.com/nltk/nltk/security/advisories/GHSA-8mgp-746c-j5xp).
 The official advisory reports no patched release as inspected on 2026-09-13. Exact rejected requirement locks
-and full audit reports are saved in the PR04 design checkpoint. Sol is evaluating an explicit newer grader
-interpreter and a minimal source-reviewed fix; no CVE ignore rule, false version, sandbox-based exemption, or
-acceptance claim is authorized by this investigation. Other authorized preparation continues.
+and full audit reports are saved in the PR04 design checkpoint. The Python 3.11.16 candidate lock has 160
+distributions and exactly the NLTK finding. Its initial minimal backport is rejected after independent Sol review:
+normal tagger loading raises NameError, hardlinked outside data can be truncated before rejection, and normal
+defaults/special-file paths are not correctly covered. Prior source/evidence stays recoverable; a bounded replacement
+option is under review. Its truthful local package version also cannot produce a clean standard pip-audit result.
+No CVE ignore rule, false version, sandbox-based exemption, gate weakening or acceptance is authorized. Any proposed
+exception would require the user's explicit plan amendment. Runtime provisioning and other authorized preparation continue.
 
 No merge, release, publish, or real-model experiment is part of this work.
 
