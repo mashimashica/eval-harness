@@ -5,6 +5,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import errno
 import hashlib
 import io
@@ -350,26 +351,36 @@ printf '%s|%s|%s|%s\\n' "$uv_version" "$harness_identity" "$meson_version" "$nin
         script_path = Path(__file__).parents[2] / "scripts" / "ci" / "install_bubblewrap.sh"
         script = script_path.read_text(encoding="utf-8")
         self.assertNotIn("getcap", script)
+        self.assertIn('if ! "$harness_python" -I -B - "$binary_path" <<\'PY\'', script)
+        self.assertIn('die "bubblewrap capability inspection failed"', script)
         start = script.index("check_bwrap_capabilities()")
         source_start = script.index("from __future__", start)
         source_end = script.index("\nPY", source_start)
         probe_source = script[source_start:source_end]
 
         def run_probe(*, return_value: bytes | None = None, side_effect: BaseException | None = None) -> int:
-            with (
-                mock.patch.object(
-                    os,
-                    "getxattr",
-                    create=True,
-                    return_value=return_value,
-                    side_effect=side_effect,
-                ) as getxattr,
-                mock.patch.object(sys, "argv", ["probe", "/private/fixed binary"]),
-            ):
-                with self.assertRaises(SystemExit) as raised:
-                    exec(compile(probe_source, "<capability-probe>", "exec"), {})
+            stdout = io.StringIO()
+            stderr = io.StringIO()
+            with contextlib.redirect_stdout(stdout), contextlib.redirect_stderr(stderr):
+                with (
+                    mock.patch.object(
+                        os,
+                        "getxattr",
+                        create=True,
+                        return_value=return_value,
+                        side_effect=side_effect,
+                    ) as getxattr,
+                    mock.patch.object(sys, "argv", ["probe", "/private/fixed binary"]),
+                ):
+                    with self.assertRaises(SystemExit) as raised:
+                        exec(compile(probe_source, "<capability-probe>", "exec"), {})
+            self.assertEqual(stdout.getvalue(), "")
+            self.assertEqual(stderr.getvalue(), "")
             getxattr.assert_called_once_with("/private/fixed binary", "security.capability", follow_symlinks=False)
-            return int(raised.exception.code)
+            code = raised.exception.code
+            if not isinstance(code, int):
+                self.fail(f"unexpected probe exit code: {code!r}")
+            return code
 
         self.assertEqual(run_probe(side_effect=OSError(errno.ENODATA, "private")), 0)
         for value in (b"", b"capability"):

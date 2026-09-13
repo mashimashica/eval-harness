@@ -3,6 +3,24 @@
 
 # PR04 implementation work record
 
+## Capability-test typing and two exact baseline fingerprints corrected
+
+Base `7282be1a149c7352b91fd3df1a3b9f712ef9d1b5`. The preparation regression now
+narrows SystemExit.code to int and checks empty probe output, fixed outer failure
+diagnostic and quoted -I -B invocation. Baseline adds only the two pre-existing public
+ALPS config revision/bundle fingerprints approved by Sol in control `f713ca31`, retaining
+the prior 64 findings and every detector setting (66 findings across seven paths).
+Installer and public source are unchanged. Ruff formatting, diff whitespace and JSON
+parse/count pass; unit, strict typing, lint, full hook and negative control await this
+save. Public correction review remains rejected and is recorded in control
+`reports/m2-public-correction-review.md`; this safe subset does not close that review.
+
+Next validate the capability/baseline subset together, then permit parent selective
+integration against formal `d3dc022f` without public source. Continue the one PR04
+implementation with test-first second public correction and the approved mandatory
+fixed-uv preflight connection. Same role split, no grandchildren, DCO/readback and
+15-minute saving apply. No real boundary, parity, CVE or overall acceptance is claimed.
+
 ## Exact provenance-only secret baseline checkpoint
 
 Base `240d5d37d58c4456db936c6ea8a3b8bc65d4138a`. With detect-secrets 1.5.0,
