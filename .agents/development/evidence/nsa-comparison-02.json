@@ -1,0 +1,884 @@
+{
+  "application": {
+    "automatic_retries": 0,
+    "cli_version": "0.154.0",
+    "concurrency": 1,
+    "executor": "codex",
+    "model": "gpt-5.6-luna",
+    "reasoning_effort": "medium",
+    "timeout_seconds": 300
+  },
+  "applications": [
+    {
+      "answer": "Janet sells \\(16 - 3 - 4 = 9\\) eggs each day.\n\nAt $2 per egg, she makes \\(9 \\times 2 = 18\\).\n\nFinal answer: $18",
+      "artifact_sha256": "0a6b82013b749ae01c4da86c8193cf0bc03cfd5b7eb27d504fb27355600b7780",
+      "attempt_count": 1,
+      "condition_id": "N",
+      "cost_usd": null,
+      "elapsed_seconds": 5.139557207992766,
+      "participant_prompt_sha256": "6acf6214e38e91fd9417475589fec8c2a4661225b22c393e335f7a4ffc902e06",
+      "repeat": 0,
+      "skill_delivery": "none",
+      "task_id": "gsm8k-0001",
+      "usage": {
+        "cached_input_tokens": 5888,
+        "cost_usd": null,
+        "input_tokens": 7217,
+        "output_tokens": 71,
+        "reasoning_tokens": 21
+      }
+    },
+    {
+      "answer": "Janet sells \\(16 - 3 - 4 = 9\\) eggs each day.\n\nAt $2 per egg: \\(9 \\times 2 = 18\\).\n\nFinal answer: $18",
+      "artifact_sha256": "4e39243aeb6a1d70659215af2942c7f6f1a37e9e74d4fa84aa69f154a5a89896",
+      "attempt_count": 1,
+      "condition_id": "N",
+      "cost_usd": null,
+      "elapsed_seconds": 4.944317541987402,
+      "participant_prompt_sha256": "6acf6214e38e91fd9417475589fec8c2a4661225b22c393e335f7a4ffc902e06",
+      "repeat": 1,
+      "skill_delivery": "none",
+      "task_id": "gsm8k-0001",
+      "usage": {
+        "cached_input_tokens": 0,
+        "cost_usd": null,
+        "input_tokens": 7215,
+        "output_tokens": 79,
+        "reasoning_tokens": 31
+      }
+    },
+    {
+      "answer": "Janet sells:\n\n16 − 3 − 4 = 9 eggs\n\nDaily earnings: 9 × $2 = $18\n\nFinal answer: $18",
+      "artifact_sha256": "1cb75bf813f19dc644825dfb99a473827d50350111f903cdf8e178a67b21864c",
+      "attempt_count": 1,
+      "condition_id": "S",
+      "cost_usd": null,
+      "elapsed_seconds": 5.647556458017789,
+      "participant_prompt_sha256": "206aba065c67aa88131332685fb16d1d78e299f93c0f7ef43c33beccc82db22f",
+      "repeat": 0,
+      "skill_delivery": "file_and_prompt",
+      "task_id": "gsm8k-0001",
+      "usage": {
+        "cached_input_tokens": 0,
+        "cost_usd": null,
+        "input_tokens": 7698,
+        "output_tokens": 111,
+        "reasoning_tokens": 43
+      }
+    },
+    {
+      "answer": "Janet sells:\n\n16 − 3 − 4 = 9 eggs\n\n9 × $2 = $18\n\nFinal answer: $18",
+      "artifact_sha256": "0b074ef8b43fff75ecb57eef522a8fda4d5f8db571c3e5c467e3227fc53eb159",
+      "attempt_count": 1,
+      "condition_id": "S",
+      "cost_usd": null,
+      "elapsed_seconds": 5.763114291999955,
+      "participant_prompt_sha256": "206aba065c67aa88131332685fb16d1d78e299f93c0f7ef43c33beccc82db22f",
+      "repeat": 1,
+      "skill_delivery": "file_and_prompt",
+      "task_id": "gsm8k-0001",
+      "usage": {
+        "cached_input_tokens": 0,
+        "cost_usd": null,
+        "input_tokens": 7697,
+        "output_tokens": 96,
+        "reasoning_tokens": 32
+      }
+    },
+    {
+      "answer": "Janet has 16 eggs per day.\n\nShe uses \\(3+4=7\\) eggs, leaving \\(16-7=9\\) eggs to sell.\n\nAt $2 per egg: \\(9 \\times 2 = 18\\).\n\n**Final answer: $18**",
+      "artifact_sha256": "d2aaa7b71cf750776f8214d5655a1ac53cc66168d4a8a0918800900c976fc702",
+      "attempt_count": 1,
+      "condition_id": "A",
+      "cost_usd": null,
+      "elapsed_seconds": 6.692312833009055,
+      "participant_prompt_sha256": "d85275967be75a31993c8be2ca85cb59fdb7d15398baa7108e993c9443581aa3",
+      "repeat": 0,
+      "skill_delivery": "file_and_prompt",
+      "task_id": "gsm8k-0001",
+      "usage": {
+        "cached_input_tokens": 0,
+        "cost_usd": null,
+        "input_tokens": 7622,
+        "output_tokens": 129,
+        "reasoning_tokens": 33
+      }
+    },
+    {
+      "answer": "Janet sells:\n\n\\(16 - 3 - 4 = 9\\) eggs per day.\n\nAt $2 per egg:\n\n\\(9 \\times 2 = 18\\) dollars.\n\nFinal answer: $18 per day",
+      "artifact_sha256": "ec5fc0bd80fd2c4bfc1c07dfc91dc44a9cdcfe7cac128a5fe4f96982a5c33ded",
+      "attempt_count": 1,
+      "condition_id": "A",
+      "cost_usd": null,
+      "elapsed_seconds": 6.141912833001697,
+      "participant_prompt_sha256": "d85275967be75a31993c8be2ca85cb59fdb7d15398baa7108e993c9443581aa3",
+      "repeat": 1,
+      "skill_delivery": "file_and_prompt",
+      "task_id": "gsm8k-0001",
+      "usage": {
+        "cached_input_tokens": 5888,
+        "cost_usd": null,
+        "input_tokens": 7637,
+        "output_tokens": 100,
+        "reasoning_tokens": 47
+      }
+    }
+  ],
+  "candidate_source_sha256": {
+    "harness/src/eval_harness/__init__.py": "8fe3d600a7f2be3ea6e499db44dfd0b1fb69beb0d6b257f8e03841226a5c96d1",
+    "harness/src/eval_harness/__main__.py": "977ae670edcda9026c7fb443027151a99dac0210a28997626a4563a41345bef6",
+    "harness/src/eval_harness/artifacts.py": "9fe9d90de45940b9b9e31f29f27aa4720e62fed39357d53ec9c815a65f63c2be",
+    "harness/src/eval_harness/benchmark.py": "bebf7aafb13d55f6e111e55f329bc994520a58a83c927d9c5180ad3cadc365d8",
+    "harness/src/eval_harness/claude_executor.py": "1fa311fb6146f0eca9eeb4b808b4dc315adc1e79c6f1cbb2efa8d65680bd8433",
+    "harness/src/eval_harness/cli.py": "cfe4623995578af67611fc66e1b8dffdcd623a52685f1efcf991f8a8f4227dab",
+    "harness/src/eval_harness/compare_pipeline.py": "f93997b8a37d8e6134c2bdaace42d5df907d9b53d332d0bc89f966757d831905",
+    "harness/src/eval_harness/config.py": "8f1c1483f847bd7639093375176ba85ea574dd87bee62821406465948aa9c0c5",
+    "harness/src/eval_harness/errors.py": "fc04614f8af8d7e7477da169cbfdae4fab1e6c1a20235555a6a39cb29ad43463",
+    "harness/src/eval_harness/evaluate_pipeline.py": "2ca8f1976ad2dc002dee3e1121f302eebf55a1c620ecf78ba362f197a7287c66",
+    "harness/src/eval_harness/executor.py": "9861591d309ae99d78dd5a77441078789cb45c2d20148abfb060eee9de47d694",
+    "harness/src/eval_harness/gdpval.py": "66f67e83ca2348b8db689afb33806ad999f6d68fbd68993cd2076b217c305594",
+    "harness/src/eval_harness/gsm8k.py": "43281a2a5221479ac908a1559885ab5c965f36f99de435a2d846d39dce6bcd98",
+    "harness/src/eval_harness/run_pipeline.py": "d9fd12903ebd9504c154815a058c5efe29e82961b0d03b7888b085a18ff7bf9e",
+    "harness/src/eval_harness/skill_pipeline.py": "7968b10c9830f8d1339b6521f3da74af5a22aab3badee91cecc5e2bdc71c84f1"
+  },
+  "comparison": {
+    "application_metrics": {
+      "A": {
+        "all_attempts_cost_usd": {
+          "max": null,
+          "mean": null,
+          "measured_count": 0,
+          "min": null,
+          "missing_count": 2,
+          "observations": [
+            null,
+            null
+          ],
+          "population_stddev": null,
+          "total": null
+        },
+        "all_attempts_elapsed_seconds": {
+          "max": 6.692312833009055,
+          "mean": 6.417112833005376,
+          "measured_count": 2,
+          "min": 6.141912833001697,
+          "missing_count": 0,
+          "observations": [
+            6.692312833009055,
+            6.141912833001697
+          ],
+          "population_stddev": 0.2752000000036787,
+          "total": 12.834225666010752
+        },
+        "all_attempts_usage": {
+          "cached_input_tokens": {
+            "max": 5888.0,
+            "mean": 2944.0,
+            "measured_count": 2,
+            "min": 0.0,
+            "missing_count": 0,
+            "observations": [
+              0,
+              5888
+            ],
+            "population_stddev": 2944.0,
+            "total": 5888.0
+          },
+          "cost_usd": {
+            "max": null,
+            "mean": null,
+            "measured_count": 0,
+            "min": null,
+            "missing_count": 2,
+            "observations": [
+              null,
+              null
+            ],
+            "population_stddev": null,
+            "total": null
+          },
+          "input_tokens": {
+            "max": 7637.0,
+            "mean": 7629.5,
+            "measured_count": 2,
+            "min": 7622.0,
+            "missing_count": 0,
+            "observations": [
+              7622,
+              7637
+            ],
+            "population_stddev": 7.5,
+            "total": 15259.0
+          },
+          "output_tokens": {
+            "max": 129.0,
+            "mean": 114.5,
+            "measured_count": 2,
+            "min": 100.0,
+            "missing_count": 0,
+            "observations": [
+              129,
+              100
+            ],
+            "population_stddev": 14.5,
+            "total": 229.0
+          },
+          "reasoning_tokens": {
+            "max": 47.0,
+            "mean": 40.0,
+            "measured_count": 2,
+            "min": 33.0,
+            "missing_count": 0,
+            "observations": [
+              33,
+              47
+            ],
+            "population_stddev": 7.0,
+            "total": 80.0
+          }
+        },
+        "attempt_count": 2,
+        "cost_usd": {
+          "max": null,
+          "mean": null,
+          "measured_count": 0,
+          "min": null,
+          "missing_count": 2,
+          "observations": [
+            null,
+            null
+          ],
+          "population_stddev": null,
+          "total": null
+        },
+        "elapsed_seconds": {
+          "max": 6.692312833009055,
+          "mean": 6.417112833005376,
+          "measured_count": 2,
+          "min": 6.141912833001697,
+          "missing_count": 0,
+          "observations": [
+            6.692312833009055,
+            6.141912833001697
+          ],
+          "population_stddev": 0.2752000000036787,
+          "total": 12.834225666010752
+        },
+        "execution_count": 2,
+        "status_counts": {
+          "completed": 2
+        },
+        "usage": {
+          "cached_input_tokens": {
+            "max": 5888.0,
+            "mean": 2944.0,
+            "measured_count": 2,
+            "min": 0.0,
+            "missing_count": 0,
+            "observations": [
+              0,
+              5888
+            ],
+            "population_stddev": 2944.0,
+            "total": 5888.0
+          },
+          "cost_usd": {
+            "max": null,
+            "mean": null,
+            "measured_count": 0,
+            "min": null,
+            "missing_count": 2,
+            "observations": [
+              null,
+              null
+            ],
+            "population_stddev": null,
+            "total": null
+          },
+          "input_tokens": {
+            "max": 7637.0,
+            "mean": 7629.5,
+            "measured_count": 2,
+            "min": 7622.0,
+            "missing_count": 0,
+            "observations": [
+              7622,
+              7637
+            ],
+            "population_stddev": 7.5,
+            "total": 15259.0
+          },
+          "output_tokens": {
+            "max": 129.0,
+            "mean": 114.5,
+            "measured_count": 2,
+            "min": 100.0,
+            "missing_count": 0,
+            "observations": [
+              129,
+              100
+            ],
+            "population_stddev": 14.5,
+            "total": 229.0
+          },
+          "reasoning_tokens": {
+            "max": 47.0,
+            "mean": 40.0,
+            "measured_count": 2,
+            "min": 33.0,
+            "missing_count": 0,
+            "observations": [
+              33,
+              47
+            ],
+            "population_stddev": 7.0,
+            "total": 80.0
+          }
+        }
+      },
+      "N": {
+        "all_attempts_cost_usd": {
+          "max": null,
+          "mean": null,
+          "measured_count": 0,
+          "min": null,
+          "missing_count": 2,
+          "observations": [
+            null,
+            null
+          ],
+          "population_stddev": null,
+          "total": null
+        },
+        "all_attempts_elapsed_seconds": {
+          "max": 5.139557207992766,
+          "mean": 5.041937374990084,
+          "measured_count": 2,
+          "min": 4.944317541987402,
+          "missing_count": 0,
+          "observations": [
+            5.139557207992766,
+            4.944317541987402
+          ],
+          "population_stddev": 0.09761983300268184,
+          "total": 10.083874749980168
+        },
+        "all_attempts_usage": {
+          "cached_input_tokens": {
+            "max": 5888.0,
+            "mean": 2944.0,
+            "measured_count": 2,
+            "min": 0.0,
+            "missing_count": 0,
+            "observations": [
+              5888,
+              0
+            ],
+            "population_stddev": 2944.0,
+            "total": 5888.0
+          },
+          "cost_usd": {
+            "max": null,
+            "mean": null,
+            "measured_count": 0,
+            "min": null,
+            "missing_count": 2,
+            "observations": [
+              null,
+              null
+            ],
+            "population_stddev": null,
+            "total": null
+          },
+          "input_tokens": {
+            "max": 7217.0,
+            "mean": 7216.0,
+            "measured_count": 2,
+            "min": 7215.0,
+            "missing_count": 0,
+            "observations": [
+              7217,
+              7215
+            ],
+            "population_stddev": 1.0,
+            "total": 14432.0
+          },
+          "output_tokens": {
+            "max": 79.0,
+            "mean": 75.0,
+            "measured_count": 2,
+            "min": 71.0,
+            "missing_count": 0,
+            "observations": [
+              71,
+              79
+            ],
+            "population_stddev": 4.0,
+            "total": 150.0
+          },
+          "reasoning_tokens": {
+            "max": 31.0,
+            "mean": 26.0,
+            "measured_count": 2,
+            "min": 21.0,
+            "missing_count": 0,
+            "observations": [
+              21,
+              31
+            ],
+            "population_stddev": 5.0,
+            "total": 52.0
+          }
+        },
+        "attempt_count": 2,
+        "cost_usd": {
+          "max": null,
+          "mean": null,
+          "measured_count": 0,
+          "min": null,
+          "missing_count": 2,
+          "observations": [
+            null,
+            null
+          ],
+          "population_stddev": null,
+          "total": null
+        },
+        "elapsed_seconds": {
+          "max": 5.139557207992766,
+          "mean": 5.041937374990084,
+          "measured_count": 2,
+          "min": 4.944317541987402,
+          "missing_count": 0,
+          "observations": [
+            5.139557207992766,
+            4.944317541987402
+          ],
+          "population_stddev": 0.09761983300268184,
+          "total": 10.083874749980168
+        },
+        "execution_count": 2,
+        "status_counts": {
+          "completed": 2
+        },
+        "usage": {
+          "cached_input_tokens": {
+            "max": 5888.0,
+            "mean": 2944.0,
+            "measured_count": 2,
+            "min": 0.0,
+            "missing_count": 0,
+            "observations": [
+              5888,
+              0
+            ],
+            "population_stddev": 2944.0,
+            "total": 5888.0
+          },
+          "cost_usd": {
+            "max": null,
+            "mean": null,
+            "measured_count": 0,
+            "min": null,
+            "missing_count": 2,
+            "observations": [
+              null,
+              null
+            ],
+            "population_stddev": null,
+            "total": null
+          },
+          "input_tokens": {
+            "max": 7217.0,
+            "mean": 7216.0,
+            "measured_count": 2,
+            "min": 7215.0,
+            "missing_count": 0,
+            "observations": [
+              7217,
+              7215
+            ],
+            "population_stddev": 1.0,
+            "total": 14432.0
+          },
+          "output_tokens": {
+            "max": 79.0,
+            "mean": 75.0,
+            "measured_count": 2,
+            "min": 71.0,
+            "missing_count": 0,
+            "observations": [
+              71,
+              79
+            ],
+            "population_stddev": 4.0,
+            "total": 150.0
+          },
+          "reasoning_tokens": {
+            "max": 31.0,
+            "mean": 26.0,
+            "measured_count": 2,
+            "min": 21.0,
+            "missing_count": 0,
+            "observations": [
+              21,
+              31
+            ],
+            "population_stddev": 5.0,
+            "total": 52.0
+          }
+        }
+      },
+      "S": {
+        "all_attempts_cost_usd": {
+          "max": null,
+          "mean": null,
+          "measured_count": 0,
+          "min": null,
+          "missing_count": 2,
+          "observations": [
+            null,
+            null
+          ],
+          "population_stddev": null,
+          "total": null
+        },
+        "all_attempts_elapsed_seconds": {
+          "max": 5.763114291999955,
+          "mean": 5.705335375008872,
+          "measured_count": 2,
+          "min": 5.647556458017789,
+          "missing_count": 0,
+          "observations": [
+            5.647556458017789,
+            5.763114291999955
+          ],
+          "population_stddev": 0.05777891699108295,
+          "total": 11.410670750017744
+        },
+        "all_attempts_usage": {
+          "cached_input_tokens": {
+            "max": 0.0,
+            "mean": 0.0,
+            "measured_count": 2,
+            "min": 0.0,
+            "missing_count": 0,
+            "observations": [
+              0,
+              0
+            ],
+            "population_stddev": 0.0,
+            "total": 0.0
+          },
+          "cost_usd": {
+            "max": null,
+            "mean": null,
+            "measured_count": 0,
+            "min": null,
+            "missing_count": 2,
+            "observations": [
+              null,
+              null
+            ],
+            "population_stddev": null,
+            "total": null
+          },
+          "input_tokens": {
+            "max": 7698.0,
+            "mean": 7697.5,
+            "measured_count": 2,
+            "min": 7697.0,
+            "missing_count": 0,
+            "observations": [
+              7698,
+              7697
+            ],
+            "population_stddev": 0.5,
+            "total": 15395.0
+          },
+          "output_tokens": {
+            "max": 111.0,
+            "mean": 103.5,
+            "measured_count": 2,
+            "min": 96.0,
+            "missing_count": 0,
+            "observations": [
+              111,
+              96
+            ],
+            "population_stddev": 7.5,
+            "total": 207.0
+          },
+          "reasoning_tokens": {
+            "max": 43.0,
+            "mean": 37.5,
+            "measured_count": 2,
+            "min": 32.0,
+            "missing_count": 0,
+            "observations": [
+              43,
+              32
+            ],
+            "population_stddev": 5.5,
+            "total": 75.0
+          }
+        },
+        "attempt_count": 2,
+        "cost_usd": {
+          "max": null,
+          "mean": null,
+          "measured_count": 0,
+          "min": null,
+          "missing_count": 2,
+          "observations": [
+            null,
+            null
+          ],
+          "population_stddev": null,
+          "total": null
+        },
+        "elapsed_seconds": {
+          "max": 5.763114291999955,
+          "mean": 5.705335375008872,
+          "measured_count": 2,
+          "min": 5.647556458017789,
+          "missing_count": 0,
+          "observations": [
+            5.647556458017789,
+            5.763114291999955
+          ],
+          "population_stddev": 0.05777891699108295,
+          "total": 11.410670750017744
+        },
+        "execution_count": 2,
+        "status_counts": {
+          "completed": 2
+        },
+        "usage": {
+          "cached_input_tokens": {
+            "max": 0.0,
+            "mean": 0.0,
+            "measured_count": 2,
+            "min": 0.0,
+            "missing_count": 0,
+            "observations": [
+              0,
+              0
+            ],
+            "population_stddev": 0.0,
+            "total": 0.0
+          },
+          "cost_usd": {
+            "max": null,
+            "mean": null,
+            "measured_count": 0,
+            "min": null,
+            "missing_count": 2,
+            "observations": [
+              null,
+              null
+            ],
+            "population_stddev": null,
+            "total": null
+          },
+          "input_tokens": {
+            "max": 7698.0,
+            "mean": 7697.5,
+            "measured_count": 2,
+            "min": 7697.0,
+            "missing_count": 0,
+            "observations": [
+              7698,
+              7697
+            ],
+            "population_stddev": 0.5,
+            "total": 15395.0
+          },
+          "output_tokens": {
+            "max": 111.0,
+            "mean": 103.5,
+            "measured_count": 2,
+            "min": 96.0,
+            "missing_count": 0,
+            "observations": [
+              111,
+              96
+            ],
+            "population_stddev": 7.5,
+            "total": 207.0
+          },
+          "reasoning_tokens": {
+            "max": 43.0,
+            "mean": 37.5,
+            "measured_count": 2,
+            "min": 32.0,
+            "missing_count": 0,
+            "observations": [
+              43,
+              32
+            ],
+            "population_stddev": 5.5,
+            "total": 75.0
+          }
+        }
+      }
+    },
+    "conditions": {
+      "A": {
+        "evaluated_sample_count": 2,
+        "generated_sample_count": 2,
+        "mean_score": 1.0,
+        "population_stddev": 0.0,
+        "scores": [
+          1.0,
+          1.0
+        ]
+      },
+      "N": {
+        "evaluated_sample_count": 2,
+        "generated_sample_count": 2,
+        "mean_score": 1.0,
+        "population_stddev": 0.0,
+        "scores": [
+          1.0,
+          1.0
+        ]
+      },
+      "S": {
+        "evaluated_sample_count": 2,
+        "generated_sample_count": 2,
+        "mean_score": 1.0,
+        "population_stddev": 0.0,
+        "scores": [
+          1.0,
+          1.0
+        ]
+      }
+    },
+    "generated_sample_count": 6
+  },
+  "creations": [
+    {
+      "creation_id": "873f4a4ed4fc4eb3bf7d5bc9ee2537de",
+      "creation_inputs": [
+        {
+          "kind": "file",
+          "path": "/Users/naokishima/Library/Mobile Documents/com~apple~CloudDocs/Project/eval-harness/.audit/nsa-v2/creation-inputs/agent-skills-specification.md",
+          "sha256": "2b1dbb4fd80c31748d15812c4ebd3e66c09383d0c792801f617718684489e40d"
+        }
+      ],
+      "creator_cost_usd": 0.0722361,
+      "creator_elapsed_seconds": 21.055532875005156,
+      "creator_skills": [
+        {
+          "kind": "directory",
+          "path": "/Users/naokishima/.codex/skills/.system/skill-creator",
+          "sha256": "e27ce6ea6469154f7b06de892d41f12c8403e5b149308eaf23cab6c02d96c3ff"
+        }
+      ],
+      "creator_status": "completed",
+      "creator_usage": {
+        "cache_creation_input_tokens": 7864,
+        "cached_input_tokens": 39107,
+        "cost_usd": 0.0722361,
+        "input_tokens": 5,
+        "output_tokens": 887,
+        "reasoning_tokens": null
+      },
+      "generated_sha256": "6e7912d532bb8900e913542adbbb708647e72702f80a4aec84c8890ed876f5f3",
+      "runtime": {
+        "executor": "claude-code",
+        "model": "claude-sonnet-4-6",
+        "settings": {
+          "max_turns": 24,
+          "reasoning_effort": "medium",
+          "timeout_seconds": 600
+        }
+      },
+      "skill_delivery": "explicit SKILL.md bodies in prompt; supporting files staged"
+    },
+    {
+      "creation_id": "22185aed673c466ea8af7fe90f3f4011",
+      "creation_inputs": [
+        {
+          "kind": "file",
+          "path": "/Users/naokishima/Library/Mobile Documents/com~apple~CloudDocs/Project/eval-harness/.audit/nsa-v2/creation-inputs/agent-skills-specification.md",
+          "sha256": "2b1dbb4fd80c31748d15812c4ebd3e66c09383d0c792801f617718684489e40d"
+        }
+      ],
+      "creator_cost_usd": 0.10929900000000001,
+      "creator_elapsed_seconds": 24.246910957997898,
+      "creator_skills": [
+        {
+          "kind": "directory",
+          "path": "/Users/naokishima/.codex/skills/.system/skill-creator",
+          "sha256": "e27ce6ea6469154f7b06de892d41f12c8403e5b149308eaf23cab6c02d96c3ff"
+        },
+        {
+          "kind": "directory",
+          "path": "/Users/naokishima/.codex/plugins/cache/personal/alps/0.7.0/skills/design-process-description",
+          "sha256": "570489cfc1ee0b7b1adc07cf6e497f7740aa8325ff0cd2149032fc1d13028646"
+        },
+        {
+          "kind": "directory",
+          "path": "/Users/naokishima/.codex/plugins/cache/personal/alps/0.7.0/skills/design-agent-work-system",
+          "sha256": "b920e147f1ed1a1c5774b21d65aea98b4dc61a595021bb500e21dcba0955205d"
+        }
+      ],
+      "creator_status": "completed",
+      "creator_usage": {
+        "cache_creation_input_tokens": 12039,
+        "cached_input_tokens": 64290,
+        "cost_usd": 0.10929900000000001,
+        "input_tokens": 6,
+        "output_tokens": 1184,
+        "reasoning_tokens": null
+      },
+      "generated_sha256": "bf43498ff28cb07f4078802f432290139d12cc7af9d979670f4b2d46bfa49398",
+      "runtime": {
+        "executor": "claude-code",
+        "model": "claude-sonnet-4-6",
+        "settings": {
+          "max_turns": 24,
+          "reasoning_effort": "medium",
+          "timeout_seconds": 600
+        }
+      },
+      "skill_delivery": "explicit SKILL.md bodies in prompt; supporting files staged"
+    }
+  ],
+  "input_sha256": "3cc70e34cf12813c6c7a951da579b4a4deeda827277c12b71ba842ae3dd38fe9",
+  "local_run_directory": "runs/nsa-v2-gsm8k-01",
+  "mechanical_reevaluation": {
+    "application_calls": 0,
+    "correction": "Original mechanical evaluation misclassified $18 per day; preserved old evaluation, re-evaluated saved answers after numeric suffix fix.",
+    "evaluation_id": "1433cb3c730e4f6d8471e3bafc6160c1",
+    "scores": [
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0
+    ],
+    "source_artifacts_unchanged": true
+  },
+  "resume": {
+    "attempt_counts": [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    "before_completed": 4,
+    "before_pending": 2,
+    "completed_records_identical": true,
+    "creator_calls": 0,
+    "remaining_application_calls": 2
+  },
+  "run_id": "ade140dd511a40d4bfd87c220c39bb11",
+  "scope": "Bounded integration evidence, not ALPS superiority or a benchmark ranking",
+  "task_id": "gsm8k-0001"
+}

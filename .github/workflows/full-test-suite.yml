@@ -39,6 +39,7 @@ env:
 
 jobs:
   full-test-suite:
+    if: github.repository == 'NVIDIA-NeMo/Gym'
     name: Full Test Suite
     runs-on: ubuntu-latest
     steps:
@@ -77,6 +78,7 @@ jobs:
             --cov-fail-under="$(python3 scripts/ci/cov_fail_under.py)" --durations=10 -m sandbox
 
   server-suite:
+    if: github.repository == 'NVIDIA-NeMo/Gym'
     name: Server suite (shard ${{ matrix.shard }})
     runs-on: ubuntu-latest
     strategy:
@@ -124,7 +126,7 @@ jobs:
     name: Server suite
     runs-on: ubuntu-latest
     needs: [server-suite]
-    if: always() && !cancelled()
+    if: github.repository == 'NVIDIA-NeMo/Gym' && always() && !cancelled()
     steps:
       - name: Aggregate shard results
         run: |
@@ -136,6 +138,7 @@ jobs:
           exit 1
 
   test-wheel-install:
+    if: github.repository == 'NVIDIA-NeMo/Gym'
     name: Test Wheel Use
     runs-on: ubuntu-latest
     env:
