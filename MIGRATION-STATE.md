@@ -11,6 +11,23 @@ This record preserves recoverable work; it does not declare the migration accept
 
 ## Current status: autonomous continuation under revised issue-level stop rule
 
+Latest implementation checkpoint: `26a87464f980ab9bf911a120f2f1cf8bceaf4008`, tree
+`8567d56333ec27a869e5bc34d01627130235afee`. Test-first checkpoint
+`64dc8d615e4d145ecfc211ea5c1bd59cd98cab5f` reproduced both uv refusal and existing
+archive deletion (two expected errors). The revised correction is saved/read back.
+Its grouped checks report 11/12 unit methods passing, including the official uv suffix
+regression; the archive test stops at macOS realpath string comparison, one strict-mypy
+test import error remains and the test file needs Ruff formatting. Ruff lint and shell
+syntax pass. Sol is reviewing this exact head read-only, including prior unclosed
+preparation findings. Luna is idle pending one consolidated review/verification return.
+No successful batch or preparation/PR04 acceptance is claimed.
+
+An active thread heartbeat, automation id `automation`, continues this same task every
+90 minutes under these rules. It must reuse active work/agents rather than duplicate
+them and stop itself at final completion or a genuine whole-task safety/authority block.
+Local scheduled work requires the computer and application to remain running. Normal
+active work in this segment continues; this is not a reason to wait for the next tick.
+
 The user explicitly changes the two-failure rule. Two failures end that correction
 approach, not all migration work. Preserve the failure history, save, analyze the cause
 and revise the approach. One additional correction/validation is authorized without
