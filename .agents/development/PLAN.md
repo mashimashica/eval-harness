@@ -54,7 +54,7 @@ notes below retain the history of excluded attempts and corrections.
 | evaluate | New evaluation identity; existing generation IDs and artifact bytes preserved | met: four evaluation routes exercised; same saved source hashes and no application calls |
 | compare | No model calls; method/task/sample identities preserved, repeats reported | met: 3-method CLI aggregate reports 6 distinct samples and 2 per condition; nonexistent CLI paths prove no calls |
 | resume | Frozen settings/inputs; only incomplete stages continue, completed work preserved | met: actual 4-complete/2-pending resume and human append; frozen creator/source/evaluation mutation guards and receipt regression |
-| Integration | main commit, required fork CI pass, DCO, security scans, reproducible user docs | not met |
+| Integration | main commit, required fork CI pass, DCO, security scans, reproducible user docs | met: PR46 merged at f917ebc59e46d2e4b03af7d5735be442eddbd611; main CI34768895116 passed; integration-acceptance.json and fresh-checkout-01.json |
 
 ## Authorized small real-trial envelope
 
@@ -219,3 +219,20 @@ The setup instructions now use `uv python install --no-bin` so Python stays proj
 CLI installations can be reused. Only documentation/evidence changed after the reproduced candidate. Next: run CI for
 this final PR revision, merge through the required check, verify main CI, and record the actual integration receipt.
 All mandatory product behavior and fresh-checkout acceptance are met; main integration is still pending.
+
+### Final acceptance and actual integration
+
+PR46 was merged through the enforced check at `f917ebc59e46d2e4b03af7d5735be442eddbd611`
+on2026-09-13T16:32:31Z. Its tree exactly matches the passing candidate `bd3cb2dbc82b20a115aa13f8655ec36e69c6d240`.
+GitHub Actions main run34768895116 then passed Harness quality, including82behavioral tests, typing, Ruff,
+dependency audit, documentation checks and the submitted-commit secret scan. The source commits and merge commit
+all carry DCO sign-off. Branch protection was respected and remains enabled for administrators.
+
+[Integration receipt](evidence/integration-acceptance.json) records the actual main commit, checks, protection,
+evidence index and supported-use constraints. R01–R10, all six commands, fresh-checkout reproducibility and main
+integration are accepted. There are no remaining product acceptance items. The final follow-up changes only this
+acceptance record and its receipt; it goes through the same required check and PR merge.
+
+Usage starts with the canonical [local harness guide](../../fern/versions/latest/pages/get-started/eval-harness.mdx).
+Preserve the existing raw runs and excluded attempts. No additional model calls, release, package publication,
+deployment or global setup is needed for this assignment.
