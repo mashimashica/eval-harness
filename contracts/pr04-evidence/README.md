@@ -5,7 +5,7 @@ SPDX-License-Identifier: Apache-2.0
 
 # PR04 dependency-lock research evidence
 
-Status: **research checkpoint; no lock is accepted for production**.
+Status: **research checkpoint; no grader lock is accepted for production**. The separate two-package bubblewrap build-tool lock is validated evidence.
 
 These files preserve the exact inputs, hash-locked resolutions, and decisive
 `pip-audit` JSON used while designing the BigCodeBench grader boundary. The
@@ -53,8 +53,7 @@ uvx --from pip-audit==2.10.1 pip-audit \
   --requirement <lock-file>
 ```
 
-Each command exited `1` because findings were present. The first-pass
-candidate leaves these material findings:
+The three grader-lock audits exited `1` because findings were present. The separate bubblewrap build-tool audit exited `0` with no findings. The first-pass candidate leaves these material findings:
 
 | Distribution | Resolved version | Finding aliases in JSON | Published fix represented in audit data |
 |---|---:|---:|---|
@@ -62,8 +61,7 @@ candidate leaves these material findings:
 | `keras` | 3.12.3 | 6 | latest required fix is 3.15.0 |
 | `nltk` | 3.10.3 | 1 | none |
 
-`cryptography` and `keras` can be investigated in an explicit CPython 3.11.16
-grader environment. That candidate clears their findings and leaves only NLTK.
+The explicit CPython 3.11.16 candidate clears the `cryptography` and `keras` findings and leaves only NLTK.
 NLTK remains a hard acceptance blocker: the official advisory marks versions
 through 3.10.3 affected and lists no patched release. The preserved narrow backport is rejected: the added independent controls expose
 a normal-load regression and destructive hardlink truncation. Its truthful local
