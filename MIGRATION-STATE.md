@@ -3,7 +3,7 @@
 
 # Migration state
 
-Updated: 2026-09-13T10:22:00Z
+Updated: 2026-09-13T10:32:00Z
 
 Control branch: `checkpoint/migration-control`.
 Procedure: [MIGRATION-WORKFLOW.md](MIGRATION-WORKFLOW.md).
@@ -12,8 +12,11 @@ This record preserves recoverable work; it does not declare the migration accept
 ## Latest recovery point: fixed Linux CI promoted; public boundary implementation
 
 Implementation `checkpoint/pr-04` is saved at
-`1df1ef8cbf363c7e69a43d119f816a6666f79b36`, tree
-`716048eb253ef1180fde77e2a48f564ef52c5fa8`. This adds ten-file legacy/test ports
+`3978d08e6226dc48f3b16c4fa304231bec56dbae`, tree
+`5c6d397b7644648fd7e5e70870d127d9fa5286c9`. Parent interrupted at the 15-minute
+save boundary and saved/read back the unfinished two-file host/app security correction
+at 10:26 UTC. It is not validated or independently reviewed. The preceding
+`1df1ef8cbf363c7e69a43d119f816a6666f79b36` adds ten-file legacy/test ports
 and exact Ninja identity checking to the preceding four-file public draft. Parent's
 first grouped check ran 114 unit methods: 112 pass, one new undefined test variable
 error, and one already-known local case-sensitive-filesystem failure. Strict typing
@@ -29,8 +32,9 @@ strict public types, accepted production limits, cancellation ownership and lega
 removal. Current drafts are not promoted to the real sandbox job. The latest setup
 draft reintroduced an explicit compatibility wrapper and evaluator's ignored legacy
 argument remains; preserving old spellings is rejected, not accepted as a migration.
-Luna has the consolidated corrections and continues by 10:30 UTC, saving by 10:25.
-Sol is checking the finite registry/locator scope by 10:20 UTC. Parent verifies evidence.
+Luna retains the consolidated corrections and will resume the saved WIP after the
+interval checkpoint. Sol closed the finite registry/locator scope and Ninja-only delta;
+the eleven public-boundary groups remain pending fixed-head correction review.
 
 The original four-file draft
 adds public manifest/probe/run handling, connects evaluator/resource app to the shared
@@ -47,7 +51,18 @@ Formal Draft PR #43 is now `d3dc022f6eae7d2fbc12a1078ef7e8079e813782`, tree
 `bbfce4c2824f40595b73797ec5211bba89b431c4`, from preceding `0c919a5c` with only the
 reviewed Ninja installer/test pair plus a parent work record. Sol closed that two-file
 delta and parent verified copied bytes against fixed `1df1ef8c`. No unaccepted public
-boundary/caller code is promoted. Actual Linux rebuild is starting; result pending.
+boundary/caller code is promoted. Actual Linux run `34751652088` passes all 611 unit
+methods and recognizes the exact Ninja binary; bubblewrap configuration and all 12
+compile/link steps pass. Upstream utility tests pass (26 subtests), but five namespace/
+sandbox scripts skip and do not count as acceptance. Installation then fails because
+`getcap` is not found. The installer PATH excludes `/usr/sbin`, where Ubuntu's
+libcap2-bin places it; package presence was not recorded and libcap-dev does not require
+that package. Ninja is closed after one correction. Getcap is a distinct initial
+failure with zero corrections. Record/prove absence of the security.capability xattr
+without relaxing checks, and expose skip reasons before another real Linux attempt.
+Downstream grader provisioning, actual probes and parity have not run. See
+`reports/m2-linux-second-validation.json`. Coverage remains 93.69%, six legacy type
+errors and the known NLTK CVE remain unresolved; no PR acceptance is implied.
 Checkpoint and formal histories now deliberately differ: future promotions must copy
 reviewed content with DCO/non-force API commits onto the current formal parent, not force
 or rewind either branch. Full source remains on checkpoint/pr-04. This selective update
@@ -91,8 +106,10 @@ coverage is 10954/11791 = 92.90%, below the exact 96% gate. See
 or repeat the same local platform checks. Fixed Linux CI and meaningful additional
 PR04 host/worker coverage remain required. Both local test sessions have finished.
 
-Current interval deadline remains `2026-09-13T10:33:34Z`; after save/readback/report,
-continue the next interval autonomously. The heartbeat id is `automation`. New issue-level
+The interval begun at 09:03:34 UTC is closed early with this saved/read-back record
+and progress report at 10:32 UTC (before its 10:33:34 deadline). Continue autonomously
+in the next interval, 10:32–12:02 UTC, with no failure-count reset. The heartbeat id
+is `automation`. New issue-level
 stop rules, preserved failure history, DCO/non-force/readback, 15-minute saves, role split,
 one-PR implementation, no models/merge/release, CVE hold and final deletion requirements
 below remain authoritative. Main and pre-existing user changes are protected.

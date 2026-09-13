@@ -1,0 +1,53 @@
+{
+  "schema_version": 1,
+  "evidence_class": "reviewed-Ninja-subset-real-Linux-partial-not-acceptance",
+  "formal_head": "d3dc022f6eae7d2fbc12a1078ef7e8079e813782",
+  "formal_parent": "0c919a5cd1256af121a912bef5a42cf41d5e360b",
+  "source_of_reviewed_two_file_delta": "1df1ef8cbf363c7e69a43d119f816a6666f79b36",
+  "changed_files": ["scripts/ci/install_bubblewrap.sh", "tests/harness/test_bigcodebench_grader_boundary.py", "contracts/pr04-work.md"],
+  "copied_source_bytes_verified": true,
+  "unaccepted_public_draft_included": false,
+  "ci_checkout": "8ff9cd13a976c9b8cf3da90958802c477d0171c0",
+  "ci_parents": ["6038a7828d62247ad98d000bc6e71c706f6d14a4", "d3dc022f6eae7d2fbc12a1078ef7e8079e813782"],
+  "head_and_ci_tree": "bbfce4c2824f40595b73797ec5211bba89b431c4",
+  "run": "https://github.com/mashimashica/eval-harness/actions/runs/34751652088",
+  "candidate_job": 103709165946,
+  "completed": true,
+  "harness_tests": {"methods": 611, "seconds": 28.012, "result": "pass"},
+  "coverage": {"displayed_percent": "93.69", "required_percent": 96, "result": "fail"},
+  "strict_typing": {"result": "fail", "errors": 6, "error_files": 1, "checked_files": 120, "scope": "unchanged legacy resource app; pending replacement not included in selective promotion"},
+  "passed": ["harness dependency audit", "build-tool dependency audit", "lint", "copyright"],
+  "still_failed": ["known NLTK grader audit", "provenance-only secret findings pending baseline", "strict legacy app typing", "coverage", "candidate preparation"],
+  "ninja": {
+    "distribution_version": "1.13.0",
+    "observed_actual_linux_binary_version": "1.13.0.git.kitware.jobserver-pipe-1",
+    "result": "closed after first correction; configure and compile now pass",
+    "initial_failed_runs": 1,
+    "corrective_attempts": 1,
+    "corrective_failures": 0,
+    "history_not_reset": true
+  },
+  "bubblewrap": {
+    "version": "0.12.0",
+    "configure": "pass",
+    "compile_and_link": "pass",
+    "upstream_tests": {"passed": 1, "passed_utils_subtests": 26, "skipped": 5, "failed": 0, "sandbox_subtests_passed": 0},
+    "skip_names": ["test-run.sh", "test-specifying-pidns.sh", "test-specifying-userns.sh", "test-seccomp.py", "test-sandbox.py"],
+    "skip_reason": "not exposed in current summarized Meson output; requires real diagnostic evidence, not an assumption",
+    "actual_isolation_accepted": false
+  },
+  "getcap": {
+    "result": "new first observed setup failure",
+    "diagnostic": "install_bubblewrap: getcap is required",
+    "initial_failed_runs": 1,
+    "corrective_attempts": 0,
+    "source_fact": "installer resets PATH to build-venv/bin:/usr/bin:/bin, omitting /usr/sbin",
+    "official_package_fact": "Ubuntu noble libcap2-bin installs getcap at /usr/sbin/getcap; libcap-dev does not depend on libcap2-bin",
+    "source": "https://packages.ubuntu.com/noble/amd64/libcap2-bin/filelist",
+    "package_dependency_source": "https://packages.ubuntu.com/noble/libcap-dev",
+    "uncertainty": "The job did not log whether the binary was physically present, so PATH omission is proved but package presence is not.",
+    "next": "Use an equally strict bounded direct security.capability xattr absence check or verify the exact OS tool, with source review and negative failure controls. Collect verbose upstream skip reasons without skipping required real boundary gates."
+  },
+  "not_run": ["grader provisioning", "runtime manifest generation/readback", "actual public preflight", "hostile boundary acceptance", "all 1140 parity"],
+  "acceptance": "PR04 and migration remain unaccepted; no mock/skip/failed gate is counted as acceptance"
+}
