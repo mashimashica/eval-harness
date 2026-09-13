@@ -57,6 +57,20 @@ still fails the hook. Keep the synthetic value out of persisted logs. Sol review
 fixed baseline/source delta before a formal PR update. The actual hosted secret gate
 must pass on the promoted head; local classification alone is not acceptance.
 
+### Full-tracked baseline supplement
+
+At `7282be1a149c7352b91fd3df1a3b9f712ef9d1b5`, the five-path hook passes and a
+private unrelated negative control is detected. The first full-tracked hook finds two
+additional existing public integrity values in `config/experiments/alps-skill-creation.json`:
+line 22 source_revision (40 hex) and line 40 expected_bundle_sha256 (64 hex). Parent
+verified the file is byte-identical to accepted base `6038a782`; it defines the
+alps-work-design reference input's immutable revision and expected bundle hash.
+Sol independently permits exactly these two same-file/same-detector/value-fingerprint
+entries. Preserve the existing 64 entries and every setting, yielding 66; do not modify
+the config, add exclusions or alter CVE handling. Full-tracked hook must then pass and
+the independent private negative control must still fail. This extends the finite
+classification based on new full-scope evidence, not a repeat of the prior 62 findings.
+
 ## Remaining existing work
 
 ### Second-Linux capability inspection and upstream skip diagnostics
@@ -85,10 +99,58 @@ metadata inspection removes an unnecessary external-tool dependency without weak
 the frozen no-file-capabilities requirement. The issue has one initial failed run and
 zero corrective attempts before this change.
 
+The same semantic rule applies to public host metadata inspection: the first public
+correction independently retained getcap there. Its removal is part of that unclosed
+public correction, separate from the reviewed installer-only delta.
+
 Use Meson's verbose test output to retain actual reasons for the five upstream skips.
 Keep tests enabled, do not turn skip into pass or disable namespace restrictions, and
 do not change host sysctls/security policy. Real preflight, hostile fixtures and native
 parity remain independent required gates; none has yet run.
+
+### Fixed uv for the mandatory fresh preflight dependency check
+
+Sol reviewed fixed `7282be1a` against frozen preflight item 1, which requires an actual
+uv pip check before model work. Installer-time success alone is insufficient. This is
+a finite implementation connection, not a selector/API redesign or new dependency.
+
+During preparation copy the already verified uv 0.11.29 to exactly
+`SETUP_ROOT/pr04-grader-tools/uv`. Create the tools root exclusively with mode 0700,
+real-UID ownership and physical-path checks. Create the uv file exclusively as a regular,
+single-link real-UID-owned file with exact 0755 mode and no file capability/set-ID bits;
+never overwrite an existing destination or copy xattrs through copy2. Verify source hash
+before/after copying equals copied content, then check the copy's exact version output.
+On partial failure clean up only the destination/root created by this attempt.
+
+The runtime manifest must bind the fixed path, copied SHA-256 and fully verified version
+stdout (including the accepted official suffix) with an exact mandatory field schema.
+Host code derives this one additional fixed child; runtime values are equality checks,
+never executable selectors. Add the uv identity to preflight/attestation and grade-time
+stale comparisons. Missing/extra/redirected/wrong-hash/version fields fail. Do not add a
+Spec field, mount uv into the grader, or forward host UV settings to the sandbox.
+
+Under the exclusive UID lock, revalidate layout, runtime, every existing identity and uv
+metadata/hash before executing uv or bubblewrap. Use exact absolute executables and
+fixed trusted cwd with a clear/explicit allowlisted environment (no inherited UV/PIP,
+proxy, token or VIRTUAL_ENV settings). The fixed command is:
+
+`uv --offline --no-cache --no-config --no-managed-python --no-python-downloads pip check --python <fixed-venv/bin/python>`
+
+`--no-config` prevents cwd/ancestor uv.toml or pyproject discovery. Verify the actual
+locked CLI accepts these controls. Keep stdin DEVNULL, close_fds, no passed fds, new
+session, bounded stdout/stderr and total/cleanup deadlines. Nonzero, launch error,
+timeout, output flood or observation failure produces a stable redacted infrastructure
+failure and complete process-tree kill/reap. Recompare at least full venv inventory
+after the check; mutation fails before bubblewrap. No downloads, sync or repair at grade
+time is allowed.
+
+Required regressions: fixed path versus runtime redirect; missing/extra/hash/version
+identity; symlink/hardlink/mode/owner/capability; lock-wait drift rejected before Popen;
+exact argv/env/cwd; nonzero/timeout/flood/cleanup; venv mutation during check. The real
+Ubuntu job must exercise the locked uv on a valid environment and a private corrupted
+fixture with expected nonzero. Unit doubles cover argument/error behavior only and do
+not replace actual dependency/sandbox acceptance. Existing installer/host/preparation
+test scope is sufficient; preserve candidate-only eligibility and all audit gates.
 
 ### Source-backed prepared runtime locator and legacy deletion
 
