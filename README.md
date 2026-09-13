@@ -1,225 +1,90 @@
-# NeMo Gym
+# Eval Harness
 
-This fork also provides an account-authenticated **Eval Harness** for Codex CLI, Claude Code and Skill comparisons.
-Start with the [local harness guide](fern/versions/latest/pages/get-started/eval-harness.mdx). The retained NeMo Gym
-project and its upstream usage are described below.
+[![Eval Harness CI](https://github.com/mashimashica/eval-harness/actions/workflows/eval-harness.yml/badge.svg)](https://github.com/mashimashica/eval-harness/actions/workflows/eval-harness.yml)
+[![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue)](LICENSE)
 
-[![PyPI](https://img.shields.io/pypi/v/nemo-gym)](https://pypi.org/project/nemo-gym/)
-[![Python](https://img.shields.io/pypi/pyversions/nemo-gym)](https://pypi.org/project/nemo-gym/)
-[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
-[![CI](https://github.com/NVIDIA-NeMo/Gym/actions/workflows/unit-tests.yml/badge.svg)](https://github.com/NVIDIA-NeMo/Gym/actions/workflows/unit-tests.yml)
-[![Docs](https://img.shields.io/badge/docs-NVIDIA-brightgreen)](https://docs.nvidia.com/nemo/gym/main/about/)
+Compare agents, models, and Skills on benchmark tasks with account-authenticated Codex CLI and Claude Code.
 
-**[Requirements](#-requirements)** • **[Quick Start](#-quick-start)** • **[Environment Tutorials](#-environment-tutorials)** • **[Available Environments](#-available-environments)** • **[Documentation & Resources](#-documentation--resources)** • **[Community & Support](#-community--support)** • **[Citations](#-citations)**
+This repository is a fork of [NVIDIA NeMo Gym](https://github.com/NVIDIA-NeMo/Gym). It keeps the upstream environment library and adds a focused local harness for reproducible agent and Skill comparisons.
 
-NeMo Gym is a library for evaluating and improving models and agents using environments. NeMo Gym provides infrastructure to develop environments, scalably run evaluation and training, and a collection of popular benchmarks and training environments.
+## Start with the harness guide
 
-An environment is the complete system an agent interacts with to complete a task. It consists of a dataset (tasks to solve), an agent harness (how the model interacts with the world), a verifier (task completion scoring), and state (per-task execution context).
+Read the [Local Eval Harness guide](fern/versions/latest/pages/get-started/eval-harness.mdx) before installing tools or authenticating an account. It is the canonical guide for the pinned toolchain, account setup, isolation model, supported combinations, configuration schema, and result interpretation.
 
-## 🎯 When to Use NeMo Gym
+## What it provides
 
-- You need to **evaluate models or agents** in stateful environments (e.g. code execution, tool calling, sandboxes)
-- You want **reproducible evaluation** across teams using shared environments and verifiers
-- You need to use environments **at scale** — multiple repeats per task, or thousands of concurrent requests for training
-- You want to **seamlessly transition** between evaluation, agent optimization, and training
+- Runs Codex CLI and Claude Code with account or subscription authentication.
+- Compares no-Skill, existing-Skill, and independently created-Skill conditions.
+- Separates creation, application, and grading sessions and preserves their inputs, logs, artifacts, and hashes.
+- Supports mechanical grading, AI scoring, anonymous pairwise comparison, and human criterion ratings with comments.
+- Re-evaluates saved artifacts and compares reports without regenerating participant outputs.
+- Runs GDPval and GSM8K with deterministic task selection, repeats, and bounded retries.
 
-If you're scoring model outputs with a stateless check and don't need scale or training, a script is probably sufficient.
+## Six commands
 
-## 🏆 What NeMo Gym Provides
+| Command | Purpose |
+| --- | --- |
+| `eval-harness check <experiment.yaml>` | Validate inputs, supported combinations, Skills, and authentication without a model call. |
+| `eval-harness build <build.yaml> --out <skill-dir>` | Create a reusable Skill from an independently configured creation run. |
+| `eval-harness run <experiment.yaml> --out <run-dir>` | Create optional Skills, execute tasks, save artifacts, evaluate, and aggregate. |
+| `eval-harness evaluate <run-dir> --config <evaluation.yaml> --out <evaluation-dir>` | Grade saved artifacts without regenerating them. |
+| `eval-harness compare <result-dir>... --out <report-dir>` | Aggregate saved evaluations without a model call. |
+| `eval-harness resume <result-dir>` | Continue incomplete runs or evaluations from frozen inputs and state. |
 
-- Modular, extensible interfaces for agents, environments, tasks, and verifiers
-- Environment hub of popular benchmarks and training environments
-- Use your own agents or choose from built-in harnesses
-- Scale to thousands of concurrent environments
-- Train with the RL framework of your choice
-- Optional OpenTelemetry tracing across the agent, model, and resources servers
-- Battle-tested in production Nemotron training
+## Minimal GSM8K run
 
-![NeMo Gym Product Overview](fern/assets/images/product_overview.png)
+After following the [installation and authentication guide](fern/versions/latest/pages/get-started/eval-harness.mdx), run one retained GSM8K task from the repository root:
 
-## 🌎 Ecosystem
+```bash
+uv run --project harness --no-sync python benchmarks/gsm8k/prepare.py
+uv run --project harness --no-sync eval-harness check harness/examples/gsm8k-one-task.yaml
+uv run --project harness --no-sync eval-harness run harness/examples/gsm8k-one-task.yaml --out runs/gsm8k-one-task
+uv run --project harness --no-sync eval-harness compare runs/gsm8k-one-task --out reports/gsm8k-one-task
+```
 
-NeMo Gym is a component of [NVIDIA NeMo](https://docs.nvidia.com/nemo/gym/main/about/ecosystem#related-nemo-libraries), a GPU-accelerated platform for training generative AI models and optimizing AI agents. NeMo Gym is integrated with the broader agentic ecosystem - see the [Ecosystem](https://docs.nvidia.com/nemo/gym/main/about/ecosystem) page for more details.
+The example uses one Codex application call and benchmark-owned mechanical grading without a judge model. For GDPval, see the guide's verified spreadsheet example, which uses Codex with spreadsheet-capable tools.
 
-**Environment Libraries:** Seamlessly combine environments and benchmarks from other libraries alongside NeMo Gym environments. Examples:
-[Aviary](https://github.com/NVIDIA-NeMo/Gym/tree/main/resources_servers/aviary) • [Harbor](https://github.com/NVIDIA-NeMo/Gym/tree/main/responses_api_agents/harbor_agent) • [OpenEnv](https://github.com/NVIDIA-NeMo/Gym/tree/main/resources_servers/openenv) • [Reasoning Gym](https://github.com/NVIDIA-NeMo/Gym/tree/main/resources_servers/reasoning_gym) • [Verifiers](https://github.com/NVIDIA-NeMo/Gym/tree/main/responses_api_agents/verifiers_agent)
+## Verified scope
 
-**Training Framework Libraries:** Use environments for SFT and RL training.
-[NeMo RL](https://docs.nvidia.com/nemo/gym/tutorials/training-tutorials/nemo-rl-grpo) • [Unsloth](https://docs.nvidia.com/nemo/gym/tutorials/training-tutorials/unsloth) • [VeRL](https://docs.nvidia.com/nemo/gym/tutorials/training-tutorials)
+The currently verified local setup is:
 
-**Agent Harnesses:** Agent harnesses for evaluation and training available out of the box. Examples:
-[OpenHands](https://github.com/NVIDIA-NeMo/Gym/tree/main/responses_api_agents/swe_agents) • [Mini SWE Agent](https://github.com/NVIDIA-NeMo/Gym/tree/main/responses_api_agents/mini_swe_agent) • [LangGraph](https://github.com/NVIDIA-NeMo/Gym/tree/main/responses_api_agents/langgraph_agent)
+- macOS with Python 3.13.14, uv 0.12.13, and the project-local harness environment.
+- Standalone Codex CLI 0.154.0 and Claude Code 2.1.270, authenticated through their account or subscription flows.
+- GDPval execution and AI evaluation through Codex; the restricted Claude file-tool route cannot inspect or generate office-file contents through scripts.
+- GSM8K execution through Codex or Claude Code and mechanical evaluation without a judge CLI.
+- Serial scheduling with `limits.concurrency: 1`; task count, retries, and each CLI timeout are explicit bounds.
 
-> [!IMPORTANT]
-> NeMo Gym is currently in early development. You should expect evolving APIs, incomplete documentation, and occasional bugs. We welcome contributions and feedback - for any changes, please open an issue first to kick off discussion!
+Missing token or cost measurements remain `null`. Claude's reported USD value is an API-equivalent estimate, not a subscription charge. Small local trials demonstrate the workflow and do not constitute official benchmark scores.
 
-## 📣 News
+## Results and source layout
 
-* **[09/03/2026]** [Release v0.6.0](https://github.com/NVIDIA-NeMo/Gym/releases/tag/v0.6.0):
-  Highlights:
-  - Use supported external agent harnesses during RL training while preserving exact token IDs across multi-step runs
-  - Compare fixed and routed model strategies on the same benchmark with Switchyard
-  - Validate and debug rollouts with automatic health checks, traces, and token, tool-call, turn, and latency diagnostics
-  - Evaluate multiple agents and datasets in one run with task-level harness routing
-  - Scale vLLM evaluation jobs across GPUs or Slurm nodes for higher rollout concurrency
+A run records its resolved configuration, frozen inputs, execution journals, artifacts, and optional evaluations:
+
+```text
+runs/<name>/run_manifest.json
+runs/<name>/run_state.json
+runs/<name>/inputs/
+runs/<name>/conditions/<condition>/tasks/<task>/repeat_<n>/
+runs/<name>/evaluations/
+runs/<name>/comparison/
+```
+
+The lightweight package is in [`harness/`](harness/), with benchmark adapters under [`harness/src/eval_harness/`](harness/src/eval_harness/) and focused tests under [`harness/tests/`](harness/tests/). Its retained benchmark preparation scripts and source data are under [`benchmarks/`](benchmarks/) and [`resources_servers/`](resources_servers/). Use the [harness package index](harness/README.md) for the project-local command reminder.
+
+## Contributing and support
+
+Use this fork's [issues](https://github.com/mashimashica/eval-harness/issues) for bug reports and feature requests.
+The [contributing guide](CONTRIBUTING.md) covers the development entry points and targeted checks. The
+[acceptance record](.agents/development/PLAN.md) links the small real CLI trials and requirement-level evidence.
+
+## Retained NeMo Gym project
+
+The retained NeMo Gym code supports server-backed environments, model and agent integrations, training workflows, and the upstream environment inventory. Read the [upstream NeMo Gym documentation](https://docs.nvidia.com/nemo/gym/latest/) and [upstream contribution guide](https://docs.nvidia.com/nemo/gym/latest/contribute/development-setup) for that project. The fork's harness development rules live in [`AGENTS.md`](AGENTS.md) and [`.agents/development/README.md`](.agents/development/README.md).
 
 <details>
-<summary>Previous News</summary>
+<summary>Retained NeMo Gym environments</summary>
 
-* **[08/06/2026]** [Release v0.5.0](https://github.com/NVIDIA-NeMo/Gym/releases#release-v0.5.0):
-  Highlights:
-  - Seven sandbox providers: Docker, Daytona, ECS Fargate, Enroot, and OpenShell join OpenSandbox and Apptainer; large-scale OpenSandbox reliability significantly improved
-  - Four new agent harnesses: Codex CLI, KiloCode, RemoteAgent, and anyswe_agent
-  - Recompute rewards from stored rollouts without re-running inference with `gym eval reverify`
-  - Rollout observability joined end-to-end: model-call capture, agent observations, and a standardized `ng_trajectory` schema
-  - 21 new environments across six domains: Agentic, Knowledge and instruction following, Long context, Science and coding, Translation and multilingual, and Reasoning
-
-* **[07/01/2026]** [Release v0.4.0](https://github.com/NVIDIA-NeMo/Gym/releases/tag/v0.4.0): Unified `gym` CLI, BLADE diagnostics, agent skill evaluation, pluggable sandboxes, more agent harnesses (OpenCode, OpenClaw, Pi), hosted inference providers, and new benchmarks.
-
-* **[06/04/2026]** [Release v0.3.0](https://github.com/NVIDIA-NeMo/Gym/releases/tag/v0.3.0): 70+ new environments, Nemotron 3 Ultra training datasets, VeRL integration, and out-of-the-box harnesses including Claude Code and Hermes.
-
-</details>
-
-## 📋 Requirements
-
-NeMo Gym is designed to run on standard development machines:
-
-| Hardware Requirements | Software Requirements |
-| --------------------- | --------------------- |
-| **GPU**: Not required for NeMo Gym library operation<br>• GPU may be needed for specific resources servers or model inference (see individual server documentation) | **Operating System**:<br>• Linux (Ubuntu 20.04+, or equivalent)<br>• macOS (11.0+ for x86_64, 12.0+ for Apple Silicon)<br>• Windows (via WSL2) |
-| **CPU**: Any modern x86_64 or ARM64 processor (e.g., Intel, AMD, Apple Silicon) | **Python**: 3.13.14 or higher |
-| **RAM**: Minimum 8 GB (16 GB+ recommended for larger environments) | **Git**: For cloning the repository |
-| **Storage**: Minimum 5 GB free disk space for installation and basic usage | **Internet Connection**: Required for downloading dependencies and API access |
-
-**Additional Requirements**
-
-- **API Keys**: OpenAI API key with available credits (for the quickstart examples)
-  - Other model providers supported (Azure OpenAI, self-hosted models via vLLM)
-- **Ray**: Automatically installed as a dependency (no separate setup required)
-
-## 🚀 Quick Start
-
-Requires Python 3.13.14+ on x86_64 or ARM64 (Linux, macOS, Windows via WSL2). No GPU required. See the [Getting Started](https://docs.nvidia.com/nemo/gym/main/get-started) docs for a more comprehensive walkthrough.
-
-**Install NeMo Gym:**
-
-Requires [uv](https://docs.astral.sh/uv/getting-started/installation/) and Python 3.13.14+.
-
-```bash
-git clone git@github.com:NVIDIA-NeMo/Gym.git
-cd Gym
-uv venv --python 3.13.14 && source .venv/bin/activate
-uv sync
-```
-
-**Configure your model:**
-
-This quickstart uses OpenAI. NeMo Gym supports local and hosted inference — see [Configure Model](https://docs.nvidia.com/nemo/gym/main/model-server) for vLLM, Fireworks, OpenRouter, and others.
-
-Create `env.yaml` in the project root:
-```yaml
-policy_base_url: https://api.openai.com/v1
-policy_api_key: <your-openai-api-key>
-policy_model_name: gpt-4.1-2025-04-14
-```
-
-### Run Evaluation
-
-Run your agent on a set of tasks and score the results. This example uses a simple tool calling agent [`simple_agent`](responses_api_agents/simple_agent/README.md) with the [`mcqa`](resources_servers/mcqa/README.md) (multiple-choice Q&A) environment and its included example data.
-
-**1. Start servers**
-
-NeMo Gym uses local servers to coordinate your model, agent, and task verification. Start them first:
-
-```bash
-gym env start \
-    --resources-server mcqa \
-    --model-type openai_model
-```
-
-You should see three server instances starting:
-
-```text
-[1] mcqa (resources_servers/mcqa)
-[2] mcqa_simple_agent (responses_api_agents/simple_agent)
-[3] policy_model (responses_api_models/openai_model)
-```
-
-**2. Evaluate your agent**
-
-In a new terminal, run your agent on a single task to verify everything works:
-
-```bash
-source .venv/bin/activate
-
-gym eval run --no-serve \
-    --agent mcqa_simple_agent \
-    --input resources_servers/mcqa/data/example.jsonl \
-    --output results/mcqa_rollouts.jsonl \
-    --limit 5 \
-    --num-repeats 1
-```
-
-You should see a progress bar followed by aggregate metrics:
-
-```text
-Collecting rollouts: 100%|██████| 5/5 [01:22<00:00, 16.44s/it]
-
-Key metrics for mcqa_simple_agent:
-{
-    "mean/reward": 0.8,
-    "pass@1[avg-of-1]/accuracy": 80.0,
-    "pass@1/accuracy": 80.0
-}
-Finished rollout collection! View results at:
-Fully materialized inputs: results/mcqa_rollouts_materialized_inputs.jsonl
-Rollouts: results/mcqa_rollouts.jsonl
-Aggregate metrics: results/mcqa_rollouts_aggregate_metrics.json
-```
-
-For per-task pass rates, see the [`gym eval profile`](https://docs.nvidia.com/nemo/gym/main/reference/cli-commands) command.
-
-### Using the NeMo-Gym Container with VLM or Audio/Video Benchmarks
-
-The NeMo-Gym container omits packages with bundled codec libraries
-(`opencv-python-headless`, `torchvision`, `torchaudio`) to avoid shipping
-royalty-bearing binaries. If you are running VLM or audio/video benchmarks
-inside the container, restore them first:
-
-```bash
-bash docker/install_codec_deps.sh
-```
-
-This installs the packages at the same versions used during the container
-build. It is safe to run multiple times.
-
-### Next Steps
-
-- **[Browse Environments](#-available-environments)** — Browse available environments for evaluation and training.
-- **[Agents](https://docs.nvidia.com/nemo/gym/main/agent-server)** — Explore available agent harnesses and learn how to integrate your own.
-- **[Training](https://docs.nvidia.com/nemo/gym/tutorials/training-tutorials)** — Improve your agent or model with RL or fine-tuning.
-- **[Build Custom Environments](https://docs.nvidia.com/nemo/gym/main/environment-tutorials)** — Create your own evaluation or training environments.
-
-## 🧭 Environment Tutorials
-
-Learn how to build custom environments through hands-on tutorials. Here are popular starting points:
-
-| Name | Demonstrates |
-| ---- | ------------ |
-| [Single Step](https://docs.nvidia.com/nemo/gym/main/environment-tutorials/single-step-environment) | Basic single-step tool calling |
-| [Multi Step](https://docs.nvidia.com/nemo/gym/main/environment-tutorials/multi-step-environment) | Multi-step tool calling |
-| [Session State](https://docs.nvidia.com/nemo/gym/main/environment-tutorials/stateful-environment) | Session state management (in-memory) |
-| [Multi Reward](https://docs.nvidia.com/nemo/gym/main/build-verifiers/multi-reward-verification) | Multiple reward components for evaluation and multi-objective RL (e.g. GDPO) |
-
-See all [environment tutorials](https://docs.nvidia.com/nemo/gym/main/environment-tutorials) for additional patterns and advanced topics.
-
-## 📦 Available Environments
-
-Environments for training and evaluation.
-
-Each resources server includes example data, configuration files, and tests. See each server's README for details.
-
-The Dataset column links to publicly available datasets (e.g., on HuggingFace). A `-` means the train/validation data has not been publicly released yet, or that it is procedurally generated using a provided script. If no data is released yet, new data can be generated, or the environment can be used as a reference. Each server includes 5 example tasks in `data/example.jsonl`.
+The table below is the retained upstream environment inventory. It is not a list of Eval Harness support; use the [Local Eval Harness guide](fern/versions/latest/pages/get-started/eval-harness.mdx) for the harness scope.
 
 <!-- START_TRAINING_SERVERS_TABLE -->
 | Environment                                   | Domain                | Description                                                                                                                                                                                                                                                                                                                                                                                                                     | Value                                                                                                                                 | Train | Validation | License                                                   | Config                                                                                                                                                                                                                              | Dataset                                                                                                                                                        |
@@ -403,25 +268,15 @@ The Dataset column links to publicly available datasets (e.g., on HuggingFace). 
 | Xstest                                        | safety                | XSTest safety benchmark - exaggerated safety (over-refusal) evaluation                                                                                                                                                                                                                                                                                                                                                          | Evaluate model safety calibration between helpfulness and harmlessness                                                                | -     | -          | -                                                         | <a href='resources_servers/xstest/configs/xstest.yaml'>xstest.yaml</a>                                                                                                                                                              | -                                                                                                                                                              |
 <!-- END_TRAINING_SERVERS_TABLE -->
 
-## 📖 Documentation & Resources
+</details>
 
-- **[Documentation](https://docs.nvidia.com/nemo/gym/main)** - Technical reference docs
-- **[Environment Tutorials](https://docs.nvidia.com/nemo/gym/main/environment-tutorials)** - Build custom environments
-- **[Training Tutorials](https://docs.nvidia.com/nemo/gym/tutorials/training-tutorials)** - Train with NeMo Gym environments
-- **[API Reference](https://docs.nvidia.com/nemo/gym/main/api/reference/api-reference)** - Complete class and function reference
-- **[Observability](https://docs.nvidia.com/nemo/gym/main/observability)** - OpenTelemetry traces, metrics, and distributed tracing
+## Origin and licensing
 
+This fork builds on NVIDIA's NeMo Gym project. See the [Apache 2.0 license](LICENSE), [third-party attributions](ATTRIBUTIONS.md), and [upstream repository](https://github.com/NVIDIA-NeMo/Gym) for project history and licensing context.
 
-## 🤝 Community & Support
+## Citation
 
-We'd love your contributions! Here's how to get involved:
-
-- **[Report Issues](https://github.com/NVIDIA-NeMo/Gym/issues)** - Bug reports and feature requests
-- **[Contributing Guide](https://docs.nvidia.com/nemo/gym/main/contribute)** - How to contribute code, docs, new environments, or training framework integrations
-
-## 📚 Citations
-
-If you use NeMo Gym in your research, please cite it using the following BibTeX entry:
+If you use the retained NeMo Gym project in research, cite it with:
 
 ```bibtex
 @misc{nemo-gym,
@@ -433,6 +288,6 @@ If you use NeMo Gym in your research, please cite it using the following BibTeX 
 }
 ```
 
-## ⚠️ Notice and Disclaimer
+## External materials notice
 
 This software automatically retrieves, accesses or interacts with external materials. Those retrieved materials are not distributed with this software and are governed solely by separate terms, conditions and licenses. You are solely responsible for finding, reviewing and complying with all applicable terms, conditions, and licenses, and for verifying the security, integrity and suitability of any retrieved materials for your specific use case. This software is provided "AS IS", without warranty of any kind. The author makes no representations or warranties regarding any retrieved materials, and assumes no liability for any losses, damages, liabilities or legal consequences from your use or inability to use this software or any retrieved materials. Use this software and the retrieved materials at your own risk.

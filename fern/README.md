@@ -1,4 +1,36 @@
-# NeMo Gym — Fern Docs
+# Eval Harness documentation
+
+The fork's user guide is [Local Eval Harness](versions/latest/pages/get-started/eval-harness.mdx): installation,
+account login, the six commands, Skill comparisons, grading, and saved results. Start at the
+[repository overview](../README.md) for a short introduction. Development standards and acceptance records are in
+[the shared development context](../.agents/development/README.md).
+
+## Validate documentation in this fork
+
+Use Node.js 22+ and the same Fern version as the fork CI. From the repository root:
+
+```bash
+npm install --prefix .tools/fern fern-api@5.121.0
+(cd fern && ../.tools/fern/node_modules/.bin/fern check)
+python3 tests/unit_tests/test_fern_docs_links.py
+```
+
+These content checks require no model calls or Fern account login. The
+[Harness quality workflow](../.github/workflows/eval-harness.yml) runs them on pull requests and main.
+NVIDIA-site publishing and authenticated preview jobs are restricted to the upstream repository; this fork does not
+publish its guide to the NVIDIA documentation site.
+
+Edit the current content under `versions/latest/pages/`. The `get-started` folder is auto-discovered by
+[`versions/main.yml`](versions/main.yml), so the harness guide does not need a separate navigation entry.
+Keep the frozen version directories unchanged for ordinary fork documentation work.
+
+## Retained upstream documentation
+
+The rest of this directory contains NeMo Gym documentation and its original site configuration. The instructions
+below describe the NVIDIA site's build and publication workflow, including its organization-specific setup.
+
+<details>
+<summary>NeMo Gym Fern site workflow</summary>
 
 This directory holds the Fern MDX source for the NeMo Gym documentation site at **[docs.nvidia.com/nemo/gym](https://docs.nvidia.com/nemo/gym)**.
 
@@ -216,3 +248,5 @@ PR titles follow Conventional Commits (e.g. `docs(fern): add rollout collection 
 ## Reference
 
 - [Fern docs (upstream)](https://buildwithfern.com/learn/docs/getting-started/overview)
+
+</details>
