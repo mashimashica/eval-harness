@@ -83,11 +83,11 @@ Sol design/review proceeds independently; drafts below are saved work, not imple
 
 | Slice | Checkpoint branch | Saved commit | Saved contract / state |
 | --- | --- | --- | --- |
-| 02c | `checkpoint/pr-02c` | `4948b2c3f85ca82d94e44734de532c8769d7b04e` | Initial generation/input-protection source, accepted amendment and work record saved/read back; incomplete, review/tests open |
+| 02c | `checkpoint/pr-02c` | `66c01eefbce311592a65e9bba7d294318be3139b` | Cursor cleanup plus bound snapshot/executor provenance fixes saved/read back; latest runner tests pending, incomplete |
 | 04 | `checkpoint/design-pr04` | `a2a9f9adcc60a117ddafb5c58e8449936a76e793` | Grader contract plus exact rejected locks/audit evidence; draft, dependency CVE closure and real sandbox proof remain |
 | 06 | `checkpoint/design-pr06` | `5a35d85d0c6af63fd95c672fda2584d26be4ba70` | GDPval semantic contract and exact characterization fixtures saved; 26 baseline fake tests passed; implementation appendix pending |
 | 07 | `checkpoint/design-pr07` | `4ab6f321be221e5e8b393d6c905fbcd72512dc5b` | Stirrup generation contract draft saved; exact dependency resolution/audit pending |
-| 08 | `checkpoint/design-pr08` | `c7332a60fe7571014a0cefbee54be99a1977970c` | Protocol contract plus numeric and cross-stage occurrence fixtures saved; final PR05 API alignment pending |
+| 08 | `checkpoint/design-pr08` | `c8b923a80d778dae1dc5980c40107b57cae915fc` | Protocol, numeric and cross-stage occurrence fixtures saved; shared identity fields aligned with PR05/06 |
 
 PR02c contract SHA-256: `a755aa7ef611238258308146ac8d602e4b9debd1e644a1e9b795616c95ce86fc`.
 Its two files and ref were read back and matched the saved bytes/Git blobs before implementation started.
@@ -117,8 +117,12 @@ changed UTF-8 files through the required APIs with the exact user DCO. Ref and e
 were read back at `4948b2c3f85ca82d94e44734de532c8769d7b04e`, tree
 `e557804dcdac7e28ce3a6f3bacc2fb6962167b35`. No implementation bytes were lost.
 A fresh checkout and locked environment were created from that actual saved commit. Root now controls remote
-saves between Luna's bounded editing tasks. The next batch fixes typed Cursor cleanup failures and their tests.
-Remaining GDPval wrapper, runner review, fixture and handoff coverage work is recorded with the code.
+saves between Luna's bounded editing tasks. Subsequent saved commits `d8bfa21554bfbe4adb9f592ddfaece65d78fff0c`
+and `ec2b0862335ce9eb9da8ad7f36839c804b0b3663` fix late and preparation-time Cursor cleanup. The latter exact
+clean head passed all 13 Cursor tests and scoped Ruff; its two strict-mypy test callback errors are addressed in
+`66c01eefbce311592a65e9bba7d294318be3139b`, together with snapshot/provenance checks and meaningful fixture
+migrations. All four changed files and the new ref were read back exactly; this latest batch is not yet validated.
+Remaining GDPval wrapper, generation handoff, fixture and full-gate work is recorded with the code.
 
 PR04 dependency audit identified an unresolved official NLTK advisory
 [GHSA-8mgp-746c-j5xp / CVE-2026-81726](https://github.com/nltk/nltk/security/advisories/GHSA-8mgp-746c-j5xp).
