@@ -1,3 +1,8 @@
+<!--
+SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+SPDX-License-Identifier: Apache-2.0
+-->
+
 # PR04 BigCodeBench grader boundary evidence
 
 **State:** DRAFT — source review checkpoint, 2026-09-13 UTC. Primary-source facts are separated from proposed policy and remaining validation.
