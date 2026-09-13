@@ -1,0 +1,50 @@
+{
+  "schema_version": 1,
+  "evidence_class": "reviewed-capability-subset-real-Linux-partial-not-acceptance",
+  "formal_head": "2d022f7649f8ee159a63593028f74b23b5b665fd",
+  "formal_parent": "d3dc022f6eae7d2fbc12a1078ef7e8079e813782",
+  "ci_checkout": "fb6e9c963e7757f222d5093f24eea1f660f29143",
+  "ci_parents": ["6038a7828d62247ad98d000bc6e71c706f6d14a4", "2d022f7649f8ee159a63593028f74b23b5b665fd"],
+  "head_and_ci_tree": "10446b5420ad3765b0b5e1384757b45b75c616b9",
+  "run": "https://github.com/mashimashica/eval-harness/actions/runs/34754202308",
+  "candidate_job": 103715743292,
+  "completed": true,
+  "harness_tests": {"methods": 612, "seconds": 27.072, "result": "pass", "job": 103715704919},
+  "coverage": {"covered_lines": 11047, "statements": 11791, "missing_lines": 744, "excluded_lines": 13, "displayed_percent": "93.69", "required_percent": 96, "integer_gate": "100 * 11047 < 96 * 11791", "result": "fail"},
+  "strict_typing": {"result": "fail", "errors": 6, "error_files": 1, "checked_files": 120, "job": 103715704796, "scope": "legacy resource app, pending replacement not included in selective promotion"},
+  "passed": ["harness dependency audit", "build-tool dependency audit", "lint", "copyright", "hosted secret scan", "bubblewrap configure/build", "shell security.capability absence inspection"],
+  "secret_run": "https://github.com/mashimashica/eval-harness/actions/runs/34754202787",
+  "grader_audit": {"job": 103715704885, "result": "fail", "package": "nltk", "version": "3.10.3", "id": "PYSEC-2026-3740", "aliases": ["CVE-2026-81726", "GHSA-8mgp-746c-j5xp"], "fix_versions": [], "exception_or_version_spoof": false},
+  "bubblewrap": {
+    "version": "0.12.0",
+    "configure_compile_link": "pass",
+    "upstream_tests": {"passed": 1, "passed_utils_subtests": 26, "skipped": 5, "sandbox_subtests_passed": 0},
+    "observed_skip_reason": "bwrap: setting up uid map: Permission denied",
+    "reason_now_recorded": true,
+    "host_policy_cause": "unconfirmed; compatible with user-namespace/AppArmor mediation, but no allowlisted policy facts yet",
+    "actual_isolation_accepted": false,
+    "next": "Collect bounded allowlisted read-only OS/userns/LSM facts; do not change sysctls, profiles, capabilities, setuid or other host policy"
+  },
+  "grader_installer": {
+    "result": "first observed provisioning failure after shell capability check closes",
+    "elapsed_approx_seconds": 0.11,
+    "diagnostic": "install_bigcodebench_grader: provisioning failed",
+    "phase": "unknown because current CLI redacts all phases identically",
+    "source_fact": "_verify_bwrap retains PATH-dependent getcap at line 457; main masks ProvisioningError at lines 990-992",
+    "inference": "getcap is compatible with the elapsed failure, but not proved to be its cause",
+    "parent_read_only_check": "_load_policy_manifest and _verify_policy_inputs pass on exact formal head locally, without download or subprocess",
+    "initial_failed_runs": 1,
+    "corrective_attempts": 0,
+    "next": "Apply already approved strict direct xattr semantics and fixed allowlisted phase-only diagnostics; preserve metadata/hash/build-record checks"
+  },
+  "downloaded_evidence": [
+    {"artifact_id": 10315974005, "file": "bubblewrap-install.log", "sha256": "416a495bc60410b940f2129da61894d2eef7c59cf3174886d43e6770898ae98b"},
+    {"artifact_id": 10315974005, "file": "grader-install.log", "sha256": "32e7b6ee28ddaac0577858646226b7996c47a44bfdce54020fd017523a93bad4"},
+    {"artifact_id": 10316901616, "file": "coverage.json", "sha256": "88203313644fbafab159895a5eb58eabe07b8ff2f2a9ef0a50d3d41b383f951c"},
+    {"artifact_id": 10316093663, "file": "grader-lock-audit.json", "sha256": "3d18536f4070cd1eb90179203e84bf1d147c755bf44d577fddeb8de41532310a"}
+  ],
+  "local_artifact_directory": "/private/tmp/pr04-third-ci.P8OUMN",
+  "not_run": ["complete grader provisioning", "runtime manifest generation/readback", "actual public preflight", "hostile boundary acceptance", "all 1140 native parity"],
+  "failure_history_preserved": true,
+  "acceptance": "PR04 and migration remain unaccepted. Real isolation and dependent parity acceptance are held; independent planned implementation continues. No skip, mock, audit exception or failed gate counts as acceptance."
+}

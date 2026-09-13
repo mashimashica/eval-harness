@@ -108,6 +108,49 @@ Keep tests enabled, do not turn skip into pass or disable namespace restrictions
 do not change host sysctls/security policy. Real preflight, hostile fixtures and native
 parity remain independent required gates; none has yet run.
 
+### Third-Linux Python installer and read-only host diagnosis
+
+Sol reviewed formal `2d022f7649f8ee159a63593028f74b23b5b665fd`, candidate job
+`103715743292`. Shell xattr inspection and hosted secret scanning pass. The Python
+installer then fails after about 0.11 seconds with a generic provisioning diagnostic.
+Its `_verify_bwrap` still invokes PATH-dependent getcap at line 457. This is compatible
+with the observed failure, not proof of its cause. Replace that invocation with the same
+strict direct xattr semantics above: follow_symlinks=False, ENODATA alone passes, every
+return including empty bytes and every other exception fails. Keep metadata, ELF,
+version, hash and build-record checks. No PATH/package fallback is needed or permitted.
+
+Expose only fixed allowlisted phase codes on CLI failure, never str(exc), command,
+path, environment, captured stdout/stderr or traceback. The finite phase vocabulary is:
+platform-inputs, harness, policy, uv, bwrap-metadata, bwrap-version, bwrap-elf,
+bwrap-capability, bwrap-provenance, root-create, python-download, python-extract,
+python-identity, venv, sync, check, bootstrap, nltk, runtime-write. Unexpected exceptions
+must fail nonzero with fixed phase=internal. Test nested secret-bearing exceptions and
+prove no sensitive text escapes. This is diagnostic precision, not success or fallback.
+
+The five upstream namespace/sandbox test skips now disclose the actual reason:
+`bwrap: setting up uid map: Permission denied`. Zero sandbox subtests passed. This is
+compatible with AppArmor/userns mediation but the specific host cause is unconfirmed.
+For the next meaningful candidate CI run permit bounded, canonical JSON diagnostics
+with strict field grammars and only these read-only facts:
+
+- OS ID/VERSION_ID; uname system/release/machine, not nodename; real/effective UID/GID.
+- `/proc/sys/user/max_user_namespaces`, `/proc/sys/kernel/unprivileged_userns_clone`,
+  `/proc/sys/kernel/apparmor_restrict_unprivileged_userns`.
+- `/sys/module/apparmor/parameters/enabled` and `/sys/kernel/security/lsm`.
+- `/proc/self/uid_map`, `/proc/self/gid_map`, `/proc/self/setgroups`.
+- `/proc/self/status` fields Uid, Gid, NoNewPrivs, Seccomp, Seccomp_filters,
+  CapInh, CapPrm, CapEff, CapBnd and CapAmb only.
+- Current AppArmor label classified only as unconfined/confined/unavailable, not raw.
+- If loaded profiles are readable, boolean exact custom BUBBLEWRAP_PATH profile match;
+  unavailable must remain distinct from false. Do not print profile text or paths.
+
+No environment, cmdline, dmesg, audit logs, full status/profile bodies, credentials or
+path dumps. No sudo, sysctl write, profile change, privilege elevation, namespace
+weakening or skip-as-acceptance. Existing installer/preparation tests and candidate
+workflow are the finite allowed source scope. Luna is the only source writer; apply at
+a coherent boundary, save before validation, and obtain fixed-head independent review.
+Actual isolation and dependent parity acceptance stay held while independent work proceeds.
+
 ### Fixed uv for the mandatory fresh preflight dependency check
 
 Sol reviewed fixed `7282be1a` against frozen preflight item 1, which requires an actual

@@ -3,7 +3,7 @@
 
 # Migration state
 
-Updated: 2026-09-13T11:18:00Z
+Updated: 2026-09-13T11:33:00Z
 
 Control branch: `checkpoint/migration-control`.
 Procedure: [MIGRATION-WORKFLOW.md](MIGRATION-WORKFLOW.md).
@@ -12,20 +12,50 @@ This record preserves recoverable work; it does not declare the migration accept
 ## Latest recovery point: fixed Linux CI promoted; public boundary implementation
 
 Implementation `checkpoint/pr-04` is saved at
-`67888fb29663f087f0c1309ecf8b41ca77732e3f`, tree
-`71ab93328c0df4e4bbf107edc859119231afe092`. The installer capability/baseline subset
+`55fc13bbbe0904a6b9702005ea0c2e89856f9f70`, tree
+`79731b351927784ba8e3a9a21dfd593d1253e6b6`. This is the first test-only RED reproduction
+batch for the second public correction, atop `67888fb29663f087f0c1309ecf8b41ca77732e3f`
+(tree `71ab93328c0df4e4bbf107edc859119231afe092`). Production public code remains
+the unclosed `0d4a4b1e`. Luna continues the consolidated second correction, deadline
+11:58 UTC, with no failure-history reset. Do not promote that public code yet.
+
+The shell-installer capability/baseline subset
 is locally closed: parent inspected 17 preparation tests passing, strict typing for two
 files, Ruff lint/format, shell syntax, full tracked secret hook (5168 files, empty output)
 and an unrelated private negative control with one detected finding. Sol closes the
-source/test/baseline delta. This is not real Linux capability or public-boundary closure.
+source/test/baseline delta. Its separately reviewed integration is now formal Draft PR
+#43 head `2d022f7649f8ee159a63593028f74b23b5b665fd`, tree
+`10446b5420ad3765b0b5e1384757b45b75c616b9`. Parent verified all four changed paths,
+DCO, ref/tree/blob bytes and non-force promotion from `d3dc022f`, after exact-head
+16 preparation tests, two-file typing/Ruff/format, shell syntax and full tracked secret
+hook passed. No public draft source was included. The two histories remain distinct.
+See `reports/m2-capability-secret-closure.json` for this component, not PR acceptance.
+
+Actual third Linux run `34754202308` passes all 612 unit methods. Shell capability
+inspection and hosted secret scanning now pass. Verbose upstream output proves UID map
+setup is denied; five upstream sandbox/namespace scripts skip and supply no real isolation
+acceptance. The next grader installer fails with a generic provisioning diagnostic after
+about 0.11 seconds. Another PATH-dependent getcap remains in the Python installer; it is
+compatible with this failure, but the exact phase is not observable yet. Sol approves
+strict xattr replacement and fixed phase-only, allowlisted read-only environment facts,
+saved in `reports/m2-linux-gate-correction-contract.md`. Do not change host policy,
+sysctls or profiles. Actual sandbox and parity acceptance are held; independent source
+work continues. See `reports/m2-linux-third-validation.json`.
+
+Coverage remains 11047/11791 (93.69%), six old resource-app type errors remain on the
+selective formal head, and the one known NLTK CVE remains unfixed. Grader environment
+provisioning, public real preflight, hostile acceptance and all 1140 parity have not run.
+No partial success is PR04 or migration acceptance.
+
 The baseline has exactly 66 reviewed public fingerprints, no new exclusions. The history
 at `240d5d37` preserves the independent installer
 capability correction at `833df6b9b5484f7fe4882259d93b30c518a81182` plus two fixture
 fixes. The first 833 preparation check had 15/17 pass and two fixture errors; 240d
-reports 17/17 pass. Sol closes the installer source, with one test typing error still
-open; metadata mocks are not Linux proof. The public source remains exact `0d4a4b1e`,
+reports 17/17 pass. The remaining test typing error was closed at `67888fb2`;
+metadata mocks are not Linux proof. The public source remains exact `0d4a4b1e`,
 which Sol's first corrective review rejects with concrete probe/identity/caller defects.
-Full diagnostics and the consolidated review are pending; do not promote public source.
+Full diagnostics and the consolidated review are saved in the two public-correction
+reports; do not promote public source.
 
 At `0d4a4b1ebf4e5b82152fc69fa35afd0c0f969d6f` Luna returned the coherent twelve-path
 public correction at the save boundary; parent saved/read back source and work record
@@ -62,10 +92,9 @@ formal `d3dc022f` in `checkpoint/pr-04-linux-gate` at
 `2d022f7649f8ee159a63593028f74b23b5b665fd`, tree
 `10446b5420ad3765b0b5e1384757b45b75c616b9`. This is an integration checkpoint, not
 the main implementation resume point. All public code and its locator test are excluded.
-Its 16 preparation methods, two-file strict typing, Ruff and shell checks pass; full
-tracked hook is running. Only after that gate closes will parent update the existing
-formal branch non-force for real Linux validation. Main remains clean and unchanged.
-The eleven public-boundary groups remain pending fixed-head correction review.
+Its 16 preparation methods, two-file strict typing, Ruff, shell and full tracked hook
+passed before the formal non-force promotion. Main remains clean and unchanged.
+The consolidated fourteen public-boundary groups await the second correction and review.
 
 The original four-file draft
 adds public manifest/probe/run handling, connects evaluator/resource app to the shared
@@ -78,7 +107,7 @@ are accepted by Sol in `reports/m2-linux-gate-correction-contract.md`, saved on 
 used an incorrect nonexistent SHA and was refused; it was then moved to the exact saved
 `fe23c09b`, clean. No source or branch was changed by the refused command.
 
-Formal Draft PR #43 is now `d3dc022f6eae7d2fbc12a1078ef7e8079e813782`, tree
+The preceding Formal Draft PR #43 head was `d3dc022f6eae7d2fbc12a1078ef7e8079e813782`, tree
 `bbfce4c2824f40595b73797ec5211bba89b431c4`, from preceding `0c919a5c` with only the
 reviewed Ninja installer/test pair plus a parent work record. Sol closed that two-file
 delta and parent verified copied bytes against fixed `1df1ef8c`. No unaccepted public
