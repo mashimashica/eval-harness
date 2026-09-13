@@ -34,6 +34,7 @@ check_uv_version() {
     local uv_version="$1"
     printf '%s\n' "$uv_version" | awk '
         NR > 1 { bad = 1; next }
+        $0 ~ /\r/ { bad = 1; next }
         $0 == "uv 0.11.29" { ok = 1; next }
         $0 ~ /^uv 0\.11\.29 \([^()]*\)$/ {
             suffix = substr($0, length("uv 0.11.29") + 2)
@@ -71,11 +72,11 @@ uv_bin="$(readlink -f "$uv_bin")"
 [ -r /etc/os-release ] || die "Ubuntu release metadata is unavailable"
 grep -q '^ID=ubuntu$' /etc/os-release || die "Ubuntu is required"
 grep -q '^VERSION_ID="24.04"$' /etc/os-release || die "Ubuntu 24.04 is required"
-uv_version="$($uv_bin --version)"
+uv_version="$("$uv_bin" --version)"
 if ! check_uv_version "$uv_version"; then
     die "uv 0.11.29 is required"
 fi
-harness_identity="$($harness_python -I -B -c 'import platform; print(platform.python_version(), platform.machine())')"
+harness_identity="$("$harness_python" -I -B -c 'import platform; print(platform.python_version(), platform.machine())')"
 [ "$harness_identity" = "3.13.14 x86_64" ] || die "locked harness Python 3.13.14 x86-64 is required"
 [ "$(sha256sum "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)/requirements-bwrap-build.lock" | awk '{print $1}')" = "$BUILD_LOCK_SHA256" ] || die "build lock hash mismatch"
 
@@ -173,8 +174,8 @@ readonly meson_bin="$build_venv/bin/meson"
 readonly ninja_bin="$build_venv/bin/ninja"
 export PATH="$build_venv/bin:/usr/bin:/bin"
 export NINJA="$ninja_bin"
-[ "$($meson_bin --version)" = "1.9.1" ] || die "Meson 1.9.1 is required"
-[ "$($ninja_bin --version)" = "1.13.0" ] || die "Ninja 1.13.0 is required"
+[ "$("$meson_bin" --version)" = "1.9.1" ] || die "Meson 1.9.1 is required"
+[ "$("$ninja_bin" --version)" = "1.13.0" ] || die "Ninja 1.13.0 is required"
 "$meson_bin" setup "$build_dir" "$source_dir" \
     --prefix="$prefix" --buildtype=release \
     -Dselinux=disabled -Dman=disabled -Dtests=true \

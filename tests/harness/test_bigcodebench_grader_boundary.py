@@ -235,6 +235,8 @@ class BigCodeBenchBoundaryPreparationTests(unittest.TestCase):
             ("uv 0.11.29 (unclosed", False),
             ("uv 0.11.29 (internal\nnewline)", False),
             ("uv 0.11.29 (suffix) extra", False),
+            ("uv 0.11.29 (suffix)\r", False),
+            ("uv 0.11.29 (suf\rfix)", False),
             ("uv 0.11.29\nuv 0.11.29", False),
         )
         for output, expected in cases:
@@ -246,6 +248,54 @@ class BigCodeBenchBoundaryPreparationTests(unittest.TestCase):
                 check=False,
             )
             self.assertEqual(result.returncode == 0, expected, output)
+
+    def test_shell_version_commands_support_whitespace_paths(self) -> None:
+        script_path = Path(__file__).parents[2] / "scripts" / "ci" / "install_bubblewrap.sh"
+        script = script_path.read_text(encoding="utf-8")
+        for command in (
+            'uv_version="$("$uv_bin" --version)"',
+            'harness_identity="$("$harness_python" -I -B -c',
+            '[ "$("$meson_bin" --version)" = "1.9.1" ]',
+            '[ "$("$ninja_bin" --version)" = "1.13.0" ]',
+        ):
+            self.assertIn(command, script)
+
+        with tempfile.TemporaryDirectory(prefix="pr04 executable ") as temporary:
+            executable_dir = Path(temporary) / "private tools"
+            executable_dir.mkdir(mode=0o700)
+            uv = executable_dir / "uv tool"
+            harness = executable_dir / "harness python"
+            meson = executable_dir / "meson tool"
+            ninja = executable_dir / "ninja tool"
+            for executable, output in (
+                (uv, "uv 0.11.29 (fixture)"),
+                (harness, "3.13.14 x86_64"),
+                (meson, "1.9.1"),
+                (ninja, "1.13.0"),
+            ):
+                executable.write_text(f"#!/bin/sh\nprintf '%s\\n' '{output}'\n", encoding="utf-8")
+                executable.chmod(0o700)
+
+            command = """\
+uv_bin="$1"
+harness_python="$2"
+meson_bin="$3"
+ninja_bin="$4"
+uv_version="$("$uv_bin" --version)"
+harness_identity="$("$harness_python" -I -B -c 'ignored')"
+meson_version="$("$meson_bin" --version)"
+ninja_version="$("$ninja_bin" --version)"
+printf '%s|%s|%s|%s\\n' "$uv_version" "$harness_identity" "$meson_version" "$ninja_version"
+"""
+            result = subprocess.run(
+                ["bash", "-c", command, "capture", str(uv), str(harness), str(meson), str(ninja)],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                check=False,
+            )
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertEqual(result.stdout, "uv 0.11.29 (fixture)|3.13.14 x86_64|1.9.1|1.13.0\n")
 
     def test_nltk_archive_install_preserves_existing_and_cleans_partial_output(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:

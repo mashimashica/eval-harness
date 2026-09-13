@@ -3,6 +3,22 @@
 
 # PR04 implementation work record
 
+## Final shell preparation correction ready, 2026-09-13
+
+Base `bbf96b7e3616d670cf784b2087aff39eab8d5e74` passed 13 preparation tests
+(0.064 seconds), strict mypy three files, Ruff lint/format and shell syntax. Sol closed
+all archive preservation/cleanup and regression issues. Control evidence is
+`reports/m2-preparation-cleanup-closure.json` at `3e05c1d2fc58bce0422e6380b95ae3d51874c912`.
+
+Luna now changes only the shell installer and preparation tests: quote all four
+executable command substitutions, explicitly reject CR output, and add actual shell
+regressions for CR variants and uv/harness/Meson/Ninja executables in temporary paths
+containing spaces. Source pins, Python installer and closed security components are
+unchanged. Formatting and diff whitespace checks pass; post-save unit, scoped strict
+typing/lint/format and shell syntax are not yet run. Next: grouped validation on this
+saved head and Sol fixed-delta closure, followed by public attested launch/common callers.
+These remain local preparation checks, not real Linux, native parity or PR04 acceptance.
+
 ## Consolidated preparation follow-up, 2026-09-13
 
 Base `26a87464f980ab9bf911a120f2f1cf8bceaf4008`; source owner Luna. Parent/Sol
