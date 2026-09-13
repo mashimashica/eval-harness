@@ -3,7 +3,7 @@
 
 # Migration state
 
-Updated: 2026-09-13T02:24:33.248Z
+Updated: 2026-09-13T02:35:14.408Z
 
 Control branch: `checkpoint/migration-control`.
 Procedure: [MIGRATION-WORKFLOW.md](MIGRATION-WORKFLOW.md).
@@ -83,10 +83,10 @@ Sol design/review proceeds independently; drafts below are saved work, not imple
 
 | Slice | Checkpoint branch | Saved commit | Saved contract / state |
 | --- | --- | --- | --- |
-| 02c | `checkpoint/pr-02c` | `31307d471c3e240ad2f3a52aa7a5514607e8b175` | Exact clean head passes all 10 handoff integrations and Ruff; two test import typing fixes plus four independently reviewed source corrections in progress; tamper/fixture/full gates remain |
+| 02c | `checkpoint/pr-02c` | `2cd4b02547bda84d230b46a0fbb0c20404089f66` | Review correction batch saved; exact clean head passes 63 focused tests, strict mypy and Ruff; final observed-read regressions, tamper/fixture/full gates remain |
 | 04 | `checkpoint/design-pr04` | `6aaf5d751848c427ddc3ed6c9d905eac1a254d4c` | Runtime/source/worker/CI and rejected patch evidence saved; strict NLTK audit red; offline data licensing and vendoring evidence pending |
 | 05 | `checkpoint/design-pr05` | `01f781cbeaff00aee3fb0bea3597dee3bd58e2df` | Final evaluation/generation resume and protected-role APIs saved; independent PR02c source review saved; implementation pending |
-| 06 | `checkpoint/design-pr06` | `9948455de7b953de63053f389a837ce580b16e7d` | GDPval semantic/fixture/implementation appendix and existing rejected-patch review saved; final PR05 API documentation alignment in progress |
+| 06 | `checkpoint/design-pr06` | `f598dbe34b38dcb9f5bb8f9309283c88c7a2dab9` | Final GDPval API contract/appendix aligned with PR05 exact resume/events/aggregate interfaces; implementation pending |
 | 07 | `checkpoint/design-pr07` | `e0fab6018c59338f5301a13e29e6c5c39f5e3305` | Final Stirrup/provider/dependency/protected-role contract saved; real Apptainer CI and implementation remain |
 | 08 | `checkpoint/design-pr08` | `4579b77f14cb0b66e0fcdb207b6fe8b7af210686` | Final protocol/fixtures and 45+175 verified-prefix generation/resume contract saved; implementation pending |
 
@@ -139,7 +139,15 @@ passes all ten handoff integrations and Ruff; strict mypy identifies two test-on
 Sol's independent review at `01f781cbeaff00aee3fb0bea3597dee3bd58e2df` identifies four production corrections:
 strict framed Cursor tree sealing/restoration, correct post-execution integrity classification, log-persistence error
 preservation, and provenance capture before run-created paths. Luna is implementing these fixes with regressions in
-a bounded four-file batch. Tamper cases, fixture ports and all full acceptance gates remain open.
+a bounded four-file batch, saved/read back at `2cd4b02547bda84d230b46a0fbb0c20404089f66`. That exact clean head
+passes all 63 Cursor/handoff/generic tests, strict mypy of the four changed source/test files, and Ruff lint/format.
+A final two-file Cursor batch closes observed traversal identity/type changes and adds real execute regressions for
+missing/replaced inputs, post-execution digest errors, and log-write interruption. Tamper cases, fixture ports and
+all full acceptance gates remain open.
+
+The unchanged main dependency audit is saved in `contracts/pr02c-evidence/locked-dependency-audit.md` and its exact
+JSON report: 153 dependencies, zero findings/skips. This is dependency-only evidence from the identical dependency
+inputs at clean `66c01eef`; formal CI on the resulting implementation head is still required.
 
 PR04 dependency audit identified an unresolved official NLTK advisory
 [GHSA-8mgp-746c-j5xp / CVE-2026-81726](https://github.com/nltk/nltk/security/advisories/GHSA-8mgp-746c-j5xp).
