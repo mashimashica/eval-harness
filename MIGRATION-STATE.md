@@ -11,6 +11,16 @@ This record preserves recoverable work; it does not declare the migration accept
 
 ## Current status: autonomous continuation under revised issue-level stop rule
 
+Current saved/tested implementation is `bbf96b7e3616d670cf784b2087aff39eab8d5e74`,
+tree `05dc5cb7e8c06f65d73890f08b965a406f54428b`. All 13 preparation unit methods,
+strict mypy (three files), Ruff lint/format and shell syntax pass. Sol closes existing
+archive preservation and both owned partial-output cleanup branches, plus the earlier
+test defects and shell multiline rejection. Two shell-only findings remain: quoted
+executable capture for paths containing spaces, and embedded CR rejection. See
+`reports/m2-preparation-cleanup-closure.json`. One bounded Luna correction is assigned
+only the shell installer and preparation test file, before the public boundary/caller
+implementation. No real Linux or PR04 acceptance is implied.
+
 Sol's fixed-head review and parent evidence reconciliation are complete; see
 `reports/m2-preparation-revised-correction.json`. The original official uv refusal is
 closed with its two-failure history retained. Existing archive deletion is source-closed.

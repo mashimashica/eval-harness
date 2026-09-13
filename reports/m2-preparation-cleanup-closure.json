@@ -1,0 +1,51 @@
+{
+  "schema_version": 1,
+  "tested_commit": "bbf96b7e3616d670cf784b2087aff39eab8d5e74",
+  "tree": "05dc5cb7e8c06f65d73890f08b965a406f54428b",
+  "validation_owner": "Luna",
+  "results": {
+    "preparation_unit_tests": 13,
+    "unit_elapsed_seconds": 0.064,
+    "unit_result": "passed",
+    "strict_mypy_three_files": "passed",
+    "ruff_lint": "passed",
+    "ruff_format": "passed",
+    "bash_syntax": "passed"
+  },
+  "independent_reviewer": "Sol, read-only exact head",
+  "closed": [
+    "Existing regular archive and symlink preservation",
+    "Owned destination cleanup after partial copy and source-open failure",
+    "macOS realpath comparison, callback keyword signature and typed patch target",
+    "Shell multiline rejection including former awk END override",
+    "Build-venv Meson/Ninja identity selection, subject to remaining executable-path quoting"
+  ],
+  "remaining": [
+    {
+      "id": "pr04-preparation-shell-executable-quoting",
+      "priority": "P1",
+      "path": "scripts/ci/install_bubblewrap.sh",
+      "lines": [74, 78, 176, 177],
+      "cause": "Unquoted command substitutions word-split valid absolute uv/harness/Meson/Ninja executable paths containing spaces.",
+      "verification": "Exercise the actual saved capture/version-check commands with temporary executable paths containing spaces.",
+      "status": "requested in previous batch, still uncorrected; do not mark fixed from Linux's usual no-space paths"
+    },
+    {
+      "id": "pr04-preparation-shell-cr-output",
+      "priority": "P1",
+      "path": "scripts/ci/install_bubblewrap.sh",
+      "lines": [33, 45],
+      "cause": "The shell suffix character class allows embedded CR, unlike Python's explicit CR rejection.",
+      "verification": "Reject uv 0.11.29 (meta\\rdata) and other CR fixtures through the real shell validator.",
+      "status": "unresolved"
+    }
+  ],
+  "retained_failure_history": "Official uv suffix refusal had two failed corrective rounds, then the authorized revised approach passed at 26a87464. Do not reset or conflate that closed issue with these distinct shell findings.",
+  "next_owner": "Luna",
+  "next_scope": ["scripts/ci/install_bubblewrap.sh", "tests/harness/test_bigcodebench_grader_boundary.py"],
+  "next_completion": "Both regressions and scoped unit/type/lint/format/syntax pass at a saved fixed head with Sol closure; then implement the frozen public preflight/run and common callers without redesigning the generic runner.",
+  "integration_observation": "At unchanged eval_harness/runner.py:492, Evaluator preflight already precedes Executor preflight at 510 and benchmark.prepare at 526. No central runner reorder is needed for PR04.",
+  "real_linux_verified": false,
+  "native_parity_1140_verified": false,
+  "pr04_accepted": false
+}
