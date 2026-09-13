@@ -32,6 +32,10 @@ not checkpoint count. No new validation has run at this record-only save.
 
 ### First combined correction, parent review still requires closure
 
+The final batch now also bounds the initial dead-process drain by the existing phase
+deadline and adds a pre-START late-exit regression. All source and tests are saved before
+one combined verification and Sol review. No test expectations were weakened.
+
 The final corrective batch now carries absolute deadlines through cleanup helpers and
 checks the reaped SIGKILL result, with internal no-op-kill and termination-latency tests.
 The parent also requested preserving the pre-terminal phase deadline when a dead process

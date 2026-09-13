@@ -659,7 +659,7 @@ def _run_bounded_supervisor(
             process_alive = process.poll() is None
             if not process_alive:
                 if cleanup_deadline is None:
-                    cleanup_deadline = now + limits.teardown_seconds
+                    cleanup_deadline = min(deadline, now + limits.teardown_seconds)
                 deadline = cleanup_deadline
                 if now >= cleanup_deadline:
                     raise GraderInfrastructureError("trusted grader pipes did not close")

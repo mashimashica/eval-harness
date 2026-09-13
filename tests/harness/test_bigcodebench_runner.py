@@ -604,6 +604,31 @@ class TestBigCodeBenchRunner(unittest.TestCase):
         finally:
             fake.close_all()
 
+    def test_supervisor_does_not_extend_preterminal_phase_deadline_after_exit(self) -> None:
+        clock = _FakeClock()
+        fake = _PipePopen(b"", clock=clock, exit_at=4.0, hold_pipes=True)
+        selector = _ScriptedSelector(clock, [])
+        limits = GraderSandboxLimits(startup_seconds=5.0, teardown_seconds=5.0)
+        try:
+            with (
+                patch.object(subprocess, "Popen", return_value=fake),
+                patch.object(
+                    selectors,
+                    "DefaultSelector",
+                    return_value=cast(selectors.BaseSelector, selector),
+                ),
+                patch.object(sandbox_module, "_sample_process_tree", return_value=(set(), 0)),
+                patch.object(sandbox_module, "_descendant_pids", return_value=set()),
+                patch.object(time, "monotonic", side_effect=clock.monotonic),
+                patch.object(time, "sleep", side_effect=clock.sleep),
+                patch.object(sandbox_module, "DESCENDANT_SAMPLE_SECONDS", 4.0),
+            ):
+                with self.assertRaises(GraderInfrastructureError):
+                    sandbox_module._run_bounded_supervisor(("bwrap",), b"", KEY, limits)
+            self.assertEqual(clock.value, limits.startup_seconds)
+        finally:
+            fake.close_all()
+
     def test_supervisor_does_not_restart_cleanup_budget_after_successful_result(self) -> None:
         clock = _FakeClock()
         fake = _PipePopen(
