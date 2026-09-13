@@ -93,13 +93,20 @@ def _require_exact_int(value: object, field: str) -> int:
     return value
 
 
-def _require_string(value: object, field: str, maximum: int, *, nonempty: bool = False) -> str:
+def _require_string(
+    value: object,
+    field: str,
+    maximum: int,
+    *,
+    nonempty: bool = False,
+    forbid_nul: bool = False,
+) -> str:
     if type(value) is not str:
         raise _protocol_error(f"{field} must be a string")
     string = value
     if nonempty and not string:
         raise _protocol_error(f"{field} must not be empty")
-    if "\x00" in string:
+    if forbid_nul and "\x00" in string:
         raise _protocol_error(f"{field} contains a forbidden character")
     try:
         encoded = string.encode("utf-8")
@@ -125,8 +132,8 @@ class BigCodeBenchGradeRequest:
             raise _protocol_error("unsupported schema version")
         _require_string(self.code, "code", MAX_CODE_BYTES)
         _require_string(self.test_code, "test_code", MAX_TEST_CODE_BYTES)
-        _require_string(self.entry_point, "entry_point", MAX_IDENTIFIER_BYTES, nonempty=True)
-        _require_string(self.task_id, "task_id", MAX_IDENTIFIER_BYTES, nonempty=True)
+        _require_string(self.entry_point, "entry_point", MAX_IDENTIFIER_BYTES, nonempty=True, forbid_nul=True)
+        _require_string(self.task_id, "task_id", MAX_IDENTIFIER_BYTES, nonempty=True, forbid_nul=True)
 
     def as_dict(self) -> dict[str, object]:
         return {
@@ -173,7 +180,7 @@ def _canonical_json_bytes(value: Mapping[str, object]) -> bytes:
             separators=(",", ":"),
             allow_nan=False,
         ).encode("utf-8")
-    except (TypeError, ValueError, UnicodeEncodeError) as exc:
+    except (RecursionError, TypeError, ValueError, UnicodeEncodeError) as exc:
         raise _protocol_error("JSON value is not canonical") from exc
     return encoded
 
@@ -205,7 +212,7 @@ def _json_object(raw: bytes, *, context: str, maximum: int) -> dict[str, object]
         )
     except ProtocolError:
         raise
-    except (TypeError, ValueError, json.JSONDecodeError) as exc:
+    except (RecursionError, TypeError, ValueError, json.JSONDecodeError) as exc:
         raise _protocol_error(f"{context} is not valid JSON") from exc
     if type(parsed) is not dict:
         raise _protocol_error(f"{context} must be a JSON object")
@@ -265,15 +272,12 @@ def decode_bcbi(data: bytes) -> tuple[bytes, BigCodeBenchGradeRequest]:
         _require_exact_int(object_value["schema_version"], "schema_version"),
         _require_string(object_value["code"], "code", MAX_CODE_BYTES),
         _require_string(object_value["test_code"], "test_code", MAX_TEST_CODE_BYTES),
-        _require_string(object_value["entry_point"], "entry_point", MAX_IDENTIFIER_BYTES, nonempty=True),
-        _require_string(object_value["task_id"], "task_id", MAX_IDENTIFIER_BYTES, nonempty=True),
+        _require_string(
+            object_value["entry_point"], "entry_point", MAX_IDENTIFIER_BYTES, nonempty=True, forbid_nul=True
+        ),
+        _require_string(object_value["task_id"], "task_id", MAX_IDENTIFIER_BYTES, nonempty=True, forbid_nul=True),
     )
     return key, request
-
-
-# Friendly aliases used by the runner entrypoint and protocol tests.
-encode_input = encode_bcbi
-decode_input = decode_bcbi
 
 
 def _body_for_frame(frame_type: FrameType, body: Mapping[str, object]) -> bytes:
@@ -438,6 +442,7 @@ class AuthenticatedOutputParser:
     def __init__(self, key: bytes) -> None:
         self._key = _validate_key(key)
         self._buffer = bytearray()
+        self._received_bytes = 0
         self._complete: AuthenticatedFrame | None = None
         self._expect_start = True
 
@@ -458,10 +463,11 @@ class AuthenticatedOutputParser:
     def feed(self, chunk: bytes) -> tuple[AuthenticatedFrame, ...]:
         if type(chunk) is not bytes:
             raise _protocol_error("output chunk must be bytes")
+        if self._received_bytes + len(chunk) > MAX_OUTPUT_BYTES:
+            raise _protocol_error("output exceeds its size limit")
+        self._received_bytes += len(chunk)
         if self._complete is not None and chunk:
             raise _protocol_error("output contains trailing data")
-        if len(self._buffer) + len(chunk) > MAX_OUTPUT_BYTES:
-            raise _protocol_error("output exceeds its size limit")
         self._buffer.extend(chunk)
         frames: list[AuthenticatedFrame] = []
         while True:
@@ -500,9 +506,6 @@ def parse_authenticated_output(data: bytes, key: bytes) -> AuthenticatedFrame:
     return parser.finish()
 
 
-parse_bcbo = parse_authenticated_output
-
-
 __all__ = [
     "AuthenticatedFrame",
     "AuthenticatedOutputParser",
@@ -524,13 +527,10 @@ __all__ = [
     "PROTOCOL_VERSION",
     "ProtocolError",
     "decode_bcbi",
-    "decode_input",
     "encode_bcbi",
     "encode_error",
-    "encode_input",
     "encode_result",
     "encode_signal",
     "encode_start",
     "parse_authenticated_output",
-    "parse_bcbo",
 ]

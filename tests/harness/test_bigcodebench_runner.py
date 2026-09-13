@@ -12,6 +12,7 @@ import unittest
 from pathlib import Path
 
 from eval_harness.bigcodebench_runner import (
+    MAX_OUTPUT_BYTES,
     OUTPUT_FRAME_OVERHEAD,
     OUTPUT_HEADER_SIZE,
     AuthenticatedFrame,
@@ -94,6 +95,15 @@ class TestBigCodeBenchRunner(unittest.TestCase):
             BigCodeBenchGradeRequest(1, "x" * (2 * 1024 * 1024 + 1), "", "entry", "task")
         with self.assertRaises(ProtocolError):
             BigCodeBenchGradeRequest(1, "", "", "", "task")
+
+        nul_request = BigCodeBenchGradeRequest(1, "before\x00after", "test\x00code", "answer", "task")
+        nul_key, decoded_nul_request = decode_bcbi(encode_bcbi(nul_request, KEY))
+        self.assertEqual(nul_key, KEY)
+        self.assertEqual(decoded_nul_request, nul_request)
+        with self.assertRaises(ProtocolError):
+            BigCodeBenchGradeRequest(1, "", "", "answer\x00", "task")
+        with self.assertRaises(ProtocolError):
+            BigCodeBenchGradeRequest(1, "", "", "answer", "task\x00")
 
     def test_bcbi_rejects_duplicate_unknown_noncanonical_and_invalid_utf8(self) -> None:
         payloads = (
@@ -183,6 +193,19 @@ class TestBigCodeBenchRunner(unittest.TestCase):
         oversized = b"{" + b"a" * 20_000 + b"}"
         with self.assertRaises(ProtocolError):
             parse_authenticated_output(frame_with_body(KEY, 0, FrameType.ERROR, oversized), KEY)
+
+        parser = AuthenticatedOutputParser(KEY)
+        parser.feed(encode_start(KEY))
+        remaining = MAX_OUTPUT_BYTES - len(encode_start(KEY))
+        pending = frame_with_body(KEY, 1, FrameType.RESULT, b" " * (MAX_OUTPUT_BYTES - OUTPUT_FRAME_OVERHEAD))
+        with self.assertRaisesRegex(ProtocolError, "^output exceeds its size limit$"):
+            parser.feed(pending[: remaining + 1])
+
+    def test_bcbi_normalizes_recursion_errors(self) -> None:
+        nested = b"[" * 2_000 + b"]" * 2_000
+        payload = b'{"schema_version":1,"code":' + nested + b',"test_code":"","entry_point":"answer","task_id":"t"}'
+        with self.assertRaises(ProtocolError):
+            decode_bcbi(input_with_payload(KEY, payload))
 
 
 if __name__ == "__main__":
