@@ -22,7 +22,7 @@ import subprocess
 import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Final, Iterator, Sequence
+from typing import IO, Final, Iterator, Sequence
 
 from eval_harness.bigcodebench_runner import (
     INPUT_FIXED_BYTES,
@@ -629,6 +629,7 @@ def _run_bounded_supervisor(
         deadline = now + limits.startup_seconds
         next_sample = now
         post_exit_deadline: float | None = None
+        registered_streams: dict[str, IO[bytes]] = {"stdout": stdout, "stderr": stderr}
         for bound_stream, event_mask, name in (
             (stdout, selectors.EVENT_READ, "stdout"),
             (stderr, selectors.EVENT_READ, "stderr"),
@@ -637,6 +638,7 @@ def _run_bounded_supervisor(
             selector.register(bound_stream, event_mask, name)
         os.set_blocking(stdin.fileno(), False)
         if stdin_open:
+            registered_streams["stdin"] = stdin
             selector.register(stdin, selectors.EVENT_WRITE, "stdin")
         else:
             stdin.close()
@@ -685,7 +687,11 @@ def _run_bounded_supervisor(
             ready_events = selector.select(timeout)
             for selected_key, mask in ready_events:
                 stream_name = selected_key.data
-                ready_stream = selected_key.fileobj
+                if not isinstance(stream_name, str):
+                    raise GraderInfrastructureError("selector returned an unknown stream")
+                ready_stream = registered_streams.get(stream_name)
+                if ready_stream is None:
+                    raise GraderInfrastructureError("selector returned an unknown stream")
                 if stream_name == "stdin" and mask & selectors.EVENT_WRITE:
                     try:
                         written = os.write(ready_stream.fileno(), input_bytes[input_offset:])

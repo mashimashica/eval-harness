@@ -9,6 +9,7 @@ import hashlib
 import hmac
 import json
 import os
+import selectors
 import stat
 import subprocess
 import sys
@@ -505,7 +506,7 @@ class TestBigCodeBenchRunner(unittest.TestCase):
                 "sandbox I/O",
             ),
             (
-                patch.object(sandbox_module.selectors, "DefaultSelector", side_effect=OSError("selector")),
+                patch.object(selectors, "DefaultSelector", side_effect=OSError("selector")),
                 "sandbox I/O",
             ),
         ):
@@ -519,7 +520,12 @@ class TestBigCodeBenchRunner(unittest.TestCase):
                     ):
                         with self.assertRaisesRegex(GraderInfrastructureError, message):
                             sandbox_module._run_bounded_supervisor(("bwrap",), b"", KEY, GraderSandboxLimits())
-                    self.assertTrue(fake.killed)
+                        self.assertTrue(fake.killed)
+                        self.assertIsNotNone(fake.returncode)
+                        self.assertGreaterEqual(fake.poll_calls, 2)
+                        self.assertTrue(fake.stdin.closed)
+                        self.assertTrue(fake.stdout.closed)
+                        self.assertTrue(fake.stderr.closed)
                 finally:
                     fake.close_writers()
 
