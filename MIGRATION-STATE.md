@@ -3,13 +3,36 @@
 
 # Migration state
 
-Updated: 2026-09-13T07:58:00Z
+Updated: 2026-09-13T08:42:27Z
 
 Control branch: `checkpoint/migration-control`.
 Procedure: [MIGRATION-WORKFLOW.md](MIGRATION-WORKFLOW.md).
 This record preserves recoverable work; it does not declare the migration accepted.
 
-## Current status: paused by explicit user instruction; await explicit resume
+## Current status: explicitly resumed; verify the saved second preparation correction
+
+The user explicitly resumed at `2026-09-13T08:42:27Z`. The work interval ends no later
+than `2026-09-13T10:12:27Z` (90 minutes). No failure count is reset by this resumption.
+One preparation corrective round failed; the second saved correction remains unverified.
+If its verification/review leaves the same issue, save and stop under the existing rule.
+
+Fresh remote-ref and local recovery checks agree on implementation
+`checkpoint/pr-04` at `7757c8ae9cd18681c789e2294d02597bcc4c39e3`, tree
+`dd4c83b28cbbc138236154c7aee0714f4339cec1`, and prior control head
+`6e8a5f94e6ca2793a0310d24905e4ff0a75dd7fd`. All worktrees were clean; root remains
+unchanged on main. Reuse Luna (source implementation) and Sol (read-only review); parent
+owns consolidated verification, evidence, checkpoints and acceptance. No grandchildren
+or concurrent implementation PRs. Closed host/bootstrap evidence and fixed design inputs
+are reused without reopening their investigation.
+
+First action: parent runs preparation unit/mypy/Ruff/shell checks on the exact saved
+implementation; Sol independently reviews the fixed second-correction delta. No new
+implementation or real installation starts before that judgment. If closed, continue
+the existing PR04 fixed Linux/common-callers/legacy-removal/real-boundary/parity plan,
+then the saved PR05–11 designs. All CVE, quality, final contract deletion, no-model,
+no-merge/release and 15-minute durable-save constraints remain unchanged.
+
+## Previous pause state, 2026-09-13T07:57:15Z
 
 The user requested a safe pause because communication is unstable. Do not start new
 implementation, validation, review or external jobs until the user explicitly resumes.
