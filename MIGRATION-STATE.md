@@ -3,7 +3,7 @@
 
 # Migration state
 
-Updated: 2026-09-13T10:32:00Z
+Updated: 2026-09-13T10:47:00Z
 
 Control branch: `checkpoint/migration-control`.
 Procedure: [MIGRATION-WORKFLOW.md](MIGRATION-WORKFLOW.md).
@@ -12,10 +12,13 @@ This record preserves recoverable work; it does not declare the migration accept
 ## Latest recovery point: fixed Linux CI promoted; public boundary implementation
 
 Implementation `checkpoint/pr-04` is saved at
-`3978d08e6226dc48f3b16c4fa304231bec56dbae`, tree
-`5c6d397b7644648fd7e5e70870d127d9fa5286c9`. Parent interrupted at the 15-minute
-save boundary and saved/read back the unfinished two-file host/app security correction
-at 10:26 UTC. It is not validated or independently reviewed. The preceding
+`0d4a4b1ebf4e5b82152fc69fa35afd0c0f969d6f`, tree
+`b6fef0101fad38cbbdf22c71a3aecd7ed2ed101c`. Luna returned the coherent twelve-path
+public correction at the save boundary; parent saved/read back source and work record
+before any validation. It includes the trusted setup-root resolver, identity/inventory/
+probe changes, common callers, registry/test ports and entire legacy setup-file deletion.
+Tests, strict typing, Ruff and independent closure review have not run on this head.
+The prior two-file WIP remains reachable at `3978d08e`. The preceding
 `1df1ef8cbf363c7e69a43d119f816a6666f79b36` adds ten-file legacy/test ports
 and exact Ninja identity checking to the preceding four-file public draft. Parent's
 first grouped check ran 114 unit methods: 112 pass, one new undefined test variable
@@ -32,9 +35,10 @@ strict public types, accepted production limits, cancellation ownership and lega
 removal. Current drafts are not promoted to the real sandbox job. The latest setup
 draft reintroduced an explicit compatibility wrapper and evaluator's ignored legacy
 argument remains; preserving old spellings is rejected, not accepted as a migration.
-Luna retains the consolidated corrections and will resume the saved WIP after the
-interval checkpoint. Sol closed the finite registry/locator scope and Ninja-only delta;
-the eleven public-boundary groups remain pending fixed-head correction review.
+Luna next applies the independently approved capability inspection and exact secret
+baseline, then performs grouped validation by 11:15 UTC, saving within 15 minutes.
+Sol reviews the returned fixed public correction read-only; parent reconciles evidence.
+The eleven public-boundary groups remain pending fixed-head correction review.
 
 The original four-file draft
 adds public manifest/probe/run handling, connects evaluator/resource app to the shared
