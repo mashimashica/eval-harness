@@ -46,3 +46,38 @@ Add only `tests/harness/test_benchmark_evaluator_edge_coverage.py` and `tests/ha
 ## Native arguments for already-authorized attested fixture limits
 
 The appendix's fixed native call `untrusted_check(code, test_code, entry_point, 8192, 6144, 10)` describes production limits. Contract sections on limits already authorize smaller values only in dedicated, attested test specifications. The worker therefore passes its validated AS/DATA/STACK byte limits converted to positive whole MiB into those same three native arguments. Reject non-integral MiB values before native import. The production call remains exactly 8192/6144/10, and public requests, YAML and environment cannot select smaller limits. This avoids the unchanged vendored child trying to raise inherited hard limits during a smaller test fixture. No default native timing or other metric argument changes. Sol reviewed this finite clarification with the worker correction.
+
+## Read-only implicit root and device filesystem
+
+During independent review of host checkpoint `64e9855b796047d351e67c2b14006eccf5ad2414`,
+Sol identified that bubblewrap's implicit root and `--dev` filesystem are separate tmpfs
+mounts without the private scratch size limits. Leaving them writable permits candidate
+files outside the intended bounded `/tmp` and `/dev/shm` trees. Per-file rlimits and process
+RSS do not establish a bound for that aggregate file storage.
+
+Astra approves this finite correction to realize the existing filesystem/resource boundary:
+after all mountpoints, directories, binds and symlinks have been created, the sole command
+builder adds nonrecursive `--remount-ro /dev` followed by `--remount-ro /`. Nested `/tmp` and
+`/dev/shm` remain separately mounted writable tmpfs with their original size limits;
+the private devpts mount retains its device semantics. No new writable host bind, sandbox
+fallback, dependency exemption, or changed native metric is introduced.
+
+The exact-operation unit fixture must include both operations, and the real Linux probe
+must verify that root, `/etc`, unselected `/opt` siblings and `/dev` reject regular-file
+creation while bounded private scratch still works. This is an additional acceptance
+requirement, not proof that it has passed. All prior accepted worker/protocol facts remain
+scoped to their immutable source, and final policy/manifest hashes must bind the final code.
+
+For the installed `RLIMIT_NPROC` baseline, count Linux tasks belonging to the real UID:
+sum the positive `Threads` value for matching first `Uid` values in numeric process status
+records. Proc-directory ownership and process-leader count do not measure that kernel limit.
+Transient disappearance may be ignored; unreadable or malformed live records fail closed.
+
+Root read the exact pinned upstream source to confirm this amendment: bubblewrap commit
+`2a76602a8c71f36c1527cf9fc3417d9149822e0c`, `bubblewrap.c` blob
+`9192550540d3c4f173a7308c11e518e18ef4c303` (root tmpfs at lines 3232–3260 and
+device/devpts mounts at 1431–1478), and `bwrap.xml` blob
+`ca717abd6001a4e07557253578d41b0e813aaf31` (next-tmpfs-only size and nonrecursive
+remount semantics at 277–285 and 315–316). Source URLs:
+[implementation](https://github.com/containers/bubblewrap/blob/2a76602a8c71f36c1527cf9fc3417d9149822e0c/bubblewrap.c)
+and [option reference](https://github.com/containers/bubblewrap/blob/2a76602a8c71f36c1527cf9fc3417d9149822e0c/bwrap.xml).

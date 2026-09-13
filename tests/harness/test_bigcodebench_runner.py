@@ -10,12 +10,15 @@ import hmac
 import json
 import os
 import stat
+import subprocess
 import sys
 import tempfile
+import threading
 import types
 import unittest
 from collections.abc import Callable
 from pathlib import Path
+from typing import BinaryIO, cast
 from unittest.mock import patch
 
 import eval_harness.bigcodebench_runner as runner_module
@@ -30,6 +33,7 @@ from eval_harness.bigcodebench_runner import (
     BigCodeBenchGradeRequest,
     FrameType,
     GraderNativeResult,
+    INPUT_FIXED_BYTES,
     LimitKind,
     NativeSignal,
     NativeStatus,
@@ -75,12 +79,75 @@ def frame_with_body(key: bytes, sequence: int, frame_type: FrameType, body: byte
     return header + tag + body
 
 
+class _FakePopen:
+    """Small pipe-backed process double for host selector-loop tests."""
+
+    def __init__(self, output: bytes, *, hold_open: bool = False) -> None:
+        input_read, input_write = os.pipe()
+        output_read, output_write = os.pipe()
+        error_read, error_write = os.pipe()
+        self.stdin: BinaryIO = os.fdopen(input_write, "wb", buffering=0)
+        self.stdout: BinaryIO = os.fdopen(output_read, "rb", buffering=0)
+        self.stderr: BinaryIO = os.fdopen(error_read, "rb", buffering=0)
+        self.pid = 424242
+        self.returncode: int | None = None
+        self.killed = False
+        self._input_read = input_read
+        self._output_write = output_write
+        self._error_write = error_write
+        self._output = output
+        self._hold_open = hold_open
+        self._fd_lock = threading.Lock()
+        self._thread = threading.Thread(target=self._emit, daemon=True)
+        self._thread.start()
+
+    def _close_fd(self, name: str) -> None:
+        with self._fd_lock:
+            descriptor = cast(int, getattr(self, name))
+            if descriptor >= 0:
+                try:
+                    os.close(descriptor)
+                except OSError:
+                    pass
+                setattr(self, name, -1)
+
+    def _emit(self) -> None:
+        try:
+            offset = 0
+            while offset < len(self._output):
+                try:
+                    offset += os.write(self._output_write, self._output[offset:])
+                except BrokenPipeError:
+                    break
+        finally:
+            self._close_fd("_output_write")
+            self._close_fd("_error_write")
+            self._close_fd("_input_read")
+            if not self._hold_open and not self.killed:
+                self.returncode = 0
+
+    def poll(self) -> int | None:
+        return self.returncode
+
+    def kill(self) -> None:
+        self.killed = True
+        self.returncode = -9
+        for name in ("_output_write", "_error_write", "_input_read"):
+            self._close_fd(name)
+
+
 class TestBigCodeBenchRunner(unittest.TestCase):
     def _sandbox_fixture(self, root: Path) -> GraderSandboxSpec:
         resource = root / "resource"
         venv = root / "venv"
         base = root / "base"
-        directories = (resource / "vendor", resource / "nltk_data", resource / "sandbox_etc", venv / "bin", base / "bin")
+        directories = (
+            resource / "vendor",
+            resource / "nltk_data",
+            resource / "sandbox_etc",
+            venv / "bin",
+            base / "bin",
+        )
         for directory in directories:
             directory.mkdir(parents=True, exist_ok=True)
         for name in ("hosts", "nsswitch.conf", "resolv.conf", "passwd", "group"):
@@ -97,29 +164,124 @@ class TestBigCodeBenchRunner(unittest.TestCase):
     def test_bwrap_policy_is_explicit_read_only_and_credential_free(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             spec = self._sandbox_fixture(Path(temporary))
-            command = sandbox_module._build_bwrap_command(spec, process_limit=123)
-        self.assertEqual(command[0], str(spec.bwrap_path))
-        self.assertIn("--unshare-user", command)
-        self.assertIn("--unshare-ipc", command)
-        self.assertIn("--unshare-pid", command)
-        self.assertIn("--unshare-net", command)
-        self.assertIn("--unshare-uts", command)
-        self.assertIn("--disable-userns", command)
-        self.assertIn("--cap-drop", command)
-        self.assertIn("--clearenv", command)
-        self.assertIn("--new-session", command)
-        self.assertIn("--die-with-parent", command)
-        ro_binds = tuple(
-            tuple(command[index : index + 3]) for index, value in enumerate(command) if value == "--ro-bind"
-        )
-        self.assertIn(("--ro-bind", "/usr", "/usr"), ro_binds)
-        self.assertNotIn("--unshare-all", command)
-        self.assertNotIn("--share-net", command)
-        self.assertNotIn("--not-a-security-boundary", command)
-        self.assertIn("--setenv", command)
-        self.assertNotIn("PYTHONPATH", command)
-        self.assertEqual(command[command.index("--processes") + 1], "123")
-        self.assertEqual(command[-6:], ("--file-bytes", "67108864", "--open-files", "256", "--processes", "123"))
+            expected_bwrap = spec.bwrap_path.resolve()
+            expected_venv = (Path(temporary) / "venv").resolve()
+            expected_base = (Path(temporary) / "base").resolve()
+            expected_resource = (Path(temporary) / "resource").resolve()
+            expected_runner = (Path(sandbox_module.__file__).with_name("bigcodebench_runner.py")).resolve()
+            expected = [
+                str(expected_bwrap),
+                "--unshare-user",
+                "--unshare-ipc",
+                "--unshare-pid",
+                "--unshare-net",
+                "--unshare-uts",
+                "--disable-userns",
+                "--cap-drop",
+                "ALL",
+                "--clearenv",
+                "--new-session",
+                "--die-with-parent",
+                "--proc",
+                "/proc",
+                "--dev",
+                "/dev",
+                "--size",
+                "536870912",
+                "--tmpfs",
+                "/tmp",
+                "--size",
+                "67108864",
+                "--tmpfs",
+                "/dev/shm",
+            ]
+            for directory in (
+                "/tmp/home",
+                "/tmp/work",
+                "/tmp/cache",
+                "/tmp/config",
+                "/tmp/data",
+                "/tmp/matplotlib",
+                "/tmp/numba",
+                "/tmp/torch",
+                "/tmp/huggingface",
+                "/tmp/joblib",
+            ):
+                expected.extend(("--dir", directory))
+            expected.extend(("--dir", "/etc"))
+            expected.extend(("--ro-bind", str(expected_venv), str(expected_venv)))
+            expected.extend(("--ro-bind", str(expected_base), str(expected_base)))
+            expected.extend(("--ro-bind", str(expected_runner), "/opt/bigcodebench/bigcodebench_runner.py"))
+            expected.extend(("--ro-bind", str(expected_resource / "vendor"), "/opt/bigcodebench/vendor"))
+            expected.extend(("--ro-bind", str(expected_resource / "nltk_data"), "/opt/bigcodebench/nltk_data"))
+            expected.extend(("--ro-bind", "/usr", "/usr"))
+            for target, link in (
+                ("usr/bin", "/bin"),
+                ("usr/sbin", "/sbin"),
+                ("usr/lib", "/lib"),
+                ("usr/lib64", "/lib64"),
+            ):
+                expected.extend(("--symlink", target, link))
+            for name in ("hosts", "nsswitch.conf", "resolv.conf", "passwd", "group"):
+                expected.extend(("--ro-bind", str(expected_resource / "sandbox_etc" / name), f"/etc/{name}"))
+            expected.extend(("--remount-ro", "/", "--remount-ro", "/dev"))
+            environment = (
+                ("PATH", f"{expected_venv / 'bin'}:/usr/bin:/bin"),
+                ("LANG", "C.UTF-8"),
+                ("LC_ALL", "C.UTF-8"),
+                ("TZ", "UTC"),
+                ("HOME", "/tmp/home"),
+                ("TMPDIR", "/tmp"),
+                ("MPLBACKEND", "Agg"),
+                ("NLTK_DATA", "/opt/bigcodebench/nltk_data"),
+                ("BIGCODEBENCH_NLTK_OFFLINE", "bigcodebench-bwrap-v1"),
+                ("XDG_CACHE_HOME", "/tmp/cache"),
+                ("XDG_CONFIG_HOME", "/tmp/config"),
+                ("XDG_DATA_HOME", "/tmp/data"),
+                ("MPLCONFIGDIR", "/tmp/matplotlib"),
+                ("NUMBA_CACHE_DIR", "/tmp/numba"),
+                ("TORCH_HOME", "/tmp/torch"),
+                ("HF_HOME", "/tmp/huggingface"),
+                ("JOBLIB_TEMP_FOLDER", "/tmp/joblib"),
+                ("CUDA_VISIBLE_DEVICES", ""),
+                ("TOKENIZERS_PARALLELISM", "false"),
+                ("OMP_NUM_THREADS", "1"),
+                ("OPENBLAS_NUM_THREADS", "1"),
+                ("MKL_NUM_THREADS", "1"),
+                ("VECLIB_MAXIMUM_THREADS", "1"),
+                ("NUMEXPR_NUM_THREADS", "1"),
+                ("BLIS_NUM_THREADS", "1"),
+                ("RAYON_NUM_THREADS", "1"),
+                ("TF_NUM_INTRAOP_THREADS", "1"),
+                ("TF_NUM_INTEROP_THREADS", "1"),
+            )
+            for name, value in environment:
+                expected.extend(("--setenv", name, value))
+            expected.extend(("--chdir", "/tmp/work", str(expected_venv / "bin" / "python"), "-I", "-B"))
+            expected.extend(("/opt/bigcodebench/bigcodebench_runner.py",))
+            expected.extend(
+                (
+                    "--cpu-soft-seconds",
+                    "245",
+                    "--cpu-hard-seconds",
+                    "250",
+                    "--address-space-bytes",
+                    "8589934592",
+                    "--data-bytes",
+                    "6442450944",
+                    "--stack-bytes",
+                    "10485760",
+                    "--file-bytes",
+                    "67108864",
+                    "--open-files",
+                    "256",
+                    "--processes",
+                    "123",
+                )
+            )
+            with patch.object(sandbox_module, "_SYSTEM_OPTIONAL_MOUNTS", ()):
+                command = sandbox_module._build_bwrap_command(spec, process_limit=123)
+            self.assertEqual(command, tuple(expected))
 
     def test_policy_rejects_mounts_under_forbidden_untrusted_root(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
@@ -149,12 +311,150 @@ class TestBigCodeBenchRunner(unittest.TestCase):
                         pass
 
     def test_supervisor_rejects_oversized_input_before_launch(self) -> None:
-        with patch.object(sandbox_module.subprocess, "Popen") as popen:
+        with patch.object(subprocess, "Popen") as popen:
             with self.assertRaisesRegex(GraderInfrastructureError, "input exceeds"):
                 sandbox_module._run_bounded_supervisor(
-                    ("bwrap",), b"x" * (8 * 1024**2 + 1), KEY, GraderSandboxLimits()
+                    ("bwrap",), b"x" * (8 * 1024**2 + INPUT_FIXED_BYTES + 1), KEY, GraderSandboxLimits()
                 )
         popen.assert_not_called()
+
+    def test_supervisor_input_limit_counts_payload_not_fixed_frame(self) -> None:
+        limits = GraderSandboxLimits(stdin_bytes=64)
+        sandbox_module._validate_input_size(b"x" * (64 + INPUT_FIXED_BYTES), limits)
+        with self.assertRaisesRegex(GraderInfrastructureError, "input exceeds"):
+            sandbox_module._validate_input_size(b"x" * (65 + INPUT_FIXED_BYTES), limits)
+
+    def _run_fake_supervisor(
+        self,
+        output: bytes,
+        *,
+        samples: list[tuple[set[int], int]] | None = None,
+        hold_open: bool = False,
+        limits: GraderSandboxLimits | None = None,
+    ) -> tuple[GraderNativeResult, _FakePopen]:
+        fake = _FakePopen(output, hold_open=hold_open)
+        values = iter(samples or [(set(), 0)])
+        last_sample = (set(), 0)
+
+        def sample(_pid: int) -> tuple[set[int], int]:
+            nonlocal last_sample
+            try:
+                last_sample = next(values)
+            except StopIteration:
+                pass
+            return last_sample
+
+        with (
+            patch.object(subprocess, "Popen", return_value=fake),
+            patch.object(sandbox_module, "_sample_process_tree", side_effect=sample),
+            patch.object(sandbox_module, "_descendant_pids", return_value=set()),
+        ):
+            result = sandbox_module._run_bounded_supervisor(("bwrap",), b"", KEY, limits or GraderSandboxLimits())
+        return result, fake
+
+    def test_supervisor_returns_authenticated_result_and_waits_for_cleanup(self) -> None:
+        output = encode_start(KEY) + encode_result(KEY, NativeStatus.PASS)
+        with patch.object(sandbox_module, "_wait_for_cleanup", wraps=sandbox_module._wait_for_cleanup) as cleanup:
+            result, fake = self._run_fake_supervisor(output)
+        self.assertEqual(result, GraderNativeResult(NativeStatus.PASS))
+        self.assertFalse(fake.killed)
+        cleanup.assert_called_once()
+
+    def test_supervisor_maps_authenticated_error_and_cleans_trusted_process(self) -> None:
+        output = encode_error(KEY, "runner_internal", 0)
+        fake = _FakePopen(output)
+        with patch.object(sandbox_module, "_wait_for_cleanup", wraps=sandbox_module._wait_for_cleanup) as cleanup:
+            with (
+                patch.object(subprocess, "Popen", return_value=fake),
+                patch.object(sandbox_module, "_sample_process_tree", return_value=(set(), 0)),
+                patch.object(sandbox_module, "_descendant_pids", return_value=set()),
+            ):
+                with self.assertRaisesRegex(GraderInfrastructureError, "infrastructure error"):
+                    sandbox_module._run_bounded_supervisor(("bwrap",), b"", KEY, GraderSandboxLimits())
+        cleanup.assert_called_once()
+
+    def test_supervisor_enforces_live_candidate_process_cap(self) -> None:
+        output = encode_start(KEY)
+        result, fake = self._run_fake_supervisor(
+            output,
+            samples=[(set(), 0), ({99}, 0)],
+            hold_open=True,
+            limits=GraderSandboxLimits(process_headroom=1),
+        )
+        self.assertEqual(result, GraderNativeResult(None, LimitKind.PROCESSES))
+        self.assertTrue(fake.killed)
+
+    def test_supervisor_treats_prestart_process_cap_as_infrastructure(self) -> None:
+        fake = _FakePopen(b"", hold_open=True)
+        with (
+            patch.object(subprocess, "Popen", return_value=fake),
+            patch.object(sandbox_module, "_sample_process_tree", return_value=({99}, 0)),
+            patch.object(sandbox_module, "_descendant_pids", return_value=set()),
+        ):
+            with self.assertRaisesRegex(GraderInfrastructureError, "before grader start"):
+                sandbox_module._run_bounded_supervisor(("bwrap",), b"", KEY, GraderSandboxLimits(process_headroom=1))
+        self.assertTrue(fake.killed)
+
+    def test_supervisor_does_not_report_limit_for_trusted_process_that_died(self) -> None:
+        class DiesAfterSample(_FakePopen):
+            def __init__(self) -> None:
+                super().__init__(b"", hold_open=True)
+                self._polls = 0
+
+            def poll(self) -> int | None:
+                self._polls += 1
+                if self._polls >= 2 and self.returncode is None:
+                    self.returncode = 0
+                return self.returncode
+
+        fake = DiesAfterSample()
+        with (
+            patch.object(subprocess, "Popen", return_value=fake),
+            patch.object(sandbox_module, "_sample_process_tree", return_value=({99}, 0)),
+            patch.object(sandbox_module, "_descendant_pids", return_value=set()),
+        ):
+            with self.assertRaisesRegex(GraderInfrastructureError, "invalid grader protocol"):
+                sandbox_module._run_bounded_supervisor(("bwrap",), b"", KEY, GraderSandboxLimits())
+        self.assertFalse(fake.killed)
+
+    def test_supervisor_reaps_when_popen_does_not_supply_all_pipes(self) -> None:
+        class NoPipes:
+            pid = 424243
+            stdin = None
+            stdout = None
+            stderr = None
+            returncode: int | None = None
+            killed = False
+
+            def poll(self) -> int | None:
+                return self.returncode
+
+            def kill(self) -> None:
+                self.killed = True
+                self.returncode = -9
+
+        fake = NoPipes()
+        with (
+            patch.object(subprocess, "Popen", return_value=fake),
+            patch.object(sandbox_module, "_descendant_pids", return_value=set()),
+        ):
+            with self.assertRaisesRegex(GraderInfrastructureError, "pipes unavailable"):
+                sandbox_module._run_bounded_supervisor(("bwrap",), b"", KEY, GraderSandboxLimits())
+        self.assertTrue(fake.killed)
+
+    def test_process_baseline_uses_real_uid_and_all_threads(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            entry = Path(temporary) / "123"
+            entry.mkdir()
+            (entry / "status").write_text(
+                f"Name:\tworker\nUid:\t{os.getuid()} 9999 9999 9999\nThreads:\t3\n",
+                encoding="ascii",
+            )
+            self.assertEqual(sandbox_module._process_thread_count(entry, os.getuid()), 3)
+
+            (entry / "status").write_text("Name:\tworker\nUid:\tbroken\nThreads:\t3\n", encoding="ascii")
+            with self.assertRaisesRegex(GraderInfrastructureError, "baseline observation"):
+                sandbox_module._process_thread_count(entry, os.getuid())
 
     def test_public_types_are_frozen_and_have_contract_defaults(self) -> None:
         limits = GraderSandboxLimits()

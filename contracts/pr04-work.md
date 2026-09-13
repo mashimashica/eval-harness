@@ -22,6 +22,23 @@ not an implementation base. Draft PR heads 38–42 and design refs match the rec
 
 ## Earlier records
 
+### Consolidated host-supervisor correction checkpoint
+
+The initial `64e9855b` validation had 17/18 unit methods pass, seven strict-mypy
+errors and scoped Ruff issues. Sol's fixed-head review returned nine concrete findings,
+preserved in control branch `reports/m2-host-review-64e9855b.md`. Luna returned a
+consolidated two-file correction and pipe-backed supervisor regressions without running
+tests. Root separately recorded the source-verified read-only root/device and real-UID
+thread-count clarification. The amended contract SHA-256 is
+`79a0441d35cbb3b42f8ae4416ec72971585dea580995b98593d71870ea06fbcf`.
+
+This checkpoint precedes correction validation and review. Root's read-through identifies
+two follow-up lifecycle cases to resolve in this same correction cycle: bound draining
+after the trusted process has exited while a descendant still holds a pipe, and ensure
+ordinary zombie/no-RSS process races do not become observation failures. Cleanup must
+still reap the outer process when process-tree observation itself fails. No acceptance,
+public launch readiness or hosted security proof is claimed.
+
 ### First host-supervisor batch saved before validation
 
 Luna added the explicit read-only bubblewrap command builder, trusted path separation,
