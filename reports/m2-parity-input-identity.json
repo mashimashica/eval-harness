@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "purpose": "immutable input for the required full 1140-task native parity check; no model or candidate code executed",
+  "dataset": "bigcode/bigcodebench",
+  "split": "v0.1.4",
+  "revision": "b74c0d0bf70d2c0bc459be537895cca163007f1a",
+  "file": "data/v0.1.4-00000-of-00001.parquet",
+  "url": "https://huggingface.co/datasets/bigcode/bigcodebench/resolve/b74c0d0bf70d2c0bc459be537895cca163007f1a/data/v0.1.4-00000-of-00001.parquet",
+  "git_lfs_pointer_blob": "ef4634c67d030dd64fd23f5304afdebed11cc6ed",
+  "bytes": 2362110,
+  "sha256": "d9a4965821c9507ebdfb551c288656b2d5fe553234f5183044333ca8a4018267",
+  "verified_download_bytes_and_sha256": true,
+  "parquet_row_count": 1140,
+  "unique_task_ids": 1140,
+  "all_nonempty_string_fields": ["task_id", "code_prompt", "canonical_solution", "test", "entry_point"],
+  "observation": "parent streamed the commit-addressed public file, bounded it to the exact expected size, verified SHA256, then inspected PyArrow rows without execution; no local dataset artifact written",
+  "sources": [
+    "https://huggingface.co/datasets/bigcode/bigcodebench",
+    "https://huggingface.co/api/datasets/bigcode/bigcodebench/revision/main",
+    "https://huggingface.co/api/datasets/bigcode/bigcodebench/tree/b74c0d0bf70d2c0bc459be537895cca163007f1a/data"
+  ],
+  "native_parity_executed": false,
+  "benchmark_behavior_changed": false,
+  "notes": "The existing benchmark dataset revision remains v0.1.4; full-set parity input is not the hard-subset default. No NLTK/CVE investigation was reopened. The eventual parity driver must verify this identity and compare all IDs in a disposable credential-free Linux environment."
+}

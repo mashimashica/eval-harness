@@ -16,8 +16,8 @@ before the two P1 corrections. Verified recovery is implementation
 `7be35da9fae98c5e56ba14bf13a15a4cdbb9a8e7` and control
 `2d36c56c8056bd34186ed11da5004e0e01188dc8`; no local edits needed protection beyond
 keeping the clean main root untouched. Current implementation checkpoint is
-`e012ccc43d0129124efa63d14b223a1b4027d79f`, tree
-`42c3ddaa365fe6df24ad66fdb15f52103c942cbc`, saved and read back.
+`cc9e246ea305249acc6f97524972f9d2bfaac62b`, tree
+`436f91da3b7e47f78b17ced7085f9b80e312ed11`, saved and read back.
 
 All three new reproductions fail as intended against the unchanged host: simulated
 terminal/exit teardown lasts 6 instead of 5 seconds, success/exception cleanup lasts 2
@@ -28,8 +28,13 @@ the final batch passes all 37 unit methods, strict mypy and Ruff on the saved he
 Sol's fixed-head independent delta review has no remaining actionable finding: shared
 absolute deadlines and actual reaped termination outcomes close both P1 issues. Parent
 accepts this component closure only, not PR04. See `reports/m2-host-closure-validation.json`.
-Luna is now implementing only the separate offline bootstrap and its unit tests; parent
-records evidence and integration boundaries. No other PR is being implemented in parallel.
+The separate bootstrap initial four unit methods and Ruff pass; a test-only import typing
+error was fixed. Sol found one automatic-startup issue: CPython swallows ordinary
+sitecustomize exceptions. Luna is making automatic failure fatal and adding fresh isolated
+interpreter regressions; this component is not yet accepted. Host source remains unchanged.
+Parent also verified the immutable v0.1.4 parity Parquet hash, size, all 1,140 unique IDs and
+required canonical fields without running any solution. See `reports/m2-parity-input-identity.json`.
+This is input identity evidence, not executed parity. No other PR is implemented in parallel.
 
 New allowance: `2026-09-13T06:54:57Z`–`2026-09-13T08:24:57Z`, maximum 90 minutes.
 Luna first edits only the existing runner test file to reproduce late-exit/cleanup budget
