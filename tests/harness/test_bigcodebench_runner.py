@@ -8,14 +8,17 @@ from __future__ import annotations
 import hashlib
 import hmac
 import json
+import os
 import sys
 import types
 import unittest
+from collections.abc import Callable
 from pathlib import Path
 from unittest.mock import patch
 
 import eval_harness.bigcodebench_runner as runner_module
 from eval_harness.bigcodebench_runner import (
+    MAX_INPUT_FRAME_BYTES,
     MAX_OUTPUT_BYTES,
     OUTPUT_FRAME_OVERHEAD,
     OUTPUT_HEADER_SIZE,
@@ -215,84 +218,174 @@ class TestBigCodeBenchRunner(unittest.TestCase):
         arguments = [item for flag, _field in runner_module._CLI_LIMIT_FIELDS for item in (flag, "1")]
         events: list[str] = []
         input_bytes = encode_bcbi(request(), KEY)
+
+        def mark(name: str) -> Callable[..., None]:
+            def callback(*_args: object) -> None:
+                events.append(name)
+
+            return callback
+
+        def mark_value(name: str, value: object) -> Callable[..., object]:
+            def callback(*_args: object) -> object:
+                events.append(name)
+                return value
+
+            return callback
+
         with (
-            patch.object(runner_module, "_set_dumpability", side_effect=lambda: events.append("dumpability")),
-            patch.object(runner_module, "_apply_runner_limits", side_effect=lambda _limits: events.append("limits")),
-            patch.object(
-                runner_module, "_read_bounded_input", side_effect=lambda: events.append("input") or input_bytes
-            ),
-            patch.object(runner_module, "_prepare_output_fd", side_effect=lambda: events.append("dup") or 9),
-            patch.object(runner_module, "_replace_standard_fds", side_effect=lambda: events.append("null")),
-            patch.object(runner_module, "_run_native", side_effect=lambda *_args: events.append("native") or True),
-            patch.object(runner_module.os, "close"),
+            patch.object(runner_module, "_set_dumpability", side_effect=mark("dumpability")),
+            patch.object(runner_module, "_apply_runner_limits", side_effect=mark("limits")),
+            patch.object(runner_module, "_read_bounded_input", side_effect=mark_value("input", input_bytes)),
+            patch.object(runner_module, "_prepare_output_fd", side_effect=mark_value("dup", 9)),
+            patch.object(runner_module, "_replace_standard_fds", side_effect=mark("null")),
+            patch.object(runner_module, "_run_native", side_effect=mark_value("native", True)),
+            patch.object(runner_module, "_close_result_fd"),
         ):
             result = runner_module.main(arguments)
         self.assertEqual(result, 0)
         self.assertEqual(events, ["dumpability", "limits", "input", "dup", "null", "native"])
 
     def test_native_hook_emits_authenticated_start_and_result_without_key_args(self) -> None:
-        events: list[object] = []
-        original_start_holder: list[object] = []
+        cases = (
+            (8 * 1024**3, 6 * 1024**3, 10 * 1024**2, (8192, 6144, 10)),
+            (2 * 1024**2, 3 * 1024**2, 4 * 1024**2, (2, 3, 4)),
+        )
+        for address_space, data, stack, expected_native_limits in cases:
+            with self.subTest(native_limits=expected_native_limits):
+                events: list[object] = []
+                captured_args: list[tuple[object, ...]] = []
 
-        class FakeProcess:
-            instances: list[object] = []
+                class FakeProcess:
+                    def __init__(self, target: object, args: tuple[object, ...] = ()) -> None:
+                        self._target = target
+                        self._args = args
+                        self.exitcode: int | None = 0
+                        captured_args.append(args)
 
-            def __init__(self, target: object, args: tuple[object, ...] = ()) -> None:
-                self._target = target
-                self._args = args
-                self.exitcode: int | None = 0
-                self.instances.append(self)
+                    def start(self) -> None:
+                        self.exitcode = 0
 
-            def start(self) -> None:
-                self.exitcode = 0
+                original_start = FakeProcess.start
 
-        original_start_holder.append(FakeProcess.start)
+                def unsafe_execute(*_args: object) -> None:
+                    return None
 
-        def unsafe_execute(*_args: object) -> None:
-            return None
+                def untrusted_check(
+                    code: str,
+                    test_code: str,
+                    entry_point: str,
+                    max_as_limit: int,
+                    max_data_limit: int,
+                    max_stack_limit: int,
+                ) -> tuple[str, dict[str, object]]:
+                    self.assertEqual(
+                        (code, test_code, entry_point), (request().code, request().test_code, request().entry_point)
+                    )
+                    self.assertEqual((max_as_limit, max_data_limit, max_stack_limit), expected_native_limits)
+                    process = FakeProcess(unsafe_execute, (request().code,))
+                    process.start()
+                    return "pass", {}
 
-        def untrusted_check(
-            code: str,
-            test_code: str,
-            entry_point: str,
-            max_as_limit: int,
-            max_data_limit: int,
-            max_stack_limit: int,
-        ) -> tuple[str, dict[str, object]]:
-            self.assertEqual(
-                (code, test_code, entry_point), (request().code, request().test_code, request().entry_point)
-            )
-            self.assertEqual((max_as_limit, max_data_limit, max_stack_limit), (8192, 6144, 10))
-            process = FakeProcess(unsafe_execute, (request().code,))
-            process.start()
-            return "pass", {}
+                fake_multiprocessing = types.ModuleType("multiprocessing")
+                context_process = type("ContextProcess", (), {})
 
-        fake_multiprocessing = types.ModuleType("multiprocessing")
-        setattr(fake_multiprocessing, "set_start_method", lambda method, force: events.append((method, force)))
-        setattr(fake_multiprocessing, "get_start_method", lambda: "spawn")
-        setattr(fake_multiprocessing, "get_context", lambda: types.SimpleNamespace(Process=FakeProcess))
-        fake_package = types.ModuleType("bigcodebench")
-        fake_eval = types.ModuleType("bigcodebench.eval")
-        setattr(fake_eval, "unsafe_execute", unsafe_execute)
-        setattr(fake_eval, "untrusted_check", untrusted_check)
+                def set_start_method(method: str, force: bool) -> None:
+                    events.append((method, force))
+
+                setattr(fake_multiprocessing, "set_start_method", set_start_method)
+                setattr(fake_multiprocessing, "get_start_method", lambda: "spawn")
+                setattr(fake_multiprocessing, "Process", FakeProcess)
+                setattr(
+                    fake_multiprocessing,
+                    "get_context",
+                    lambda: types.SimpleNamespace(Process=context_process),
+                )
+                fake_package = types.ModuleType("bigcodebench")
+                fake_eval = types.ModuleType("bigcodebench.eval")
+                setattr(fake_eval, "unsafe_execute", unsafe_execute)
+                setattr(fake_eval, "untrusted_check", untrusted_check)
+                output: list[bytes] = []
+
+                def record_frame(_fd: int, frame: bytes) -> None:
+                    output.append(frame)
+
+                with (
+                    patch.dict(
+                        sys.modules,
+                        {
+                            "multiprocessing": fake_multiprocessing,
+                            "bigcodebench": fake_package,
+                            "bigcodebench.eval": fake_eval,
+                        },
+                    ),
+                    patch.object(sys, "path", list(sys.path)),
+                    patch.object(runner_module, "_write_frame", side_effect=record_frame),
+                ):
+                    limits = runner_module._RunnerLimits(245, 250, address_space, data, stack, 64 * 1024**2, 256, 32)
+                    self.assertTrue(runner_module._run_native(request(), KEY, 9, limits))
+                self.assertEqual(events, [("spawn", True)])
+                self.assertIs(FakeProcess.start, original_start)
+                self.assertEqual(parse_authenticated_output(b"".join(output), KEY).native_status, NativeStatus.PASS)
+                self.assertEqual(len(captured_args), 1)
+                self.assertNotIn(KEY, captured_args[0])
+
+    def test_non_whole_native_limit_rejects_before_native_import(self) -> None:
+        imported: list[str] = []
+        fake_importlib = types.ModuleType("importlib")
+
+        def import_module(name: str) -> object:
+            imported.append(name)
+            raise AssertionError("native import should not run")
+
+        setattr(fake_importlib, "import_module", import_module)
         output: list[bytes] = []
+
+        def record_frame(_fd: int, frame: bytes) -> None:
+            output.append(frame)
+
+        limits = runner_module._RunnerLimits(245, 250, 1, 3 * 1024**2, 4 * 1024**2, 64 * 1024**2, 256, 32)
         with (
-            patch.dict(
-                sys.modules,
-                {
-                    "multiprocessing": fake_multiprocessing,
-                    "bigcodebench": fake_package,
-                    "bigcodebench.eval": fake_eval,
-                },
-            ),
-            patch.object(runner_module.sys, "path", list(runner_module.sys.path)),
-            patch.object(runner_module, "_write_frame", side_effect=output.append),
+            patch.dict(sys.modules, {"importlib": fake_importlib}),
+            patch.object(runner_module, "_write_frame", side_effect=record_frame),
         ):
-            self.assertTrue(runner_module._run_native(request(), KEY, 9))
-        self.assertEqual(events, [("spawn", True)])
-        self.assertEqual(FakeProcess.start, original_start_holder[0])
-        self.assertEqual(parse_authenticated_output(b"".join(output), KEY).native_status, NativeStatus.PASS)
-        self.assertNotIn(KEY, FakeProcess.instances[0]._args)
+            self.assertFalse(runner_module._run_native(request(), KEY, 9, limits))
+        self.assertEqual(imported, [])
+        error = parse_authenticated_output(b"".join(output), KEY)
+        self.assertEqual(error.error_code, "native_setup_failed")
+
+    def test_bounded_reader_overflow_with_key_emits_input_error_without_native(self) -> None:
+        arguments = [item for flag, _field in runner_module._CLI_LIMIT_FIELDS for item in (flag, "1")]
+        input_bytes = encode_bcbi(request(), KEY)
+        oversized = input_bytes + b"x" * (MAX_INPUT_FRAME_BYTES + 1 - len(input_bytes))
+        chunks = [oversized[index : index + 64 * 1024] for index in range(0, len(oversized), 64 * 1024)]
+
+        def read(_fd: int, _size: int) -> bytes:
+            return chunks.pop(0) if chunks else b""
+
+        output: list[bytes] = []
+
+        def record_frame(_fd: int, frame: bytes) -> None:
+            output.append(frame)
+
+        def forbidden_native(*_args: object) -> bool:
+            self.fail("native execution must not follow oversized input")
+            return False
+
+        with (
+            patch.object(runner_module, "_set_dumpability"),
+            patch.object(runner_module, "_apply_runner_limits"),
+            patch.object(os, "read", side_effect=read),
+            patch.object(runner_module, "_prepare_output_fd", return_value=9),
+            patch.object(runner_module, "_replace_standard_fds"),
+            patch.object(runner_module, "_close_result_fd"),
+            patch.object(runner_module, "_run_native", side_effect=forbidden_native),
+            patch.object(runner_module, "_write_frame", side_effect=record_frame),
+        ):
+            self.assertEqual(runner_module.main(arguments), 1)
+        error = parse_authenticated_output(b"".join(output), KEY)
+        self.assertEqual(error.sequence, 0)
+        self.assertIs(error.frame_type, FrameType.ERROR)
+        self.assertEqual(error.error_code, "input_invalid")
 
 
 if __name__ == "__main__":

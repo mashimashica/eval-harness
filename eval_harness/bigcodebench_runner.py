@@ -517,9 +517,16 @@ def parse_authenticated_output(data: bytes, key: bytes) -> AuthenticatedFrame:
 class _RunnerFailure(RuntimeError):
     """An internal runner failure whose details never cross the protocol."""
 
-    def __init__(self, message: str, *, code: str = "runner_internal") -> None:
+    def __init__(
+        self,
+        message: str,
+        *,
+        code: str = "runner_internal",
+        input_key: bytes | None = None,
+    ) -> None:
         super().__init__(message)
         self.code = code
+        self.input_key = input_key
 
 
 @dataclass(frozen=True, slots=True)
@@ -614,7 +621,7 @@ def _apply_runner_limits(limits: _RunnerLimits) -> None:
 def _read_bounded_input() -> bytes:
     """Read exactly one bounded BCBI frame and its terminating EOF."""
 
-    chunks: list[bytes] = []
+    data = bytearray()
     total = 0
     while True:
         remaining = MAX_INPUT_FRAME_BYTES - total
@@ -623,11 +630,16 @@ def _read_bounded_input() -> bytes:
         chunk = os.read(0, min(64 * 1024, remaining + 1))
         if not chunk:
             break
+        if total + len(chunk) > MAX_INPUT_FRAME_BYTES:
+            data.extend(chunk[: MAX_INPUT_FRAME_BYTES - total])
+            raise _RunnerFailure(
+                "input exceeds its size limit",
+                code="input_invalid",
+                input_key=_input_key_if_available(bytes(data)),
+            )
+        data.extend(chunk)
         total += len(chunk)
-        if total > MAX_INPUT_FRAME_BYTES:
-            raise _RunnerFailure("input exceeds its size limit")
-        chunks.append(chunk)
-    return b"".join(chunks)
+    return bytes(data)
 
 
 def _input_key_if_available(data: bytes) -> bytes | None:
@@ -692,6 +704,13 @@ def _write_frame(result_fd: int, frame: bytes) -> None:
         offset += written
 
 
+def _close_result_fd(result_fd: int) -> None:
+    try:
+        os.close(result_fd)
+    except OSError:
+        pass
+
+
 def _safe_error(result_fd: int, key: bytes, sequence: int, code: str = "runner_internal") -> None:
     try:
         _write_frame(result_fd, encode_error(key, code, sequence))
@@ -721,13 +740,23 @@ def _captured_signal(exitcode: int) -> NativeSignal | None:
     return None
 
 
-def _run_native(request: BigCodeBenchGradeRequest, key: bytes, result_fd: int) -> bool:
+def _native_limit_mib(value: int, field: str) -> int:
+    mib = 1024 * 1024
+    if type(value) is not int or value <= 0 or value % mib != 0:
+        raise _RunnerFailure(f"{field} is not a whole MiB", code="native_setup_failed")
+    return value // mib
+
+
+def _run_native(request: BigCodeBenchGradeRequest, key: bytes, result_fd: int, limits: _RunnerLimits) -> bool:
     """Run exactly one vendored native check and emit its authenticated result."""
 
     started = False
     process_type: Any = None
     original_start: Callable[..., object] | None = None
     try:
+        max_as_limit = _native_limit_mib(limits.address_space_bytes, "address-space limit")
+        max_data_limit = _native_limit_mib(limits.data_bytes, "data limit")
+        max_stack_limit = _native_limit_mib(limits.stack_bytes, "stack limit")
         import multiprocessing
 
         multiprocessing.set_start_method("spawn", force=True)
@@ -735,10 +764,16 @@ def _run_native(request: BigCodeBenchGradeRequest, key: bytes, result_fd: int) -
             raise _RunnerFailure("spawn start method verification failed", code="native_setup_failed")
         if VENDOR_ROOT not in sys.path:
             sys.path.insert(0, VENDOR_ROOT)
-        from bigcodebench.eval import unsafe_execute, untrusted_check
+        import importlib
 
-        context = multiprocessing.get_context()
-        process_type = context.Process
+        native_module = importlib.import_module("bigcodebench.eval")
+        unsafe_execute = getattr(native_module, "unsafe_execute", None)
+        untrusted_check_object = getattr(native_module, "untrusted_check", None)
+        if not callable(unsafe_execute) or not callable(untrusted_check_object):
+            raise _RunnerFailure("native entrypoints are unavailable", code="native_setup_failed")
+        untrusted_check = cast(Callable[[str, str, str, int, int, int], object], untrusted_check_object)
+
+        process_type = multiprocessing.Process
         original_start = cast(Callable[..., object], process_type.start)
         start_impl = original_start
         captured: list[Any] = []
@@ -764,9 +799,9 @@ def _run_native(request: BigCodeBenchGradeRequest, key: bytes, result_fd: int) -
                 request.code,
                 request.test_code,
                 request.entry_point,
-                NATIVE_AS_LIMIT_MIB,
-                NATIVE_DATA_LIMIT_MIB,
-                NATIVE_STACK_LIMIT_MIB,
+                max_as_limit,
+                max_data_limit,
+                max_stack_limit,
             )
         finally:
             if original_start is not None:
@@ -834,8 +869,16 @@ def main(argv: Sequence[str] | None = None) -> int:
         key = decoded_key
         result_fd = _prepare_output_fd()
         _replace_standard_fds()
-        return 0 if _run_native(request, key, result_fd) else 1
+        return 0 if _run_native(request, key, result_fd, limits) else 1
     except _RunnerFailure as exc:
+        if key is None:
+            key = exc.input_key
+        if result_fd is None and key is not None and exc.code == "input_invalid":
+            try:
+                result_fd = _prepare_output_fd()
+                _replace_standard_fds()
+            except BaseException:
+                result_fd = None
         if result_fd is not None and key is not None:
             _safe_error(result_fd, key, 0, exc.code)
         return 1
@@ -845,10 +888,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         return 1
     finally:
         if result_fd is not None:
-            try:
-                os.close(result_fd)
-            except OSError:
-                pass
+            _close_result_fd(result_fd)
 
 
 __all__ = [
