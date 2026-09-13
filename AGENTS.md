@@ -179,8 +179,11 @@ gym env resolve --config ...
 
 Notable custom hooks that auto-modify files:
 - `add-verified-flag`: Adds `verified: false` to new resources server YAML configs (`verified: true` means the benchmark has been baselined and reviewed; new servers start as `false`)
-- `update-readme-table`: Updates the resources server table in root README.md
 - `ruff-format`: Auto-formats code
+
+The upstream environment-table generator (`scripts/update_env_list.py`) is retained as an upstream utility but is not
+registered as a pre-commit hook in this fork. The root README describes the local Eval Harness and has no generated
+environment catalog.
 
 First run may fail as hooks modify files. Stage the changes and commit again.
 

@@ -272,3 +272,20 @@ the starting main; the plan copy matched3849a491). Their contents were preserved
 `.audit/presentation/untracked-copies/`, with original paths, hashes and matching revisions in
 `.audit/presentation/untracked-duplicates.json`. They are excluded from the submission. Content checks and CLI-help
 receipts are also retained locally under `.audit/presentation/`.
+
+### README scope correction
+
+After PR48, the user questioned the `Retained NeMo Gym project` section. Remove that introduction and the unrelated
+177-row catalog from the root README; the existing origin, license, citation and external-materials notice provide
+the needed attribution. A duplicate catalog page is unnecessary. This supersedes the controller's earlier choice to
+keep the generated table in a collapsed README section; it changes no product requirement.
+
+Baseline main663b70372b3630ea8c08526c1655db3a1b11ad98; branch `codex/trim-upstream-readme`. Astra owns README,
+this record and the AGENTS hook note. Luna removes only the catalog's now-inapplicable pre-commit hook. Retain the
+upstream utility and implementation; no runtime changes or model calls. Verify remaining links and attribution,
+pre-commit YAML/other hooks, whitespace and required CI, then integrate through the protected PR route.
+
+Content accepted: README reduced from293to100lines; all13remaining local links resolve. The complete origin/licensing,
+BibTeX and external-materials notice suffix is unchanged. YAML parsing confirms the catalog hook is the only removed
+hook; other hook settings remain identical. Fern check passes with0errors/1existing warning; diff whitespace passes.
+No new benchmark page, generated table, runtime change or model trial was needed.
