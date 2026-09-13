@@ -1,0 +1,83 @@
+{
+  "accepted_at": "2026-09-13T04:30:56.162Z",
+  "formal": {
+    "branch": "migration/02c-generation-handoff",
+    "checkpoint": "272092f26948bdce763c185333ca417898eef88d",
+    "head": "6038a7828d62247ad98d000bc6e71c706f6d14a4",
+    "tree": "4f7fc21be5195611ba7df8feeefe3a5cc962c2cb"
+  },
+  "pr": 42,
+  "required_workflows": [
+    {
+      "conclusion": "success",
+      "id": 34737905024,
+      "jobs_url": "https://api.github.com/repos/mashimashica/eval-harness/actions/runs/34737905024/jobs",
+      "logs_url": "https://api.github.com/repos/mashimashica/eval-harness/actions/runs/34737905024/logs",
+      "name": "Code linting",
+      "run_number": 24,
+      "status": "completed",
+      "workflow_id": 356046868
+    },
+    {
+      "conclusion": "success",
+      "id": 34737905236,
+      "jobs_url": "https://api.github.com/repos/mashimashica/eval-harness/actions/runs/34737905236/jobs",
+      "logs_url": "https://api.github.com/repos/mashimashica/eval-harness/actions/runs/34737905236/logs",
+      "name": "Secrets detector",
+      "run_number": 24,
+      "status": "completed",
+      "workflow_id": 356046881
+    },
+    {
+      "conclusion": "success",
+      "id": 34737905252,
+      "jobs_url": "https://api.github.com/repos/mashimashica/eval-harness/actions/runs/34737905252/jobs",
+      "logs_url": "https://api.github.com/repos/mashimashica/eval-harness/actions/runs/34737905252/logs",
+      "name": "Copyright check",
+      "run_number": 24,
+      "status": "completed",
+      "workflow_id": 356046882
+    },
+    {
+      "conclusion": "success",
+      "id": 34737905018,
+      "jobs_url": "https://api.github.com/repos/mashimashica/eval-harness/actions/runs/34737905018/jobs",
+      "logs_url": "https://api.github.com/repos/mashimashica/eval-harness/actions/runs/34737905018/logs",
+      "name": "Eval Harness CI",
+      "run_number": 15,
+      "status": "completed",
+      "workflow_id": 356477864
+    }
+  ],
+  "ci_run": {
+    "conclusion": "success",
+    "created_at": "2026-09-13T04:26:51Z",
+    "event": "pull_request",
+    "head_branch": "migration/02c-generation-handoff",
+    "head_sha": "6038a7828d62247ad98d000bc6e71c706f6d14a4",
+    "html_url": "https://github.com/mashimashica/eval-harness/actions/runs/34737905018",
+    "run_started_at": "2026-09-13T04:26:51Z",
+    "status": "completed",
+    "updated_at": "2026-09-13T04:28:12Z"
+  },
+  "synthetic_merge": {
+    "commit": "73f403d8e1e9334f783f0bb7005d01aa6ba00c4e",
+    "parents": [
+      "d5ce0c10162cad788a17cb90f34b8f60574e7f75",
+      "6038a7828d62247ad98d000bc6e71c706f6d14a4"
+    ],
+    "tree": "4f7fc21be5195611ba7df8feeefe3a5cc962c2cb"
+  },
+  "coverage": {
+    "covered": 10070,
+    "total": 10469,
+    "passed": true
+  },
+  "python_tests": 553,
+  "shell_tests": 6,
+  "compatibility_tests": 45,
+  "inventory_tests": 5,
+  "review_outstanding": 0,
+  "dco_verified": true,
+  "known_separate_blocker": "PR04 NLTK CVE remains unresolved"
+}

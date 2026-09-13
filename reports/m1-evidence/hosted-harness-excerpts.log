@@ -1,0 +1,16 @@
+2026-09-13T04:26:55.4657908Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +73f403d8e1e9334f783f0bb7005d01aa6ba00c4e:refs/remotes/pull/42/merge
+2026-09-13T04:26:57.4157107Z  * [new ref]         73f403d8e1e9334f783f0bb7005d01aa6ba00c4e -> pull/42/merge
+2026-09-13T04:26:57.9266429Z HEAD is now at 73f403d Merge 6038a7828d62247ad98d000bc6e71c706f6d14a4 into d5ce0c10162cad788a17cb90f34b8f60574e7f75
+2026-09-13T04:26:57.9357811Z 73f403d8e1e9334f783f0bb7005d01aa6ba00c4e
+2026-09-13T04:27:50.0091732Z Ran 553 tests in 26.743s
+2026-09-13T04:27:51.2408778Z codex executor self-test passed
+2026-09-13T04:27:51.8743723Z claude-code executor self-test passed
+2026-09-13T04:27:56.3340894Z cursor executor self-test passed
+2026-09-13T04:27:57.7908230Z local judge executor self-test passed
+2026-09-13T04:27:57.8267711Z experiment condition CLI self-test passed
+2026-09-13T04:28:00.3390577Z generic eval CLI self-test passed
+2026-09-13T04:28:00.3392612Z gdpval harness self-test passed
+2026-09-13T04:28:01.4672212Z coverage guard passed: 10070/10469 statements meet the exact 96% threshold
+2026-09-13T04:28:02.0643492Z TOTAL                                       10469    399  96.19%
+2026-09-13T04:28:08.0878605Z ======================== 45 passed, 1 warning in 4.48s =========================
+2026-09-13T04:28:09.1362162Z ============================== 5 passed in 0.05s ===============================

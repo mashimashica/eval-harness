@@ -3,33 +3,31 @@
 
 # Migration state
 
-Updated: 2026-09-13T04:27:44.509Z
+Updated: 2026-09-13T04:30:56.162Z
 
 Control branch: `checkpoint/migration-control`.
 Procedure: [MIGRATION-WORKFLOW.md](MIGRATION-WORKFLOW.md).
 This file records durable state; it does not declare the entire migration accepted.
 
-## Accepted purpose-first amendment and active M1
+## M1 accepted; next active slice M2 / PR04
 
 The user approved purpose-first execution. The known NLTK CVE remains an acceptance blocker for PR04
-and affected later heads, without stopping independent implementation. Its M0 investigation is closed.
-All original quality gates and the prohibition on real-model experiments, merge and release remain.
+and affected later heads without stopping independent implementation. Its M0 investigation is closed.
+All quality gates and the prohibition on real-model experiments, merge, release and publish remain.
 
-M1 started at 2026-09-13T03:56:46Z with a 90-minute working budget excluding external CI waits.
-PR02c is now Draft [#42](https://github.com/mashimashica/eval-harness/pull/42), branch
-`migration/02c-generation-handoff`, head `6038a7828d62247ad98d000bc6e71c706f6d14a4`,
-tree `4f7fc21be5195611ba7df8feeefe3a5cc962c2cb`, based on PR03 `d5ce0c10162cad788a17cb90f34b8f60574e7f75`.
-Recoverable checkpoint: `checkpoint/pr-02c` at `272092f26948bdce763c185333ca417898eef88d` (identical tree).
-Independent review is closed. The tested source at `ece294de` passed 553 Python tests, six CLI
-integrations, 10070/10469 statement coverage (96.18874773139746%), all-file pre-commit and strict mypy
-(111 files). Compatibility/inventory tests passed 45+5; unchanged main dependency inputs audited
-153 packages with zero findings/skips. The promoted head changes only the work record and passed
-all-file pre-commit. Formal exact-head CI remains pending; no PR02c acceptance is claimed yet.
+M1 is accepted at unmerged Draft [#42](https://github.com/mashimashica/eval-harness/pull/42), branch
+`migration/02c-generation-handoff`, head `6038a7828d62247ad98d000bc6e71c706f6d14a4`, tree
+`4f7fc21be5195611ba7df8feeefe3a5cc962c2cb`, base `d5ce0c10162cad788a17cb90f34b8f60574e7f75`.
+All four required workflows pass; the hosted synthetic merge has the identical tree. Hosted coverage
+is 10070/10469 (96.18874773139746%), with 553 Python, six shell, 45 compatibility and five inventory
+tests passing. Review and DCO are closed. Checkpoint `272092f26948bdce763c185333ca417898eef88d`
+has the same tree. See `reports/m1-acceptance.md` and `reports/m1-evidence/acceptance.json`.
 
-CI waiting began at 2026-09-13T04:26:49.544Z. Next verify every required CI workflow and its actual
-commit/tree relationship, save M1 acceptance evidence, report M1 and the next bounded work allowance.
-No PR04 implementation starts before this M1 gate. See `reports/m1-local-validation.json` and
-`reports/m1-evidence/pip-audit.json` for durable local evidence. Do not repeat already closed reviews.
+Next prepare and save PR04's exact frozen contract and start record on a new checkpoint based on
+PR02c head. Luna owns implementation; Sol reviews bounded saved deltas; Astra controls scope and
+acceptance. First PR04 working allowance is 90 minutes with existing stop conditions. No extra
+NLTK investigation or rejected patch. CVE failure remains visible and cannot be called CI success.
+No PR04 code has been implemented yet. Remaining milestone estimates and limits are in the M1 report.
 
 ## Last durable implementation base
 
