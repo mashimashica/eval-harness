@@ -5,7 +5,7 @@ SPDX-License-Identifier: Apache-2.0
 
 # PR06 GDPval evaluator design contract
 
-> Checkpoint status (2026-09-13): saved design draft, not accepted implementation or migration state. This document records verified baseline behavior and the proposed PR06 boundary while characterization fixtures are completed.
+> Checkpoint status (2026-09-13): complete design/characterization handoff, not accepted implementation or migration state. No production code or real-model result is represented by this document.
 
 ## Checkpoint identity
 
@@ -16,7 +16,8 @@ SPDX-License-Identifier: Apache-2.0
 | Source baseline | `d5ce0c10162cad788a17cb90f34b8f60574e7f75` (tree `354943ebbb8ea81a30523bfdc12baf26771853b5`) |
 | Canonical plan | `eval-harness-neutrality-migration-plan-2026-09-12.md`, 33,790 bytes, SHA-256 `174f0b3d289ddffa9e9d617637e58dc2ad4198f2046a3064407ba41aa423885f` |
 | Scope | Design and deterministic characterization only; no production edits and no live model calls |
-| Next action | Complete exact fixture matrix, finalize interfaces and gates, then append a descendant checkpoint commit |
+| Companion evidence | `contracts/pr06-gdpval-characterization-fixtures.md` |
+| Next action | Reconcile the two minimal PR05 interfaces below with PR05's contract, then implement PR06 against the accepted dependency stack |
 
 ## Baseline source map
 
@@ -35,6 +36,10 @@ The source was read from the exact baseline above. Git blob IDs identify the rev
 | `eval_harness/evaluators/pairwise.py` | `fba665b0ae0b394ffc7a815c7bffc772460476e5` | Exactly-two validation and fail-fast injected-judge loop | Reuse cardinality and coherence rules; replace one-judge/output shape with panel plan and durable records |
 | `eval_harness/local_judge_runner.py` | `db6822eeb81674dd1952cdf4d7bebd172a3944a4` | Strict invalid handling and per-trial persistence | Behavior source only; fixed dataset paths and environment wiring are not reusable |
 | `eval_harness/evaluators/gdpval.py` | `4314fc5c9901dc36bce0f045f12a2f9321c790bb` | External handoff bundle | Retire as GDPval completion path when common evaluation lands |
+| `eval_harness/candidate_bundle.py` | `fdc93ec63392b7cad6a0750d454a54e3d3306d25` | Sealed, verified candidate artifacts and execution evidence | Consume the opaque verified bundle API; never project its provenance to the judge |
+| `eval_harness/benchmarks/snapshot.py` | `cdcceed76b0c2d80b4afaf67295a0def306ce944` | Immutable task, execution, and evaluation views | Consume one verified bound evaluation view; never reconstruct evaluator inputs by path search |
+| `eval_harness/judges/base.py`, `codex.py`, `claude_code.py` | `c8bdd1e790edaef3c0c4f1f028b09333fb5b38cd`, `758461713e08614cb2381506fed9470fde072ae6`, `32dd0de288fd47f12ee30e2e73009040fefc6969` | Judge request/result, subscription-auth checks, blind read confinement, and vendor CLI adapters | Put the guarded behavior behind the shared injectable runtime; reuse normal Executor transport only with an explicit blind-judge role that preserves the guards and probes |
+| `eval_harness/executors/codex.py`, `claude_code.py` | `3c037656375cedf2d83f3f8604746f34952305b3`, `e1a6739a61dc11ff5e6f37b60023d3c466a0cfec` | Normal application executor lifecycles and vendor transport | Reuse lifecycle/transport where possible, but do not use their ordinary permission profiles for blind judging |
 
 ## Verified incompatibilities that require an explicit revision
 
@@ -49,11 +54,31 @@ These are observed legacy behaviors, not proposed compatibility behavior:
 
 PR06 therefore introduces a new evaluator/protocol revision. Invalid or truncated responses have no vote and no score. Zero valid trials is a failed evaluation with `winner=null` and `score=null`, never a tie or neutral reward. AV content with no capable panel member fails preflight before any judge call. Original candidate and snapshot bytes remain unchanged.
 
+### Mechanical migration versus revised semantics
+
+| Behavior | Classification | Contract |
+|---|---|---|
+| Valid binary score-key precedence, finite numeric clamping, criteria-score mean fallback | Mechanical parity | Preserve and pin with fixtures |
+| Valid structured weighted-total normalization and mean of eligible trials | Mechanical parity | Preserve and pin with fixtures |
+| Explicit A/B reversal normalization; explicit tie counts as half only in aggregates that define it | Mechanical parity | Preserve and pin with fixtures |
+| A-first four-trial GDPval position sequence and legacy weighted panel draw | Mechanical parity when selected | Expose as named, hash-bound policies and persist the resolved plan |
+| CandidateBundle/BoundEvaluationView wiring, anonymous staging, shared runtime, result sink, immutable presentation | Mechanical architecture migration | Does not change valid score/vote meaning; every input/output digest becomes auditable |
+| Root-deny blind-judge reads, environment/temp isolation, subscription-auth checks, and no-model confinement probes | Mechanical protection parity | Preserve behind the shared runtime; weakening these guards does not qualify as transport reuse |
+| Malformed/multiple/missing pairwise verdict maps to invalid rather than tie | Algorithm change | `gdpval.pairwise@2` |
+| Truncated/no-score/non-finite rubric response maps to invalid rather than numeric score | Algorithm change | `gdpval.rubric.binary@2` and visual equivalent |
+| All-invalid structured trials fail rather than return a valid-looking zero | Algorithm change | `gdpval.rubric.structured@2` |
+| Non-positive/invalid structured denominator is rejected | Algorithm change | `gdpval.rubric.structured@2` |
+| Non-positive trial count is rejected | Algorithm/config validation change | pairwise/rubric revision 2 |
+| AV-capable member absent causes preflight failure rather than incapable fallback | Panel-selection behavior change | panel selector revision 2, included in evaluator config digest |
+| Unsupported/oversized required content fails instead of filename-only or omission-based judging | Presentation behavior change | presenter revision 2, included in evaluator config and judge-input digests |
+
+Completion policy is reusable configuration, not duplicated evaluator logic. `require_complete` publishes a metric only for the exact requested completed set. `valid_only(min_valid=N)` may publish from completed records once its threshold is met, but returns status `partial` and explicit requested/valid/invalid/failed counts plus coverage. Invalid records never become votes. Policy ID and threshold enter the configuration digest; AA-v2 selects the generic policy in PR08.
+
 ## Proposed evaluator boundary
 
 PR06 receives exactly one verified `BoundEvaluationView` and verified `CandidateBundle` values from the common runner. Rubric evaluation accepts exactly one candidate. Pairwise evaluation accepts exactly two distinct candidate identities; N-candidate expansion remains a planner responsibility.
 
-The evaluator verifies that every bundle binds the same snapshot, task, canonical-task hash, and evaluation-view hash. It projects only:
+The evaluator verifies the `BoundEvaluationView` once, then requires every bundle's `snapshot_reference` to equal the view's reference and every bundle's canonical task text/hash to equal the view's canonical task text/hash. CandidateBundles do not carry an evaluation-view hash; the verified view supplies that identity and its allowed assets. The evaluator projects only:
 
 - `BoundEvaluationView.canonical_task_prompt`;
 - allowed task inputs, anonymously staged as reference material;
@@ -62,39 +87,142 @@ The evaluator verifies that every bundle binds the same snapshot, task, canonica
 
 It never projects candidate IDs, model/executor/condition/intervention metadata, effective prompts, bundle manifests, absolute source paths, or credentials. Candidate identities remain in controller-side records only.
 
-The shared judge runtime needs one narrow call: accept a hashable anonymous judge input plus a preselected judge-member spec, and return typed process/transport status, raw response bytes/text, timestamps, exit code, and adapter metadata. PR06 owns parsing and score/vote semantics. PR05 owns invocation, cancellation, result-root freshness, and an append-capable durable record sink.
+`judge_input_sha256` is computed from a canonical manifest of the exact anonymous prompt asset/revision, canonical task text, allowed reference bytes/logical labels, anonymous submission bytes/logical labels, permitted rubric fields, and resolved presentation mode/derivations. It excludes candidate IDs and provenance, controller slot bindings, timestamps, run IDs, and runtime paths. The controller record separately binds that anonymous input digest to the logical candidate/slot map. Tests inspect prompt text, payload blocks, workspace names/content, argv, and environment to prove that no forbidden identity reaches the judge.
+
+The shared judge runtime needs one narrow call: accept a hashable anonymous judge input plus a preselected judge-member spec and explicit role policy, and return typed preflight/process/transport status, raw response bytes/text, timestamps, exit code, and adapter metadata. PR06 owns parsing and score/vote semantics. PR05 owns invocation, cancellation, result-root freshness, the enforced runtime role, and an append-capable durable record sink.
+
+### Mode contracts
+
+| Evaluator ID/revision | Candidates | Evaluation-only inputs | Completed output |
+|---|---:|---|---|
+| `gdpval.rubric.binary@2` | exactly 1 | required rubric JSON/pretty representation from `BoundEvaluationView.evaluation_data`; optional allowed task inputs | one finite metric in `[0,1]`, completed trial record, coverage 1 |
+| `gdpval.rubric.structured@2` | exactly 1 | required rubric with a finite positive total or an explicit validated maximum; optional allowed task inputs | configured eligible-trial mean divided by the validated maximum, trial/attempt records, coverage |
+| `gdpval.pairwise@2` | exactly 2 | canonical task plus allowed task inputs; rubric is not exposed unless a future separately identified evaluator explicitly requires it | logical win/loss/tie counts and winner/score only when completion policy is satisfied, BattleRecords, coverage |
+
+The GDPval defaults are explicit: binary rubric has one trial; structured rubric has two trials with three formatting attempts and `valid_only(min_valid=1)` to preserve the legacy eligible-score mean while exposing partial coverage; pairwise has four trials, `alternating-a-first-v1`, and `require_complete`. A profile may override supported values, and every override changes the evaluator configuration digest. Trial and formatting-attempt counts must be positive.
+
+Candidate outcomes must be successful sealed outcomes (`completed` or the accepted `no_deliverable` success state) and expose the channels required by the chosen presenter. Empty deliverables remain an explicit anonymous empty submission; a missing, failed, unverified, or modified bundle is a plan failure rather than an implicit loss. Candidate IDs must differ. Identical artifact bytes from two distinct candidates are allowed.
+
+Rubric results publish the named `rubric_score` metric only when the configured completion policy permits it, plus raw-point/maximum/trial coverage in outcomes/details. Pairwise results publish candidate-keyed win counts, explicit tie count, requested/valid/invalid/failed counts, coverage, and an optional winner candidate ID in outcomes. The generic pairwise evaluator emits no implicit Elo and no orientation-dependent universal reward. A profile aggregate may derive a focal-candidate rate or Elo from the completed BattleRecord set under its own named rules.
+
+All task/snapshot/view/cardinality/capability/presentation validation and the full position/member plan complete before the first judge call. Any failure at this phase produces no trial intent, no score, and a typed preflight failure. The common runner must not expand an N-candidate set inside the evaluator; `MatchPlanner` supplies one- or two-candidate evaluation jobs as appropriate.
+
+### Minimal interfaces required from PR05
+
+PR05's eventual names may differ, but its accepted contract must provide these two capabilities without acquiring GDPval-specific logic:
+
+1. **Injectable judge runtime.** It preflights a selected member and executes one sanitized anonymous invocation. Input is an opaque trial ID, anonymous prompt/payload or workspace, explicit capabilities/model/timeout, a minimal environment/auth reference, and an explicit hash-bound runtime role policy such as `blind-judge`. Output is typed preflight/success/failure/interruption plus raw output, timestamps, exit code, runtime/version/auth provenance, applied policy/probe evidence, and evidence paths/digests. It does not parse GDPval scores or verdicts, choose panel members, reverse candidates, or aggregate.
+2. **Durable evaluation record sink.** It atomically saves a content-addressed evaluation plan before calls, appends an attempt-start event before each invocation, appends/flushed terminal attempt evidence immediately after it, loads prior records for integrity-checked reuse, and refuses conflicting or overwrite-prone output. It is generic over evaluator-owned typed payloads.
+
+The preferred local judge adapter reuses the normal Executor lifecycle and vendor transport with a sanitized judge `TaskSpec`/`ExecutionRequest`: opaque trial identity, blind prompt, anonymous materialized workspace, no Intervention, and an explicit blind-judge role configuration. This reuse is permitted only when that role enforces and proves the isolation contract below. The baseline ordinary `CodexExecutor` `workspace-write` profile permits a broader read surface and is insufficient unchanged. If the normal Executor abstraction cannot express the required role, retain one refactored guarded judge runtime that shares vendor transport rather than weakening isolation or creating a second transport stack. A transport adapter may satisfy the same runtime interface for structured multimodal payloads. Neither path may invoke `eval_harness/local_judge_runner.py`, the GDPval resources server, benchmark dataset discovery, fixed `GDPVAL_*` paths, or a silent alternative runtime.
+
+PR06 owns rubric/pairwise prompt assets, presentation, parsers, panel selection, resolved trial plans, BattleRecord semantic payloads, and protocol aggregates. PR05 owns generic invocation/cancellation/storage mechanics only. If PR05 cannot provide the two capabilities above, the interface delta must return to design review; PR06 must not embed a private common runner.
+
+### Blind-judge runtime isolation contract
+
+Anonymous filenames and prompts do not stop a local agent from reading other host paths. For a local CLI member, `blind-judge` therefore means all of the following:
+
+- The model/tool process can read the anonymous presentation workspace and only the minimal command/runtime libraries needed to launch. Its filesystem policy starts with root deny. CandidateBundle roots, snapshot stores outside the staged view, other candidate/run roots, result/history directories, controller files, and credential/config homes remain unreadable. Runtime allowances that overlap a protected root are rejected.
+- The anonymous workspace is read-only to the model/tool process. The host adapter may write raw output only to a fresh isolated evidence directory that is outside the model's readable tree. Network and web search are disabled for a local subscription judge.
+- The host launcher receives only a reviewed runtime/auth allowlist. Candidate paths, candidate IDs/labels, condition/provenance fields, and unrelated parent secrets are absent. The model shell inherits no parent environment; its synthetic `HOME` is the anonymous workspace, `PATH` is the minimal system path, and `TMPDIR`/`TMP`/`TEMP` point to one fresh runtime directory disjoint from every bundle, snapshot, and output root.
+- Preflight validates command/version, an explicitly permitted auth mode, required capabilities, and the applied sandbox role. Before any model call, a deterministic probe must prove that a file inside the anonymous workspace is readable and a sibling outside-secret file is unreadable. Missing, unsupported, unverifiable, or failed confinement is a typed preflight failure with zero judge calls.
+- Evidence records the adapter/runtime version, non-secret auth classification, role-policy ID/revision/digest, probe ID/result, network policy, environment-policy ID, and temp-root relationship. It records no credential contents or unrestricted environment dump.
+
+At the baseline, `CodexJudgeExecutor` supplies a `gdpval-harness-blind-judge` permission profile with root deny, minimal/runtime reads, workspace read, and network disabled; it rejects API/access-token or unidentified login and runs a no-model `codex sandbox` read probe. Its judge command is ephemeral, ignores user config, forces ChatGPT subscription auth, disables web search and approvals, forbids a login shell, and gives the model shell an `inherit="none"` environment. These behaviors are protection parity requirements, although the GDPval-prefixed role name must become neutral.
+
+`ClaudeCodeJudgeExecutor` recognizes only logged-in first-party `claude.ai` Pro/Max/Team/Enterprise subscription status and rejects Console/API, OAuth-token, gateway, Bedrock, Vertex, and Foundry modes. Its intended policy denies read/write at root, allows read of the anonymous workspace, uses an empty strict network allowlist, fails if sandboxing is unavailable, permits only sandboxed Bash, and disables Read/Edit/Write/WebFetch/WebSearch/MCP tools. It nevertheless fails preflight today because no documented no-model probe proves that configuration. PR06 must preserve that fail-closed result until a tested probe or stronger independently verified isolation primitive exists; a settings declaration alone is not evidence.
+
+An HTTP/structured-payload judge uses a separate explicit transport policy: the adapter sends only the hash-bound anonymous payload to the configured endpoint, holds credentials outside the payload, and records the endpoint/provider policy identity without secrets. Local-filesystem permission claims do not transfer to that transport, and it cannot be a silent fallback for a failed local member.
 
 ## Pairwise plan and BattleRecord minimum contract
 
-The plan contains exactly `num_trials` entries and must be completely resolved before the first call. Each entry supplies `trial_index`, `attempt`, explicit slot-A and slot-B bundle assignments, and a preselected judge-member ID/spec hash. Position policy is evaluator configuration: GDPval legacy parity is A-first alternating (`A/B`, `B/A`, ...); seeded initial reversal remains available only under its own named revision. A hidden seed-derived first swap is forbidden because AA-v2 must persist an explicit legacy order.
+The semantic plan contains exactly `num_trials` entries and must be completely resolved before the first call. Each entry supplies `trial_index`, explicit slot-A and slot-B bundle assignments, and a preselected judge-member ID/spec hash. Attempt numbers belong to execution history, not this plan. Position policy is evaluator configuration: GDPval legacy parity is A-first alternating (`A/B`, `B/A`, ...); seeded initial reversal remains available only under its own named policy ID. A hidden seed-derived first swap is forbidden because AA-v2 must persist an explicit legacy order.
 
-`evaluation_job_id` is content-addressed from profile-independent task/evaluation-view identity, evaluator ID/revision/config hash, and the ordered logical pair of candidate IDs plus bundle SHA-256 values. Stage, anchor role, Elo, and headline fields are excluded, allowing PR08 to reuse an identical matchup across stages.
+Panel planning filters capabilities before selection, applies the named deterministic weight policy, and freezes the selected member for each trial. A retry invokes that same member; it never silently substitutes another panel member, provider, model, or reasoning setting. Zero/negative effective weights retain the characterized selector behavior (non-positive becomes zero; an all-zero panel samples uniformly), while non-finite weights, duplicate member IDs, or missing member specs fail configuration validation. Panel/member order, sanitized specs, weights, capabilities, selection-policy ID/input, and resolved draws are content-hashed; credentials are excluded.
 
-Each durable terminal `BattleRecord` includes:
+`evaluation_input_sha256` is content-addressed from the task/evaluation-view identity, evaluator ID/revision/config hash, and the ordered logical pair of candidate IDs plus bundle SHA-256 values. It identifies identical evaluation content independently of scheduling. `evaluation_job_id` additionally binds an opaque, deterministic planner-supplied `match_occurrence_id`. Trial identity is the job ID plus trial index. Thus repeated occurrences can share CandidateBundles and the same input digest while still requiring separate judge calls and records. Stage, anchor role, Elo, and headline fields remain absent from the generic schema; PR08 derives its opaque occurrence identity from the resolved profile/stage/task-repeat/anchor-repeat plan.
 
-- schema version, record/trial ID, `evaluation_job_id`, trial index, and attempt;
+These cross-PR field spellings are fixed by this contract so PR05, PR06, and PR08 can share records without translation:
+
+| Python/JSON spelling | Contract meaning |
+|---|---|
+| `match_occurrence_id` | opaque deterministic planner identity for one scheduled occurrence; its internal AA-v2 dimensions remain outside the generic schema |
+| `evaluation_input_sha256` | digest of reusable evaluation content/configuration, including the ordered logical candidates and bundle hashes, but excluding occurrence |
+| `evaluation_job_id` | digest-bound job identity over schema/domain, `evaluation_input_sha256`, and `match_occurrence_id` |
+| `battle_record_id` | stable trial identity over schema/domain, `evaluation_job_id`, and `trial_index`; unchanged across attempts |
+| `battle_status` | current logical state: `planned`, `running`, `completed`, `failed`, `interrupted`, or `invalid_response`; `partial` exists only at aggregate `EvaluationResult` level |
+| `battle_semantic_sha256` | digest of the immutable plan entry plus canonical completed result; present only when `battle_status=completed` |
+| `attempt_id`, `attempt_number` | identity and positive ordinal of one invocation attempt for the stable battle record |
+| `attempt_event_sha256` | digest of one append-only attempt event/evidence object, including its runtime evidence references |
+| `attempt_history_sha256` | digest of the canonical ordered attempt-event chain; it changes when an interrupted/failed battle is retried and is excluded from `battle_semantic_sha256` |
+
+Any later spelling change is a coordinated schema revision across those PRs, not an adapter-local alias. `invalid_response` is never serialized as `tie`; `failed` denotes runtime/transport/policy failure rather than parser invalidity.
+
+Each planned trial has a durable `BattleRecord` identity derived from `evaluation_job_id` and trial index, plus an immutable semantic plan entry. A completed trial adds this stable semantic result payload:
+
+- schema version, `battle_record_id`, `evaluation_job_id`, `evaluation_input_sha256`, `match_occurrence_id`, and `trial_index`;
 - task, snapshot, canonical-prompt, evaluation-view, evaluator-config, panel, presentation, and judge-input hashes;
 - logical candidate identities and bundle hashes plus explicit presented slot A/B assignments;
-- judge-member ID/spec hash and runtime provenance;
-- lifecycle status (`completed`, `invalid_response`, `judge_failed`, or `interrupted`), typed failure code/retryability, and response/result hashes;
-- blind verdict for completed trials, normalized winner candidate ID or explicit tie, and no verdict/winner for every other status.
+- judge-member ID/spec hash;
+- completed status, strict blind verdict, normalized winner candidate ID or explicit tie, and a canonical parsed-result hash.
 
-The durable sink records intent before invocation and a terminal event immediately afterward. Planned/running work without a terminal event is unresolved, retained as attempt history, and retried only as a new attempt. Reuse requires a completed record and exact equality of every bound semantic/content hash. Invalid/failed/interrupted records never enter vote totals.
+Its `battle_semantic_sha256` is computed only from the immutable plan entry and completed canonical result payload. It excludes attempt number, timestamps, run ID, run-local/absolute paths, raw reasoning text, exit-log locations, and earlier interrupted/failed attempts. An interrupted run followed by a retry that produces the same parsed result therefore has the same semantic record digest as an uninterrupted run. A trial whose current terminal state is `invalid_response`, `failed`, or `interrupted` remains a durable BattleRecord with no semantic result digest.
+
+Invocation history is a separate append-only evidence stream. Each attempt event includes `attempt_id`, `attempt_number`, planned/running/terminal lifecycle state, timestamps, runtime/version/auth provenance, exit code, raw stdout/stderr/response digests and logical evidence references, typed failure/retryability, `attempt_event_sha256`, and a link to the semantic plan entry. The ordered event chain has `attempt_history_sha256`. A completed event links to the stable BattleRecord semantic digest. `invalid_response`, `failed`, and `interrupted` events have no semantic result payload/digest, verdict, normalized winner, or vote.
+
+The durable sink records intent before invocation and a terminal event immediately afterward. Planned/running work without a terminal event is unresolved, retained as attempt history, and retried only as a new attempt. Reuse requires the same planned occurrence ID, a completed semantic record, and exact integrity revalidation of snapshot/evaluation view, both CandidateBundles, evaluator/config, panel/member, presented slots, judge input, canonical parsed result, and every linked evidence object. Identical input content in another planned occurrence is not reusable as a completed battle; it receives new calls and records. PR08 may aggregate a sorted exact set of completed semantic record IDs/digests even when retry histories differ. Invalid/failed/interrupted attempt records never enter vote totals.
 
 ## Rubric trial status
 
-Binary and structured modes use the same durable trial-status rule. A completed rubric record has a finite parsed score, validated denominator/range, normalized score, judge/input hashes, and response/result hashes. Malformed JSON, truncated JSON, missing score fields, invalid tags, mismatched maximum, non-finite values, or out-of-range values produce `invalid_response` and no score. Formatting retries are attempts of one planned trial and remain auditable. Any policy that permits completion from fewer valid trials than requested must be a separately named evaluator revision; the strict PR06 default requires the configured valid-trial set.
+Binary and structured modes use the same durable trial-status rule and the same semantic/evidence split. A completed rubric record has a finite parsed score, validated denominator where applicable, normalized score, judge/input hashes, and canonical result hash. Binary finite numeric values retain the legacy `[0,1]` clamp; malformed JSON, truncated JSON, missing score sources, float conversion failure, and non-finite values produce `invalid_response` and no score. Structured invalid tags, mismatched/non-positive maximum, non-finite values, or awarded points outside `[0, maximum]` do the same. Formatting retries are attempt history for one planned trial and remain auditable. A supported partial-trial policy is named configuration with a distinct digest and explicit coverage; it does not require duplicated mechanism or a new code revision for every threshold.
+
+Binary parsing accepts one JSON object, optionally inside one complete code fence, and preserves the characterized key precedence and criteria fallback. Additional non-whitespace payload, incomplete/multiple fences, a non-object root, or ambiguous score conversion is invalid. Structured parsing requires exactly one final-score tag and exactly one maximum tag in the required final result form; duplicate/conflicting top-level tags are invalid rather than first-match wins. The rubric/prompt canonical bytes and parser revision are evaluator assets and enter the config digest.
+
+## Evaluation status and failure contract
+
+`EvaluationResult` needs unambiguous terminal meanings. The final names are coordinated with PR05, but GDPval requires these states:
+
+| State | Metric allowed | Meaning |
+|---|---|---|
+| `completed` | yes | Completion policy is fully satisfied; every counted trial has a completed semantic record |
+| `partial` | only when the configured `valid_only` policy threshold is satisfied | Some planned trials are invalid/failed; counts and coverage are explicit |
+| `failed` | no | Preflight, presentation, capability, parser/coverage, or judge failures prevent an eligible result |
+| `interrupted` | no | Stop/cancellation left no final eligible result; durable prefix and attempt history remain |
+
+Failure payloads carry a stable `kind`, code, impact (`job` or `run`), and retryability. Missing/modified inputs, cardinality/coherence violations, unsupported rubric, and capability/presentation insufficiency are deterministic job failures and make zero judge calls. Invalid response is an attempt outcome, never a tie or score. Auth/quota/runtime protocol failure with run impact stops remaining tasks; a normal completed judge verdict or rubric score does not. An all-judge/all-trial failure yields `failed`, winner/score `null`, valid count zero, and full attempt evidence. Aggregators consume only eligible completed semantic records and must not infer a zero, loss, tie, or denominator exclusion from failure status.
 
 ## Presentation contract
 
 All presentation work runs in a fresh disposable directory materialized from verified inputs. Source logical paths and SHA-256 values are recorded before presentation and rechecked afterward. Derived PDFs/content blocks carry source hash, derived hash, converter identity/version, and status. Runtime absolute paths are excluded from semantic hashes. Archives require traversal-safe extraction and preserve member-relative paths; basename flattening is forbidden. Unsupported, oversized, or failed required material causes typed presentation/preflight failure rather than filename-only judging.
 
-## Completion gates (draft)
+Task-input, grader-asset, and candidate-artifact roles remain distinct in the presenter manifest. Pairwise sees allowed task inputs and two anonymous candidate artifact trees. Rubric sees allowed task inputs, one anonymous candidate artifact tree/output text, and only the rubric fields its evaluator consumes. The selected judge member must advertise every modality required by the resolved presentation. In particular, audio/video detection includes nested manifest paths and safely inspected supported archives; an AV judge must also receive the actual media payload or filesystem file, not merely be selected by name.
+
+Presentation mode and source policy are explicit and hash-bound (`extracted-text`, rendered/multimodal blocks, or anonymous filesystem). Rubric's artifact-preferred rule may use final output text only when no required artifact representation exists; it may not hide a conversion/read failure by silently substituting the executor's summary. Pairwise presents candidate artifact trees and represents an empty successful artifact set explicitly; it does not substitute executor output text or finish metadata. The current automatic text/visual choice is therefore resolved during preflight and captured in the plan rather than inferred differently during retries.
+
+## Implementation extraction boundary
+
+| Layer | PR06 action |
+|---|---|
+| Strict verdict parse/normalize and anonymous copy hardening | Reuse/refactor the pure logic in `eval_harness/judges/pairwise.py`; replace candidate-directory reference discovery with one bound-view materialization |
+| Binary and structured rubric prompt/valid score math | Extract from `resources_servers/gdpval/scoring.py` with retained NVIDIA SPDX; isolate pure construction/parsing from any OpenAI client or retry loop |
+| Weighted panel selection and AV detection | Extract from `judge_panel.py` into reusable typed panel/plan logic; revision/hash the selector and fail closed on missing capability |
+| Artifact presentation and Office conversion | Reimplement around verified manifests and a fresh derived root, borrowing file-type/rendition semantics from `file_reader.py`, `preconvert.py`, and `comparison.py` without their source-tree mutation or unsafe archive assumptions |
+| BattleRecord semantic payload and trial aggregation | Add reusable generic records/pure folds owned by PR06; exclude stage/anchor/Elo fields |
+| Judge process/transport, blind-role isolation, and durable event storage | Consume the minimal PR05 interfaces; port the existing protection behavior and tests, but do not copy transport/retry/storage loops into evaluator code |
+| AA-v2 reference binding, stage plan, draw inputs, completeness set, and Elo | Leave entirely to PR08; PR08 supplies explicit slots/member IDs and consumes completed BattleRecord semantic digests |
+| Old GDPval resources server, external handoff, and local judge runner | Keep as characterization sources until their scheduled removal; the new path must not call them |
+
+Expected new implementation scope is the GDPval rubric/pairwise evaluators, prompt assets, a safe presenter, reusable panel/BattleRecord pure modules, evaluator registration/integration against accepted PR05 APIs, and focused unit/integration fixtures. Changes to the common runner are limited to the previously reviewed generic interface delta. No production implementation was created on this design branch.
+
+This remains one logical PR06 because its evaluator revision, judge projection, presentation digest, and durable trial result must be reviewed together. If implementation size requires a physical split, `06a` may land pure presenter/parser/panel/record types and fixtures, followed by `06b` common-runner integration. Both inherit this complete acceptance set; the split cannot defer failure handling or leave external handoff as the completed path.
+
+## Completion gates
 
 - Fake-judge tests cover exact one-candidate rubric and exactly-two pairwise cardinality, snapshot/task/view coherence, anonymous projection, A-first reversal, optional explicitly seeded position policy, configured trial count, deterministic panel draw plan, strict verdict parsing, and vote normalization.
 - Fixture tests pin valid binary and structured rubric math plus invalid/truncated/no-score/max-mismatch behavior under the new revision.
 - Failure tests prove all-judge failure, zero trials, partial trials, AV capability insufficiency, interruption, and invalid responses cannot produce a successful score or tie.
 - Presentation tests hash all source bytes before/after Office and archive handling and prove identical bytes, safe member paths, deterministic output hashes, and typed failures.
-- Durability tests prove intent-before-call, terminal-after-call, attempt history, complete-hash reuse, and refusal to count incomplete records.
+- Blind-runtime tests port every assertion in `tests/harness/test_local_judge_isolation.py`, inspect the actual role-policy argv/settings/environment, and use a no-model subprocess probe to prove workspace-read/outside-deny. They also prove the ordinary `workspace-write` Executor profile is rejected for the judge role, protected runtime allowances fail preflight, the model shell receives no parent secrets or provenance, temp/output roots are disjoint, network is disabled, unsupported auth fails, and Claude remains unavailable while confinement is not probe-verifiable.
+- Durability tests prove intent-before-call, terminal-after-call, attempt history, complete-hash reuse, refusal to count incomplete records, and equal semantic digests after an interrupted retry that reaches the same parsed result despite different history/evidence digests.
 - Integration tests use fake judge adapters only and prove the common runner returns a normal `EvaluationResult`; no external handoff counts as completion.
-
+- The exact current outputs and required revised outputs in `contracts/pr06-gdpval-characterization-fixtures.md` become automated fixture oracles. No test invokes a real model, paid API, subscription quota, the legacy resources server, or the old local judge runner as a fallback.
