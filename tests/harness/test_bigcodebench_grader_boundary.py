@@ -37,7 +37,7 @@ from eval_harness.grader_sandbox import (
 class BigCodeBenchBoundaryPreparationTests(unittest.TestCase):
     def test_prepared_root_locator_requires_fixed_physical_layout(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
-            root = Path(temporary) / "setup"
+            root = Path(temporary).resolve() / "setup"
             runtime = root / "pr04-bigcodebench-runtime"
             resource = root / "pr04-bigcodebench-resources"
             venv = root / "pr04-bigcodebench-venv"
@@ -360,6 +360,7 @@ printf '%s|%s|%s|%s\\n' "$uv_version" "$harness_identity" "$meson_version" "$nin
                 mock.patch.object(
                     os,
                     "getxattr",
+                    create=True,
                     return_value=return_value,
                     side_effect=side_effect,
                 ) as getxattr,

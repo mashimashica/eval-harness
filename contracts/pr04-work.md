@@ -3,6 +3,22 @@
 
 # PR04 implementation work record
 
+## Preparation fixture correction saved before remaining grouped checks
+
+Fixed `833df6b9b5484f7fe4882259d93b30c518a81182` ran
+`python -m unittest tests.harness.test_bigcodebench_grader_boundary`: 17 methods,
+15 pass and two fixture errors. The capability double referenced os.getxattr absent in
+this macOS Python, and the prepared-root fixture used a nonphysical temporary path.
+Luna corrects only those fixtures: create=True for the metadata-call double and a
+resolved temporary root. This is not real Linux xattr/sandbox evidence. Ruff formatting
+and diff whitespace pass; corrected unit tests and all remaining grouped unit/mypy/lint/
+shell/secret checks have not yet run. Preserve this first failed fixture validation.
+
+Public `0d4a4b1e` source review remains unclosed; do not promote it. After this save,
+collect all remaining applicable diagnostics before another correction batch rather
+than validating/fixing individual modules sequentially. Same owner, scope, deadline
+and security/acceptance conditions remain in force.
+
 ## Capability inspection correction ready for grouped validation
 
 Base `0d4a4b1ebf4e5b82152fc69fa35afd0c0f969d6f`. Luna returns the bounded
