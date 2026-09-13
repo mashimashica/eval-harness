@@ -6,6 +6,16 @@ Unified root instructions for AI coding assistants (Cursor, Claude, Codex, OpenC
 
 Humans: see [Development Setup → Use of AI and LLM Tools](https://docs.nvidia.com/nemo/gym/latest/contribute/development-setup#use-of-ai-and-llm-tools) (maintainer response policy) and [Agent Skills](https://docs.nvidia.com/nemo/gym/latest/contribute/agent-skills).
 
+## Eval Harness development
+
+For this fork's development, use the [five lifecycle Skills and shared context](.agents/development/README.md).
+Start or resume a development effort with `control-development`; use another Skill directly for a bounded request.
+The [project requirements](.agents/development/requirements.md) govern new harness capability. The retained NeMo
+architecture and environment recommendations below apply to that code, not as a requirement to add model-server or API
+execution routes to the local CLI harness. Development-process records live under `.agents/development/`; product docs
+retain the documentation conventions below. Apply the shared authority, evidence, and remote-write rules. These Skills
+are not implicit instructions or interventions for benchmark participants.
+
 ## Quality bar
 
 - Prefer focused changes. Do not make unrelated "drive-by" edits. If a drive-by fix is worth keeping, open a separate issue or PR.
