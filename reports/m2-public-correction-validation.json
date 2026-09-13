@@ -1,0 +1,59 @@
+{
+  "schema_version": 1,
+  "evidence_class": "failed-first-public-correction-not-acceptance",
+  "public_source_head": "0d4a4b1ebf4e5b82152fc69fa35afd0c0f969d6f",
+  "unit_head": "240d5d37d58c4456db936c6ea8a3b8bc65d4138a",
+  "additional_static_head": "7282be1a149c7352b91fd3df1a3b9f712ef9d1b5",
+  "reported_sha_transcription_correction": "Luna's final static summary ended in d1b4; parent verified actual clean HEAD is d1b5. No nonexistent SHA is treated as tested.",
+  "units": {
+    "provenance": "Luna command/result summaries; first broad-run raw logs were not returned. Subsequent preparation logs were independently inspected by parent.",
+    "modules": [
+      {"name": "test_bigcodebench_grader_boundary", "methods": 17, "pass": 17},
+      {"name": "test_bigcodebench_runner", "methods": 37, "pass": 37},
+      {"name": "test_bigcodebench_benchmark", "methods": 7, "errors": 1},
+      {"name": "test_benchmark_evaluator_edge_coverage", "methods": 18, "failures": 4, "errors": 4},
+      {"name": "test_boundary_failure_coverage", "methods": 31, "failures": 4, "errors": 9},
+      {"name": "test_evaluator_registry", "methods": 2, "pass": 2}
+    ],
+    "resource_app_pytest": {"tests": 16, "pass": 16, "command": "PYTHONPATH=. pytest -q resources_servers/bigcodebench/tests/test_app.py"},
+    "platform_limitations": "Existing case-sensitive collision/physical-root fixture failures are not production success. Do not weaken those guards or repeat the same unsupported macOS check. Public Path exact-type rejection is a separate source-confirmed cross-platform defect.",
+    "not_acceptance": true
+  },
+  "strict_typing": {
+    "initial_scope": ["eval_harness/grader_sandbox.py", "scripts/ci/install_bigcodebench_grader.py", "tests/harness/test_bigcodebench_grader_boundary.py"],
+    "initial_errors": 5,
+    "additional_checked_files": 9,
+    "additional_errors": 22,
+    "additional_error_file": "resources_servers/bigcodebench/tests/test_app.py",
+    "additional_log": "/private/tmp/pr04-mypy-extra-7282be1a.log",
+    "parent_verified_additional_log": true,
+    "later_subset_correction": "The boundary-test SystemExit.code error is closed and independently checked at 67888fb2; public host and resource-test errors remain open."
+  },
+  "ruff": {
+    "initial_scope": "grader_sandbox import order, missing shutil references, grader_sandbox formatting",
+    "additional_lint_errors": 7,
+    "additional_lint_breakdown": "six import-order findings and one unused subprocess import",
+    "additional_files_to_format": 5,
+    "additional_logs": ["/private/tmp/pr04-ruff-extra-7282be1a.log", "/private/tmp/pr04-ruff-format-extra-7282be1a.log"],
+    "parent_verified_additional_logs": true
+  },
+  "preparation_fixture_history": {
+    "first_head": "833df6b9b5484f7fe4882259d93b30c518a81182",
+    "first_methods": 17,
+    "first_pass": 15,
+    "first_errors": ["macOS Python has no os.getxattr attribute for the double", "prepared fixture used nonphysical temporary root"],
+    "correction": "240d uses create=True and resolved root; 17 pass. No real Linux behavior is mocked into acceptance."
+  },
+  "secret_history": {
+    "uncached_offline_command": "Tool unavailable initially; parent installed isolated detect-secrets 1.5.0 with ordinary network access and verified version. Project dependencies unchanged.",
+    "head_7282_targeted_five_paths": "pass, empty log",
+    "head_7282_full_tracked": "fail, two pre-existing ALPS config public digest fingerprints only",
+    "head_7282_negative_control": "expected failure with one unrelated private finding; value not published",
+    "full_log_sha256": "58ef4ce237a0db274ddd854d0dfe0c516b27625346a8a2a03356c43473e8bd06",
+    "negative_log_sha256": "03cdaa800143520cb6ad791f6dd3e2435be3d38e6445c21cae80c930d6f44123",
+    "later_subset_correction": "Exact two additional public fingerprints approved by Sol and saved at 67888fb2; full tracked hook subsequently passes with unrelated negative control still detected."
+  },
+  "review": "reports/m2-public-correction-review.md",
+  "public_corrective_round": 1,
+  "result": "rejected; test-first second public correction assigned to same Luna owner, with fixed-uv preflight completion, no real unreviewed launch"
+}

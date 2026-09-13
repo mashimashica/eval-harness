@@ -3,7 +3,7 @@
 
 # Migration state
 
-Updated: 2026-09-13T11:00:00Z
+Updated: 2026-09-13T11:18:00Z
 
 Control branch: `checkpoint/migration-control`.
 Procedure: [MIGRATION-WORKFLOW.md](MIGRATION-WORKFLOW.md).
@@ -12,8 +12,14 @@ This record preserves recoverable work; it does not declare the migration accept
 ## Latest recovery point: fixed Linux CI promoted; public boundary implementation
 
 Implementation `checkpoint/pr-04` is saved at
-`240d5d37d58c4456db936c6ea8a3b8bc65d4138a`, tree
-`a78b13b414f8e72a17536212163c298b0c1361de`. This preserves the independent installer
+`67888fb29663f087f0c1309ecf8b41ca77732e3f`, tree
+`71ab93328c0df4e4bbf107edc859119231afe092`. The installer capability/baseline subset
+is locally closed: parent inspected 17 preparation tests passing, strict typing for two
+files, Ruff lint/format, shell syntax, full tracked secret hook (5168 files, empty output)
+and an unrelated private negative control with one detected finding. Sol closes the
+source/test/baseline delta. This is not real Linux capability or public-boundary closure.
+The baseline has exactly 66 reviewed public fingerprints, no new exclusions. The history
+at `240d5d37` preserves the independent installer
 capability correction at `833df6b9b5484f7fe4882259d93b30c518a81182` plus two fixture
 fixes. The first 833 preparation check had 15/17 pass and two fixture errors; 240d
 reports 17/17 pass. Sol closes the installer source, with one test typing error still
@@ -45,11 +51,20 @@ strict public types, accepted production limits, cancellation ownership and lega
 removal. Current drafts are not promoted to the real sandbox job. The latest setup
 draft reintroduced an explicit compatibility wrapper and evaluator's ignored legacy
 argument remains; preserving old spellings is rejected, not accepted as a migration.
-Luna completes the exact secret baseline and missing full strict/static diagnostic scope
-by 11:15 UTC, saving within 15 minutes. Parent installed only the isolated fixed
-detect-secrets 1.5.0 tool and verified its version, resolving an uncached offline command
-without changing project dependencies or audit rules. Sol is consolidating public source
-defects; parent reconciles evidence before returning the second corrective batch.
+The first public correction is rejected in `reports/m2-public-correction-review.md`
+and `reports/m2-public-correction-validation.json`. Luna is assigned the test-first
+second public correction through 11:58 UTC, using the saved 14-item consolidated review
+and finite mandatory fixed-uv preflight completion. Save within 15 minutes and before
+long checks. This does not reset prior failures.
+
+Parent separately stages only reviewed installer/capability-test/baseline content atop
+formal `d3dc022f` in `checkpoint/pr-04-linux-gate` at
+`2d022f7649f8ee159a63593028f74b23b5b665fd`, tree
+`10446b5420ad3765b0b5e1384757b45b75c616b9`. This is an integration checkpoint, not
+the main implementation resume point. All public code and its locator test are excluded.
+Its 16 preparation methods, two-file strict typing, Ruff and shell checks pass; full
+tracked hook is running. Only after that gate closes will parent update the existing
+formal branch non-force for real Linux validation. Main remains clean and unchanged.
 The eleven public-boundary groups remain pending fixed-head correction review.
 
 The original four-file draft
