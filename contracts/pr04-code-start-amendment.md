@@ -34,3 +34,11 @@ Reject selected binds equal to an untrusted root, selected artifacts under an un
 ## First implementation batch
 
 Only `eval_harness/grader_sandbox.py`, `eval_harness/bigcodebench_runner.py` and `tests/harness/test_bigcodebench_runner.py`: frozen public types, pure canonical BCBI/BCBO codecs and incremental host state parsing, including the signal union and rejection cases. No process launch, native import or resource-limit execution in this batch. It is saved before deterministic verification and independent delta review. Subsequent process/isolation implementation remains mandatory.
+
+## Finite vendor-byte and legacy fixture scope
+
+Astra accepts Sol's source-backed scope clarification. Add `.pre-commit-config.yaml` solely for the same anchored exclusion on `end-of-file-fixer` and `trailing-whitespace`:
+`^resources_servers/bigcodebench/vendor/bigcodebench/eval/(?:__init__|utils|_special_oracle)\.py$`.
+Retain each hook's existing Python selector and all other hook behavior. The frozen source has three trailing-space lines in __init__.py and seven in utils.py; these hooks otherwise modify exact upstream bytes. Only those three upstream files are excluded; authored code remains fully checked. Exact vendor blob/content hashes remain mandatory and must reject drift. The existing narrow Ruff and one-file copyright rules remain unchanged.
+
+Add only `tests/harness/test_benchmark_evaluator_edge_coverage.py` and `tests/harness/test_boundary_failure_coverage.py` for equivalent existing grader preflight/status/error fixture ports. Replace old runner/interpreter/installer patches with the typed spec and shared preflight/run seam; retain empty/no-code no-call checks and infrastructure propagation without zero metrics. These unit mocks test orchestration only. Hosted real boundary tests remain unmocked and unskipped. No other test/config scope is added.
