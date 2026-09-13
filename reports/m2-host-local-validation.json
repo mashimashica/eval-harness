@@ -13,7 +13,7 @@
   "unittest": {"command": ".venv/bin/python -m unittest discover -s tests/harness -p test_bigcodebench_runner.py -v", "methods": 31, "passed": 31, "failed": 0, "elapsed_seconds": 0.087, "warnings": 0},
   "mypy": {"command": ".venv/bin/mypy --strict --explicit-package-bases --show-error-codes eval_harness/grader_sandbox.py tests/harness/test_bigcodebench_runner.py", "source_files": 2, "errors": 0},
   "ruff": {"version": "0.12.11", "lint": "passed for both source files", "format": "passed for both source files"},
-  "review": "Sol is reviewing the unchanged host blob against fixed 058a5878; the latest delta is cleanup-test typing and owned-stream closure only",
+  "review": "Sol completed fixed 058a5878 review: two P1 findings remain, teardown budget restart and trusted-exit/enforcement TOCTOU; see m2-host-review-058a5878.md. Parent confirmed and stopped under the two-failed-correction rule.",
   "limitations": ["public preflight and launch still deliberately closed", "real Linux security acceptance not run", "no Python 3.11 host recheck yet", "no full-head coverage or hosted PR04 CI"],
   "pr04_accepted": false,
   "real_sandbox_verified": false,

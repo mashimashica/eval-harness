@@ -3,13 +3,13 @@
 
 # Migration state
 
-Updated: 2026-09-13T06:31:58Z
+Updated: 2026-09-13T06:33:12Z
 
 Control branch: `checkpoint/migration-control`.
 Procedure: [MIGRATION-WORKFLOW.md](MIGRATION-WORKFLOW.md).
 This record preserves recoverable work; it does not declare the migration accepted.
 
-## Current status: M1 accepted; M2 host-supervisor implementation resumed
+## Current status: M1 accepted; M2 partial, stopped under the two-failed-correction rule
 
 The user resumed the migration from `aa7e2cc9df25795be50559ea5c5d986af020c933`.
 Root recovered the complete original plan, workflow, latest/historical state, M1 acceptance
@@ -18,23 +18,34 @@ All remote Draft heads 38–42 and the frozen design refs were checked and match
 The previously reported local clone was absent, so a fresh clone was made; its root remains
 clean on `main`. Implementation runs in a separate worktree from the exact PR04 checkpoint.
 
-Current implementation checkpoint: `checkpoint/pr-04` at `5678340634362d155a5b98f296b1a75a34c8dc07`,
-tree `55941cbeba7255823d4b6a5b64d907e238231871`; ref and all changed UTF-8 files/Git blobs
-were read back. Host lifecycle/procfs corrections are saved; public attestation and launch
-remain closed. Exact-head tests in the detached review worktree pass all 31 unit methods.
-Strict typing of both files and both scoped Ruff checks pass, with no ResourceWarnings.
-See `reports/m2-host-local-validation.json`; prior evidence remains preserved. Sol is
-reviewing the unchanged host blob at fixed 058a5878. Luna now owns only the independent
-new bootstrap and bootstrap unit-test files for an eight-minute bounded batch. Root is
-recording evidence and preparing the next manifest/provisioning handoff, not editing source.
-Root approved and source-verified the finite read-only
-implicit-root clarification, saved in the amended contract. No PR04 acceptance is claimed.
+Current implementation checkpoint: `checkpoint/pr-04` at `7be35da9fae98c5e56ba14bf13a15a4cdbb9a8e7`,
+tree `fa72b8f742f60496e9380353f7c8f7c3b3c515f0`; ref and changed UTF-8 files/Git blobs
+were read back. This final save changes only the work record. Its source/test blobs are
+identical to `5678340634362d155a5b98f296b1a75a34c8dc07`, whose 31 unit methods, strict
+mypy of both files and Ruff lint/format pass without ResourceWarnings. See
+`reports/m2-host-local-validation.json`; this is partial validation, not PR04 acceptance.
+
+Sol's fixed-host review leaves two P1 defects, independently confirmed by Astra:
+teardown deadlines restart across outer exit/cleanup and exceed the contract budget;
+and a trusted-exit race can return a candidate resource-limit result without actual host
+enforcement. The latter can misclassify infrastructure as zero score. Other host-delta
+findings closed, but the two counterexamples are not covered by passing unit checks.
+See `reports/m2-host-review-058a5878.md` for exact locations and recovery instructions.
+
+The teardown-bound problem remained after two corrective reviews (e839a8cb, 058a5878).
+Astra applied the user's stop rule before the 90-minute cap: no third correction, no new
+implementation, save and report. Luna stopped the independent bootstrap batch before
+editing files. Both agents are idle. Public attestation/launch remain closed; preflight,
+provisioning, caller replacement, old runner deletion, real Linux validation and native
+parity remain unfinished. No formal PR04 Draft was promoted. PR05–11 remain unimplemented.
+Root's finite read-only implicit-root clarification is preserved in the amended contract.
 Luna is the sole implementation owner; Sol reviews saved commits without source edits;
 Astra owns API checkpoints, integration and acceptance. No grandchildren are used.
 
 Current allowance is 2026-09-13T05:58:23Z–07:28:23Z (90 minutes including recovery).
-The first bounded host-policy/supervisor batch permits only `eval_harness/grader_sandbox.py`
-and `tests/harness/test_bigcodebench_runner.py`; save before validation and within 15 minutes.
+On a user-authorized continuation, first close the two saved host findings in only
+`eval_harness/grader_sandbox.py` and `tests/harness/test_bigcodebench_runner.py`; preserve
+the fixed contract/amendment and save before consolidated validation and independent review.
 Runtime provisioning, caller replacement, real Linux boundary/native parity and full PR04
 acceptance remain pending. The local host is macOS arm64, not the required Linux acceptance
 platform. The locked development environment was recreated successfully with uv 0.11.29 and
