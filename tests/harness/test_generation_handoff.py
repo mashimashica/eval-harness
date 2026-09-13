@@ -3,6 +3,8 @@
 
 from __future__ import annotations
 
+import contextlib
+import io
 import json
 import os
 import shutil
@@ -15,6 +17,7 @@ from pathlib import Path
 from typing import TypedDict, cast
 from unittest.mock import patch
 
+import eval_harness.cli as cli
 import eval_harness.runner as runner_module
 from eval_harness.benchmarks.base import Benchmark, BenchmarkTask
 from eval_harness.benchmarks.snapshot import Availability, SnapshotError, SnapshotTaskContent, open_verified_snapshot
@@ -42,6 +45,7 @@ from eval_harness.executors.base import (
     PreflightResult,
     TaskSpec,
 )
+from eval_harness.executors.cursor import CursorExecutor
 from eval_harness.failures import Failure, FailureImpact, FailureKind, RunAbort
 from eval_harness.interventions.base import (
     ApplicationMapping,
@@ -167,6 +171,10 @@ class FixtureBenchmark(Benchmark):
             task_id=task.execution.task_id,
             prompt=f"fixture execution wrapper; network_policy={network_policy}\n{task.execution.prompt}",
         )
+
+
+class CursorFixtureBenchmark(FixtureBenchmark):
+    name = "fixture-cursor"
 
 
 class FixtureIntervention(Intervention):
@@ -594,9 +602,11 @@ class GenerationHandoffTests(unittest.TestCase):
                 )
                 if file_payload is None or type(file_payload.get("sha256")) is not str:
                     raise AssertionError(f"fixture snapshot did not contain {expected_path}")
-                (snapshot_root / "blobs" / "sha256" / cast(str, file_payload["sha256"])).write_bytes(
-                    b"tampered snapshot bytes"
-                )
+                snapshot_blob = snapshot_root / "blobs" / "sha256" / cast(str, file_payload["sha256"])
+                if case == "snapshot_evaluation_blob":
+                    snapshot_blob.unlink()
+                else:
+                    snapshot_blob.write_bytes(b"tampered snapshot bytes")
                 with self.assertRaises(SnapshotError):
                     VerifiedSnapshotBinding.load(snapshot_root)
                 self.assertEqual(len(evaluator.evaluation_requests), 1)
@@ -658,7 +668,9 @@ class GenerationHandoffTests(unittest.TestCase):
                     if len(lines) != 1:
                         raise AssertionError("fixture run did not contain one result row")
                     row_payload = _json_object(json.loads(lines[0]))
-                    row_payload["bundle_path"] = "../outside" if case == "changed_path" else row_payload["bundle_path"]
+                    row_payload["bundle_path"] = (
+                        "candidates/tampered-link" if case == "changed_path" else row_payload["bundle_path"]
+                    )
                     if case == "changed_digest":
                         row_payload["bundle_sha256"] = "0" * 64
                     index_path.write_bytes(
