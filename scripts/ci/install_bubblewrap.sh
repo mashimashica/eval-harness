@@ -46,6 +46,10 @@ check_uv_version() {
     '
 }
 
+check_ninja_version() {
+    [ "$1" = "1.13.0" ] && [ "$2" = "1.13.0.git.kitware.jobserver-pipe-1" ]
+}
+
 runner_temp="${RUNNER_TEMP:?RUNNER_TEMP is required}"
 harness_python="${HARNESS_PYTHON:?HARNESS_PYTHON is required}"
 uv_bin="${UV_BIN:-uv}"
@@ -175,7 +179,10 @@ readonly ninja_bin="$build_venv/bin/ninja"
 export PATH="$build_venv/bin:/usr/bin:/bin"
 export NINJA="$ninja_bin"
 [ "$("$meson_bin" --version)" = "1.9.1" ] || die "Meson 1.9.1 is required"
-[ "$("$ninja_bin" --version)" = "1.13.0" ] || die "Ninja 1.13.0 is required"
+[ "$(command -v ninja)" = "$ninja_bin" ] || die "pinned Ninja is not selected"
+ninja_distribution_version="$("$build_venv/bin/python" -I -B -c 'import importlib.metadata; print(importlib.metadata.version("ninja"))')"
+ninja_binary_version="$("$ninja_bin" --version)"
+check_ninja_version "$ninja_distribution_version" "$ninja_binary_version" || die "pinned Ninja identity is invalid"
 "$meson_bin" setup "$build_dir" "$source_dir" \
     --prefix="$prefix" --buildtype=release \
     -Dselinux=disabled -Dman=disabled -Dtests=true \

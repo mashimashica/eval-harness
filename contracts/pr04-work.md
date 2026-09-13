@@ -3,6 +3,31 @@
 
 # PR04 implementation work record
 
+## Reviewed Ninja-only formal promotion, 2026-09-13
+
+Formal parent `0c919a5cd1256af121a912bef5a42cf41d5e360b`; copy only the reviewed
+Ninja installer/test delta from checkpoint `1df1ef8cbf363c7e69a43d119f816a6666f79b36`.
+The exact two files are scripts/ci/install_bubblewrap.sh and
+tests/harness/test_bigcodebench_grader_boundary.py. Parent verifies both copied files
+byte-for-byte against that fixed checkpoint. All other code stays at the formal parent;
+in particular the unaccepted public-boundary/caller drafts are not included.
+
+First real Ubuntu run installed the correct hash-locked Ninja distribution 1.13.0 but
+the script rejected its actual binary version string. This correction requires both
+metadata version 1.13.0 and exact binary output 1.13.0.git.kitware.jobserver-pipe-1,
+using only quoted absolute build-venv tools. Pins and lock hashes are unchanged.
+The preparation unit methods, including new exact/negative/space-path regressions,
+passed in the parent's grouped 1df1ef8 run; that larger draft had separate test/type/
+lint failures and is not promoted. Scoped test typing, lint and format have no finding;
+shell syntax and copied-diff whitespace pass. Sol closes this exact two-file delta.
+
+This formal update is for actual Linux build verification, not checkpoint transport or
+acceptance. Public preflight still fails closed as its original placeholder. Grader
+audit remains blocked by NLTK, secret digest classification awaits its exact baseline,
+legacy app typing and 96% coverage remain open. All real isolation/hostile/parity gates
+are mandatory and no model call, merge or release is performed. Full draft development
+continues separately on checkpoint/pr-04 with Luna and fixed-source Sol review.
+
 ## CI path and preflight correction ready, 2026-09-13
 
 Base `92408b9d506f6b287598616b7ac58e9e145713c7`; Luna changes only the
