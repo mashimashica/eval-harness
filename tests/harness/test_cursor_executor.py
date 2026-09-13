@@ -109,6 +109,77 @@ class CursorExecutorTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "task_inputs input must be a real directory"):
                 CursorExecutor()._isolate_task_inputs(workspace)
 
+    def test_policy_write_failure_restores_task_inputs_without_invoking_agent(self) -> None:
+        with tempfile.TemporaryDirectory() as root:
+            request = self.request(root)
+            inputs = request.workspace / "task_inputs"
+            inputs.mkdir()
+            original = inputs / "input.txt"
+            original.write_text("original", encoding="utf-8")
+            executor = CursorExecutor(command="agent")
+            with (
+                patch.object(executor, "_write_workspace_policy", side_effect=OSError("policy denied")),
+                patch("eval_harness.executors.cursor.subprocess.run") as run,
+            ):
+                with self.assertRaisesRegex(OSError, "policy denied"):
+                    executor.execute(request)
+            run.assert_not_called()
+            self.assertTrue(inputs.is_dir())
+            self.assertFalse(inputs.is_symlink())
+            self.assertEqual(original.read_text(encoding="utf-8"), "original")
+
+    def test_prompt_write_failure_or_interrupt_restores_task_inputs_without_invoking_agent(self) -> None:
+        prompt_path_error = "prompt write denied"
+        for name, prompt_error in (("error", OSError(prompt_path_error)), ("interrupt", KeyboardInterrupt())):
+            with self.subTest(name=name), tempfile.TemporaryDirectory() as root:
+                request = self.request(root)
+                inputs = request.workspace / "task_inputs"
+                inputs.mkdir()
+                original = inputs / "input.txt"
+                original.write_text("original", encoding="utf-8")
+                prompt_path = request.executor_dir / "prompt.txt"
+                executor = CursorExecutor(command="agent")
+                original_write_text = Path.write_text
+
+                def write_text(path: Path, data: str, *args: object, **kwargs: object) -> int:
+                    if path == prompt_path:
+                        raise prompt_error
+                    return original_write_text(path, data, *args, **kwargs)
+
+                with (
+                    patch.object(Path, "write_text", autospec=True, side_effect=write_text),
+                    patch("eval_harness.executors.cursor.subprocess.run") as run,
+                ):
+                    if isinstance(prompt_error, KeyboardInterrupt):
+                        with self.assertRaises(KeyboardInterrupt):
+                            executor.execute(request)
+                    else:
+                        with self.assertRaisesRegex(OSError, prompt_path_error):
+                            executor.execute(request)
+                run.assert_not_called()
+                self.assertTrue(inputs.is_dir())
+                self.assertFalse(inputs.is_symlink())
+                self.assertEqual(original.read_text(encoding="utf-8"), "original")
+
+    def test_isolation_digest_failure_restores_task_inputs_without_invoking_agent(self) -> None:
+        with tempfile.TemporaryDirectory() as root:
+            request = self.request(root)
+            inputs = request.workspace / "task_inputs"
+            inputs.mkdir()
+            original = inputs / "input.txt"
+            original.write_text("original", encoding="utf-8")
+            executor = CursorExecutor(command="agent")
+            with (
+                patch("eval_harness.executors.cursor._tree_digest", side_effect=OSError("digest unavailable")),
+                patch("eval_harness.executors.cursor.subprocess.run") as run,
+            ):
+                with self.assertRaisesRegex(OSError, "digest unavailable"):
+                    executor.execute(request)
+            run.assert_not_called()
+            self.assertTrue(inputs.is_dir())
+            self.assertFalse(inputs.is_symlink())
+            self.assertEqual(original.read_text(encoding="utf-8"), "original")
+
     def test_late_task_input_mutation_discards_parsed_output(self) -> None:
         with tempfile.TemporaryDirectory() as root:
             request = self.request(root)

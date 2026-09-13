@@ -41,3 +41,9 @@ Base: `4948b2c3f85ca82d94e44734de532c8769d7b04e`. Luna edited only `eval_harness
 The change clears output text whenever cleanup adds a typed failure, represents a cleanup interruption explicitly, and adds focused regressions for late mutation, restore failure, and primary-failure preservation. Tests have not been run on this batch. It does not yet fix the separately identified setup-write cleanup gap, complete other fixture migration, or close PR02c acceptance.
 
 Next: run the focused Cursor tests on this saved head, fix any concrete failure, then bring policy/prompt preparation inside the cleanup lifetime and address the remaining reviewed runner/fixture requirements in bounded saved batches.
+
+## Cursor preparation cleanup batch
+
+Base `d8bfa21554bfbe4adb9f592ddfaece65d78fff0c` was read back and checked out cleanly. `python -m unittest tests.harness.test_cursor_executor` passed all 10 tests on that exact head. An isolated clean checkout of the same head ran `test_generic_runner`: 33 tests, 4 failures and 1 error, all recorded as remaining input-path/descriptor/duplicate-ID/unavailable-revision fixture migration work; no full-suite or acceptance pass is claimed.
+
+This batch changes only Cursor and its focused tests: policy/prompt preparation now lies inside the restoration lifetime, and a failed digest immediately after isolating inputs restores the original namespace before propagating. Focused tests assert original bytes, a real directory, and zero subprocess calls after setup failure/interruption. These new tests have not yet run. Root saves this returned batch before validation; source review, typing and all remaining handoff work stay open.

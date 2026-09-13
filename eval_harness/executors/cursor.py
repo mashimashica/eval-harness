@@ -324,7 +324,16 @@ class CursorExecutor(Executor):
         elif protected.is_dir():
             shutil.rmtree(protected)
         visible.rename(protected)
-        digest = _tree_digest(protected)
+        try:
+            digest = _tree_digest(protected)
+        except BaseException:
+            # A failed pre-symlink digest must leave the input namespace in
+            # its original form before the exception escapes.
+            try:
+                protected.rename(visible)
+            except BaseException as restore_error:
+                raise RuntimeError("Cursor task input isolation could not restore task_inputs") from restore_error
+            raise
         try:
             visible.symlink_to(protected.resolve(), target_is_directory=True)
         except OSError:
@@ -372,8 +381,6 @@ class CursorExecutor(Executor):
         request.deliverables_dir.mkdir(parents=True, exist_ok=True)
         request.executor_dir.mkdir(parents=True, exist_ok=True)
         protected_task_inputs, task_inputs_digest = self._isolate_task_inputs(request.workspace)
-        self._write_workspace_policy(request.workspace, protected_task_inputs)
-        (request.executor_dir / "prompt.txt").write_text(request.task.prompt, encoding="utf-8")
 
         started_at = _utc_now()
         stdout_path = request.executor_dir / "stdout.log"
@@ -390,8 +397,12 @@ class CursorExecutor(Executor):
         protocol_error: str | None = None
         failure: Failure | None = None
         cleanup_interrupted = False
+        preparation_complete = False
 
         try:
+            self._write_workspace_policy(request.workspace, protected_task_inputs)
+            (request.executor_dir / "prompt.txt").write_text(request.task.prompt, encoding="utf-8")
+            preparation_complete = True
             completed = subprocess.run(
                 self.build_command(request),
                 input=request.task.prompt,
@@ -437,9 +448,13 @@ class CursorExecutor(Executor):
             status = ExecutionStatus.TIMED_OUT
             failure = Failure(FailureKind.TIMEOUT, "timeout", FailureImpact.RUN)
         except KeyboardInterrupt:
+            if not preparation_complete:
+                raise
             status = ExecutionStatus.INTERRUPTED
             failure = Failure(FailureKind.INTERRUPTED, "interrupted", FailureImpact.RUN)
         except OSError as exc:
+            if not preparation_complete:
+                raise
             stderr = str(exc) + "\n"
             status = ExecutionStatus.FAILED
             failure = Failure(FailureKind.PROCESS, "process_spawn", FailureImpact.RUN)
