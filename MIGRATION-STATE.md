@@ -3,7 +3,7 @@
 
 # Migration state
 
-Updated: 2026-09-13T06:09:01Z
+Updated: 2026-09-13T06:20:09Z
 
 Control branch: `checkpoint/migration-control`.
 Procedure: [MIGRATION-WORKFLOW.md](MIGRATION-WORKFLOW.md).
@@ -18,15 +18,15 @@ All remote Draft heads 38–42 and the frozen design refs were checked and match
 The previously reported local clone was absent, so a fresh clone was made; its root remains
 clean on `main`. Implementation runs in a separate worktree from the exact PR04 checkpoint.
 
-Current implementation checkpoint: `checkpoint/pr-04` at `64e9855b796047d351e67c2b14006eccf5ad2414`,
-tree `5361630ad13135f77c387a3c7937bc6bcf771fc4`; ref and all three changed UTF-8 files/Git blobs
-were read back. It adds the first host command/lock/supervisor batch; public attestation and
-launch remain closed. Exact-head local checks found one path-normalization fixture failure
-among 18 unittest methods, seven strict-mypy errors and scoped Ruff formatting/import issues.
-See `reports/m2-host-initial-validation.json`. Sol is independently reviewing this saved delta;
-the same Luna owner is implementing consolidated corrections. Sol's nine concrete findings
-are saved in `reports/m2-host-review-64e9855b.md`. Root approved and source-verified the finite
-read-only implicit-filesystem clarification. No PR04 acceptance is claimed.
+Current implementation checkpoint: `checkpoint/pr-04` at `e839a8cba1416e600910c90171a72a15b910a23c`,
+tree `d82dfc86913a51f5b5596457ccdf4aedc349c383`; ref and all four changed UTF-8 files/Git blobs
+were read back. It corrects the first host command/lock/supervisor batch; public attestation
+and launch remain closed. Exact-head tests in the detached review worktree pass all 26 unit
+methods. Three new mypy findings and the original import-sort issue remain; format passes.
+See `reports/m2-host-correction-validation.json`. Sol's initial nine findings are saved in
+`reports/m2-host-review-64e9855b.md`; the same Luna owner is closing the remaining lifecycle
+and regression details. Root approved and source-verified the finite read-only implicit-root
+clarification, saved in the amended contract. No PR04 acceptance is claimed.
 Luna is the sole implementation owner; Sol reviews saved commits without source edits;
 Astra owns API checkpoints, integration and acceptance. No grandchildren are used.
 

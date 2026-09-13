@@ -1,0 +1,49 @@
+{
+  "schema_version": 1,
+  "tested_commit": "e839a8cba1416e600910c90171a72a15b910a23c",
+  "tree": "d82dfc86913a51f5b5596457ccdf4aedc349c383",
+  "tested_at": "2026-09-13T06:20:09Z",
+  "platform": "macOS arm64",
+  "python": "3.13.14",
+  "source_isolation": "detached clean review worktree; imported grader_sandbox.__file__ was asserted beneath that worktree before tests",
+  "unittest": {
+    "command": "../pr04/.venv/bin/python -m unittest discover -s tests/harness -p test_bigcodebench_runner.py -v",
+    "methods": 26,
+    "passed": 26,
+    "failed": 0
+  },
+  "mypy": {
+    "command": "../pr04/.venv/bin/mypy --strict --explicit-package-bases --show-error-codes eval_harness/grader_sandbox.py tests/harness/test_bigcodebench_runner.py",
+    "initial_seven_errors_resolved": true,
+    "remaining_errors": [
+      "grader_sandbox.py:650: stream reused for int | HasFileno after IO[bytes]",
+      "grader_sandbox.py:727: stream reused for IO[bytes] | None",
+      "test_bigcodebench_runner.py:337: last_sample requires annotation"
+    ]
+  },
+  "ruff": {
+    "format": "passed for both files",
+    "lint": "import sorting remains incorrect in both files",
+    "unsuccessful_corrections_for_import_sorting": 1
+  },
+  "review": {
+    "reviewer": "Sol",
+    "status": "correction closure in progress",
+    "parent_followups": [
+      "post-exit held pipes still require a bounded drain deadline",
+      "explicit zombie/dead process state must allow absent VmRSS without treating live failures as zero",
+      "outer process must still be reaped when tree observation fails"
+    ],
+    "reviewer_followups": [
+      "exact nonrecursive remount order must match saved amendment",
+      "test parser/selector construction failure after launch",
+      "exact optional host mount set must remain asserted",
+      "add direct fail-closed sampler regressions"
+    ]
+  },
+  "pr04_accepted": false,
+  "real_sandbox_verified": false,
+  "native_1140_parity_verified": false,
+  "whole_migration_complete": false,
+  "known_dependency_cve": "unresolved; investigation remains closed"
+}
