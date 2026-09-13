@@ -56,6 +56,10 @@ _VERSION_PATTERN = re.compile(r"(?<![A-Za-z0-9])2026\.09\.10-fd3934a(?![A-Za-z0-
 _CURSOR_AUTH_STORE_RELATIVE_PATH = Path("cursor") / "auth.json"
 
 
+class _TreeDigestError(OSError):
+    """Stable local error raised when the protected input tree is not verifiable."""
+
+
 def _utc_now() -> str:
     return datetime.now(timezone.utc).isoformat()
 
@@ -73,9 +77,20 @@ def _tree_digest(root: Path) -> str:
     try:
         root_info = root.lstat()
     except OSError as exc:
-        raise OSError("task input tree root cannot be inspected") from exc
+        raise _TreeDigestError("task input tree root cannot be inspected") from exc
     if stat.S_ISLNK(root_info.st_mode) or not stat.S_ISDIR(root_info.st_mode):
-        raise OSError("task input tree root must be a real directory")
+        raise _TreeDigestError("task input tree root must be a real directory")
+
+    def stat_signature(info: os.stat_result) -> tuple[int, int, int, int, int, int, int]:
+        return (
+            info.st_mode,
+            info.st_dev,
+            info.st_ino,
+            info.st_size,
+            info.st_mtime_ns,
+            info.st_ctime_ns,
+            stat.S_IFMT(info.st_mode),
+        )
 
     def frame(entry_type: bytes, logical: bytes, content_length: int) -> None:
         digest.update(entry_type)
@@ -85,42 +100,41 @@ def _tree_digest(root: Path) -> str:
 
     def visit(directory: Path, prefix: str) -> None:
         try:
-            directory_info = directory.lstat()
-            if stat.S_ISLNK(directory_info.st_mode) or not stat.S_ISDIR(directory_info.st_mode):
-                raise OSError("task input tree contains a non-directory node")
-            entries = sorted(os.scandir(directory), key=lambda entry: entry.name)
+            before = directory.lstat()
+            if stat.S_ISLNK(before.st_mode) or not stat.S_ISDIR(before.st_mode):
+                raise _TreeDigestError("task input tree contains a non-directory node")
+            with os.scandir(directory) as scanner:
+                entries = sorted(scanner, key=lambda entry: entry.name)
         except OSError as exc:
-            raise OSError("task input tree cannot be traversed") from exc
+            if isinstance(exc, _TreeDigestError):
+                raise
+            raise _TreeDigestError("task input tree cannot be traversed") from exc
         for entry in entries:
             logical_text = f"{prefix}/{entry.name}" if prefix else entry.name
             logical = os.fsencode(logical_text)
+            entry_path = Path(entry.path)
             try:
-                info = entry.stat(follow_symlinks=False)
+                info = entry_path.lstat()
             except OSError as exc:
-                raise OSError("task input tree entry cannot be inspected") from exc
+                raise _TreeDigestError("task input tree entry cannot be inspected") from exc
             mode = info.st_mode
             if stat.S_ISLNK(mode):
-                raise OSError("task input tree cannot contain symlinks")
+                raise _TreeDigestError("task input tree cannot contain symlinks")
             if stat.S_ISDIR(mode):
                 frame(b"D", logical, 0)
-                visit(Path(entry.path), logical_text)
+                visit(entry_path, logical_text)
                 continue
             if not stat.S_ISREG(mode):
-                raise OSError("task input tree can contain only directories and regular files")
+                raise _TreeDigestError("task input tree can contain only directories and regular files")
 
             frame(b"F", logical, info.st_size)
             descriptor: int | None = None
             total = 0
             try:
-                descriptor = os.open(entry.path, os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0))
+                descriptor = os.open(entry_path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
                 opened = os.fstat(descriptor)
-                if (
-                    not stat.S_ISREG(opened.st_mode)
-                    or opened.st_dev != info.st_dev
-                    or opened.st_ino != info.st_ino
-                    or opened.st_size != info.st_size
-                ):
-                    raise OSError("task input tree file changed during read")
+                if not stat.S_ISREG(opened.st_mode) or stat_signature(opened) != stat_signature(info):
+                    raise _TreeDigestError("task input tree file changed during read")
                 while True:
                     chunk = os.read(descriptor, 1024 * 1024)
                     if not chunk:
@@ -128,18 +142,35 @@ def _tree_digest(root: Path) -> str:
                     total += len(chunk)
                     digest.update(chunk)
                 after = os.fstat(descriptor)
+                try:
+                    after_path = entry_path.lstat()
+                except OSError as exc:
+                    raise _TreeDigestError("task input tree file changed during read") from exc
                 if (
-                    after.st_dev != opened.st_dev
-                    or after.st_ino != opened.st_ino
-                    or after.st_size != opened.st_size
+                    not stat.S_ISREG(after.st_mode)
+                    or stat_signature(after) != stat_signature(opened)
+                    or stat_signature(after_path) != stat_signature(after)
                     or total != info.st_size
                 ):
-                    raise OSError("task input tree file changed during read")
+                    raise _TreeDigestError("task input tree file changed during read")
             except OSError as exc:
-                raise OSError("task input tree file cannot be read") from exc
+                if isinstance(exc, _TreeDigestError):
+                    raise
+                raise _TreeDigestError("task input tree file cannot be read") from exc
             finally:
                 if descriptor is not None:
                     os.close(descriptor)
+
+        try:
+            after = directory.lstat()
+        except OSError as exc:
+            raise _TreeDigestError("task input tree directory changed during traversal") from exc
+        if (
+            stat.S_ISLNK(after.st_mode)
+            or not stat.S_ISDIR(after.st_mode)
+            or stat_signature(after) != stat_signature(before)
+        ):
+            raise _TreeDigestError("task input tree directory changed during traversal")
 
     frame(b"D", b"", 0)
     visit(root, "")
@@ -538,7 +569,7 @@ class CursorExecutor(Executor):
                         status = ExecutionStatus.INTERRUPTED
                     else:
                         task_inputs_integrity_error = "task input integrity check was interrupted after execution"
-                except BaseException:
+                except Exception:
                     task_inputs_integrity_ok = False
                     task_inputs_integrity_error = "task input integrity could not be verified"
                     if failure is None:
@@ -575,7 +606,13 @@ class CursorExecutor(Executor):
             ):
                 try:
                     log_path.write_text(content, encoding="utf-8")
-                except OSError:
+                except KeyboardInterrupt:
+                    cleanup_interrupted = True
+                    log_persistence_errors.append(log_name)
+                    if failure is None:
+                        failure = Failure(FailureKind.INTERRUPTED, "interrupted", FailureImpact.RUN)
+                        status = ExecutionStatus.INTERRUPTED
+                except Exception:
                     log_persistence_errors.append(log_name)
             if log_persistence_errors and failure is None:
                 failure = Failure(FailureKind.PROCESS, "log_persistence", FailureImpact.RUN)
