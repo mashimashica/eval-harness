@@ -71,3 +71,11 @@ Exact clean head `621be5d6b43ef65b0f4c75d3c414aca0bb05a7f9` passed all 48 Cursor
 Luna returned a three-file GDPval wrapper/test edit before tests or commits. The execution prompt now lists and protects only `task_inputs`. A real sealed snapshot is reopened through VerifiedSnapshotBinding, its execution files are materialized from the bound view, and the wrapper is checked for nested input paths and canonical-task preservation. The legacy direct materialization test remains separate for its staged consumer; no downloader or legacy fallback was added. Root reviewed and saves this batch before its scoped snapshot/boundary tests, typing and Ruff.
 
 Next: validate this saved wrapper batch, add the required generation handoff integration file, and port the already enumerated typed-executor/Cursor fixtures. Full tests, coverage, audit, independent review and formal PR CI remain open.
+
+## Real generation handoff test batch
+
+Exact clean head `6e7bc240de3a3ad0faaf05c4e2b4bde787314c4b` passed all 31 snapshot/BenchmarkBoundary tests, strict mypy of its three changed source/test files, and Ruff lint/format.
+
+Luna returned one new test file, `tests/harness/test_generation_handoff.py`, before tests or commits. Root read the complete file. It uses an unknown benchmark, typed fake roles, and real snapshot acquisition, binding, candidate sealing/indexing and authoritative loaders. It covers indexed candidates visible before evaluation, runtime deletion and out relocation, execution/evaluation file separation, single acquisition/materialization, typed network provenance, semantic fingerprint exclusions and changes, label-independent identities, and validation-before-publication/binding reopen. Instrumented methods wrap their actual implementations; the tests do not fabricate successful handoff records.
+
+This is an unvalidated test checkpoint. Next run this file and scoped strict typing/Ruff on the saved head; correct concrete fixture/API errors before adding the contract's systemic-failure, seal/index/path and tamper cases. Old typed-executor and Cursor fixtures plus the full required gates remain open.
