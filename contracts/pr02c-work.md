@@ -33,3 +33,11 @@ Next action: verify this remote checkpoint and changed bytes, return a fresh che
 Validation of this checkpoint: design reviewed by Sol and Astra; no source implementation tests run or claimed. Base PR03 exact-head validation remains historical evidence for that unchanged base only. PR02c requires focused tests, independent review, and all unchanged mandatory CI gates on its own saved implementation head.
 
 Promotion: no formal PR yet. A reachable checkpoint is saved work, not a passed test or accepted migration slice.
+
+## Cursor cleanup batch
+
+Base: `4948b2c3f85ca82d94e44734de532c8769d7b04e`. Luna edited only `eval_harness/executors/cursor.py` and `tests/harness/test_cursor_executor.py`, then returned the batch without local commits or tests. Root reviewed the bounded diff and is saving it with this record before validation.
+
+The change clears output text whenever cleanup adds a typed failure, represents a cleanup interruption explicitly, and adds focused regressions for late mutation, restore failure, and primary-failure preservation. Tests have not been run on this batch. It does not yet fix the separately identified setup-write cleanup gap, complete other fixture migration, or close PR02c acceptance.
+
+Next: run the focused Cursor tests on this saved head, fix any concrete failure, then bring policy/prompt preparation inside the cleanup lifetime and address the remaining reviewed runner/fixture requirements in bounded saved batches.

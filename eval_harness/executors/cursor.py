@@ -389,6 +389,7 @@ class CursorExecutor(Executor):
         output_text: str | None = None
         protocol_error: str | None = None
         failure: Failure | None = None
+        cleanup_interrupted = False
 
         try:
             completed = subprocess.run(
@@ -446,7 +447,11 @@ class CursorExecutor(Executor):
             if protected_task_inputs is not None and task_inputs_digest is not None:
                 try:
                     task_inputs_integrity_ok = _tree_digest(protected_task_inputs) == task_inputs_digest
-                except BaseException:
+                except KeyboardInterrupt:
+                    cleanup_interrupted = True
+                    task_inputs_integrity_ok = False
+                    task_inputs_integrity_error = "task input integrity check was interrupted"
+                except Exception:
                     task_inputs_integrity_ok = False
                     task_inputs_integrity_error = "task input integrity could not be verified"
                     if failure is None:
@@ -454,19 +459,31 @@ class CursorExecutor(Executor):
                         status = ExecutionStatus.FAILED
                     else:
                         task_inputs_integrity_error = "task input integrity check failed after execution"
-                if not task_inputs_integrity_ok and failure is None:
+                if not task_inputs_integrity_ok and failure is None and not cleanup_interrupted:
                     task_inputs_integrity_error = "task input tree changed during execution"
                     failure = Failure(FailureKind.INTEGRITY, "task_input_mutation", FailureImpact.RUN)
                     status = ExecutionStatus.FAILED
             try:
                 self._restore_task_inputs(request.workspace, protected_task_inputs)
-            except BaseException as exc:
+            except KeyboardInterrupt as exc:
+                cleanup_interrupted = True
+                restore_error = exc
+            except Exception as exc:
                 restore_error = exc
                 if failure is None:
                     failure = Failure(FailureKind.INTEGRITY, "task_input_restore", FailureImpact.RUN)
                     status = ExecutionStatus.FAILED
+            if cleanup_interrupted and failure is None:
+                failure = Failure(FailureKind.INTERRUPTED, "interrupted", FailureImpact.RUN)
+                status = ExecutionStatus.INTERRUPTED
             stdout_path.write_text(stdout, encoding="utf-8")
             stderr_path.write_text(stderr, encoding="utf-8")
+
+        # Cleanup can discover a failure after the executor has parsed a valid
+        # response.  Preserve the typed failure boundary by discarding every
+        # output channel before constructing ExecutionResult.
+        if failure is not None:
+            output_text = None
 
         available_outputs: frozenset[ExecutorOutput] = (
             frozenset(
@@ -491,6 +508,7 @@ class CursorExecutor(Executor):
             if protected_task_inputs is not None
             else "none",
             "task_inputs_integrity_verified": task_inputs_integrity_ok,
+            "task_inputs_cleanup_interrupted": cleanup_interrupted,
             "api_environment_removed": sorted(_API_ENV_VARS),
         }
         if task_inputs_integrity_error is not None:
