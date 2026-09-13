@@ -24,7 +24,9 @@ were read back. It adds the first host command/lock/supervisor batch; public att
 launch remain closed. Exact-head local checks found one path-normalization fixture failure
 among 18 unittest methods, seven strict-mypy errors and scoped Ruff formatting/import issues.
 See `reports/m2-host-initial-validation.json`. Sol is independently reviewing this saved delta;
-the same Luna owner will receive consolidated corrections. No PR04 acceptance is claimed.
+the same Luna owner is implementing consolidated corrections. Sol's nine concrete findings
+are saved in `reports/m2-host-review-64e9855b.md`. Root approved and source-verified the finite
+read-only implicit-filesystem clarification. No PR04 acceptance is claimed.
 Luna is the sole implementation owner; Sol reviews saved commits without source edits;
 Astra owns API checkpoints, integration and acceptance. No grandchildren are used.
 
