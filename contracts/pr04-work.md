@@ -22,6 +22,15 @@ handling; these must be consolidated with test/review results and returned to Lu
 Runtime manifest is currently proposed below the private runtime setup root, but its
 full identity fields and resource path alignment remain unverified. PR04 remains open.
 
+The first consolidated preparation correction adds candidate-only output, source policy
+checks, binary metadata/readback, content inventory and safe internal archive symlinks.
+It is saved before consolidated tests/mypy/Ruff and independent review. Parent inspection
+still sees NLTK extraction dropping the package-id level and missing actual Ubuntu release
+validation in the Python installer; the promised identity/provenance mutation regressions
+are not yet present. These are remaining original findings, not a closed component.
+The parent also inspected the exact CPython tar in memory: 4,906 members, including 300
+safe parent-relative links; no interpreter execution or environment install occurred.
+
 At `e012ccc43d0129124efa63d14b223a1b4027d79f`, all 37 unit methods, strict mypy of
 the two changed files and Ruff lint/format pass. Sol independently closed both original
 P1 findings and found no remaining actionable defect in that fixed host delta. Parent

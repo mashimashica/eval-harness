@@ -9,6 +9,7 @@ readonly BWRAP_URL="https://github.com/containers/bubblewrap/releases/download/v
 readonly BWRAP_ARCHIVE_SIZE=126452
 readonly BWRAP_ARCHIVE_SHA256="9760d007363e3abba7c747489910f9f82d9fca53ba3bd3282e396fa3c97a3314"
 readonly BWRAP_VERSION="0.12.0"
+readonly BUILD_LOCK_SHA256="32df6b18b4c96eb4146d18cd16adad24efecba5c4a5212115f5c6acea4749605"
 
 die() {
     echo "install_bubblewrap: $*" >&2
@@ -41,6 +42,11 @@ require_absolute "$harness_python" HARNESS_PYTHON
 [ -r /etc/os-release ] || die "Ubuntu release metadata is unavailable"
 grep -q '^ID=ubuntu$' /etc/os-release || die "Ubuntu is required"
 grep -q '^VERSION_ID="24.04"$' /etc/os-release || die "Ubuntu 24.04 is required"
+uv_version="$($uv_bin --version)"
+[ "$uv_version" = "uv 0.11.29" ] || die "uv 0.11.29 is required"
+harness_identity="$($harness_python -I -B -c 'import platform; print(platform.python_version(), platform.machine())')"
+[ "$harness_identity" = "3.13.14 x86_64" ] || die "locked harness Python 3.13.14 x86-64 is required"
+[ "$(sha256sum "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)/requirements-bwrap-build.lock" | awk '{print $1}')" = "$BUILD_LOCK_SHA256" ] || die "build lock hash mismatch"
 
 readonly build_venv="$runner_temp/pr04-bwrap-build-venv"
 readonly source_dir="$runner_temp/pr04-bwrap-source-0.12.0"
@@ -141,12 +147,12 @@ PY
 binary="$prefix/bin/bwrap"
 [ -f "$binary" ] && [ ! -L "$binary" ] || die "bubblewrap binary is not regular"
 [ "$(stat -c '%a' "$binary")" = 755 ] || die "bubblewrap binary mode is not 0755"
-mode="$(stat -c '%A' "$binary")"
-case "$mode" in
-    *s*|*w*) die "bubblewrap binary has unsafe mode" ;;
-esac
+[ "$(stat -c '%h' "$binary")" = 1 ] || die "bubblewrap binary has multiple links"
+owner="$(stat -c '%u' "$binary")"
+[ "$owner" = 0 ] || [ "$owner" = "$(id -u)" ] || die "bubblewrap binary owner is unsafe"
 [ "$("$binary" --version)" = "bubblewrap $BWRAP_VERSION" ] || die "bubblewrap version mismatch"
 [ "$(readelf -h "$binary" | awk -F: '/Class:/ {gsub(/[[:space:]]/, "", $2); print $2}')" = ELF64 ] || die "bubblewrap is not ELF64"
+[ "$(readelf -h "$binary" | awk -F: '/Machine:/ {gsub(/[[:space:]]/, "", $2); print $2}')" = AdvancedMicroDevicesX86-64 ] || die "bubblewrap architecture is not x86-64"
 command -v getcap >/dev/null 2>&1 || die "getcap is required"
 [ -z "$(getcap "$binary")" ] || die "bubblewrap binary has file capabilities"
 printf 'BUBBLEWRAP_PATH=%s\n' "$binary"
