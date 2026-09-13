@@ -13,12 +13,28 @@ Start or resume a development effort with `control-development`; use another Ski
 The [project requirements](.agents/development/requirements.md) govern new harness capability. The retained NeMo
 architecture and environment recommendations below apply to that code, not as a requirement to add model-server or API
 execution routes to the local CLI harness. Development-process records live under `.agents/development/`; product docs
-retain the documentation conventions below. Apply the shared authority, evidence, and remote-write rules. These Skills
-are not implicit instructions or interventions for benchmark participants.
+retain the documentation conventions below. Apply the shared quality and coordination rules.
+These Skills are not implicit instructions or interventions for benchmark participants.
 
 The [shared development standards and quality gates](.agents/development/README.md#development-standards-and-quality-gates)
 govern this fork's quality scope and supersede inherited universal coverage and pre-PR all-file requirements.
 Active branch protection, authorization, license obligations, and DCO remain applicable.
+
+## Authorization and remote writes
+
+- Work within the user's assignment. Only the owner-authorized controller may change product requirements.
+- Preserve unrelated edits and DCO sign-off. Use authorized `git`/`gh` or direct API operations.
+  A separate API connector is not required.
+- On a conflict, fetch the current state, reconcile changes, and retry without overwriting unrelated work.
+  Inspect remote state before retrying an uncertain write.
+- Do not bypass denied authority or branch protection by changing routes.
+  If no authorized route is available, report the cause and retain local work for later handoff.
+  Independent authorized work may continue.
+- Commits, pushes, and PR handoffs do not authorize merge, release, deployment, package publication, or destructive history changes.
+  Those actions require their own applicable authorization.
+- Use Actions for CI, not as an editing mechanism. Do not construct Base64 payloads or temporary workflows to edit files.
+- Keep credentials out of source, logs, and artifacts. Do not change runtimes, models, settings, or billing routes to hide failures.
+- Do not run untrusted candidate code before its required isolation has been verified.
 
 ## Quality bar
 
@@ -92,6 +108,9 @@ Servers communicate via `ServerClient`, which wraps aiohttp with retry logic (3 
 - Guard optional nested fields: `(body.field or {}).get("key", default)`
 
 ## External Tool Auto-Install
+
+This guidance remains subject to the [local setup permissions](.agents/development/README.md#local-work-and-publication).
+It does not authorize global installation or configuration changes.
 
 When an environment requires an external tool (compiler, runtime, etc.), auto-install it on server startup so users don't need manual setup:
 

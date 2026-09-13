@@ -72,3 +72,43 @@ and judgments separately from these expected results.
 Assess these criteria with human inspection of the outputs and execution evidence. Record material failures and useful
 partial results, not a single blanket pass. A successful trial supports only its examined conditions; it does not establish
 that these Skills outperform the no-Skill baseline.
+
+## Local setup
+
+The canonical Skills are `.agents/skills/<name>/SKILL.md`.
+The `.claude/skills/<name>` aliases point to those folders. Preserve symlinks when cloning.
+Keep the shared `.agents/development` context and sibling Skills with the checkout.
+The five Skill folders are not independently distributable packages.
+
+Check discovery and shared links in the installed host before relying on native Skill loading.
+If discovery fails, report it. Explicitly reading the canonical file is a manual application, not native discovery.
+If delegation is unavailable, the controller may do compatible work and report the loss of independence.
+A check requiring an independent actor must remain pending until one is available.
+
+Start with an explicit request:
+
+```text
+Use control-development for this repository. Read .agents/development/requirements.md.
+Inspect local state, establish one plan, and select a small first increment.
+Apply .agents/development/README.md and delegate only the work needed.
+```
+
+Use the host's supported Skill-selection interface. The exercise above is for initial validation, not every change.
+ALPS is authoring and revision support, not a mandatory step during ordinary development.
+
+## Design basis
+
+Initial authoring used both ALPS design responsibilities at commit `1b3d41093c37da24385765907e9fb858d28b498f`.
+The Skill descriptions define the work. The shared README configures its local execution.
+Consult these references when revising that design:
+
+- [Process Description Design](https://github.com/mashimashica/alps/blob/1b3d41093c37da24385765907e9fb858d28b498f/skills/design-process-description/SKILL.md)
+- [Process Framework](https://github.com/mashimashica/alps/blob/1b3d41093c37da24385765907e9fb858d28b498f/skills/design-process-description/references/process-framework.md)
+- [Agent Work System Design](https://github.com/mashimashica/alps/blob/1b3d41093c37da24385765907e9fb858d28b498f/skills/design-agent-work-system/SKILL.md)
+- [Work-system design principles](https://github.com/mashimashica/alps/blob/1b3d41093c37da24385765907e9fb858d28b498f/skills/design-agent-work-system/references/agent-work-system-design.md)
+- [Agent Skills format](https://agentskills.io/specification)
+- [Codex Skills documentation](https://developers.openai.com/codex/skills/)
+- [Claude Code Skills documentation](https://code.claude.com/docs/en/skills)
+
+The initial authoring record dates consultation of external format and host documentation to 2026-09-13.
+Those live documentation links are not version pins.

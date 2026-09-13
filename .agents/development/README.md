@@ -1,207 +1,91 @@
 <!-- SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved. -->
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 
-# Development work system
+# Local development
 
-This checkout supplies five reusable development Skills. Their Process Descriptions are the source of meaning for the
-work; this file supplies their shared controls, information interface, and local execution configuration. It is not a
-sixth Skill or a mandatory five-stage pipeline. The [project requirements](requirements.md) are the source for product
-obligations, not a claim of existing functionality.
+## Purpose and references
 
-## Select the work needed
+Shared rules for the five development Skills.
+Product obligations are in [requirements.md](requirements.md).
+Repository permissions are in [AGENTS.md](../../AGENTS.md#authorization-and-remote-writes).
+See [validation.md](validation.md#local-setup) for initial setup, authoring references, and validation history.
 
-| Skill | Use |
-| --- | --- |
-| [control-development](../skills/control-development/SKILL.md) | Start, resume, allocate, assess, and steer an authorized development scope. |
-| [design-change](../skills/design-change/SKILL.md) | Resolve behavior, boundaries, interfaces, and consequential design choices. |
-| [implement-change](../skills/implement-change/SKILL.md) | Change code, meaningful tests, and affected documentation; self-check. |
-| [verify-change](../skills/verify-change/SKILL.md) | Establish actual behavior against selected criteria through applicable checks. |
-| [review-change](../skills/review-change/SKILL.md) | Assess an assigned concern and evidence without owning implementation or acceptance. |
+## Roles and workflow
 
-A normal increment is bounded by criteria, implemented and checked, then assessed by the controller. Use design when a
-choice needs resolution and independent review when consequences or uncertainty justify it. The same worker may implement
-and verify, but must identify self-verification as such. Do not require separate documents, agents, commits, or approvals
-solely because the work has separate Skill names. Existing domain Skills remain tools for selected specialist work, not
-an alternative lifecycle controller.
-
-## Shared controls and decision rules
-
-These rules apply to all five Skills in this repository. Must / must not are requirements; should is a recommendation;
-may is permission. The current user request and applicable repository rules govern authorization. Within this fork,
-[requirements.md](requirements.md) governs new harness capability; inherited NeMo implementation guidance applies where
-that retained implementation is being changed, not as a mandate to add model-server or API execution routes.
-
-For each claim distinguish **met**, **not met**, **unconfirmed**, and **not applicable with rationale**. Record the
-subject, criterion, evidence, and affected scope. Format validity, a created artifact, a successful tool exit, and an
-approval are not interchangeable with successful execution or fulfilled requirements.
-
-| Finding | Meaning | Required response |
+| Skill | Initial assignee | Responsibility |
 | --- | --- | --- |
-| Blocker | A concrete violation, consequential failure path, or missing mandatory prerequisite makes the next dependent action unsafe or its result invalid. | Hold that action or acceptance claim, establish the smallest correction/check, and continue independent authorized work. |
-| Required | An applicable obligation must be met before an identified increment or milestone can be accepted, but does not invalidate other current work. | Assign an owner and due criterion. It cannot remain outstanding when accepting the scope to which it applies. |
-| Follow-up | Optional improvement, design preference, or future capability outside the current obligations. | Track only when useful; do not delay acceptance on this basis. |
+| [control-development](../skills/control-development/SKILL.md) | Astra max | Plan, delegate, resolve findings, and accept work. |
+| [design-change](../skills/design-change/SKILL.md) | Astra or a delegate | Define behavior, interfaces, and verification scope. |
+| [implement-change](../skills/implement-change/SKILL.md) | Luna max | Implement, test, and update affected documentation. |
+| [verify-change](../skills/verify-change/SKILL.md) | Luna max or a separate verifier | Establish actual behavior and its limits. |
+| [review-change](../skills/review-change/SKILL.md) | Sol max when needed | Assess consequential boundaries or uncertainty. |
 
-A finding needs its applicable requirement/criterion, exact location or subject, failure condition or evidence gap,
-impact, and basis/confidence. A reasoned code path can justify a risk; dangerous reproduction is not required. Conversely,
-an unbounded hypothetical is not a Blocker. New evidence can justify reclassification; schedule pressure cannot.
+These are role preferences, not CLI model identifiers. Confirm supported model/settings at assignment time.
+Use one controller and one implementation worker by default. Add at most one specialist when needed.
+Keep one writer per scope. Nested delegation requires user approval.
+Start with a small usable increment. Select only the Skills it needs.
+One worker may implement and verify; identify this as self-verification.
 
-Ordinary review is limited to one scoped review and one correction check per increment. At that point the controller must
-resolve the remaining decision, not keep handing the same work back and forth. Additional narrowly scoped review needs a
-stated consequential reason. This budget never permits ignoring a serious finding or accepting an unmet mandatory
-criterion. Optional improvements do not need unanimous agreement. Whole-plan design review belongs at milestone boundaries
-or when new evidence invalidates an important assumption, not at every PR.
+## Assignments and records
+
+The controller supplies these details directly or through precise references:
+
+- Target, requirement IDs, acceptance criteria, and exclusions.
+- Workspace, revision or local diff, relevant design, and existing evidence.
+- Allowed edits, side effects, execution limits, and any independence requirement.
+- The result needed next and where to return it.
+
+Workers return the candidate identity, changes, check results, evidence locations, and unresolved issues.
+Assigned workers own their design, code, or observations. The controller owns the plan and acceptance decisions.
+Keep one plan with accepted work, remaining obligations, decisions, and next actions.
+Notify affected workers when requirements, interfaces, or assignments change.
+Reference shared information rather than copying it into each Skill or creating a parallel contracts hierarchy.
 
 ## Development standards and quality gates
 
-These owner-approved rules govern development quality in this fork, including the five Skills. They supersede inherited
-requirements for a universal coverage percentage or all-file validation before every PR. They do not waive product
-requirements, authorization, or active branch protection. The controller selects the affected scope and acceptance
-criteria; implementation performs the checks, verification assesses evidence, and control decides acceptance.
+- **Toolchain:** Use uv, `pyproject.toml`, and `uv.lock`. Align local and CI versions and settings.
+  Write new owned code in typed Python. Run static typing and Ruff on changed owned code and affected interfaces.
+  Unrelated upstream cleanup is not a prerequisite. Prefer existing tools over new validation machinery.
+- **Tests:** Cover acceptance criteria and consequential failure paths. Use relevant content checks for documentation.
+  Measure coverage to locate gaps, not to impose a universal percentage gate. Do not weaken assertions to pass.
+- **CI:** Establish repository-owned GitHub Actions checks as merge gates. Required checks must pass for the merge candidate.
+  Use targeted local checks while editing. Full CI is not required before saving work or opening a PR.
+  Ordinary CI must not depend on real-model calls or personal subscription credentials.
+- **Security:** Audit relevant runtime, development, and grader dependencies for vulnerabilities.
+  Scan the publication surface for secrets.
+  Fix genuine danger or disable the affected capability. Document narrowly justified false positives separately.
+  Do not hide real findings. An incomplete scan is unconfirmed, not clean.
+- **Real execution:** Run small authorized CLI trials early. Record the version, conditions, and observed result.
+  Full grading-parity and broad hostile suites apply to the affected grader or boundary, not every change.
 
-1. **uv, typed Python, and Ruff.** Use uv with `pyproject.toml` and `uv.lock`; keep local and CI environments and check
-   settings aligned. Write new owned code in typed Python and run static type checking and Ruff lint/format checks on
-   new or changed owned code and affected interfaces. Do not make unrelated upstream-wide typing or formatting cleanup
-   a prerequisite for the current increment. Use existing tool capabilities rather than building redundant gate machinery.
-2. **Tests and coverage.** Require behavior-based tests for acceptance criteria and consequential failure paths. Measure
-   coverage to identify missing evidence, but do not impose 96% or another arbitrary percentage as a universal progression
-   gate. Judge gaps by the affected behavior and risk; a high percentage alone is not sufficient. Do not remove meaningful
-   assertions or disguise failures to obtain a passing result. Content-only changes need applicable content checks.
-3. **GitHub Actions.** Establish repository-owned CI checks as PR merge gates. Run targeted checks during local iteration;
-   full CI success is not a prerequisite for each edit, local save, or PR creation. Required checks for the merge candidate
-   must succeed before merging; never bypass active branch protection. Keep ordinary CI independent of real-model calls
-   and personal subscription credentials. Introduce scoped CI/tool configuration with the first implementation PR rather
-   than requiring an upstream-wide cleanup first. This Skills PR states the policy; it does not implement those gates.
-4. **Vulnerability and secret checks.** Retain dependency vulnerability and secret scanning for the relevant execution,
-   development, and grading environments and publication surface. Fix genuine danger or disable the affected capability,
-   holding its unsafe execution or acceptance while independent authorized development continues. Record grounded,
-   narrowly scoped false-positive dispositions separately from true vulnerabilities; do not suppress a real finding to
-   make a gate pass. A failed or unavailable scan is unconfirmed evidence, not a clean result.
-5. **Real CLI and large-scale verification.** Use small, authorized real CLI trials early, alongside deterministic tests,
-   instead of waiting for the entire lifecycle implementation. Record the tested version, conditions, and result. Full
-   grading-parity suites and broad hostile tests belong to acceptance of the affected grader or security boundary, not
-   every change or unrelated benchmark. Do not execute untrusted code through an unverified required safety boundary.
-6. **Model review.** The controller accepts ordinary changes from applicable evidence. Use Sol or another specialist for
-   consequential boundaries or uncertainty, not mandatory approval of every PR. Mechanically settled issues and design
-   preferences must not create independent approval waits. Apply the existing scoped review budget and finding rules.
-7. **Persistence and evidence.** Use local Git, logs, and one working record for continuity. Use the authorized Git/gh or
-   API publication routes below; do not require remote checkpoints and byte-by-byte readback after every local edit.
-   Identify the candidate and conditions each result concerns, revalidate affected evidence, and retain unaffected evidence.
-   An uncertain remote write still requires state inspection before retrying.
+### Acceptance and review
 
-A gate must identify the action or claim it governs. An unmet criterion holds that dependent action or acceptance, not
-all development. Do not rename failed work as accepted; retain its status and continue independent work. Changes to CI
-configuration or required checks need the applicable authorization and review, not an ad hoc bypass of a red check.
+Astra accepts ordinary changes from applicable evidence. Sol is not a required approver for every PR.
+Mechanical checks and design preferences must not create additional approval waits.
+Review once and check corrections once. Then the controller resolves remaining decisions.
+Further specialist review needs a specific consequential reason. Mandatory criteria cannot be waived to end a review.
 
-## Local execution configuration
+| Finding | Response |
+| --- | --- |
+| Blocker: a violation or missing prerequisite invalidates the next action. | Hold that action; correct or verify the affected condition. |
+| Required: an obligation is due before an identified increment is accepted. | Assign it and complete it before that acceptance. |
+| Follow-up: an optional improvement outside current obligations. | Track when useful; do not delay acceptance. |
 
-| Role | Initial preference | Authority |
-| --- | --- | --- |
-| Controller | Astra max | Plan, allocate, resolve design choices and findings, integrate, and accept within user authority. |
-| Implementer / verifier | Luna max; a different setting only by explicit agreement | Execute bounded assignments and ordinary implementation decisions. |
-| Specialist / independent reviewer | Sol max, when needed | Investigate or review the assigned consequential concern and return evidence. |
+Tie findings to an applicable criterion, failure condition or evidence gap, and impact.
+Judge each criterion as met, not met, unconfirmed, or not applicable with a reason.
+An unmet condition holds only dependent work or acceptance. Continue independent authorized work.
+A clean review or successful tool exit does not establish missing acceptance evidence.
 
-These are role preferences from the commissioning discussion, not literal CLI model IDs or guaranteed effort values.
-The controller must resolve and record supported runtime/model/settings in the actual local environment. Do not silently
-substitute a rejected model or effort. Changes of assignment are execution choices, not edits to the Skill's meaning.
+## Local work and publication
 
-Default to the controller and one implementation worker. Add at most one specialist when needed; keep a single writer
-for each scope. Workers must not create nested delegates unless the user authorizes that configuration. A missing
-subagent facility does not justify pretending delegation occurred: the controller may perform compatible work itself and
-record the loss of independence, or hold a check that explicitly requires an independent actor.
+A development assignment permits installing its locked dependencies inside the project environment.
+Global configuration changes and out-of-scope dependency additions require separate approval.
+Agree runtime, model/settings, authentication, and workload/resource limits for each assignment.
+Include task count, concurrency, and retries. Runs within those limits need no repeated approval.
+Changes to the agreed scope or limits require renewed authorization.
 
-Use the existing editor, shell, Git, test runners, and installed CLIs. Prefer a small real probe to speculative argument
-about runtime behavior. Before model work, establish authentication mode, exact invocation, allowed task count, concurrency,
-retry limits, and relevant resource/billing permission. Use separate temporary probe workspaces where needed; preserve
-unrelated edits and never log credentials. Do not install dependencies or change global configuration without permission.
-
-Local files retain work between sessions. Do not add a separate artifact-backup approval gate to every step. The controller
-records where the current plan and evidence live, then resumes from actual state. A paid API fallback is not an acceptable
-repair for an unavailable subscription runtime.
-
-These development Skills apply to development agents, not implicitly to benchmark builders, participants, or judges. When
-implementing or verifying experiment execution, check that the selected workspaces and invocation do not inherit repository
-instructions, development Skills, or unrelated condition data. A fresh session alone does not prove isolation.
-
-### Remote writes
-
-Select an authorized publication route supported by the current environment. In a local checkout, use `git` for local
-commits and authenticated branch pushes, and `gh` for PR operations; an authorized repository Skill's CLI route may be
-used. Direct GitHub API integrations, including `gh api`, are also valid. A separate API connector is not a prerequisite,
-and its absence must not block a working authorized CLI route.
-
-Preserve DCO sign-off and unrelated edits. On a recoverable conflict, fetch or reread the current branch/files, reconcile
-the change, and retry without overwriting unrelated work. After an uncertain write response, inspect the resulting state
-before retrying. Do not bypass denied authority or branch protection by switching routes. If no authorized route is
-available, report the concrete cause and retain local work for the pending handoff; independent local work may continue.
-
-Do not use Actions, temporary workflows, or Base64 payload construction as editing mechanisms; normal CI use of Actions
-is allowed. Authorization for ordinary commits, pushes, and PR handoffs does not itself authorize merge, release, package
-publication, deployment, or destructive history changes. Those actions require their own applicable authorization.
-
-## Context interface and information ownership
-
-The controller supplies a short assignment, either directly or by precise references:
-
-- **Target:** purpose, bounded scope, requirement IDs, acceptance criteria, and exclusions.
-- **State:** repository/workspace, branch and revision or identifiable local diff, relevant design and prior evidence.
-- **Authority:** permitted edits and side effects, execution limits, write owner, and whether independence is required.
-- **Return:** the decision or evidence needed next, including the plan/evidence location to update or report to.
-
-Workers load the relevant sources, not the entire development history. They return the examined revision, changes or
-observations, criterion judgments, evidence locations, and unresolved issues. A missing necessary source limits dependent
-work; it does not justify inventing context. This is an information interface, not a mandatory form or new schema.
-
-| Information | Responsible writer | Readers and change effects |
-| --- | --- | --- |
-| Product requirements | Owner-authorized controller | All roles; changes trigger reconsideration of affected designs, criteria, and evidence. |
-| Working plan, assignments, acceptance | Controller | All assigned workers; changed scope or ownership must reach affected workers. |
-| Selected design | Design assignee; controller resolves scope choices | Implementer, verifier, reviewer; changed interfaces invalidate affected checks. |
-| Candidate code, tests, usage documentation | Assigned implementer | Verifier, reviewer, controller; results must identify the candidate they concern. |
-| Observations and verification judgments | Assigned verifier; self-check evidence from implementer | Reviewer and controller; retain original observations and explain supersession. |
-| Review findings | Reviewer; disposition recorded by controller | Implementer and controller; corrections receive a focused recheck when needed. |
-
-Keep one working plan in an existing local file or issue and announce its location. The plan must retain the active
-increment, remaining product obligations, evidence references, decisions, and next work; its format is not prescribed.
-Do not copy requirements, Process Outcomes, or full logs into every Skill or maintain a parallel `contracts/` hierarchy.
-Process changes revise the affected Skill and shared references; ordinary assignments and model allocation do not.
-
-## Loading and first use
-
-The canonical Skills are `.agents/skills/<name>/SKILL.md`. The corresponding `.claude/skills/<name>` entries are Git
-symlinks to the canonical folders, following the existing checkout convention; preserve symlinks when cloning. Shared
-links in the five Skills explicitly reach the repository's `.agents/development` directory from either host path.
-These are repository-local Skills, not independently distributable single folders: retain the shared context and sibling
-Skills with the checkout. They need no bundled processing script or mandatory ALPS invocation during normal development.
-
-In a fresh local session, confirm the five names appear in the host's available Skills. Start with an explicit request:
-
-```text
-Use control-development for this repository. Read .agents/development/requirements.md.
-Inspect the current local state, establish one working plan and a bounded first increment,
-then select and delegate only the work required by its acceptance criteria.
-Use the local role configuration in .agents/development/README.md.
-Do not merge or publish without authorization.
-```
-
-Codex's explicit skill selection may use `$control-development`; Claude Code may use `/control-development`. Check the
-installed host's supported interface. Do not treat an intended discovery path as proof that this version loaded a Skill.
-If discovery fails, report it and explicitly read the canonical file for authorized manual application; do not call that
-native discovery. The [validation record](validation.md) distinguishes checks performed here from local host trials still
-needed. Its test prompts are validation material, not instructions to load for ordinary development.
-
-## Design basis
-
-The five Skills were authored using both ALPS design responsibilities at commit
-`1b3d41093c37da24385765907e9fb858d28b498f`: first their purposes, observable results, and boundaries, then this allocation
-of agents, existing tools, information, and execution conditions. These are authoring/revision references, not runtime
-steps or a claim of universal effectiveness:
-
-- [ALPS Process Description Design](https://github.com/mashimashica/alps/blob/1b3d41093c37da24385765907e9fb858d28b498f/skills/design-process-description/SKILL.md)
-- [ALPS Process Framework](https://github.com/mashimashica/alps/blob/1b3d41093c37da24385765907e9fb858d28b498f/skills/design-process-description/references/process-framework.md)
-- [ALPS Agent Work System Design](https://github.com/mashimashica/alps/blob/1b3d41093c37da24385765907e9fb858d28b498f/skills/design-agent-work-system/SKILL.md)
-- [ALPS design principles](https://github.com/mashimashica/alps/blob/1b3d41093c37da24385765907e9fb858d28b498f/skills/design-agent-work-system/references/agent-work-system-design.md)
-- [Agent Skills format](https://agentskills.io/specification)
-- [Codex Skills documentation](https://developers.openai.com/codex/skills/)
-- [Claude Code Skills documentation](https://code.claude.com/docs/en/skills)
-
-External format and host documentation was consulted on 2026-09-13; those live pages are not version pins.
+Use local Git, logs, and the working plan for continuity. Remote checkpoints are not required after every edit.
+Tie results to the candidate and execution conditions. Recheck affected evidence; retain unaffected results.
+Use `git` for commits and authenticated pushes, and `gh` for PR operations. Direct APIs are also valid.
+Follow the [repository write rules](../../AGENTS.md#authorization-and-remote-writes) for permissions and recovery.
+Keep development instructions and unrelated condition data out of experimental participant contexts.
