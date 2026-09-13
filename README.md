@@ -75,7 +75,7 @@ The lightweight package is in [`harness/`](harness/), with benchmark adapters un
 
 Use this fork's [issues](https://github.com/mashimashica/eval-harness/issues) for bug reports and feature requests.
 The [contributing guide](CONTRIBUTING.md) covers the development entry points and targeted checks. The
-[acceptance record](.agents/development/PLAN.md) links the small real CLI trials and requirement-level evidence.
+[historical acceptance evidence](.agents/development/evidence/README.md) links the small real CLI trials and requirement-level evidence.
 
 ## Origin and licensing
 

@@ -33,8 +33,9 @@ Development Skill discovery is distinct from participant isolation and benchmark
 
 Acceptance is evidence-based; implementation alone does not satisfy live-evidence requirements.
 Real evidence: [GDPval](evidence/gdpval-pilot-01.json), [Claude GSM8K](evidence/claude-gsm8k-01.json),
-[discovery and boundaries](evidence/2026-09-13.md). The ledger reflects the latest accepted evidence; earlier trial
-notes below retain the history of excluded attempts and corrections.
+[discovery and boundaries](evidence/integration-acceptance.json). The [evidence index](evidence/README.md) explains
+the historical scope and original-artifact availability. This ledger records the implementation acceptance;
+earlier trial notes below retain the history of excluded attempts and corrections.
 
 | Criterion | Required evidence | Status / evidence |
 | --- | --- | --- |
@@ -289,3 +290,36 @@ Content accepted: README reduced from293to100lines; all13remaining local links r
 BibTeX and external-materials notice suffix is unchanged. YAML parsing confirms the catalog hook is the only removed
 hook; other hook settings remain identical. Fern check passes with0errors/1existing warning; diff whitespace passes.
 No new benchmark page, generated table, runtime change or model trial was needed.
+
+## Acceptance-evidence organization PR
+
+User requested a new independent PR to implement the evidence-retention decision. Baseline:
+`3edb1797adef6846d0b032fa190bc3e3dfda6828`, clean main; branch `codex/organize-acceptance-evidence`.
+Delivery stops at an open, checked PR; do not merge this follow-up. Existing product acceptance is unchanged.
+
+Keep a concise historical acceptance index, a consolidated acceptance summary and five actual trial records.
+Consolidate the dated diary's settled reuse and isolation decisions, the quality/security snapshot and the excluded
+first resume trial into the acceptance summary; remove those
+three redundant standalone files. Preserve factual outcomes, source identity, condition separation, judgments, synthetic
+human labels and exclusion reasons. Link full originals at the immutable baseline commit and retain Git history/raw
+local runs. Clarify that local paths/hashes alone do not make original artifacts publicly retrievable.
+
+Luna owns compaction of N/S/A, grading/aggregation and fresh-checkout JSON. Astra owns the acceptance summary, small trial
+metadata, human-readable evidence entry and affected references. No model calls, runtime/CLI/requirements/dependency/CI
+changes, new benchmark data, or rewrite of prior PRs. Verify retained facts against original JSON, cross-record IDs,
+references, normalized paths and secret scans; use existing required CI for the PR. Original byte snapshots and hashes
+are retained under `.audit/evidence-cleanup/` for this verification only.
+
+Local content accepted: evidence is now seven files (six JSON records and one README index), 69,083 bytes /
+1,681 lines, down from nine files, 84,731 bytes / 2,155 lines. Luna's self-checks and Astra's original-record
+comparison preserve all trial answers, IDs, scores, rationales, synthetic-rating labels, usage/cost measurements,
+and relevant hashes. All nine original-file links/hashes match immutable Git objects. Redundant all-attempt metrics
+were checked equal before omission; shell command strings round-trip to the original argument arrays. Historical
+CI/protection/quality receipts, all nine reuse decisions and excluded resume facts are retained. Forty-one relative
+documentation references resolve; current evidence has no machine-specific absolute paths. Two local deliverables
+(GDPval spreadsheet and fresh-checkout answer) still match their original recorded SHA-256.
+
+Documentation link tests: 14 passed. Fern check: exit 0, zero errors and one existing warning. Whitespace check
+passed. Content-only scope needs no new runtime tests or model calls; the new PR runs the existing Harness quality
+check. Detailed one-time comparison reports stay local under `.audit/evidence-cleanup/`; this cleanup adds no new
+tracked development diary. Complete publication scanning and deliver the separate PR for review without merging.

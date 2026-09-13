@@ -1,7 +1,35 @@
 {
+  "record_type": "historical_development_acceptance",
+  "observed_on": "2026-09-13/14",
+  "scope": "Acceptance and actual main integration of R01-R10 and the six CLI commands",
   "accepted": true,
+  "accepted_for_commit": "f917ebc59e46d2e4b03af7d5735be442eddbd611",
+  "interpretation": "Acceptance at the recorded implementation commit; this snapshot does not certify later revisions or current vulnerability status.",
   "baseline_main": "98f7634747b6e489309f73df97f7d08529592e9a",
-  "branch_protection": {
+  "implementation_pr": {
+    "headRefOid": "bd3cb2dbc82b20a115aa13f8655ec36e69c6d240",
+    "mergeCommit": {
+      "oid": "f917ebc59e46d2e4b03af7d5735be442eddbd611"
+    },
+    "mergedAt": "2026-09-13T16:32:31Z",
+    "state": "MERGED",
+    "url": "https://github.com/mashimashica/eval-harness/pull/46"
+  },
+  "candidate_ci": {
+    "conclusion": "success",
+    "head_sha": "bd3cb2dbc82b20a115aa13f8655ec36e69c6d240",
+    "url": "https://github.com/mashimashica/eval-harness/actions/runs/34768821823"
+  },
+  "main_ci": {
+    "conclusion": "success",
+    "event": "push",
+    "headSha": "f917ebc59e46d2e4b03af7d5735be442eddbd611",
+    "status": "completed",
+    "url": "https://github.com/mashimashica/eval-harness/actions/runs/34768895116"
+  },
+  "merge_tree_identical_to_checked_pr_head": true,
+  "dco": "Both source commits and the merge commit contain Signed-off-by: mashimashica <mashimashica@gmail.com>",
+  "branch_protection_at_acceptance": {
     "allow_deletions": false,
     "allow_force_pushes": false,
     "bypass_used": false,
@@ -15,97 +43,41 @@
       }
     ]
   },
-  "candidate_ci": {
-    "conclusion": "success",
-    "head_sha": "bd3cb2dbc82b20a115aa13f8655ec36e69c6d240",
-    "url": "https://github.com/mashimashica/eval-harness/actions/runs/34768821823"
-  },
-  "dco": "Both source commits and the merge commit contain Signed-off-by: mashimashica <mashimashica@gmail.com>",
   "evidence_files": [
     "gdpval-pilot-01.json",
     "claude-gsm8k-01.json",
     "nsa-comparison-02.json",
     "grading-and-aggregation-01.json",
-    "fresh-checkout-01.json",
-    "security-and-quality.json",
-    "2026-09-13.md"
+    "fresh-checkout-01.json"
   ],
-  "implementation_pr": {
-    "headRefOid": "bd3cb2dbc82b20a115aa13f8655ec36e69c6d240",
-    "mergeCommit": {
-      "oid": "f917ebc59e46d2e4b03af7d5735be442eddbd611"
-    },
-    "mergedAt": "2026-09-13T16:32:31Z",
-    "state": "MERGED",
-    "url": "https://github.com/mashimashica/eval-harness/pull/46"
+  "acceptance_ledger_at_cleanup": "https://github.com/mashimashica/eval-harness/blob/3edb1797adef6846d0b032fa190bc3e3dfda6828/.agents/development/PLAN.md#acceptance-ledger",
+  "original_record": {
+    "commit": "3edb1797adef6846d0b032fa190bc3e3dfda6828",
+    "path": ".agents/development/evidence/integration-acceptance.json",
+    "sha256": "bc59c21c6a0745c80da908ba965a97bfcffd204a7909b6dd6d044da6e189d55c",
+    "url": "https://github.com/mashimashica/eval-harness/blob/3edb1797adef6846d0b032fa190bc3e3dfda6828/.agents/development/evidence/integration-acceptance.json"
   },
-  "main_ci": {
-    "conclusion": "success",
-    "event": "push",
-    "headSha": "f917ebc59e46d2e4b03af7d5735be442eddbd611",
-    "status": "completed",
-    "url": "https://github.com/mashimashica/eval-harness/actions/runs/34768895116"
-  },
-  "main_quality_steps": [
+  "consolidated_records": [
     {
-      "conclusion": "success",
-      "name": "Set up job"
+      "commit": "3edb1797adef6846d0b032fa190bc3e3dfda6828",
+      "path": ".agents/development/evidence/2026-09-13.md",
+      "sha256": "bfa7b1d00530d2a19562c1ec4031a502dc88d04558d180e9ac6f69aa190b465d",
+      "url": "https://github.com/mashimashica/eval-harness/blob/3edb1797adef6846d0b032fa190bc3e3dfda6828/.agents/development/evidence/2026-09-13.md"
     },
     {
-      "conclusion": "success",
-      "name": "Run actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803"
+      "commit": "3edb1797adef6846d0b032fa190bc3e3dfda6828",
+      "path": ".agents/development/evidence/security-and-quality.json",
+      "sha256": "1232387a4e3cead9a8e1b07dda6d00d308319220dd4470ba1b7cce9cf541dd8a",
+      "url": "https://github.com/mashimashica/eval-harness/blob/3edb1797adef6846d0b032fa190bc3e3dfda6828/.agents/development/evidence/security-and-quality.json"
     },
     {
-      "conclusion": "success",
-      "name": "Run astral-sh/setup-uv@45c121f982720f3bdf236c2ac06f126ca211949c"
-    },
-    {
-      "conclusion": "success",
-      "name": "Install locked local harness"
-    },
-    {
-      "conclusion": "success",
-      "name": "Lint and type check"
-    },
-    {
-      "conclusion": "success",
-      "name": "Behavioral tests and measured coverage"
-    },
-    {
-      "conclusion": "success",
-      "name": "Dependency audit"
-    },
-    {
-      "conclusion": "success",
-      "name": "Documentation links"
-    },
-    {
-      "conclusion": "success",
-      "name": "Fern configuration"
-    },
-    {
-      "conclusion": "success",
-      "name": "Install verified secret scanner"
-    },
-    {
-      "conclusion": "success",
-      "name": "Scan submitted changes for secrets"
-    },
-    {
-      "conclusion": "success",
-      "name": "Post Run astral-sh/setup-uv@45c121f982720f3bdf236c2ac06f126ca211949c"
-    },
-    {
-      "conclusion": "success",
-      "name": "Post Run actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803"
-    },
-    {
-      "conclusion": "success",
-      "name": "Complete job"
+      "commit": "3edb1797adef6846d0b032fa190bc3e3dfda6828",
+      "path": ".agents/development/evidence/nsa-resume-01.json",
+      "sha256": "be84aca11cb357994d4f34d1c8d88100a9fa8cd19374fe41ecbcaa120c7f0c83",
+      "url": "https://github.com/mashimashica/eval-harness/blob/3edb1797adef6846d0b032fa190bc3e3dfda6828/.agents/development/evidence/nsa-resume-01.json"
     }
   ],
-  "merge_tree_identical_to_checked_pr_head": true,
-  "quality": {
+  "quality_at_acceptance": {
     "behavioral_tests": 82,
     "documentation_link_tests": 14,
     "fern_check": "passed",
@@ -113,8 +85,171 @@
     "locked_distributions_audited": 52,
     "mypy_source_modules": 15,
     "ruff": "passed",
-    "submitted_commit_secret_scan": "passed with no findings"
+    "submitted_commit_secret_scan": "passed with no findings",
+    "python": "3.13.14",
+    "uv": "0.12.13",
+    "installed_noneditable_package": true,
+    "coverage": {
+      "covered_lines": 2842,
+      "num_statements": 3568,
+      "missing_lines": 726,
+      "percent_covered": 79.652466367713
+    },
+    "coverage_policy": "measured for risk inspection, no universal percentage gate",
+    "harness_lock_sha256": "5e7a40660761752ecb35102b96594f3d3a1bd6ffffe9183cf81d47a344dc76aa",
+    "raw_harness_audit_sha256": "ce7ec95c606f0859a1fd51aab2d707aaa9b855c243997c0c3a29cbadee3ae0f0",
+    "npm_tools": {
+      "claude": {
+        "known_vulnerabilities": 0,
+        "raw_audit_sha256": "80bdd73601420827b752e012c31cc94a7cf5e8c8bec9e7b1618b4f2871ffc2fc"
+      },
+      "codex": {
+        "known_vulnerabilities": 0,
+        "raw_audit_sha256": "58a42064c8f483b4157e89652872e2a0ddd89dce81f13102af01c0271aec4d24"
+      },
+      "fern": {
+        "known_vulnerabilities": 0,
+        "raw_audit_sha256": "e925f82231877530453c711a926472f641bb030418b55e976ac7e81b1eee9b28"
+      }
+    },
+    "bootstrap": {
+      "known_vulnerabilities": 0,
+      "pip_and_setuptools": "removed after installing standalone uv; global environment unchanged",
+      "scope": "project-local uv bootstrap environment"
+    },
+    "secret_scan": {
+      "ci": "exact submitted commits scanned again by Harness quality",
+      "findings": 0,
+      "raw_report": ".audit/acceptance/submission-secret-scan.json",
+      "scope": "staged submission diff; 751583 bytes before this evidence-only update",
+      "status": "passed",
+      "tool": "gitleaks8.30.1"
+    },
+    "initial_scan_false_positive": "Two existing SHA1 hashed_secret entries in .github/workflows/config/.secrets.baseline (then lines 132/139) were baseline digests, not credentials. The submitted-change scan separately passed."
   },
+  "development_roles": {
+    "controller": "Astra",
+    "implementation_and_self_verification": "Luna max; /root/implementation",
+    "independent_specialist_review": "Sol max; /root/runtime_boundary_review; account authentication and R08 boundary only, not blanket approval",
+    "review_correction": "Sol retracted the initial claim that a separate process boundary was necessary after the exact configured standalone prompt probe removed native defaults. One unauthenticated probe returned HTTP 401 with no model generation."
+  },
+  "boundary_verification": [
+    {
+      "subject": "Codex native filesystem and rendered input",
+      "method": "Pinned standalone 0.154.0; fresh canonical HOME/CODEX_HOME/workspace outside checkout; minimal read/workspace write profile and explicit native customization disables.",
+      "observed": "Native probe wrote inside workspace and denied sibling private-file access. Configured prompt had no default Skill, multi-agent or development markers; auth-only copy reported ChatGPT while sandbox denied auth.json and repository AGENTS.",
+      "local_probe_records": [
+        ".audit/codex-sandbox-probe.json",
+        ".audit/executor-prompt.json"
+      ],
+      "limit": "Native probe/input inspection is separate from model execution; actual applications are recorded in the trial files."
+    },
+    {
+      "subject": "Read-only grading",
+      "method": "Evaluator-only instructions and native read-only workspace, after excluding a judge that wrote a replacement workbook.",
+      "observed": "Probe read the reference spreadsheet through openpyxl and denied replacement creation. Corrected GDPval re-evaluation preserved the original artifact hash.",
+      "evidence": "gdpval-pilot-01.json"
+    },
+    {
+      "subject": "Claude subscription file-tool route",
+      "method": "Safe/restricted mode with fresh configuration, transient OAuth-only credentials and selected Skill bodies supplied explicitly; bare mode was rejected because it excludes OAuth/keychain authentication.",
+      "observed": "User login and isolated-copy checks reported claude.ai/firstParty/Max. Actual GSM8K used the exact Sonnet4.6 model with Read/Write/Edit/Glob/Grep; anonymous judges exposed Read/Glob/Grep.",
+      "limit": "No shell-isolation claim for re-enabled Bash. GDPval office execution/judging is rejected for this Claude route.",
+      "evidence": [
+        "claude-gsm8k-01.json",
+        "grading-and-aggregation-01.json"
+      ]
+    }
+  ],
+  "settled_setup_findings": [
+    "The initial Codex profile missed the uv minor-version symlink. A native probe reproduced the denial; interpreter-namespace read access fixed openpyxl imports without changing model or billing route.",
+    "iCloud UF_HIDDEN flags caused Python3.13 to skip editable .pth imports. Noneditable locked installation was verified for users and fresh checkout; PYTHONPATH=harness/src is available for source development. Global settings were unchanged.",
+    "Five development Skills were exposed in the host catalog; Claude aliases resolved, but native Claude development-Skill discovery was not claimed as verified. Participants use explicit selected Skill delivery with ambient discovery disabled."
+  ],
+  "retained_input_acquisition": [
+    {
+      "source": "benchmarks/gsm8k/prepare.py",
+      "rows": 1319,
+      "sha256": "3cc70e34cf12813c6c7a951da579b4a4deeda827277c12b71ba842ae3dd38fe9"
+    },
+    {
+      "source": "resources_servers/gdpval/data/example.jsonl",
+      "task_id": "83d10b06-26d1-4636-a32c-23f92c57f30b",
+      "reference_file": "Population v2.xlsx",
+      "bytes": 61470,
+      "sha256": "e64a9d3ba60bbaecef0e6685a57b618e9b321bcd813c79e4460be36bf8c79fb7",
+      "grading_input_boundary": "Rubric withheld from participant; prompt and reference spreadsheet supplied."
+    }
+  ],
+  "reuse_and_adaptation": [
+    {
+      "retained_code": "`benchmarks/gsm8k/prepare.py`",
+      "decision": "Execute unchanged data preparation, including its existing answer fixes; verified 1,319 rows and source hash above."
+    },
+    {
+      "retained_code": "`resources_servers/gdpval/data/example.jsonl`, `task_data.py`",
+      "decision": "Use retained public task/reference/rubric fields. Harness normalization keeps answer-bearing snapshots outside participants."
+    },
+    {
+      "retained_code": "`responses_api_agents/stirrup_agent/tasks/gdpval.py`",
+      "decision": "Adapt its task/reference-file staging boundary; public files are acquired separately so preflight remains read-only. Native CLI workspaces replace container/server assumptions."
+    },
+    {
+      "retained_code": "`responses_api_agents/codex_agent/app.py`",
+      "decision": "Adapt the existing JSONL CLI execution, temporary-home, timeout/process-group and stream-recording patterns. Its Gym provider config injects OPENAI_API_KEY and bypasses login; that path cannot be the required subscription route."
+    },
+    {
+      "retained_code": "`responses_api_agents/claude_code_agent/app.py`",
+      "decision": "Adapt per-call configuration and stream usage collection. Its API environment, skip-permissions and optional bare/native-discovery behavior are incompatible with the measured account/isolation requirements. Exact pinned CLI probes determined the new confined invocation."
+    },
+    {
+      "retained_code": "`nemo_gym/skills.py`",
+      "decision": "Preserve the Agent Skills frontmatter, content-hash provenance and file staging concepts. The local adapter stages only explicitly selected bodies/references; native discovery would expose ambient Skills in the actual probe."
+    },
+    {
+      "retained_code": "`resources_servers/math_with_code`, retained GSM8K preparation",
+      "decision": "Adapt the final-answer/boxed convention into a bounded non-executing numeric/string grader. No arbitrary submission expression or candidate code execution. Formatting edge regressions and actual saved answers verify this local diagnostic grader; it is not an official score claim."
+    },
+    {
+      "retained_code": "`resources_servers/gdpval/scoring.py`, `comparison.py`",
+      "decision": "Preserve rubric-scoring and anonymous A/B/tie concepts. Direct model client calls and office conversion/server setup are not mandatory. New CLI judges inspect immutable saved artifacts; both presentation orders are scheduled."
+    },
+    {
+      "retained_code": "`nemo_gym/cli/`, upstream rollout/artifact handling",
+      "decision": "Retain upstream commands for upstream environments; the six requested local commands use the same task-to-artifact-to-judgment boundary, with new durable local journals for frozen resume and no API/server dependency."
+    }
+  ],
+  "new_responsibilities": "Six-command contract, account-only runtime policy, independently frozen creation/application/grading inputs, append-preserving journals, human entry and method-separated aggregation.",
+  "excluded_trials": [
+    {
+      "run_id": "2177778780e147d289d76cce7ff1702d",
+      "scope": "Actual resume plumbing; excluded from ALPS comparison due to missing ALPS body exposure in first creator",
+      "before_completed": 4,
+      "before_pending": 2,
+      "after_completed": 6,
+      "completed_records_identical": true,
+      "creation_calls_after_resume": 0,
+      "application_calls_after_resume": 2,
+      "attempt_counts": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "local_run_directory": "runs/nsa-gsm8k-01",
+      "excluded_from": "ALPS comparison acceptance",
+      "reason": "ALPS body was not supplied to the first creator; resume mechanics were observed but treatment validity was not established.",
+      "replacement_evidence": "nsa-comparison-02.json"
+    },
+    {
+      "evidence": "gdpval-pilot-01.json",
+      "excluded_evaluation_id": "6e61dd420859404f94789686dd77e729",
+      "excluded_score": 0.94,
+      "reason": "Judge created a replacement workbook; accepted separate read-only re-evaluation is 0.81."
+    }
+  ],
   "real_trial_calls": {
     "ai_judgment": 6,
     "application": 15,
@@ -122,9 +257,6 @@
     "skill_creation": 4,
     "total": 25
   },
-  "record_note": "This receipt records the completed implementation merge and passing main CI. The subsequent acceptance-record-only commit preserves the accepted implementation.",
-  "remaining_product_acceptance_items": [],
-  "scope": "Acceptance and actual main integration of R01-R10 and the six CLI commands",
   "usage_constraints": [
     "Live verification on macOS with standalone Codex0.154.0 and Claude2.1.270; Luna medium and Sonnet4.6 medium.",
     "Claude GDPval office application/judging rejected before execution; use Codex.",
@@ -133,5 +265,13 @@
     "Human evaluation acceptance uses explicitly synthetic fixture ratings, not real human quality judgments.",
     "Small functional comparisons are neither official benchmark scores nor evidence of ALPS superiority."
   ],
+  "remaining_product_acceptance_items_at_recording": [],
+  "artifact_availability": {
+    "committed": "Acceptance records, selected answers, judgments, synthetic human ratings, hashes and immutable links to original full records.",
+    "local_only": "Original workbooks, complete CLI logs, prompts/config snapshots and audit outputs remain under recorded runs/ and .audit/ paths; cleanup does not move or regenerate them.",
+    "shared_artifact_archive_url": null,
+    "path_base": "All relative local paths are relative to the originating repository checkout unless a record explicitly states another base.",
+    "limitation": "Local paths and hashes do not make raw files retrievable to another checkout. No independently downloadable raw-artifact bundle is recorded. Historical full record URLs include precommit source hashes omitted from compact records."
+  },
   "user_documentation": "fern/versions/latest/pages/get-started/eval-harness.mdx"
 }

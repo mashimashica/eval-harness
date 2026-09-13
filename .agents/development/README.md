@@ -10,6 +10,7 @@ Product obligations are in [requirements.md](requirements.md).
 CLI commands and configuration examples are in [SPEC.md](SPEC.md).
 Repository permissions are in [AGENTS.md](../../AGENTS.md#authorization-and-remote-writes).
 See [validation.md](validation.md#local-setup) for initial setup, authoring references, and validation history.
+The [historical acceptance evidence](evidence/README.md) indexes the completed harness trials and integration record.
 
 ## Roles and workflow
 

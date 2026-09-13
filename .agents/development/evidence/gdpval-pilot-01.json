@@ -1,5 +1,5 @@
 {
-  "scope": "Real Codex CLI GDPval application; quality judgment follows separately",
+  "scope": "Historical Codex CLI GDPval application and separate read-only scalar evaluation",
   "run_id": "d81ed414154a4c2cbfcd1f7b07a938a7",
   "task_id": "83d10b06-26d1-4636-a32c-23f92c57f30b",
   "runtime": "Codex CLI 0.154.0",
@@ -69,5 +69,13 @@
     "source_artifact_sha256": "611466868b62410161b54e56ebf06847325ae58c06bef019f26119709a9a6457",
     "original_artifacts_unchanged": true,
     "interpretation": "Local AI rubric judgment, not an official benchmark score or a human quality assessment."
+  },
+  "record_type": "historical_acceptance_evidence",
+  "observed_on": "2026-09-13/14",
+  "original_record": {
+    "commit": "3edb1797adef6846d0b032fa190bc3e3dfda6828",
+    "path": ".agents/development/evidence/gdpval-pilot-01.json",
+    "sha256": "2ac8945b545c007160d6461eb20528e6cbe67f0c81fd3414dc6c23f75b566167",
+    "url": "https://github.com/mashimashica/eval-harness/blob/3edb1797adef6846d0b032fa190bc3e3dfda6828/.agents/development/evidence/gdpval-pilot-01.json"
   }
 }

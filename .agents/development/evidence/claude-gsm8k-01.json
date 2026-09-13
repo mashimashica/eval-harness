@@ -41,5 +41,13 @@
   "cost_interpretation": "CLI-reported USD is an API-equivalent estimate, not a subscription charge.",
   "local_run_directory": "runs/claude-gsm8k-01",
   "config_sha256": "836628e975094c46d6c29fb22e8de1a6391b35ca9cacc19e82b3e1b701da21c3",
-  "dataset_sha256": "3cc70e34cf12813c6c7a951da579b4a4deeda827277c12b71ba842ae3dd38fe9"
+  "dataset_sha256": "3cc70e34cf12813c6c7a951da579b4a4deeda827277c12b71ba842ae3dd38fe9",
+  "record_type": "historical_acceptance_evidence",
+  "observed_on": "2026-09-13/14",
+  "original_record": {
+    "commit": "3edb1797adef6846d0b032fa190bc3e3dfda6828",
+    "path": ".agents/development/evidence/claude-gsm8k-01.json",
+    "sha256": "5e2af3a61ac482fe7ed74e9faa05967ac0ae1a65031295dc7f926245b7bc1bde",
+    "url": "https://github.com/mashimashica/eval-harness/blob/3edb1797adef6846d0b032fa190bc3e3dfda6828/.agents/development/evidence/claude-gsm8k-01.json"
+  }
 }

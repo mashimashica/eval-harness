@@ -1,4 +1,13 @@
 {
+  "record_type": "historical_acceptance_evidence",
+  "observed_on": "2026-09-13/14",
+  "original_record": {
+    "commit": "3edb1797adef6846d0b032fa190bc3e3dfda6828",
+    "path": ".agents/development/evidence/grading-and-aggregation-01.json",
+    "sha256": "16988eecc01daf72374931ba7a811a8724ed65b9850fb0e6e7bcce64cca8fcbe",
+    "url": "https://github.com/mashimashica/eval-harness/blob/3edb1797adef6846d0b032fa190bc3e3dfda6828/.agents/development/evidence/grading-and-aggregation-01.json"
+  },
+  "scope": "Four real anonymous judge calls plus synthetic human-input integration, not human quality assessment",
   "compare": {
     "generated_sample_count": 6,
     "local_directory": "runs/nsa-v2-all-report-01",
@@ -11,220 +20,20 @@
     "per_condition_generated_count": 2,
     "source_artifacts_unchanged": true
   },
-  "human": {
-    "commands_used_nonexistent_cli_paths": true,
-    "evaluation_id": "b7e43dec2f0f443682c91b97751dab4d",
-    "first_completed_rating_preserved": true,
-    "is_test_data": true,
-    "judgments": [
-      {
-        "comment": "Synthetic test data verifies criterion/comment ingestion; no actual human quality assessment.",
-        "condition_id": "N",
-        "evaluation_status": "completed",
-        "generation_id": "ade140dd511a40d4bfd87c220c39bb11:N:gsm8k-0001:0",
-        "grading_method": "human",
-        "is_test_data": true,
-        "judge_cost_usd": null,
-        "judge_elapsed_seconds": null,
-        "judge_execution_status": "not_run",
-        "judge_usage": {
-          "cached_input_tokens": null,
-          "cost_usd": null,
-          "input_tokens": null,
-          "output_tokens": null,
-          "reasoning_tokens": null
-        },
-        "rater_id": "synthetic-integration-fixture",
-        "rating_id": "ade140dd511a40d4bfd87c220c39bb11:human:fixture-N-0",
-        "ratings": {
-          "clarity": 4,
-          "correctness": 5
-        },
-        "repeat": 0,
-        "score": 0.875,
-        "score_error": null,
-        "score_valid": true,
-        "source_artifact_sha256": "0a6b82013b749ae01c4da86c8193cf0bc03cfd5b7eb27d504fb27355600b7780",
-        "source_rating_row": 1,
-        "task_id": "gsm8k-0001"
-      },
-      {
-        "comment": "Synthetic integration fixture, not a human assessment.",
-        "condition_id": "N",
-        "evaluation_status": "completed",
-        "generation_id": "ade140dd511a40d4bfd87c220c39bb11:N:gsm8k-0001:1",
-        "grading_method": "human",
-        "is_test_data": true,
-        "judge_cost_usd": null,
-        "judge_elapsed_seconds": null,
-        "judge_execution_status": "not_run",
-        "judge_usage": {
-          "cached_input_tokens": null,
-          "cost_usd": null,
-          "input_tokens": null,
-          "output_tokens": null,
-          "reasoning_tokens": null
-        },
-        "rater_id": "synthetic-integration-fixture",
-        "rating_id": "ade140dd511a40d4bfd87c220c39bb11:human:fixture-N-1",
-        "ratings": {
-          "clarity": 4,
-          "correctness": 5
-        },
-        "repeat": 1,
-        "score": 0.875,
-        "score_error": null,
-        "score_valid": true,
-        "source_artifact_sha256": "4e39243aeb6a1d70659215af2942c7f6f1a37e9e74d4fa84aa69f154a5a89896",
-        "source_rating_row": 2,
-        "task_id": "gsm8k-0001"
-      },
-      {
-        "comment": "Synthetic integration fixture, not a human assessment.",
-        "condition_id": "S",
-        "evaluation_status": "completed",
-        "generation_id": "ade140dd511a40d4bfd87c220c39bb11:S:gsm8k-0001:0",
-        "grading_method": "human",
-        "is_test_data": true,
-        "judge_cost_usd": null,
-        "judge_elapsed_seconds": null,
-        "judge_execution_status": "not_run",
-        "judge_usage": {
-          "cached_input_tokens": null,
-          "cost_usd": null,
-          "input_tokens": null,
-          "output_tokens": null,
-          "reasoning_tokens": null
-        },
-        "rater_id": "synthetic-integration-fixture",
-        "rating_id": "ade140dd511a40d4bfd87c220c39bb11:human:fixture-S-0",
-        "ratings": {
-          "clarity": 3,
-          "correctness": 5
-        },
-        "repeat": 0,
-        "score": 0.75,
-        "score_error": null,
-        "score_valid": true,
-        "source_artifact_sha256": "1cb75bf813f19dc644825dfb99a473827d50350111f903cdf8e178a67b21864c",
-        "source_rating_row": 3,
-        "task_id": "gsm8k-0001"
-      },
-      {
-        "comment": "Synthetic integration fixture, not a human assessment.",
-        "condition_id": "S",
-        "evaluation_status": "completed",
-        "generation_id": "ade140dd511a40d4bfd87c220c39bb11:S:gsm8k-0001:1",
-        "grading_method": "human",
-        "is_test_data": true,
-        "judge_cost_usd": null,
-        "judge_elapsed_seconds": null,
-        "judge_execution_status": "not_run",
-        "judge_usage": {
-          "cached_input_tokens": null,
-          "cost_usd": null,
-          "input_tokens": null,
-          "output_tokens": null,
-          "reasoning_tokens": null
-        },
-        "rater_id": "synthetic-integration-fixture",
-        "rating_id": "ade140dd511a40d4bfd87c220c39bb11:human:fixture-S-1",
-        "ratings": {
-          "clarity": 4,
-          "correctness": 5
-        },
-        "repeat": 1,
-        "score": 0.875,
-        "score_error": null,
-        "score_valid": true,
-        "source_artifact_sha256": "0b074ef8b43fff75ecb57eef522a8fda4d5f8db571c3e5c467e3227fc53eb159",
-        "source_rating_row": 4,
-        "task_id": "gsm8k-0001"
-      },
-      {
-        "comment": "Synthetic integration fixture, not a human assessment.",
-        "condition_id": "A",
-        "evaluation_status": "completed",
-        "generation_id": "ade140dd511a40d4bfd87c220c39bb11:A:gsm8k-0001:0",
-        "grading_method": "human",
-        "is_test_data": true,
-        "judge_cost_usd": null,
-        "judge_elapsed_seconds": null,
-        "judge_execution_status": "not_run",
-        "judge_usage": {
-          "cached_input_tokens": null,
-          "cost_usd": null,
-          "input_tokens": null,
-          "output_tokens": null,
-          "reasoning_tokens": null
-        },
-        "rater_id": "synthetic-integration-fixture",
-        "rating_id": "ade140dd511a40d4bfd87c220c39bb11:human:fixture-A-0",
-        "ratings": {
-          "clarity": 3,
-          "correctness": 5
-        },
-        "repeat": 0,
-        "score": 0.75,
-        "score_error": null,
-        "score_valid": true,
-        "source_artifact_sha256": "d2aaa7b71cf750776f8214d5655a1ac53cc66168d4a8a0918800900c976fc702",
-        "source_rating_row": 5,
-        "task_id": "gsm8k-0001"
-      },
-      {
-        "comment": "Synthetic integration fixture, not a human assessment.",
-        "condition_id": "A",
-        "evaluation_status": "completed",
-        "generation_id": "ade140dd511a40d4bfd87c220c39bb11:A:gsm8k-0001:1",
-        "grading_method": "human",
-        "is_test_data": true,
-        "judge_cost_usd": null,
-        "judge_elapsed_seconds": null,
-        "judge_execution_status": "not_run",
-        "judge_usage": {
-          "cached_input_tokens": null,
-          "cost_usd": null,
-          "input_tokens": null,
-          "output_tokens": null,
-          "reasoning_tokens": null
-        },
-        "rater_id": "synthetic-integration-fixture",
-        "rating_id": "ade140dd511a40d4bfd87c220c39bb11:human:fixture-A-1",
-        "ratings": {
-          "clarity": 4,
-          "correctness": 5
-        },
-        "repeat": 1,
-        "score": 0.875,
-        "score_error": null,
-        "score_valid": true,
-        "source_artifact_sha256": "ec5fc0bd80fd2c4bfc1c07dfc91dc44a9cdcfe7cac128a5fe4f96982a5c33ded",
-        "source_rating_row": 6,
-        "task_id": "gsm8k-0001"
-      }
-    ],
-    "local_directory": "runs/nsa-v2-human-01",
-    "manifest": {
-      "inbox_path": "human_ratings.inbox.jsonl",
-      "inbox_row_count": 0,
-      "inbox_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-      "inbox_snapshot": "human_ratings.inbox.v0.jsonl",
-      "inbox_version": 0,
-      "path": "human_ratings.jsonl",
-      "row_count": 0,
-      "source_sha256": null
-    },
-    "model_call_count": 0,
-    "progression": [
-      "partial:0",
-      "partial:1",
-      "completed:6",
-      "completed:6"
-    ]
-  },
   "pairwise": {
     "evaluation_id": "5bf1a2f7837049a79d829362e96337e9",
+    "local_directory": "runs/nsa-v2-pairwise-01",
+    "runtime": {
+      "auth": "claude.ai subscription",
+      "concurrency": 1,
+      "executor": "claude-code",
+      "max_turns": 12,
+      "model": "claude-sonnet-4-6",
+      "reasoning_effort": "medium",
+      "retries": 0,
+      "timeout_seconds": 300,
+      "version": "2.1.270"
+    },
     "exact_call_count": 4,
     "generation_call_count": 0,
     "init_evidence": [
@@ -271,25 +80,34 @@
     ],
     "judgments": [
       {
+        "judgment_id": "ade140dd511a40d4bfd87c220c39bb11:pair:gsm8k-0001:0:N:A:order-0",
+        "pair_id": "ade140dd511a40d4bfd87c220c39bb11:pair:gsm8k-0001:0:N:A",
+        "task_id": "gsm8k-0001",
+        "repeat": 0,
         "condition_ids": [
           "N",
           "A"
         ],
-        "evaluation_attempt_count": 1,
-        "evaluation_status": "completed",
-        "execution_status": "completed",
         "generation_ids": [
           "ade140dd511a40d4bfd87c220c39bb11:N:gsm8k-0001:0",
           "ade140dd511a40d4bfd87c220c39bb11:A:gsm8k-0001:0"
         ],
-        "judge_cost_usd": 0.0506673,
-        "judge_elapsed_seconds": 9.699109792010859,
-        "judge_error": null,
-        "judge_events_path": "judgments/pairwise/gsm8k-0001/repeat_0/ade140dd511a40d4bfd87c220c39bb11_pair_gsm8k-0001_0_N_A_order-0/codex_events.jsonl",
+        "presented_conditions": [
+          "A",
+          "B"
+        ],
+        "winner": "tie",
+        "winner_condition_id": null,
+        "rationale": "Both submissions arrive at the correct answer of $18 through identical arithmetic: 16 - 3 - 4 = 9 eggs sold, 9 × $2 = $18. Submission A groups the subtraction in a single step while Submission B first adds the consumed eggs (3+4=7) then subtracts; both approaches are equally valid and clear. Neither submission has any errors, omissions, or meaningful quality differences that would distinguish one over the other.",
+        "score": null,
+        "score_error": null,
+        "score_valid": true,
+        "evaluation_attempt_count": 1,
+        "evaluation_status": "completed",
+        "execution_status": "completed",
         "judge_execution_status": "completed",
-        "judge_response_path": "judgments/pairwise/gsm8k-0001/repeat_0/ade140dd511a40d4bfd87c220c39bb11_pair_gsm8k-0001_0_N_A_order-0/judge_response.txt",
         "judge_returncode": 0,
-        "judge_stderr_path": "judgments/pairwise/gsm8k-0001/repeat_0/ade140dd511a40d4bfd87c220c39bb11_pair_gsm8k-0001_0_N_A_order-0/stderr.log",
+        "judge_elapsed_seconds": 9.699109792010859,
         "judge_usage": {
           "cache_creation_input_tokens": 6649,
           "cached_input_tokens": 12211,
@@ -298,46 +116,42 @@
           "output_tokens": 473,
           "reasoning_tokens": null
         },
-        "judgment_id": "ade140dd511a40d4bfd87c220c39bb11:pair:gsm8k-0001:0:N:A:order-0",
-        "judgment_path": "judgments/pairwise/gsm8k-0001/repeat_0/ade140dd511a40d4bfd87c220c39bb11_pair_gsm8k-0001_0_N_A_order-0/judgment.json",
-        "pair_id": "ade140dd511a40d4bfd87c220c39bb11:pair:gsm8k-0001:0:N:A",
-        "presented_conditions": [
-          "A",
-          "B"
-        ],
-        "rationale": "Both submissions arrive at the correct answer of $18 through identical arithmetic: 16 - 3 - 4 = 9 eggs sold, 9 × $2 = $18. Submission A groups the subtraction in a single step while Submission B first adds the consumed eggs (3+4=7) then subtracts; both approaches are equally valid and clear. Neither submission has any errors, omissions, or meaningful quality differences that would distinguish one over the other.",
-        "repeat": 0,
-        "score": null,
-        "score_error": null,
-        "score_valid": true,
+        "judge_cost_usd": 0.0506673,
+        "judge_error": null,
         "source_artifact_sha256": [
           "0a6b82013b749ae01c4da86c8193cf0bc03cfd5b7eb27d504fb27355600b7780",
           "d2aaa7b71cf750776f8214d5655a1ac53cc66168d4a8a0918800900c976fc702"
-        ],
-        "task_id": "gsm8k-0001",
-        "winner": "tie",
-        "winner_condition_id": null
+        ]
       },
       {
+        "judgment_id": "ade140dd511a40d4bfd87c220c39bb11:pair:gsm8k-0001:0:N:A:order-1",
+        "pair_id": "ade140dd511a40d4bfd87c220c39bb11:pair:gsm8k-0001:0:N:A",
+        "task_id": "gsm8k-0001",
+        "repeat": 0,
         "condition_ids": [
           "A",
           "N"
         ],
-        "evaluation_attempt_count": 1,
-        "evaluation_status": "completed",
-        "execution_status": "completed",
         "generation_ids": [
           "ade140dd511a40d4bfd87c220c39bb11:A:gsm8k-0001:0",
           "ade140dd511a40d4bfd87c220c39bb11:N:gsm8k-0001:0"
         ],
-        "judge_cost_usd": 0.0209208,
-        "judge_elapsed_seconds": 9.947074916999554,
-        "judge_error": null,
-        "judge_events_path": "judgments/pairwise/gsm8k-0001/repeat_0/ade140dd511a40d4bfd87c220c39bb11_pair_gsm8k-0001_0_N_A_order-1/codex_events.jsonl",
+        "presented_conditions": [
+          "A",
+          "B"
+        ],
+        "winner": "tie",
+        "winner_condition_id": null,
+        "rationale": "Both submissions arrive at the correct answer of $18 through identical arithmetic: 16 − 3 − 4 = 9 eggs remaining, sold at $2 each yields $18. Submission A groups the consumed eggs as 3+4=7 before subtracting, while Submission B subtracts them sequentially; both approaches are equally valid and clear. Neither submission contains errors, omissions, or meaningful qualitative differences in correctness or clarity.",
+        "score": null,
+        "score_error": null,
+        "score_valid": true,
+        "evaluation_attempt_count": 1,
+        "evaluation_status": "completed",
+        "execution_status": "completed",
         "judge_execution_status": "completed",
-        "judge_response_path": "judgments/pairwise/gsm8k-0001/repeat_0/ade140dd511a40d4bfd87c220c39bb11_pair_gsm8k-0001_0_N_A_order-1/judge_response.txt",
         "judge_returncode": 0,
-        "judge_stderr_path": "judgments/pairwise/gsm8k-0001/repeat_0/ade140dd511a40d4bfd87c220c39bb11_pair_gsm8k-0001_0_N_A_order-1/stderr.log",
+        "judge_elapsed_seconds": 9.947074916999554,
         "judge_usage": {
           "cache_creation_input_tokens": 1485,
           "cached_input_tokens": 17436,
@@ -346,46 +160,42 @@
           "output_tokens": 451,
           "reasoning_tokens": null
         },
-        "judgment_id": "ade140dd511a40d4bfd87c220c39bb11:pair:gsm8k-0001:0:N:A:order-1",
-        "judgment_path": "judgments/pairwise/gsm8k-0001/repeat_0/ade140dd511a40d4bfd87c220c39bb11_pair_gsm8k-0001_0_N_A_order-1/judgment.json",
-        "pair_id": "ade140dd511a40d4bfd87c220c39bb11:pair:gsm8k-0001:0:N:A",
-        "presented_conditions": [
-          "A",
-          "B"
-        ],
-        "rationale": "Both submissions arrive at the correct answer of $18 through identical arithmetic: 16 − 3 − 4 = 9 eggs remaining, sold at $2 each yields $18. Submission A groups the consumed eggs as 3+4=7 before subtracting, while Submission B subtracts them sequentially; both approaches are equally valid and clear. Neither submission contains errors, omissions, or meaningful qualitative differences in correctness or clarity.",
-        "repeat": 0,
-        "score": null,
-        "score_error": null,
-        "score_valid": true,
+        "judge_cost_usd": 0.0209208,
+        "judge_error": null,
         "source_artifact_sha256": [
           "d2aaa7b71cf750776f8214d5655a1ac53cc66168d4a8a0918800900c976fc702",
           "0a6b82013b749ae01c4da86c8193cf0bc03cfd5b7eb27d504fb27355600b7780"
-        ],
-        "task_id": "gsm8k-0001",
-        "winner": "tie",
-        "winner_condition_id": null
+        ]
       },
       {
+        "judgment_id": "ade140dd511a40d4bfd87c220c39bb11:pair:gsm8k-0001:1:N:A:order-0",
+        "pair_id": "ade140dd511a40d4bfd87c220c39bb11:pair:gsm8k-0001:1:N:A",
+        "task_id": "gsm8k-0001",
+        "repeat": 1,
         "condition_ids": [
           "N",
           "A"
         ],
-        "evaluation_attempt_count": 1,
-        "evaluation_status": "completed",
-        "execution_status": "completed",
         "generation_ids": [
           "ade140dd511a40d4bfd87c220c39bb11:N:gsm8k-0001:1",
           "ade140dd511a40d4bfd87c220c39bb11:A:gsm8k-0001:1"
         ],
-        "judge_cost_usd": 0.019485,
-        "judge_elapsed_seconds": 8.307610250019934,
-        "judge_error": null,
-        "judge_events_path": "judgments/pairwise/gsm8k-0001/repeat_1/ade140dd511a40d4bfd87c220c39bb11_pair_gsm8k-0001_1_N_A_order-0/codex_events.jsonl",
+        "presented_conditions": [
+          "A",
+          "B"
+        ],
+        "winner": "tie",
+        "winner_condition_id": null,
+        "rationale": "Both submissions arrive at the identical correct answer of $18 per day using the same arithmetic (16 - 3 - 4 = 9 eggs sold; 9 × $2 = $18). The reasoning steps are equivalent in substance and clarity, with only trivial formatting differences (B adds 'per day' to the final answer and uses slightly more line breaks). Neither has any factual error or meaningful quality advantage over the other.",
+        "score": null,
+        "score_error": null,
+        "score_valid": true,
+        "evaluation_attempt_count": 1,
+        "evaluation_status": "completed",
+        "execution_status": "completed",
         "judge_execution_status": "completed",
-        "judge_response_path": "judgments/pairwise/gsm8k-0001/repeat_1/ade140dd511a40d4bfd87c220c39bb11_pair_gsm8k-0001_1_N_A_order-0/judge_response.txt",
         "judge_returncode": 0,
-        "judge_stderr_path": "judgments/pairwise/gsm8k-0001/repeat_1/ade140dd511a40d4bfd87c220c39bb11_pair_gsm8k-0001_1_N_A_order-0/stderr.log",
+        "judge_elapsed_seconds": 8.307610250019934,
         "judge_usage": {
           "cache_creation_input_tokens": 1383,
           "cached_input_tokens": 17340,
@@ -394,46 +204,42 @@
           "output_tokens": 398,
           "reasoning_tokens": null
         },
-        "judgment_id": "ade140dd511a40d4bfd87c220c39bb11:pair:gsm8k-0001:1:N:A:order-0",
-        "judgment_path": "judgments/pairwise/gsm8k-0001/repeat_1/ade140dd511a40d4bfd87c220c39bb11_pair_gsm8k-0001_1_N_A_order-0/judgment.json",
-        "pair_id": "ade140dd511a40d4bfd87c220c39bb11:pair:gsm8k-0001:1:N:A",
-        "presented_conditions": [
-          "A",
-          "B"
-        ],
-        "rationale": "Both submissions arrive at the identical correct answer of $18 per day using the same arithmetic (16 - 3 - 4 = 9 eggs sold; 9 × $2 = $18). The reasoning steps are equivalent in substance and clarity, with only trivial formatting differences (B adds 'per day' to the final answer and uses slightly more line breaks). Neither has any factual error or meaningful quality advantage over the other.",
-        "repeat": 1,
-        "score": null,
-        "score_error": null,
-        "score_valid": true,
+        "judge_cost_usd": 0.019485,
+        "judge_error": null,
         "source_artifact_sha256": [
           "4e39243aeb6a1d70659215af2942c7f6f1a37e9e74d4fa84aa69f154a5a89896",
           "ec5fc0bd80fd2c4bfc1c07dfc91dc44a9cdcfe7cac128a5fe4f96982a5c33ded"
-        ],
-        "task_id": "gsm8k-0001",
-        "winner": "tie",
-        "winner_condition_id": null
+        ]
       },
       {
+        "judgment_id": "ade140dd511a40d4bfd87c220c39bb11:pair:gsm8k-0001:1:N:A:order-1",
+        "pair_id": "ade140dd511a40d4bfd87c220c39bb11:pair:gsm8k-0001:1:N:A",
+        "task_id": "gsm8k-0001",
+        "repeat": 1,
         "condition_ids": [
           "A",
           "N"
         ],
-        "evaluation_attempt_count": 1,
-        "evaluation_status": "completed",
-        "execution_status": "completed",
         "generation_ids": [
           "ade140dd511a40d4bfd87c220c39bb11:A:gsm8k-0001:1",
           "ade140dd511a40d4bfd87c220c39bb11:N:gsm8k-0001:1"
         ],
-        "judge_cost_usd": 0.020955599999999998,
-        "judge_elapsed_seconds": 8.249839833006263,
-        "judge_error": null,
-        "judge_events_path": "judgments/pairwise/gsm8k-0001/repeat_1/ade140dd511a40d4bfd87c220c39bb11_pair_gsm8k-0001_1_N_A_order-1/codex_events.jsonl",
+        "presented_conditions": [
+          "A",
+          "B"
+        ],
+        "winner": "tie",
+        "winner_condition_id": null,
+        "rationale": "Both submissions arrive at the correct answer of $18 per day using identical arithmetic: 16 - 3 - 4 = 9 eggs remaining, then 9 × $2 = $18. Submission A adds a slightly more explicit label ('per day') in the final answer and breaks out the steps with slightly more spacing, while Submission B is marginally more concise by combining the first two lines. Neither has any errors, omissions, or meaningful quality differences; the content is substantively equivalent.",
+        "score": null,
+        "score_error": null,
+        "score_valid": true,
+        "evaluation_attempt_count": 1,
+        "evaluation_status": "completed",
+        "execution_status": "completed",
         "judge_execution_status": "completed",
-        "judge_response_path": "judgments/pairwise/gsm8k-0001/repeat_1/ade140dd511a40d4bfd87c220c39bb11_pair_gsm8k-0001_1_N_A_order-1/judge_response.txt",
         "judge_returncode": 0,
-        "judge_stderr_path": "judgments/pairwise/gsm8k-0001/repeat_1/ade140dd511a40d4bfd87c220c39bb11_pair_gsm8k-0001_1_N_A_order-1/stderr.log",
+        "judge_elapsed_seconds": 8.249839833006263,
         "judge_usage": {
           "cache_creation_input_tokens": 1476,
           "cached_input_tokens": 17432,
@@ -442,57 +248,177 @@
           "output_tokens": 457,
           "reasoning_tokens": null
         },
-        "judgment_id": "ade140dd511a40d4bfd87c220c39bb11:pair:gsm8k-0001:1:N:A:order-1",
-        "judgment_path": "judgments/pairwise/gsm8k-0001/repeat_1/ade140dd511a40d4bfd87c220c39bb11_pair_gsm8k-0001_1_N_A_order-1/judgment.json",
-        "pair_id": "ade140dd511a40d4bfd87c220c39bb11:pair:gsm8k-0001:1:N:A",
-        "presented_conditions": [
-          "A",
-          "B"
-        ],
-        "rationale": "Both submissions arrive at the correct answer of $18 per day using identical arithmetic: 16 - 3 - 4 = 9 eggs remaining, then 9 × $2 = $18. Submission A adds a slightly more explicit label ('per day') in the final answer and breaks out the steps with slightly more spacing, while Submission B is marginally more concise by combining the first two lines. Neither has any errors, omissions, or meaningful quality differences; the content is substantively equivalent.",
-        "repeat": 1,
-        "score": null,
-        "score_error": null,
-        "score_valid": true,
+        "judge_cost_usd": 0.020955599999999998,
+        "judge_error": null,
         "source_artifact_sha256": [
           "ec5fc0bd80fd2c4bfc1c07dfc91dc44a9cdcfe7cac128a5fe4f96982a5c33ded",
           "4e39243aeb6a1d70659215af2942c7f6f1a37e9e74d4fa84aa69f154a5a89896"
-        ],
-        "task_id": "gsm8k-0001",
-        "winner": "tie",
-        "winner_condition_id": null
+        ]
       }
     ],
-    "local_directory": "runs/nsa-v2-pairwise-01",
-    "runtime": {
-      "auth": "claude.ai subscription",
-      "concurrency": 1,
-      "executor": "claude-code",
-      "max_turns": 12,
-      "model": "claude-sonnet-4-6",
-      "reasoning_effort": "medium",
-      "retries": 0,
-      "timeout_seconds": 300,
-      "version": "2.1.270"
-    },
-    "source_sha256": {
-      ".audit/acceptance/pairwise.yaml": "e70298079e00cd95b735d9fb7232339bc1791ef3f52a964ed0a3ed9bcccdbbae",
-      "harness/src/eval_harness/__init__.py": "8fe3d600a7f2be3ea6e499db44dfd0b1fb69beb0d6b257f8e03841226a5c96d1",
-      "harness/src/eval_harness/__main__.py": "977ae670edcda9026c7fb443027151a99dac0210a28997626a4563a41345bef6",
-      "harness/src/eval_harness/artifacts.py": "9fe9d90de45940b9b9e31f29f27aa4720e62fed39357d53ec9c815a65f63c2be",
-      "harness/src/eval_harness/benchmark.py": "bebf7aafb13d55f6e111e55f329bc994520a58a83c927d9c5180ad3cadc365d8",
-      "harness/src/eval_harness/claude_executor.py": "1fa311fb6146f0eca9eeb4b808b4dc315adc1e79c6f1cbb2efa8d65680bd8433",
-      "harness/src/eval_harness/cli.py": "ec158577b7fe93eb8a4b57682a59c8e80d307cdca8d15fdc407137768aece857",
-      "harness/src/eval_harness/compare_pipeline.py": "f93997b8a37d8e6134c2bdaace42d5df907d9b53d332d0bc89f966757d831905",
-      "harness/src/eval_harness/config.py": "a48635b58d06bd70634ffce99a82b6dd267c180c6dfb07bd1e19eb57ea3da810",
-      "harness/src/eval_harness/errors.py": "fc04614f8af8d7e7477da169cbfdae4fab1e6c1a20235555a6a39cb29ad43463",
-      "harness/src/eval_harness/evaluate_pipeline.py": "d7824e488b57ff7bf8e5326b7d4ab46103dc9d6102381858ac8682f4584a4779",
-      "harness/src/eval_harness/executor.py": "9861591d309ae99d78dd5a77441078789cb45c2d20148abfb060eee9de47d694",
-      "harness/src/eval_harness/gdpval.py": "66f67e83ca2348b8db689afb33806ad999f6d68fbd68993cd2076b217c305594",
-      "harness/src/eval_harness/gsm8k.py": "43281a2a5221479ac908a1559885ab5c965f36f99de435a2d846d39dce6bcd98",
-      "harness/src/eval_harness/run_pipeline.py": "440c7899b9b1e86925f0967e9920e8b9c3032209a56394506295557eaef0ca37",
-      "harness/src/eval_harness/skill_pipeline.py": "7968b10c9830f8d1339b6521f3da74af5a22aab3badee91cecc5e2bdc71c84f1"
+    "source_hashes": {
+      "status": "omitted",
+      "reason": "Repeated source-file hash map is retained in the immutable original record.",
+      "provenance_url": "https://github.com/mashimashica/eval-harness/blob/3edb1797adef6846d0b032fa190bc3e3dfda6828/.agents/development/evidence/grading-and-aggregation-01.json",
+      "original_record_sha256": "16988eecc01daf72374931ba7a811a8724ed65b9850fb0e6e7bcce64cca8fcbe"
     }
   },
-  "scope": "Four real anonymous judge calls plus synthetic human-input integration, not human quality assessment"
+  "human": {
+    "evaluation_id": "b7e43dec2f0f443682c91b97751dab4d",
+    "local_directory": "runs/nsa-v2-human-01",
+    "is_test_data": true,
+    "commands_used_nonexistent_cli_paths": true,
+    "model_call_count": 0,
+    "progression": [
+      "partial:0",
+      "partial:1",
+      "completed:6",
+      "completed:6"
+    ],
+    "first_completed_rating_preserved": true,
+    "manifest": {
+      "inbox_path": "human_ratings.inbox.jsonl",
+      "inbox_row_count": 0,
+      "inbox_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "inbox_snapshot": "human_ratings.inbox.v0.jsonl",
+      "inbox_version": 0,
+      "path": "human_ratings.jsonl",
+      "row_count": 0,
+      "source_sha256": null
+    },
+    "judgments": [
+      {
+        "generation_id": "ade140dd511a40d4bfd87c220c39bb11:N:gsm8k-0001:0",
+        "rating_id": "ade140dd511a40d4bfd87c220c39bb11:human:fixture-N-0",
+        "condition_id": "N",
+        "task_id": "gsm8k-0001",
+        "repeat": 0,
+        "rater_id": "synthetic-integration-fixture",
+        "is_test_data": true,
+        "ratings": {
+          "clarity": 4,
+          "correctness": 5
+        },
+        "comment": "Synthetic test data verifies criterion/comment ingestion; no actual human quality assessment.",
+        "score": 0.875,
+        "score_error": null,
+        "score_valid": true,
+        "grading_method": "human",
+        "evaluation_status": "completed",
+        "judge_execution_status": "not_run",
+        "source_artifact_sha256": "0a6b82013b749ae01c4da86c8193cf0bc03cfd5b7eb27d504fb27355600b7780",
+        "source_rating_row": 1
+      },
+      {
+        "generation_id": "ade140dd511a40d4bfd87c220c39bb11:N:gsm8k-0001:1",
+        "rating_id": "ade140dd511a40d4bfd87c220c39bb11:human:fixture-N-1",
+        "condition_id": "N",
+        "task_id": "gsm8k-0001",
+        "repeat": 1,
+        "rater_id": "synthetic-integration-fixture",
+        "is_test_data": true,
+        "ratings": {
+          "clarity": 4,
+          "correctness": 5
+        },
+        "comment": "Synthetic integration fixture, not a human assessment.",
+        "score": 0.875,
+        "score_error": null,
+        "score_valid": true,
+        "grading_method": "human",
+        "evaluation_status": "completed",
+        "judge_execution_status": "not_run",
+        "source_artifact_sha256": "4e39243aeb6a1d70659215af2942c7f6f1a37e9e74d4fa84aa69f154a5a89896",
+        "source_rating_row": 2
+      },
+      {
+        "generation_id": "ade140dd511a40d4bfd87c220c39bb11:S:gsm8k-0001:0",
+        "rating_id": "ade140dd511a40d4bfd87c220c39bb11:human:fixture-S-0",
+        "condition_id": "S",
+        "task_id": "gsm8k-0001",
+        "repeat": 0,
+        "rater_id": "synthetic-integration-fixture",
+        "is_test_data": true,
+        "ratings": {
+          "clarity": 3,
+          "correctness": 5
+        },
+        "comment": "Synthetic integration fixture, not a human assessment.",
+        "score": 0.75,
+        "score_error": null,
+        "score_valid": true,
+        "grading_method": "human",
+        "evaluation_status": "completed",
+        "judge_execution_status": "not_run",
+        "source_artifact_sha256": "1cb75bf813f19dc644825dfb99a473827d50350111f903cdf8e178a67b21864c",
+        "source_rating_row": 3
+      },
+      {
+        "generation_id": "ade140dd511a40d4bfd87c220c39bb11:S:gsm8k-0001:1",
+        "rating_id": "ade140dd511a40d4bfd87c220c39bb11:human:fixture-S-1",
+        "condition_id": "S",
+        "task_id": "gsm8k-0001",
+        "repeat": 1,
+        "rater_id": "synthetic-integration-fixture",
+        "is_test_data": true,
+        "ratings": {
+          "clarity": 4,
+          "correctness": 5
+        },
+        "comment": "Synthetic integration fixture, not a human assessment.",
+        "score": 0.875,
+        "score_error": null,
+        "score_valid": true,
+        "grading_method": "human",
+        "evaluation_status": "completed",
+        "judge_execution_status": "not_run",
+        "source_artifact_sha256": "0b074ef8b43fff75ecb57eef522a8fda4d5f8db571c3e5c467e3227fc53eb159",
+        "source_rating_row": 4
+      },
+      {
+        "generation_id": "ade140dd511a40d4bfd87c220c39bb11:A:gsm8k-0001:0",
+        "rating_id": "ade140dd511a40d4bfd87c220c39bb11:human:fixture-A-0",
+        "condition_id": "A",
+        "task_id": "gsm8k-0001",
+        "repeat": 0,
+        "rater_id": "synthetic-integration-fixture",
+        "is_test_data": true,
+        "ratings": {
+          "clarity": 3,
+          "correctness": 5
+        },
+        "comment": "Synthetic integration fixture, not a human assessment.",
+        "score": 0.75,
+        "score_error": null,
+        "score_valid": true,
+        "grading_method": "human",
+        "evaluation_status": "completed",
+        "judge_execution_status": "not_run",
+        "source_artifact_sha256": "d2aaa7b71cf750776f8214d5655a1ac53cc66168d4a8a0918800900c976fc702",
+        "source_rating_row": 5
+      },
+      {
+        "generation_id": "ade140dd511a40d4bfd87c220c39bb11:A:gsm8k-0001:1",
+        "rating_id": "ade140dd511a40d4bfd87c220c39bb11:human:fixture-A-1",
+        "condition_id": "A",
+        "task_id": "gsm8k-0001",
+        "repeat": 1,
+        "rater_id": "synthetic-integration-fixture",
+        "is_test_data": true,
+        "ratings": {
+          "clarity": 4,
+          "correctness": 5
+        },
+        "comment": "Synthetic integration fixture, not a human assessment.",
+        "score": 0.875,
+        "score_error": null,
+        "score_valid": true,
+        "grading_method": "human",
+        "evaluation_status": "completed",
+        "judge_execution_status": "not_run",
+        "source_artifact_sha256": "ec5fc0bd80fd2c4bfc1c07dfc91dc44a9cdcfe7cac128a5fe4f96982a5c33ded",
+        "source_rating_row": 6
+      }
+    ]
+  }
 }
