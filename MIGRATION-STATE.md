@@ -3,13 +3,60 @@
 
 # Migration state
 
-Updated: 2026-09-13T07:50:00Z
+Updated: 2026-09-13T07:58:00Z
 
 Control branch: `checkpoint/migration-control`.
 Procedure: [MIGRATION-WORKFLOW.md](MIGRATION-WORKFLOW.md).
 This record preserves recoverable work; it does not declare the migration accepted.
 
-## Current status: M1 accepted; M2 host findings closed, remaining PR04 implementation active
+## Current status: paused by explicit user instruction; await explicit resume
+
+The user requested a safe pause because communication is unstable. Do not start new
+implementation, validation, review or external jobs until the user explicitly resumes.
+
+Exact implementation resume branch: `checkpoint/pr-04`.
+Exact resume SHA: `7757c8ae9cd18681c789e2294d02597bcc4c39e3`.
+Tree: `dd4c83b28cbbc138236154c7aee0714f4339cec1`.
+Its four changed files (second preparation correction in three source/test files plus
+`contracts/pr04-work.md`) were saved with DCO sign-off and non-force ref update. The
+remote ref, tree modes, Git blobs, decoded bytes and current local bytes were read back
+and matched. The implementation worktree has no unsaved changes after alignment.
+
+Validated earlier: host findings closed at `e012ccc4` (37 tests, strict mypy, Ruff and
+Sol review); offline bootstrap closed at `debe87e5` (6 tests, strict mypy, Ruff and
+Sol review of identical production source). These are component results, not PR04
+acceptance. Preparation first correction at `d8e7653b` has five unit passes but four
+mypy errors and independently confirmed remaining defects; see
+`reports/m2-preparation-first-correction.json`.
+
+The second preparation correction at the resume SHA is UNVERIFIED: no parent unit/mypy
+run and no Sol fixed-head closure review. Luna reported only scoped Ruff/format/diff
+checks before the pause. No new checks were started after the stop instruction.
+There is one failed corrective round for preparation; this untested second correction
+does not count as another failed verification. Preserve the two-failure stop rule.
+
+Next concrete action ONLY AFTER EXPLICIT RESUME: restore this exact SHA, then run the
+preparation unittest module, strict mypy over `eval_harness/grader_sandbox.py`,
+`scripts/ci/install_bigcodebench_grader.py` and
+`tests/harness/test_bigcodebench_grader_boundary.py`, scoped Ruff/format and shell syntax
+as one validation batch. Sol then reviews this fixed correction read-only. If the same
+finding remains after this second correction, save and stop; do not start a third fix.
+If closed, continue the saved PR04 design with actual Linux provisioning, public
+preflight/attested launch, common callers, old runner deletion and real sandbox/1,140-task
+parity. Those features and all PR05–11 implementation remain unfinished. NLTK CVE,
+unclarified data redistribution licenses, final old-route/contract deletion, fourth
+benchmark and whole-head quality gates remain unresolved; nothing is accepted by waiver.
+
+Process/job state at pause: Luna and Sol both show completed/idle and were sent explicit
+stop instructions. All parent tool commands and diagnostic subprocesses have returned;
+there are no residual sessions or CI jobs started by this segment and no job IDs to
+resume. No destructive process termination was used. No real-model experiment, PR04
+promotion, merge or release was started. Existing external jobs and history are untouched.
+The main root remains clean on `main` at
+`adb6adf4ec0113790a326a67325ced5716dc6837`. Worktree ownership and frozen designs are
+unchanged. The control checkpoint containing this record is saved/read back separately.
+
+## Pre-pause context: M1 accepted; M2 host findings closed, remaining PR04 incomplete
 
 The user explicitly resumed from the saved implementation head and requires reproductions
 before the two P1 corrections. Verified recovery is implementation
