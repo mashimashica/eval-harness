@@ -9,6 +9,7 @@ import hashlib
 import io
 import json
 import os
+import shutil
 import stat
 import subprocess
 import tarfile
@@ -220,6 +221,32 @@ class BigCodeBenchBoundaryPreparationTests(unittest.TestCase):
                     with self.assertRaises(installer.ProvisioningError):
                         installer._verify_uv_version(Path("/usr/bin/uv"))
 
+    def test_shell_uv_parser_uses_the_same_exact_grammar(self) -> None:
+        script_path = Path(__file__).parents[2] / "scripts" / "ci" / "install_bubblewrap.sh"
+        script = script_path.read_text(encoding="utf-8")
+        start = script.index("check_uv_version()")
+        end = script.index("\n}\n", start) + 3
+        function_source = script[start:end]
+        cases: tuple[tuple[str, bool], ...] = (
+            ("uv 0.11.29", True),
+            ("uv 0.11.29 (901092ee1 2026-07-15 aarch64-apple-darwin)", True),
+            ("uv 0.11.290", False),
+            ("uv 0.11.29 ()", False),
+            ("uv 0.11.29 (unclosed", False),
+            ("uv 0.11.29 (internal\nnewline)", False),
+            ("uv 0.11.29 (suffix) extra", False),
+            ("uv 0.11.29\nuv 0.11.29", False),
+        )
+        for output, expected in cases:
+            result = subprocess.run(
+                ["bash", "-c", f'{function_source}\ncheck_uv_version "$1"', "check-uv-version", output],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                check=False,
+            )
+            self.assertEqual(result.returncode == 0, expected, output)
+
     def test_nltk_archive_install_preserves_existing_and_cleans_partial_output(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
@@ -233,7 +260,9 @@ class BigCodeBenchBoundaryPreparationTests(unittest.TestCase):
             destination = category / "stopwords.zip"
             destination.write_bytes(b"existing")
             with self.assertRaises(installer.ProvisioningError):
-                installer._install_nltk_package(archive, data_root, subdir="corpora", package_id="stopwords", unzip=True)
+                installer._install_nltk_package(
+                    archive, data_root, subdir="corpora", package_id="stopwords", unzip=True
+                )
             self.assertEqual(destination.read_bytes(), b"existing")
 
             destination.unlink()
@@ -241,20 +270,33 @@ class BigCodeBenchBoundaryPreparationTests(unittest.TestCase):
             sentinel.write_bytes(b"sentinel")
             destination.symlink_to(sentinel)
             with self.assertRaises(installer.ProvisioningError):
-                installer._install_nltk_package(archive, data_root, subdir="corpora", package_id="stopwords", unzip=True)
+                installer._install_nltk_package(
+                    archive, data_root, subdir="corpora", package_id="stopwords", unzip=True
+                )
             self.assertTrue(destination.is_symlink())
-            self.assertEqual(destination.resolve(), sentinel)
+            self.assertEqual(destination.resolve(), sentinel.resolve())
             self.assertEqual(sentinel.read_bytes(), b"sentinel")
 
             destination.unlink()
 
-            def partial_copy(_source: IO[bytes], target: IO[bytes]) -> None:
+            def partial_copy(_source: IO[bytes], target: IO[bytes], *, length: int) -> None:
+                del length
                 target.write(b"partial")
                 raise OSError("simulated partial copy")
 
-            with mock.patch.object(installer.shutil, "copyfileobj", side_effect=partial_copy):
+            with mock.patch.object(shutil, "copyfileobj", side_effect=partial_copy):
                 with self.assertRaises(installer.ProvisioningError):
-                    installer._install_nltk_package(archive, data_root, subdir="corpora", package_id="stopwords", unzip=True)
+                    installer._install_nltk_package(
+                        archive, data_root, subdir="corpora", package_id="stopwords", unzip=True
+                    )
+            self.assertFalse(destination.exists())
+
+            source_failure = mock.Mock(spec=Path, wraps=archive)
+            source_failure.open.side_effect = OSError("simulated source open failure")
+            with self.assertRaises(installer.ProvisioningError):
+                installer._install_nltk_package(
+                    cast(Path, source_failure), data_root, subdir="corpora", package_id="stopwords", unzip=True
+                )
             self.assertFalse(destination.exists())
 
     def test_build_package_record_requires_exact_names_versions_and_shape(self) -> None:

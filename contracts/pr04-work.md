@@ -3,6 +3,30 @@
 
 # PR04 implementation work record
 
+## Consolidated preparation follow-up, 2026-09-13
+
+Base `26a87464f980ab9bf911a120f2f1cf8bceaf4008`; source owner Luna. Parent/Sol
+evidence is control `9fe92b1293a3fd73eb3f917fa14472c21cd69d19`, report
+`reports/m2-preparation-revised-correction.json`. The previous batch has 11/12 unit
+passes, one test import typing error and test formatting failure; no whole-batch pass.
+Official uv refusal is closed after the one extra authorized attempt; its prior two
+failures remain recorded. Existing archive deletion is source-closed. Real Linux and
+final PR acceptance remain unproven and CVE-blocked.
+
+This batch addresses partial destination creation before source-open failure, realpath
+fixture portability, a length-aware partial-copy callback and explicit patch imports.
+It adds a real shell grammar fixture for malformed multiline output; parent showed
+the previous awk END block incorrectly overrode its early nonzero exit. The shell
+installer also binds Meson and Ninja to the absolute hash-locked build-venv executables,
+checks their fixed versions, and preserves explicit copy-mode installation. No pin,
+lock, host-supervisor, worker, bootstrap or candidate-eligibility change is authorized.
+
+Only the two installer files, preparation tests and this work record change. Luna ran
+Ruff formatting and whitespace-diff checks before this save; grouped unit/mypy/lint/
+format/shell validation has not yet run. Next: validate this saved head as one batch,
+then Sol reviews the returned fixed delta and evidence read-only. No actual installation,
+unsafe candidate execution, PR acceptance, merge or release has occurred.
+
 ## Revised correction ready for grouped verification, 2026-09-13T09:09:31Z
 
 Luna ran two targeted red reproductions on saved test-first head

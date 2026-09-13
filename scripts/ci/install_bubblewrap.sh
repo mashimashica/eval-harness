@@ -30,6 +30,21 @@ new_private_dir() {
     chmod 0700 "$path"
 }
 
+check_uv_version() {
+    local uv_version="$1"
+    printf '%s\n' "$uv_version" | awk '
+        NR > 1 { bad = 1; next }
+        $0 == "uv 0.11.29" { ok = 1; next }
+        $0 ~ /^uv 0\.11\.29 \([^()]*\)$/ {
+            suffix = substr($0, length("uv 0.11.29") + 2)
+            inner = substr(suffix, 2, length(suffix) - 2)
+            gsub(/[[:space:]]/, "", inner)
+            if (inner != "") ok = 1
+        }
+        END { exit(NR == 1 && !bad && ok ? 0 : 1) }
+    '
+}
+
 runner_temp="${RUNNER_TEMP:?RUNNER_TEMP is required}"
 harness_python="${HARNESS_PYTHON:?HARNESS_PYTHON is required}"
 uv_bin="${UV_BIN:-uv}"
@@ -57,17 +72,7 @@ uv_bin="$(readlink -f "$uv_bin")"
 grep -q '^ID=ubuntu$' /etc/os-release || die "Ubuntu is required"
 grep -q '^VERSION_ID="24.04"$' /etc/os-release || die "Ubuntu 24.04 is required"
 uv_version="$($uv_bin --version)"
-if ! printf '%s\n' "$uv_version" | awk '
-    NR > 1 { exit 1 }
-    $0 == "uv 0.11.29" { ok = 1; next }
-    $0 ~ /^uv 0\.11\.29 \([^()]*\)$/ {
-        suffix = substr($0, length("uv 0.11.29") + 2)
-        inner = substr(suffix, 2, length(suffix) - 2)
-        gsub(/[[:space:]]/, "", inner)
-        if (inner != "") ok = 1
-    }
-    END { exit(ok ? 0 : 1) }
-'; then
+if ! check_uv_version "$uv_version"; then
     die "uv 0.11.29 is required"
 fi
 harness_identity="$($harness_python -I -B -c 'import platform; print(platform.python_version(), platform.machine())')"
@@ -164,13 +169,19 @@ PY
 "$uv_bin" pip sync --python "$build_venv/bin/python" --no-managed-python \
     --no-python-downloads --require-hashes --strict --link-mode copy \
     "$repo_root/scripts/ci/requirements-bwrap-build.lock"
-"$build_venv/bin/meson" setup "$build_dir" "$source_dir" \
+readonly meson_bin="$build_venv/bin/meson"
+readonly ninja_bin="$build_venv/bin/ninja"
+export PATH="$build_venv/bin:/usr/bin:/bin"
+export NINJA="$ninja_bin"
+[ "$($meson_bin --version)" = "1.9.1" ] || die "Meson 1.9.1 is required"
+[ "$($ninja_bin --version)" = "1.13.0" ] || die "Ninja 1.13.0 is required"
+"$meson_bin" setup "$build_dir" "$source_dir" \
     --prefix="$prefix" --buildtype=release \
     -Dselinux=disabled -Dman=disabled -Dtests=true \
     -Dbash_completion=disabled -Dzsh_completion=disabled
-"$build_venv/bin/meson" compile -C "$build_dir"
-"$build_venv/bin/meson" test -C "$build_dir" --print-errorlogs
-"$build_venv/bin/meson" install -C "$build_dir" --no-rebuild
+"$meson_bin" compile -C "$build_dir"
+"$meson_bin" test -C "$build_dir" --print-errorlogs
+"$meson_bin" install -C "$build_dir" --no-rebuild
 
 binary="$prefix/bin/bwrap"
 [ -f "$binary" ] && [ ! -L "$binary" ] || die "bubblewrap binary is not regular"

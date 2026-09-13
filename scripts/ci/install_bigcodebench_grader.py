@@ -685,9 +685,10 @@ def _install_nltk_package(archive: Path, data_root: Path, *, subdir: str, packag
     archive_destination = category_root / f"{package_id}.zip"
     created = False
     try:
-        with archive_destination.open("xb") as destination_file, archive.open("rb") as source_file:
+        with archive_destination.open("xb") as destination_file:
             created = True
-            shutil.copyfileobj(source_file, destination_file, length=1024 * 1024)
+            with archive.open("rb") as source_file:
+                shutil.copyfileobj(source_file, destination_file, length=1024 * 1024)
         archive_destination.chmod(0o600)
     except OSError as exc:
         if created and not archive_destination.is_symlink():
