@@ -203,10 +203,59 @@ class BigCodeBenchBoundaryPreparationTests(unittest.TestCase):
                 [], 0, stdout="uv 0.11.29 (901092ee1 2026-07-15 aarch64-apple-darwin)\n", stderr=""
             )
             installer._verify_uv_version(Path("/usr/bin/uv"))
-            for output in ("uv 0.11.290\n", "uv 0.11.29 extra\n"):
+            for output in (
+                "uv 0.11.29\n",
+                "uv 0.11.290\n",
+                "uv 0.11.29 extra\n",
+                "uv 0.11.29 ()\n",
+                "uv 0.11.29 (unclosed\n",
+                "uv 0.11.29 unopen)\n",
+                "uv 0.11.29 (internal\nnewline)\n",
+                "uv 0.11.29 (suffix) extra\n",
+            ):
                 run_checked.return_value = subprocess.CompletedProcess([], 0, stdout=output, stderr="")
-                with self.assertRaises(installer.ProvisioningError):
+                if output == "uv 0.11.29\n":
                     installer._verify_uv_version(Path("/usr/bin/uv"))
+                else:
+                    with self.assertRaises(installer.ProvisioningError):
+                        installer._verify_uv_version(Path("/usr/bin/uv"))
+
+    def test_nltk_archive_install_preserves_existing_and_cleans_partial_output(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            data_root = root / "nltk_data"
+            data_root.mkdir(mode=0o700)
+            archive = root / "stopwords.zip"
+            with zipfile.ZipFile(archive, "w") as package:
+                package.writestr("stopwords/README", b"new")
+            category = data_root / "corpora"
+            category.mkdir(mode=0o700)
+            destination = category / "stopwords.zip"
+            destination.write_bytes(b"existing")
+            with self.assertRaises(installer.ProvisioningError):
+                installer._install_nltk_package(archive, data_root, subdir="corpora", package_id="stopwords", unzip=True)
+            self.assertEqual(destination.read_bytes(), b"existing")
+
+            destination.unlink()
+            sentinel = root / "sentinel"
+            sentinel.write_bytes(b"sentinel")
+            destination.symlink_to(sentinel)
+            with self.assertRaises(installer.ProvisioningError):
+                installer._install_nltk_package(archive, data_root, subdir="corpora", package_id="stopwords", unzip=True)
+            self.assertTrue(destination.is_symlink())
+            self.assertEqual(destination.resolve(), sentinel)
+            self.assertEqual(sentinel.read_bytes(), b"sentinel")
+
+            destination.unlink()
+
+            def partial_copy(_source: Path, target: Path) -> None:
+                target.write_bytes(b"partial")
+                raise OSError("simulated partial copy")
+
+            with mock.patch.object(installer.shutil, "copyfile", side_effect=partial_copy):
+                with self.assertRaises(installer.ProvisioningError):
+                    installer._install_nltk_package(archive, data_root, subdir="corpora", package_id="stopwords", unzip=True)
+            self.assertFalse(destination.exists())
 
     def test_build_package_record_requires_exact_names_versions_and_shape(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:

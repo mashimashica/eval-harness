@@ -3,6 +3,28 @@
 
 # PR04 implementation work record
 
+## Authorized revised correction: test-first checkpoint, 2026-09-13
+
+Base: `90dc9d17f0c10532028ace4f8657240b6e742a26`. Owner Luna, with parent-owned
+checkpoint/evidence records and Sol read-only review. Frozen contract/appendix and their
+saved amendments remain authoritative. The user's new issue-level stop rule is recorded
+on control `c930d2032e7f6de1df17abf752542aa91ec00e6a`; previous failures remain history.
+
+Uv has two failed corrective rounds. The old prefix/suffix predicates contradict each
+other at the delimiter space. One additional correction is authorized using a complete
+exact-version grammar, with bare/official suffix success and near-version, extra token,
+empty/malformed suffix and embedded-newline rejection. If unresolved, hold the issue and
+dependent acceptance while continuing safe independent work; do not silently retry.
+
+This checkpoint changes only preparation tests and this work record. It adds private
+temporary fixtures for existing archive/symlink preservation and cleanup of a partially
+written newly created archive, and extends the saved uv regression. No production source
+change or validation has run. Next: Luna runs these red reproductions on this saved head,
+then applies the one revised correction and the bundled archive-ownership fix. Save again
+before grouped unit/strict-mypy/Ruff/shell checks and fixed-head independent review.
+
+No actual Linux environment, sandbox proof, native parity or PR04 acceptance is implied.
+
 ## Stopped after second corrective failure, 2026-09-13T08:46:00Z
 
 The user explicitly resumed at 08:42:27 UTC without resetting the prior failure count.
