@@ -461,6 +461,7 @@ class TestBigCodeBenchRunner(unittest.TestCase):
 
     def test_cleanup_polls_outer_process_before_unverifiable_descendants(self) -> None:
         fake = _FakePopen(b"", hold_open=True)
+        typed_fake = cast(subprocess.Popen[bytes], fake)
         try:
             with patch.object(
                 sandbox_module,
@@ -468,11 +469,14 @@ class TestBigCodeBenchRunner(unittest.TestCase):
                 side_effect=GraderInfrastructureError("process tree is unavailable"),
             ):
                 with self.assertRaisesRegex(GraderInfrastructureError, "process tree"):
-                    sandbox_module._terminate_and_reap(fake, set(), 0.01)
+                    sandbox_module._terminate_and_reap(typed_fake, set(), 0.01)
             self.assertTrue(fake.killed)
             self.assertGreaterEqual(fake.poll_calls, 2)
         finally:
             fake.close_writers()
+            fake.stdin.close()
+            fake.stdout.close()
+            fake.stderr.close()
 
     def test_supervisor_reaps_when_popen_does_not_supply_all_pipes(self) -> None:
         class NoPipes:
