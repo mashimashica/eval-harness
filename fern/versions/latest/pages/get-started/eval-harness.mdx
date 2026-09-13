@@ -17,6 +17,10 @@ servers.
 Development acceptance records and the full CLI schema are in `.agents/development/`. These files are for developers;
 they are not automatically given to the agents participating in experiments.
 
+Start with [installation](#install-from-a-checkout) and [one task](#run-a-minimal-experiment), then follow the workflow
+you need: [Skill comparisons](#create-and-compare-skills), [re-evaluation](#evaluate-saved-artifacts),
+[human ratings](#enter-human-ratings), or [resuming work](#preserve-and-resume-work).
+
 ## Install from a checkout
 
 The verified local runtime is macOS with Python 3.13.14, uv 0.12.13, standalone Codex CLI 0.154.0 and Claude Code
@@ -299,6 +303,18 @@ with `ratings_path: ratings.jsonl`; its path is relative to the evaluation YAML.
 `rejected_ratings.jsonl`. Import and aggregation never call a model.
 
 ## Interpret results
+
+For the minimal experiment, these files are the main entry points:
+
+| File | What to inspect |
+| --- | --- |
+| `runs/first/run_manifest.json` | Run identity, saved configuration, input and Skill versions. |
+| `runs/first/run_state.json` | Each condition/task/repeat, execution status, attempts, metrics and artifact paths. |
+| `runs/first/evaluations/<evaluation-dir>/judgments.jsonl` | Saved scores, rationales and evaluation/task-success status. Use the actual evaluation directory reported by `run`. |
+| `reports/first/comparison.json` | Generated sample counts and quality/time/usage distributions, separated by evaluation. |
+
+Use the paths recorded in the run journal to find captured deliverables and CLI logs. The execution journal preserves
+the generation record; consult the evaluation's judgments for grading completion and task success.
 
 Execution completion means that the CLI finished and its outputs were captured. Evaluation completion means that a
 grader returned a valid judgment. Task success is a separate result. A failed or missing judgment is not a zero-quality

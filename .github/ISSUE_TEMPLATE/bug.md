@@ -1,37 +1,43 @@
 ---
-name: Bug
-about: Bug report
+name: Bug report
+about: Report an Eval Harness command, result, or setup problem
 title: ''
 labels: ''
 assignees: ''
 
 ---
 
-**Describe the bug**
+## What happened?
 
-A clear and concise description of what the bug is.
+Describe the observed behavior and what you expected instead.
 
-**Steps/Code to reproduce bug**
+## Minimal reproduction
 
-Please list *minimal* steps or code snippet for us to be able to reproduce the bug.
+Include the command, working directory, and smallest relevant YAML configuration. State whether the problem is in
+the local `eval-harness` CLI or a retained upstream NeMo Gym component.
 
-A  helpful guide on on how to craft a minimal bug report  http://matthewrocklin.com/blog/work/2018/02/28/minimal-bug-reports. 
+```bash
+# The command that failed
+```
 
-**Expected behavior**
+## Environment and experiment
 
-A clear and concise description of what you expected to happen.
+- Repository commit:
+- OS and architecture:
+- Python and uv versions:
+- Codex CLI or Claude Code version:
+- Model and relevant settings:
+- Authentication mode (account/subscription; never include a token):
+- Benchmark, task IDs, and repeats:
 
-**Configs**
-NeMo Gym (e.g. via `ng_dump_config`) or RL training framework config files.
+## Saved result or error
 
-**Environment details**
+Include the error and, where relevant, the run/evaluation ID, affected stage, and a small redacted record.
+For resume problems, describe the interruption and any changes to the original inputs.
 
-Otherwise, please provide:
-- OS version
-- Python version
-- `uv pip list` output
+Do not attach credentials, authentication files, private benchmark inputs, or an entire run directory without
+reviewing its contents.
 
-**Additional context**
+## Additional context
 
-Add any other context about the problem here.
-Example: GPU model
+Add anything else needed to reproduce or understand the problem.

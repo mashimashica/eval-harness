@@ -1,23 +1,27 @@
 ---
-name: Feature
-about: Feature template
+name: Feature request
+about: Propose an improvement to an evaluation or repository workflow
 title: ''
 labels: ''
 assignees: ''
 
 ---
 
-**Use cases, pain points, and background**
-Why should we do this? Why is this needed or wanted?
+## Use case
 
-**Description**:
-What should we do?
+What are you trying to evaluate or accomplish, and what gets in the way today?
 
-**Design**:
-What files should be touched? What logic should be written?
+## Proposed behavior
 
-**Out of scope**:
-What are some items that this issue could be mistaken to cover that this issue should explicitly NOT cover?
+Describe the desired user workflow. Include a command/config example if helpful, and identify any affected
+benchmark, runtime, Skill creation/application, evaluation, or result-processing stage.
 
-**Acceptance Criteria**:
-- [ ] Individual items that need to be finished in order for this issue to be considered completed
+## Alternatives considered
+
+Describe any existing workflow you tried and why it is insufficient. Implementation details are optional.
+
+## Scope and acceptance
+
+What observable result would make this improvement useful? Note any important limits or excluded work.
+
+- [ ] Describe the outcome to verify.

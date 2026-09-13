@@ -236,3 +236,39 @@ acceptance record and its receipt; it goes through the same required check and P
 Usage starts with the canonical [local harness guide](../../fern/versions/latest/pages/get-started/eval-harness.mdx).
 Preserve the existing raw runs and excluded attempts. No additional model calls, release, package publication,
 deployment or global setup is needed for this assignment.
+
+## Repository presentation follow-up
+
+User requested README and repository presentation improvements and selected English. Baseline:
+`baddbeb5f632db46971abd721fc6e6f8d7838078`, clean main. Work branch: `codex/polish-repository-docs`.
+This is documentation and repository-entry maintenance; R01–R10 and the six-command behavior remain accepted.
+
+- Acceptance: README presents Eval Harness first, links install/auth → one-task run → saved results, and states the
+  verified support limits. Contribution and Issue/PR entry points match the fork's actual workflow.
+- Preserve the generated upstream environment-table block and its markers, NVIDIA attribution/citation and external
+  materials notice, licenses, retained implementation and all existing experiment evidence.
+- Canonical usage stays in Fern; requirements/spec/process records stay in .agents/development. Existing root entry
+  documents are updated because the user explicitly requested repository presentation, including README.md.
+- Luna owns README.md, harness/README.md and CONTRIBUTING.md. Astra owns this plan, Fern entry/guide, Issue/PR templates,
+  GitHub About links and integration. No specialist review is needed for this content-only change.
+- No model trials, runtime changes, dependency/lock changes, release or deployment. Check actual paths/anchors, CLI help,
+  preserved generated text, Fern validation and submitted-content secrets; run the existing required CI before merge.
+- Next: prepare and review the focused documentation diff, update the fork About link, then DCO commit, PR, passing
+  Harness quality and main integration under the continuing repository-maintenance authorization.
+
+Content acceptance: README, package/contribution entry points, Issue/PR templates, Fern entry/guide and GitHub About
+now describe this fork consistently. The existing 177-row generated upstream table (SHA256
+`b4217ffe5d81a45a919540dccd55b760417856a2d5f4bdc0e362c61843855843`), BibTeX and external-materials notice remain
+byte-identical. The table stays within its original generator markers in a collapsed section. Canonical usage remains
+in Fern; product code, CLI semantics, requirements, dependencies, workflows and licenses are unchanged.
+
+Verification: 34 new local/GitHub-source links and heading anchors resolve; six CLI help commands exit0; all14existing
+documentation checks pass; Fern check passes with0errors/1existing warning; Markdown structure and diff whitespace
+checks pass. No model calls. Luna implemented/self-checked the three entry documents; Astra reviewed and integrated
+the content and checked the affected references. Existing Harness quality remains the required merge gate.
+
+During editing, 44 untracked files named `* 2.*` appeared. All matched known committed versions exactly (43 matched
+the starting main; the plan copy matched3849a491). Their contents were preserved without deletion under
+`.audit/presentation/untracked-copies/`, with original paths, hashes and matching revisions in
+`.audit/presentation/untracked-duplicates.json`. They are excluded from the submission. Content checks and CLI-help
+receipts are also retained locally under `.audit/presentation/`.

@@ -1,185 +1,64 @@
-# Contributing to NeMo Gym
+# Contributing to this fork
 
-Welcome! We are excited to have you contribute to NeMo Gym. Whether you are adding new training environments, integrating RL frameworks, improving documentation, or fixing bugs, your contributions help advance RL training.
+This repository is a fork of [NVIDIA NeMo Gym](https://github.com/NVIDIA-NeMo/Gym) with a local,
+account-authenticated Eval Harness. Contributions to the harness and to the retained NeMo Gym code have different
+setup and validation paths.
 
-## High Priority Contributions
+## Start here
 
-**New Environments**
-- Novel training environments (coding, reasoning, tool use, games, and so on)
-- Benchmark integrations (SWE-Bench, Tau Bench, and so on)
+Read [`AGENTS.md`](AGENTS.md) and the [shared development context](.agents/development/README.md) before changing
+code. The shared context is the authority for requirements, lifecycle roles, quality gates, and publication rules;
+the [Local Eval Harness guide](fern/versions/latest/pages/get-started/eval-harness.mdx) is the authority for harness
+installation and CLI usage.
 
-Refer to the [Environment Contribution Guide](https://docs.nvidia.com/nemo/gym/latest/contribute/environments) for detailed guidance.
+Keep changes scoped to the assigned component, preserve unrelated work, and do not run candidate code before its
+required isolation has been checked. Harness checks use local fixtures and do not require model calls, subscription
+credentials, upstream NVIDIA access, or the retained NeMo Gym full test suite.
 
-**RL Framework Integrations**
-- Integration for new RL training frameworks (TRL, SkyRL, and so on)
+## Harness development
 
-Refer to the [RL Framework Integration Guide](https://docs.nvidia.com/nemo/gym/latest/contribute/rl-framework-integration) for detailed guidance.
-
-**Always Welcome**
-- Documentation and Tutorials
-- Bug Fixes
-- Features and Enhancements
-
-### Before Contributing
-
-- **Bug reports**: Include reproduction steps and environment details
-- **Features and breaking changes**: Open an issue to discuss before implementing
-- **Environment behavior changes**: Require careful consideration as they affect versioning and result comparability
-
-**Not sure where to start?** Refer to our [open issues](https://github.com/NVIDIA-NeMo/Gym/issues) or create a new issue to discuss your idea.
-
-## Use of AI and LLM Tools
-
-We encourage contributors to use AI coding assistants (Cursor, Claude, Codex, OpenCode, and similar)
-where they genuinely help, but AI assistance does not replace human understanding, judgment, and
-accountability.
-
-**Guiding principle:** Prefer contributions where your review and ownership clearly outweigh the
-maintainer review burden. You are responsible for every line of code you submit, regardless of
-whether you or an AI tool wrote it.
-
-Refer to [`AGENTS.md`](./AGENTS.md) for the quality bar (shared by humans and coding agents), and to
-[Use of AI and LLM Tools](https://docs.nvidia.com/nemo/gym/latest/contribute/development-setup#use-of-ai-and-llm-tools)
-for how maintainers handle low-effort submissions.
-
-## Licensing of Contributions
-
-NeMo Gym is licensed under the **Apache License, Version 2.0** (see [`LICENSE`](./LICENSE)).
-We accept contributions **only** under the terms of the Apache-2.0 license. By
-submitting a contribution, you agree that:
-
-- Your contribution is your own original work (or you have the right to submit it),
-  and it is licensed to the project and its users under Apache-2.0.
-- Every new source file you author carries the standard NVIDIA SPDX header:
-
-  ```text
-  # SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
-  # SPDX-License-Identifier: Apache-2.0
-  ```
-
-- Do **not** introduce code under a license incompatible with Apache-2.0
-  (e.g. GPL/LGPL/AGPL or a proprietary/custom source license) into the main tree.
-- If you must vendor third-party code, it has to be under an Apache-2.0-compatible
-  license, its original notices must be preserved, any file you modify must retain
-  the upstream notice and add an NVIDIA `SPDX-License-Identifier: Apache-2.0`
-  modifications block, and the component must be recorded in
-  [`ATTRIBUTIONS.md`](./ATTRIBUTIONS.md). See
-  `resources_servers/toolsandbox/tool_sandbox/VENDORING.md` for a worked example.
-
-## Development Setup
-
-For complete development setup, CI/CD requirements, DCO sign-off, and troubleshooting, refer to the [Development Setup Guide](https://docs.nvidia.com/nemo/gym/latest/contribute/development-setup.html).
-
-**Quick Start:**
+Install the locked project environment from the repository root:
 
 ```bash
-git clone git@github.com:NVIDIA-NeMo/Gym.git
-cd Gym
-uv venv --python 3.13.14 && source .venv/bin/activate
-uv sync --extra dev
-pre-commit install
+uv sync --project harness --locked --no-editable
 ```
 
-**Important:** All commits must be signed with DCO sign-off (`-s`):
+Run the targeted checks used by the harness workflow:
 
 ```bash
-git commit -s -m "Your commit message"
+uv run --project harness --no-sync pytest -c harness/pyproject.toml harness/tests -q
+uv run --project harness --no-sync ruff check harness
+uv run --project harness --no-sync ruff format --check harness
+uv run --project harness --no-sync mypy --config-file harness/pyproject.toml harness/src/eval_harness
 ```
 
-If DCO checks fail after you have already pushed, see the [Development Setup Guide](https://docs.nvidia.com/nemo/gym/main/contribute/development-setup#dco-and-commit-signing). Force-pushing is disallowed on branches in the upstream repo; for fork branches, use `--force-with-lease` only if your fork allows it, otherwise push the signed history to a new branch.
+After source changes, either refresh the non-editable package with
+`uv sync --project harness --locked --no-editable --reinstall-package eval-harness`, or prefix each check with
+`PYTHONPATH=harness/src` and keep `--no-sync`; otherwise the installed package may be stale. The non-editable install
+is the fresh-checkout and CI path. Do not add account credentials, generated runs, or downloaded benchmark data to a
+change. The harness's real CLI trials require the separate authentication and isolation procedure in the [Local Eval
+Harness guide](fern/versions/latest/pages/get-started/eval-harness.mdx).
 
-## Continuous Integration (CI)
+The fork-owned [`Eval Harness` workflow](.github/workflows/eval-harness.yml) runs the locked tests, lint, typing,
+dependency and documentation checks. It does not invoke a live model or depend on personal account authentication.
 
-CI runs in two clearly separated stages:
+## Retained NeMo Gym development
 
-1. **Pre-merge checks** — run on every pull request. All must be green before a PR can merge.
-2. **Post-merge full test suite** — runs after merge on `main`, with no change detection. It always exercises everything.
+For changes to the retained environment, agent, model, or training code, follow the upstream [NeMo Gym development
+documentation](https://docs.nvidia.com/nemo/gym/latest/contribute/development-setup) and the affected component's
+instructions. The root project may have broader dependencies and checks than the lightweight harness project.
 
-**Triggering CI (`/ok to test`):** GitHub CI workflows only run automatically for verified commits from NVIDIA-NeMo members. If your commits are unverified, or you're an external contributor, CI won't start until an NVIDIA-NeMo member comments `/ok to test <commit sha>` on the PR. This safeguards CI capacity and adds a review gate before external code can execute in CI.
+## Licensing and commits
 
-Reproduce the pre-merge checks locally before you push:
+Contributions must be compatible with Apache-2.0. See [`LICENSE`](LICENSE) and [`ATTRIBUTIONS.md`](ATTRIBUTIONS.md).
+New source files need the standard NVIDIA SPDX header required by [`AGENTS.md`](AGENTS.md); preserve third-party
+notices when modifying vendored code.
+
+Include a DCO sign-off on every commit:
 
 ```bash
-pre-commit run --all-files                          # linting + custom hooks
-gym env test --resources-server your_server         # server tests + data validation
+git commit -s -m "Describe the change"
 ```
 
-### Checks That Run on Every Pull Request
-
-| Check | Workflow | What it enforces |
-|-------|----------|------------------|
-| **Copyright** | `copyright-check.yml` | Every new file has the Apache 2.0 SPDX header (see below). |
-| **Code linting** | `code-linting.yml` | `pre-commit run --all-files` passes for all 8 hooks (see table below). |
-| **Fern docs** | `fern-docs-ci.yml` | `npm run check` in `fern/` validates the docs config. Runs only when a PR touches `fern/**`. |
-| **Unit tests** | `unit-tests.yml` | Smart change detection selects the test scope, then runs it (see below). |
-
-**Pre-commit hooks** (from `.pre-commit-config.yaml`):
-
-| Hook | What it checks |
-|------|----------------|
-| `end-of-file-fixer` | Python files end with a newline |
-| `trailing-whitespace` | No trailing whitespace in Python files |
-| `ruff` (lint) | Python linting, with auto-fix |
-| `ruff` (imports) | Import ordering (`--select I`), with auto-fix |
-| `ruff-format` | Code formatting |
-| `no-underscore-md` | No underscores in Markdown filenames (use hyphens) |
-| `add-verified-flag` | New resources server YAML configs get `verified: false` injected automatically |
-| `update-readme-table` | Root `README.md` environment table kept in sync |
-
-Hooks that auto-modify files (`ruff`, `ruff-format`, `add-verified-flag`, `update-readme-table`) may fail the first run while they rewrite files — stage the changes and commit again.
-
-**Every new file must include the Apache 2.0 header:**
-
-```python
-# SPDX-FileCopyrightText: Copyright (c) 2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
-# SPDX-License-Identifier: Apache-2.0
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-# http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-```
-
-**Smart unit test selection** (`unit-tests.yml`) classifies your changed files and runs only the matching scope:
-
-| Changed files | Test scope |
-|---------------|------------|
-| Only `**.md`, `docs/**`, `fern/**`, `LICENSE`, `benchmarks/**` | **Skip** — no tests run |
-| Only `resources_servers/**`, `responses_api_agents/**`, `responses_api_models/**` | **Server-only** — tests run for the changed servers only |
-| Anything else (core library, CI, scripts, and so on) | **Full suite** — all tests run |
-
-Priority is `other > server > doc`: a PR touching both a server file and a core file triggers the full suite. When the full suite runs, the server tests are split across **8 parallel shards** with `fail_on_total_and_test_mismatch=true` — this means **every resources server must have at least one test**, or its shard fails.
-
-### Checks a New Environment Must Satisfy
-
-If you are contributing a new resources server (environment), it must pass all of the following before it can merge. Most are enforced inside `gym env test --resources-server your_server` (see `nemo_gym/cli/env.py`):
-
-- **At least one test** — provide `tests/test_app.py`. A server with no tests fails the sharded suite (`fail_on_total_and_test_mismatch=true`).
-- **Copyright header** — on every new file (enforced by `copyright-check.yml`).
-- **`data/example.jsonl`** — must exist with **exactly 5 rows** (typically the first 5 rows of your train dataset).
-- **`data/example_metrics.json`** — must exist and report `"Number of examples": 5`. Generate it with `gym dataset collate "+config_paths=[...]" +output_dirpath=... +mode=example_validation`.
-- **`data/example_rollouts.jsonl`** — must exist with **exactly 5 rollouts** (run your example data through your agent to produce it).
-- **No merge-conflict artifacts** — the `data/` directory must contain no `*conflict*` files.
-- **Config `domain`** — every resources server YAML config must set `domain`.
-- **Dataset `license`** — train and validation datasets must include a `license` field.
-- **`verified: false`** — the `add-verified-flag` hook adds this to your config automatically. Leave it as-is; a maintainer flips it to `true` after baselining (see [Post-Merge](#post-merge-the-verified-flag)).
-
-### Post-Merge: Full Test Suite
-
-**Workflow:** `full-test-suite.yml` — runs on every push to `main` (no change detection; always runs everything):
-
-- **Core tests** — the same pytest markers as PR CI (`-m "not sandbox"` then `-m sandbox`).
-- **Server suite** — the same 8-shard run with `fail_on_total_and_test_mismatch=true`.
-- **Wheel install test** — builds the wheel, installs it in a fresh venv against a mock inference endpoint, and runs `ng_help`, `ng_dump_config`, `ng_init_resources_server`, `ng_run`, and `ng_collect_rollouts` end-to-end.
-- **Slack notification** — posts to the team channel if any job fails.
-
-### Post-Merge: The `verified` Flag
-
-New environments merge with `verified: false`. The environment is not surfaced as verified until a maintainer baselines the benchmark and flips `verified: true` in the YAML config. See the [Environment Contribution Guide](https://docs.nvidia.com/nemo/gym/latest/contribute/environments) for baselining requirements.
+Explain the user-visible behavior, relevant validation, and any unresolved limitation in the pull request. Do not
+claim a local harness trial as an official benchmark score.

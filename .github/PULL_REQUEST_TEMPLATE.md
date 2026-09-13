@@ -1,13 +1,23 @@
-<!-- Thanks for contributing to NeMo Gym! Please fill out the sections below. -->
+<!-- Describe the final change for an Eval Harness reviewer. -->
 
 ## What does this PR do?
 
-<!-- Briefly describe the change and the motivation. Link any related issue, e.g. "Closes #123". -->
+<!-- Explain the problem and resulting behavior. Link any related issue, e.g. "Closes #123". -->
+
+## Validation
+
+<!-- List checks you actually ran and their results. For documentation, check affected links and examples.
+If real CLI trials were needed, record the runtime/version, model/settings, task count and evidence location.
+Distinguish model trials from mocks and synthetic human ratings. Never include credentials. -->
+
+## Limits or follow-up
+
+<!-- Note any relevant limitations or remaining work; omit this section when empty. -->
 
 ## Checklist
 
-- [ ] I have read the [contributing guidelines](https://docs.nvidia.com/nemo/gym/latest/contribute/development-setup).
-- [ ] The change is focused; unrelated "drive-by" edits are tracked as separate issues/PRs.
-- [ ] Tests added or updated and pass locally, or N/A for docs-only / non-code changes (so CI unit/server checks pass when applicable).
-- [ ] Pre-commit checks pass locally (`pre-commit run --all-files`) (so CI lint/format/copyright pass).
-- [ ] All commits have DCO sign-off (`git commit -s`) (so the DCO check passes).
+- [ ] I followed the fork's [contributing guide](https://github.com/mashimashica/eval-harness/blob/main/CONTRIBUTING.md) and shared development standards.
+- [ ] The change is focused and preserves unrelated work and saved experiment results.
+- [ ] Relevant tests or content checks passed; results and any unconfirmed behavior are recorded above.
+- [ ] Affected usage documentation agrees with the implementation.
+- [ ] All commits have DCO sign-off (`git commit -s`).
