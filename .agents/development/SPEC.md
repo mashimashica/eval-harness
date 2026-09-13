@@ -4,7 +4,7 @@
 # Eval Harness CLI specification
 
 This document defines the target CLI, not the implementation status.
-The [product requirements](.agents/development/requirements.md) remain the development baseline.
+The [product requirements](requirements.md) remain the development baseline.
 Use `eval-harness` as the command name and YAML for experiment configuration.
 Single-condition runs and comparative experiments use the same commands.
 
