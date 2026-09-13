@@ -65,7 +65,13 @@ The explicit CPython 3.11.16 candidate was compiled for `x86_64-unknown-linux-gn
 
 Strict aliased `pip-audit` 2.10.1 reports exactly one finding: NLTK 3.10.3, `PYSEC-2026-3740`, aliases `CVE-2026-81726` and `GHSA-8mgp-746c-j5xp`, with no fix version. Audit JSON SHA-256 is `3d18536f4070cd1eb90179203e84bf1d147c755bf44d577fddeb8de41532310a`. This candidate therefore remains rejected even though it clears every published finding observed in the Python 3.10 candidates.
 
-uv 0.11.29 can compile the lock when given an existing 3.11.16 interpreter, but its embedded managed-Python catalog returns `No download found` for that version. A newer uv installed the research interpreter. Production setup needs an independently pinned interpreter artifact/source route; silently using newer uv would violate the tool lock.
+uv 0.11.29 can compile and install the lock when given an existing 3.11.16 interpreter, but its embedded managed-Python catalog returns `No download found` for that version. The provisioning gap is now closed with the independently verified `python-build-standalone` artifact recorded below; production uv remains exactly 0.11.29 and uses `--no-python-downloads`.
+
+## CPython 3.11.16 provisioning evidence
+
+Astral's immutable `python-build-standalone` release `20260901` supplies exact asset ID `539915682`, `cpython-3.11.16+20260901-x86_64-unknown-linux-gnu-install_only_stripped.tar.gz`, 30,778,779 bytes, publisher digest and independently observed SHA-256 `64427febea27864d136db46c8efe968eb6fa5ca2813ce1dca4bb95aec31cb2e4`. Its release target is verified commit `4bb01f09aaf362c71e891be4a41cb6d6ddf830b3`. Exact uv source commit `4b53f66b79c59c69eef428289904300df9e4df92` independently catalogues the same URL and digest.
+
+Fresh archive inspection found only 3,858 regular files and 1,048 contained relative symbolic links under `python/`; no path escape or special file. Extracted execution reports CPython 3.11.16, x86-64, GNU SOABI `cpython-311-x86_64-linux-gnu`. The exact release/API/source/executable/license evidence and safe-extraction requirements are preserved in `pr04-evidence/cpython-3.11.16-20260901-provenance.md`. This closes artifact selection, while full venv install/inventory and hosted-CI validation remain implementation proofs.
 
 ## NLTK advisory and bounded backport evidence
 
@@ -94,7 +100,7 @@ Official repository: [containers/bubblewrap](https://github.com/containers/bubbl
 - The pinned [`README.md`](https://github.com/containers/bubblewrap/blob/v0.12.0/README.md) says bubblewrap constructs an empty mount-namespace root, uses user namespaces for unprivileged operation, always creates a mount namespace, can make mounts read-only/nodev, and can add PID/network/IPC/UTS namespaces. It also says security depends entirely on caller arguments and `--new-session` is needed against TIOCSTI when no seccomp filter supplies that protection.
 - The pinned [`bwrap.xml`](https://github.com/containers/bubblewrap/blob/v0.12.0/bwrap.xml) defines explicit mandatory namespace flags, `--disable-userns`, `--clearenv`, `--size`/`--tmpfs`, `--ro-bind`, `--proc`, `--dev`, `--new-session`, and `--die-with-parent`. It states `--unshare-all` uses `--unshare-user-try` and `--unshare-cgroup-try`; therefore it is unsuitable for a fail-closed proof. The new `--not-a-security-boundary` flag deliberately makes some setup failures nonfatal and must be forbidden.
 
-Bubblewrap is a mechanism, not a complete policy. The proposed contract supplies the mount/env/namespace/resource/process arguments and verifies their effects in a real probe.
+Bubblewrap is a mechanism, not a complete policy. The proposed contract supplies the mount/env/namespace/resource/process arguments and verifies their effects in a real probe. The build-tool input and hash-complete Meson 1.9.1/Ninja 1.13.0 lock are preserved; their strict audit and an exact hosted build remain unvalidated at this checkpoint.
 
 ## CI platform evidence and observed local limitation
 
@@ -115,7 +121,7 @@ The boundary aims to contain host effects and bound denial of service. It does n
 ## Unvalidated items at this checkpoint
 
 - The Python 3.11.16 lock is solver-valid and its dry-run/audit are preserved, but it is rejected until the NLTK gate is resolved and a full install/inventory is tested.
-- CPython 3.11.16 needs a pinned artifact/source path independent of uv 0.11.29's unavailable managed download.
+- The pinned CPython 3.11.16 artifact still needs exact installer, full prepared-prefix/venv inventory and hosted-CI validation; uv 0.11.29 must run with managed downloads disabled.
 - The exact runtime mount list and seven NLTK assets need all-1,140 canonical-solution validation; imports do not justify mounting home/repository trees.
 - Upstream compatibility with forced multiprocessing `spawn`, `PR_SET_DUMPABLE=0`, descriptor redirection and authenticated frames needs a real same-UID hostile test.
 - GitHub-hosted `ubuntu-24.04` has not yet run the exact mandatory namespace/probe command. PR04 acceptance requires that green execution.

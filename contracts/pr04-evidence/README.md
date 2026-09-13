@@ -33,6 +33,9 @@ first resolution target was CPython 3.10.21 on
 | `test_nltk_ghsa_8mgp_backport.py` | Negative-control plus all-advisory-API regression | 9/9 patched; 8 failures pristine |
 | `nltk-backport-validation.md` | Commands, deterministic wheel hash and truthful audit limitation | Evidence |
 | `nltk-data-index-550b6625.xml` | Exact official data index at commit `550b6625...` | Data-lock input |
+| `cpython-3.11.16-20260901-provenance.md` | Immutable interpreter asset/API/source and extraction evidence | Artifact selected; CI install unvalidated |
+| `requirements-bwrap-build.in` | Exact Meson/Ninja build-tool input | Research input |
+| `requirements-bwrap-build.lock` | uv 0.11.29 hash-complete Meson/Ninja lock | Sync/audit not yet validated |
 
 The audit invocation was equivalent to:
 
@@ -60,6 +63,11 @@ cannot be attested by ordinary strict pip-audit. PR04 must not claim otherwise.
 
 ## Primary provenance
 
+* CPython grader artifact: immutable Astral release `20260901`, asset ID
+  `539915682`, source target `4bb01f09aaf362c71e891be4a41cb6d6ddf830b3`:
+  <https://github.com/astral-sh/python-build-standalone/releases/tag/20260901>
+* Exact uv source entry for that artifact, provenance only (production remains uv 0.11.29):
+  <https://github.com/astral-sh/uv/blob/4b53f66b79c59c69eef428289904300df9e4df92/crates/uv-python/download-metadata.json>
 * BigCodeBench tag `v0.2.5`: commit
   `9bd90fedee89d7dc3676838c75d9642cb0cd0702`, requirements blob
   `82e1e6bf0b1f27f8bcea60f0f6f667ee24f8d572`.

@@ -26,8 +26,9 @@ Implement a fail-closed host-security boundary for BigCodeBench native grading. 
 Luna may change only these paths. A newly discovered need outside the list returns to Sol for a contract amendment.
 
 - `eval_harness/evaluators/bigcodebench.py`
-- `eval_harness/grader_sandbox.py` (new, BigCodeBench-specific bubblewrap policy and process supervisor)
-- `resources_servers/bigcodebench/bcb_runner.py`
+- `eval_harness/grader_sandbox.py` (new, BigCodeBench-specific bubblewrap policy, bounded host I/O and process supervisor)
+- `eval_harness/bigcodebench_runner.py` (new, measured and typed inner runner/authenticated protocol)
+- `resources_servers/bigcodebench/bcb_runner.py` (delete the executable legacy shim; no direct runner route remains)
 - `resources_servers/bigcodebench/app.py`
 - `resources_servers/bigcodebench/setup_bcb_venv.py`
 - `resources_servers/bigcodebench/requirements-grader.in` (new)
@@ -41,8 +42,11 @@ Luna may change only these paths. A newly discovered need outside the list retur
 - `eval_harness/benchmarks/registry.yaml` only for truthful grader/sandbox provenance wording
 - `tests/harness/test_bigcodebench_benchmark.py`
 - `tests/harness/test_bigcodebench_grader_boundary.py` (new real Linux integration tests)
+- `tests/harness/test_bigcodebench_runner.py` (new protocol/native-runner unit and spawn tests)
 - `resources_servers/bigcodebench/tests/test_app.py`
 - `scripts/ci/install_bubblewrap.sh` (new pinned source installer)
+- `scripts/ci/install_bigcodebench_grader.py` (new safe CPython/data/environment preparer)
+- `scripts/ci/requirements-bwrap-build.in` and `scripts/ci/requirements-bwrap-build.lock` (new)
 - `.github/workflows/eval-harness-ci.yml` only to provision and execute the reviewed boundary test job
 
 Do not edit central migration state, unrelated evaluators/executors, coverage/audit thresholds, generated fixtures, or model/provider paths.
@@ -86,25 +90,50 @@ class GraderSandboxLimits:
     protocol_bytes: int = 16 * 1024
     diagnostic_bytes: int = 32 * 1024
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
+class BigCodeBenchGradeRequest:
+    schema_version: int
+    code: str
+    test_code: str
+    entry_point: str
+    task_id: str
+
+@dataclass(frozen=True, slots=True)
+class GraderSandboxSpec:
+    resource_dir: Path
+    bwrap_path: Path
+    grader_python: Path
+    forbidden_roots: tuple[Path, ...] = ()
+
+@dataclass(frozen=True, slots=True)
 class GraderSandboxPreflight:
     ok: bool
     sandbox_version: str | None
     policy_revision: str
+    attestation_sha256: str | None
     details: tuple[str, ...]
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class GraderNativeResult:
-    status: NativeStatus
+    native_status: NativeStatus | None
+    limit_kind: LimitKind | None = None
 
 class GraderInfrastructureError(RuntimeError):
     """Stable, secret-free grader boundary failure."""
 
-def preflight_bigcodebench_sandbox(...) -> GraderSandboxPreflight: ...
-def run_bigcodebench_sandbox(payload: bytes, ...) -> GraderNativeResult: ...
+def preflight_bigcodebench_sandbox(spec: GraderSandboxSpec) -> GraderSandboxPreflight: ...
+
+def run_bigcodebench_sandbox(
+    request: BigCodeBenchGradeRequest,
+    *,
+    spec: GraderSandboxSpec,
+    preflight: GraderSandboxPreflight,
+) -> GraderNativeResult: ...
 ```
 
-The evaluator and resource server must call the same implementation. No direct `python bcb_runner.py` path may remain. `app.py` must not preserve an unsafe legacy route.
+The evaluator and resource server must call the same implementation. `run_bigcodebench_sandbox` rejects a false, stale, or spec-mismatched preflight attestation and rechecks the manifest/critical file identities immediately before launch. No direct `python bcb_runner.py` path may remain. `app.py` must not preserve an unsafe legacy route; its async endpoint calls the synchronous supervisor with `asyncio.to_thread` under a process-wide semaphore of size one.
+
+The trusted supervisor and runner live under `eval_harness/`, so strict typing and the existing `source=eval_harness` coverage gate measure their parser, HMAC, state machine, bounded-I/O, error-map and worker logic. `bcb_runner.py` in the resources server is deleted. The inner file is mounted as `/opt/bigcodebench/bigcodebench_runner.py` and executed with `python -I -B`; it may import only the standard library and the pinned vendored metric. Security integration tests still run the real sandbox rather than weakening isolation for coverage.
 
 Production limits are constants, not request fields. Public input has exactly `schema_version=1`, `code`, `test_code`, `entry_point`, and `task_id`. Limit the encoded object to 8 MiB, `code` to 2 MiB, `test_code` to 6 MiB, and each identifier to 256 UTF-8 bytes. Reject duplicate/unknown keys, invalid UTF-8, identifier NULs, non-string fields, and trailing input before importing the grader or spawning candidate code.
 
@@ -129,7 +158,7 @@ Bubblewrap starts from its empty mount-namespace root. Bind read-only only:
 
 - the grader virtual environment at its resolved absolute host path;
 - the virtual environment's resolved base-interpreter prefix at the same absolute path;
-- `bcb_runner.py` at `/opt/bigcodebench/bcb_runner.py`;
+- measured `eval_harness/bigcodebench_runner.py` at `/opt/bigcodebench/bigcodebench_runner.py`;
 - the exact vendored metric source at `/opt/bigcodebench/vendor`;
 - the hash-verified NLTK asset tree plus local index at `/opt/bigcodebench/nltk_data`;
 - `/usr`, existing `/lib` and `/lib64`, and only `/etc/ld.so.cache`, `/etc/ssl/certs`, `/etc/fonts`, and `/etc/localtime` when present;
@@ -197,7 +226,15 @@ The installation manifest is JSON containing Python/build provenance, platform, 
 
 Strict `pip-audit` 2.10.1 reports exactly NLTK 3.10.3 `PYSEC-2026-3740`, aliases `CVE-2026-81726` and `GHSA-8mgp-746c-j5xp`, with no fix. The preserved source-reviewed backport and deterministic wheel are a concrete remediation option, but ordinary audit cannot attest its truthful local version and is not clean.
 
-Do not ignore the CVE, spoof a version, rename the package, or claim the backport satisfies the standard gate. Gate A remains red until an official fixed NLTK release produces a clean regenerated lock, or root explicitly revises policy to require separate source/patch/artifact/license/regression attestation while retaining the original audit finding.
+Do not ignore the CVE, spoof a version, rename the package, or claim the backport satisfies the standard gate. Gate A remains red until an official fixed NLTK release produces a clean regenerated lock. Any exception or replacement audit policy requires the user’s explicit plan amendment; an internal reviewer cannot weaken this gate.
+
+### Exact CPython and bubblewrap setup path
+
+`scripts/ci/install_bigcodebench_grader.py` downloads the immutable `python-build-standalone` release `20260901` asset ID `539915682` from its literal URL, requires size `30778779` and SHA-256 `64427febea27864d136db46c8efe968eb6fa5ca2813ce1dca4bb95aec31cb2e4`, rejects unsafe tar members, and extracts the single `python/` root into a new `$RUNNER_TEMP/pr04-cpython-3.11.16+20260901`. It verifies CPython `3.11.16`, `x86_64`, SOABI `cpython-311-x86_64-linux-gnu`, executable SHA-256 `1e761eb19d6f2594ab8dc64bd99ad4e1753589f3bf1ec199e4eef3aaa21e3930`, and license SHA-256 `3b2f81fe21d181c499c59a256c8e1968455d6689d269aa85373bfb6af41da3bf`. It creates a new grader venv with the absolute interpreter using repository uv `0.11.29`, `--no-project`, `--no-python-downloads`, and copy link mode, then syncs the accepted grader lock with `--require-hashes --no-python-downloads --strict`. It never calls uv's Python installer.
+
+`scripts/ci/install_bubblewrap.sh` requires SHA-256 `9760d007363e3abba7c747489910f9f82d9fca53ba3bd3282e396fa3c97a3314` before extraction. Its Python build tools are exactly Meson `1.9.1` and Ninja `1.13.0` from `scripts/ci/requirements-bwrap-build.lock`, installed by uv `0.11.29` with hashes. On Ubuntu 24.04 it requires the image compiler, `pkg-config` and `libcap-dev`, records their `dpkg-query` versions, configures with `-Dselinux=disabled -Dman=disabled -Dtests=true -Dbash_completion=disabled -Dzsh_completion=disabled`, compiles, runs upstream tests, and installs under a new `$RUNNER_TEMP/pr04-bwrap-0.12.0`. It verifies `bwrap --version`, ELF architecture, absence of setuid/setgid bits and records the built binary SHA-256. The CI job exports only that absolute binary path.
+
+The dedicated `ubuntu-24.04` boundary job uses these paths and then runs, in order: strict audit of the accepted grader lock and build-tool lock; grader preparation; `uv pip check`; manifest generation/readback; the real preflight test; hostile fixtures; all 1,140 canonical solutions in a disposable credential-free checkout/data root. Canonical comparison has an unsandboxed exact-source reference only inside that disposable CI environment with an empty allowlisted environment and no user/workspace mounts or credentials. It is parity evidence and never runs against user-controlled workspace data.
 
 ## Required tests and expected results
 
@@ -230,4 +267,4 @@ No model calls, production credentials, external grader service, container daemo
 - Install the 160-package lock, run all 1,140 canonical solutions under CPython 3.11.16 and the exact 8/6 GiB limits, compare to an unsandboxed exact-source reference, and investigate every delta.
 - Run all 26 NLTK tasks and all seven prepared data assets against any approved backport or official fixed release.
 - Demonstrate the production bubblewrap policy and same-UID spawn/FD/`/proc` protocol on hosted `ubuntu-24.04`.
-- Pin an independently verifiable CPython 3.11.16 artifact/source path. uv 0.11.29 can compile against an existing interpreter, but its embedded download catalog cannot install 3.11.16; setup must not silently invoke a newer uv.
+- Use the now-pinned CPython 3.11.16 artifact and exact setup recipe below; verify its manifest and full locked-environment inventory on hosted CI.
