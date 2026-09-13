@@ -10,15 +10,14 @@ import tempfile
 import unittest
 from collections.abc import Mapping, Sequence
 from pathlib import Path
-from typing import cast
+from typing import TypedDict, cast
 from unittest.mock import patch
 
-import eval_harness.candidate_bundle as candidate_bundle_module
 import eval_harness.runner as runner_module
 from eval_harness.benchmarks.base import Benchmark, BenchmarkTask
-from eval_harness.benchmarks.snapshot import Availability, SnapshotTaskContent
-from eval_harness.capabilities import ExecutorCapabilities, ExecutorInput, ExecutorOutput
+from eval_harness.benchmarks.snapshot import Availability, SnapshotTaskContent, open_verified_snapshot
 from eval_harness.candidate_bundle import SnapshotReference, VerifiedSnapshotBinding
+from eval_harness.capabilities import ExecutorCapabilities, ExecutorInput, ExecutorOutput
 from eval_harness.evaluators.base import (
     EvaluationPlan,
     EvaluationRequest,
@@ -41,7 +40,6 @@ from eval_harness.interventions.base import (
     Intervention,
     InterventionApplication,
     InterventionBundle,
-    InterventionFile,
     InterventionManifest,
     InterventionPreflightResult,
     InterventionType,
@@ -55,6 +53,15 @@ from eval_harness.runner import run_benchmark
 
 
 JsonObject = dict[str, object]
+
+
+class SemanticChanges(TypedDict, total=False):
+    model: str
+    network_access_enabled: bool
+    timeout_seconds: float
+    intervention_content: bytes
+    judge_model: str
+    prompt_suffix: str
 
 
 def _json_object(value: object) -> JsonObject:
@@ -441,7 +448,7 @@ class GenerationHandoffTests(unittest.TestCase):
             evaluator = FixtureEvaluator(events=events)
             executor = FixtureExecutor(events=events)
             materialize_calls: list[str] = []
-            original_materialize = runner_module.VerifiedSnapshotBinding.materialize_execution
+            original_materialize = VerifiedSnapshotBinding.materialize_execution
 
             def counted_materialize(
                 binding: VerifiedSnapshotBinding,
@@ -452,7 +459,7 @@ class GenerationHandoffTests(unittest.TestCase):
                 return original_materialize(binding, reference, workspace)
 
             with patch.object(
-                runner_module.VerifiedSnapshotBinding,
+                VerifiedSnapshotBinding,
                 "materialize_execution",
                 new=counted_materialize,
             ):
@@ -622,7 +629,7 @@ class GenerationHandoffTests(unittest.TestCase):
             ):
                 self.assertNotIn(forbidden, serialized_configuration)
 
-            changed_semantics = (
+            changed_semantics: tuple[SemanticChanges, ...] = (
                 {"model": "different-model"},
                 {"network_access_enabled": True},
                 {"timeout_seconds": 456.0},
@@ -732,10 +739,9 @@ class GenerationHandoffTests(unittest.TestCase):
             root = Path(temporary)
             out = root / "run"
             runtime = root / "runtime"
-            with patch.object(
-                candidate_bundle_module,
-                "open_verified_snapshot",
-                wraps=candidate_bundle_module.open_verified_snapshot,
+            with patch(
+                "eval_harness.candidate_bundle.open_verified_snapshot",
+                wraps=open_verified_snapshot,
             ) as open_snapshot:
                 run_benchmark(
                     FixtureBenchmark(task_count=1),
