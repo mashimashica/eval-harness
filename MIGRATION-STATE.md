@@ -3,7 +3,7 @@
 
 # Migration state
 
-Updated: 2026-09-13T00:24:04.831Z
+Updated: 2026-09-13T00:28:53.838Z
 
 Control branch: `checkpoint/migration-control`.
 Procedure: [MIGRATION-WORKFLOW.md](MIGRATION-WORKFLOW.md).
@@ -135,6 +135,12 @@ No workflow runs were returned for that checkpoint when checked after publicatio
 This drill verifies recovery of the saved control documents. It does not recover the missing unpublished source
 or provide implementation acceptance. This evidence is recorded in a descendant commit so that the tested commit
 and file hashes remain immutable.
+
+## Final acceptance inventory
+
+Astra's current deletion, protection-porting, fourth-benchmark, and exact-final-head checklist is saved at
+[`contracts/final-acceptance-map.md`](contracts/final-acceptance-map.md).
+It identifies integration risks sent to the slice designers; none is claimed fixed by this document.
 
 ## Updating this control record
 
