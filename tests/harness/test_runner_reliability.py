@@ -18,7 +18,9 @@ import eval_harness.local_runner as local_runner
 import eval_harness.provenance as provenance
 import eval_harness.runner as generic_runner
 from eval_harness.benchmarks.base import Benchmark, BenchmarkTask
-from eval_harness.capabilities import ExecutorOutput
+from eval_harness.benchmarks.snapshot import Availability
+from eval_harness.candidate_bundle import VerifiedSnapshotBinding
+from eval_harness.capabilities import ExecutorCapabilities, ExecutorInput, ExecutorOutput
 from eval_harness.evaluators.base import (
     EvaluationPlan,
     EvaluationRequest,
@@ -52,6 +54,7 @@ from eval_harness.interventions.none import NoneIntervention
 from eval_harness.judges.base import JudgeExecutor, JudgePreflightResult, JudgeRequest, JudgeResult, Verdict
 from eval_harness.layout import task_layout
 from eval_harness.reasoning import ReasoningEffortOption
+from eval_harness.run_manifest import load_run_manifest, load_run_results
 
 
 def detail_text(payload: Mapping[str, object]) -> list[str]:
@@ -64,6 +67,7 @@ def detail_text(payload: Mapping[str, object]) -> list[str]:
 class ReliabilityBenchmark(Benchmark):
     name = "reliability"
     revision = "reliability-revision"
+    revision_availability = Availability.AVAILABLE
 
     def __init__(self, tasks: tuple[BenchmarkTask, ...] = ()) -> None:
         self.tasks = tasks or (BenchmarkTask(TaskSpec("task-one", "prompt-one")),)
@@ -138,6 +142,10 @@ class ReliabilityExecutor(Executor):
     invocation_mode = "reliability"
     network_access_enabled: bool = False
     reasoning_effort: ReasoningEffortOption = None
+    capabilities = ExecutorCapabilities(
+        inputs=frozenset({ExecutorInput.PROMPT_TEXT, ExecutorInput.WORKSPACE_FILES}),
+        outputs=frozenset({ExecutorOutput.FINAL_TEXT}),
+    )
 
     def __init__(self) -> None:
         self.preflight_ok = True
@@ -191,10 +199,16 @@ class ReliabilityExecutor(Executor):
                 None
                 if successful
                 else Failure(
-                    FailureKind.INTERRUPTED
-                    if self.result_status is ExecutionStatus.INTERRUPTED
-                    else FailureKind.PROCESS,
-                    "interrupted" if self.result_status is ExecutionStatus.INTERRUPTED else "test_failure",
+                    {
+                        ExecutionStatus.FAILED: FailureKind.PROCESS,
+                        ExecutionStatus.TIMED_OUT: FailureKind.TIMEOUT,
+                        ExecutionStatus.INTERRUPTED: FailureKind.INTERRUPTED,
+                    }[self.result_status],
+                    {
+                        ExecutionStatus.FAILED: "test_failure",
+                        ExecutionStatus.TIMED_OUT: "timeout",
+                        ExecutionStatus.INTERRUPTED: "interrupted",
+                    }[self.result_status],
                     FailureImpact.RUN,
                 )
             ),
@@ -1208,9 +1222,12 @@ class GenericRunnerReliabilityTests(unittest.TestCase):
                         out_dir=root / "out",
                         limit=1,
                     )
-                self.assertEqual(
-                    str(raised.exception), "interrupted" if status is ExecutionStatus.INTERRUPTED else "test_failure"
-                )
+                expected_failure = {
+                    ExecutionStatus.FAILED: ("process", "test_failure", "test_failure", "failed"),
+                    ExecutionStatus.TIMED_OUT: ("timeout", "timeout", "timeout", "failed"),
+                    ExecutionStatus.INTERRUPTED: ("interrupted", "interrupted", "interrupted", "interrupted"),
+                }[status]
+                self.assertEqual(str(raised.exception), expected_failure[2])
                 self.assertEqual(evaluator.calls, 0)
                 row = json.loads((root / "out" / "results.jsonl").read_text(encoding="utf-8").splitlines()[0])
                 self.assertEqual(row["evaluation"]["status"], "skipped")
@@ -1218,15 +1235,25 @@ class GenericRunnerReliabilityTests(unittest.TestCase):
                 self.assertEqual(row["evaluation"]["outcomes"], {})
                 self.assertEqual(row["evaluation"]["details"], {"reason": "executor failure prevented evaluation"})
                 self.assertEqual(row["execution"]["available_outputs"], [])
-                expected_kind = "interrupted" if status is ExecutionStatus.INTERRUPTED else "process"
-                expected_code = "interrupted" if status is ExecutionStatus.INTERRUPTED else "test_failure"
                 self.assertEqual(
                     row["execution"]["failure"],
-                    {"kind": expected_kind, "code": expected_code, "impact": "run"},
+                    {"kind": expected_failure[0], "code": expected_failure[1], "impact": "run"},
                 )
                 metadata = json.loads((root / "out" / "run-metadata.json").read_text(encoding="utf-8"))
+                self.assertEqual(metadata["status"], expected_failure[3])
+                manifest = load_run_manifest(root / "out")
+                binding = VerifiedSnapshotBinding.load(root / "out" / "snapshot")
+                indexed = load_run_results(manifest, snapshot_binding=binding)
+                self.assertEqual(len(indexed), 1)
+                indexed_row, candidate = indexed[0]
+                self.assertEqual(indexed_row.snapshot_reference, manifest.ordered_tasks[0])
+                self.assertEqual(candidate.snapshot_reference, indexed_row.snapshot_reference)
+                self.assertEqual(candidate.outcome.status, status)
+                self.assertEqual(candidate.outcome.available_outputs, frozenset())
+                self.assertIsNone(candidate.outcome.output_text)
                 self.assertEqual(
-                    metadata["status"], "interrupted" if status is ExecutionStatus.INTERRUPTED else "failed"
+                    candidate.outcome.failure,
+                    Failure(FailureKind(expected_failure[0]), expected_failure[1], FailureImpact.RUN),
                 )
 
 

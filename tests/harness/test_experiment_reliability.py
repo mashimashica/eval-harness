@@ -17,6 +17,7 @@ import eval_harness.experiments.base as base_module
 import eval_harness.experiments.profile as profile_module
 import eval_harness.experiments.runner as runner_module
 from eval_harness.benchmarks.base import Benchmark, BenchmarkTask
+from eval_harness.benchmarks.snapshot import Availability
 from eval_harness.builders.base import (
     Builder,
     BuilderInputBundle,
@@ -27,7 +28,8 @@ from eval_harness.builders.base import (
 )
 from eval_harness.builders.executor_skill import ExecutorSkillBuilder
 from eval_harness.builders.inputs import load_builder_input_bundle
-from eval_harness.capabilities import ExecutorOutput
+from eval_harness.candidate_bundle import VerifiedSnapshotBinding
+from eval_harness.capabilities import ExecutorCapabilities, ExecutorInput, ExecutorOutput
 from eval_harness.evaluators.base import (
     EvaluationPlan,
     EvaluationRequest,
@@ -57,12 +59,14 @@ from eval_harness.failures import Failure, FailureImpact, FailureKind, RunAbort
 from eval_harness.interventions import load_agent_skill_bundle
 from eval_harness.provenance import RepositoryProvenance, canonical_json_sha256
 from eval_harness.reasoning import ReasoningEffortOption
+from eval_harness.run_manifest import load_run_manifest, load_run_results
 from eval_harness.runner import RunSummary
 
 
 class ReliabilityBenchmark(Benchmark):
     name = "reliability-benchmark"
     revision = "revision"
+    revision_availability = Availability.AVAILABLE
 
     def __init__(self, tasks: tuple[BenchmarkTask, ...]) -> None:
         self.tasks = tasks
@@ -111,6 +115,10 @@ class ReliabilityApplicationExecutor(Executor):
     invocation_mode = "deterministic"
     network_access_enabled: bool = False
     reasoning_effort: ReasoningEffortOption = None
+    capabilities = ExecutorCapabilities(
+        inputs=frozenset({ExecutorInput.PROMPT_TEXT, ExecutorInput.WORKSPACE_FILES}),
+        outputs=frozenset(),
+    )
 
     def __init__(
         self,
@@ -132,8 +140,15 @@ class ReliabilityApplicationExecutor(Executor):
         if self.raise_on_execute is not None:
             raise self.raise_on_execute
         successful = self.status in {ExecutionStatus.COMPLETED, ExecutionStatus.NO_DELIVERABLE}
-        failure_kind = FailureKind.INTERRUPTED if self.status is ExecutionStatus.INTERRUPTED else FailureKind.PROCESS
-        failure_code = "interrupted" if self.status is ExecutionStatus.INTERRUPTED else "test_failure"
+        if self.status is ExecutionStatus.INTERRUPTED:
+            failure_kind = FailureKind.INTERRUPTED
+            failure_code = "interrupted"
+        elif self.status is ExecutionStatus.TIMED_OUT:
+            failure_kind = FailureKind.TIMEOUT
+            failure_code = "timeout"
+        else:
+            failure_kind = FailureKind.PROCESS
+            failure_code = "test_failure"
         return ExecutionResult(
             runtime="test",
             task_id=request.task.task_id,
@@ -158,6 +173,10 @@ class ReliabilityBuilderExecutor(Executor):
     invocation_mode = "deterministic"
     network_access_enabled: bool = False
     reasoning_effort: ReasoningEffortOption = None
+    capabilities = ExecutorCapabilities(
+        inputs=frozenset({ExecutorInput.PROMPT_TEXT, ExecutorInput.WORKSPACE_FILES}),
+        outputs=frozenset({ExecutorOutput.ARTIFACT_FILES}),
+    )
 
     def __init__(self) -> None:
         self.requests: list[ExecutionRequest] = []
@@ -664,10 +683,31 @@ class ExperimentReliabilityTests(unittest.TestCase):
             result_row = json.loads((application_output / "results.jsonl").read_text(encoding="utf-8").splitlines()[0])
             self.assertEqual(result_row["task_id"], "task-one")
             self.assertEqual(result_row["evaluation"]["metrics"], {"score": 1.0})
+            self.assertEqual(result_row["evaluation"]["status"], "completed")
             self.assertEqual(result_row["intervention"]["application_run_id"], "application-run-1")
+            application_metadata = json.loads((application_output / "run-metadata.json").read_text(encoding="utf-8"))
+            self.assertEqual(application_metadata["metrics"], {"score": 1.0})
+            self.assertIsNone(application_metadata["benchmark_source"])
+            self.assertEqual(application_metadata["benchmark_source_availability"], "unavailable")
+            self.assertEqual(application_metadata["benchmark_revision"], "revision")
+            self.assertEqual(application_metadata["benchmark_revision_status"], "available")
+            application_manifest = load_run_manifest(application_output)
+            application_binding = VerifiedSnapshotBinding.load(application_output / "snapshot")
+            indexed = load_run_results(application_manifest, snapshot_binding=application_binding)
+            self.assertEqual(len(indexed), 1)
+            indexed_row, candidate = indexed[0]
+            self.assertEqual(indexed_row.snapshot_reference, application_manifest.ordered_tasks[0])
+            self.assertEqual(candidate.snapshot_reference, indexed_row.snapshot_reference)
             self.assertEqual(
-                json.loads((application_output / "run-metadata.json").read_text(encoding="utf-8"))["metrics"],
-                {"score": 1.0},
+                application_binding.resolve(indexed_row.snapshot_reference).task_id,
+                "task-one",
+            )
+            self.assertEqual(candidate.outcome.status, ExecutionStatus.COMPLETED)
+            self.assertEqual(candidate.outcome.available_outputs, frozenset())
+            self.assertIsNone(candidate.outcome.output_text)
+            self.assertEqual(
+                candidate.intervention_evidence.application.application_run_id,
+                "application-run-1",
             )
             self.assertEqual((source / "guide.txt").read_text(encoding="utf-8"), "guide")
 
@@ -734,6 +774,67 @@ class ExperimentReliabilityTests(unittest.TestCase):
                     "status": "skipped",
                 },
             )
+            failed_manifest = load_run_manifest(output)
+            failed_binding = VerifiedSnapshotBinding.load(output / "snapshot")
+            failed_index = load_run_results(failed_manifest, snapshot_binding=failed_binding)
+            self.assertEqual(len(failed_index), 1)
+            failed_index_row, failed_candidate = failed_index[0]
+            self.assertEqual(failed_index_row.snapshot_reference, failed_manifest.ordered_tasks[0])
+            self.assertEqual(failed_candidate.snapshot_reference, failed_index_row.snapshot_reference)
+            self.assertEqual(failed_candidate.outcome.status, ExecutionStatus.FAILED)
+            self.assertEqual(failed_candidate.outcome.available_outputs, frozenset())
+            self.assertIsNone(failed_candidate.outcome.output_text)
+            self.assertEqual(
+                failed_candidate.outcome.failure,
+                Failure(FailureKind.PROCESS, "test_failure", FailureImpact.RUN),
+            )
+
+    def test_builder_experiment_typed_timeout_preserves_timeout_failure(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            profile, config, benchmark, evaluator, builder, builder_executor, application, source = self._run_fixture(
+                root,
+                application_status=ExecutionStatus.TIMED_OUT,
+            )
+            with (
+                patch.object(runner_module.secrets, "token_hex", return_value="schedule-0000000000000006"),
+                patch("eval_harness.runner.secrets.token_urlsafe", return_value="application-run-timeout"),
+            ):
+                with self.assertRaises(RunAbort) as raised:
+                    runner_module.run_builder_experiment(
+                        profile,
+                        config,
+                        benchmark,
+                        evaluator,
+                        builder,
+                        application,
+                        source_roots={"input-one": source},
+                        out_dir=root / "output",
+                        runtime_root=root / "runtime",
+                    )
+
+            self.assertEqual(str(raised.exception), "timeout")
+            self.assertEqual(evaluator.evaluate_calls, 0)
+            metadata = json.loads((root / "output" / "experiment-metadata.json").read_text(encoding="utf-8"))
+            self.assertEqual(metadata["status"], "failed")
+            output = Path(metadata["entries"][0]["application"]["output_root"])
+            row = json.loads((output / "results.jsonl").read_text(encoding="utf-8").splitlines()[0])
+            self.assertEqual(
+                row["execution"]["failure"],
+                {"kind": "timeout", "code": "timeout", "impact": "run"},
+            )
+            timeout_manifest = load_run_manifest(output)
+            timeout_binding = VerifiedSnapshotBinding.load(output / "snapshot")
+            timeout_index = load_run_results(timeout_manifest, snapshot_binding=timeout_binding)
+            self.assertEqual(len(timeout_index), 1)
+            _, timeout_candidate = timeout_index[0]
+            self.assertEqual(timeout_candidate.outcome.status, ExecutionStatus.TIMED_OUT)
+            self.assertEqual(
+                timeout_candidate.outcome.failure,
+                Failure(FailureKind.TIMEOUT, "timeout", FailureImpact.RUN),
+            )
+            self.assertEqual(timeout_candidate.outcome.available_outputs, frozenset())
+            self.assertIsNone(timeout_candidate.outcome.output_text)
 
     def test_builder_experiment_typed_interrupt_preserves_interrupt_status(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
@@ -774,6 +875,19 @@ class ExperimentReliabilityTests(unittest.TestCase):
                 {"kind": "interrupted", "code": "interrupted", "impact": "run"},
             )
             self.assertEqual(row["evaluation"]["status"], "skipped")
+            interrupted_manifest = load_run_manifest(output)
+            interrupted_binding = VerifiedSnapshotBinding.load(output / "snapshot")
+            interrupted_index = load_run_results(interrupted_manifest, snapshot_binding=interrupted_binding)
+            self.assertEqual(len(interrupted_index), 1)
+            interrupted_row, interrupted_candidate = interrupted_index[0]
+            self.assertEqual(interrupted_row.snapshot_reference, interrupted_manifest.ordered_tasks[0])
+            self.assertEqual(interrupted_candidate.outcome.status, ExecutionStatus.INTERRUPTED)
+            self.assertEqual(
+                interrupted_candidate.outcome.failure,
+                Failure(FailureKind.INTERRUPTED, "interrupted", FailureImpact.RUN),
+            )
+            self.assertEqual(interrupted_candidate.outcome.available_outputs, frozenset())
+            self.assertIsNone(interrupted_candidate.outcome.output_text)
 
     def test_builder_experiment_builder_and_application_exceptions_are_durable(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
@@ -829,6 +943,10 @@ class ExperimentReliabilityTests(unittest.TestCase):
             self.assertEqual(application_metadata["status"], "failed")
             self.assertEqual(application_metadata["entries"][0]["build"]["status"], "completed")
             self.assertEqual(application_metadata["entries"][0]["application"]["status"], "failed")
+            application_output = Path(application_metadata["entries"][0]["application"]["output_root"])
+            application_manifest = load_run_manifest(application_output)
+            application_binding = VerifiedSnapshotBinding.load(application_output / "snapshot")
+            self.assertEqual(load_run_results(application_manifest, snapshot_binding=application_binding), ())
 
 
 def replace_run_summary(summary: RunSummary, application_run_ids: object) -> RunSummary:

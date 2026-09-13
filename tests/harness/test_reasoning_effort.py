@@ -12,10 +12,11 @@ from typing import TypedDict, cast
 from unittest.mock import patch
 
 from eval_harness.benchmarks.base import Benchmark, BenchmarkTask
+from eval_harness.benchmarks.snapshot import Availability
 from eval_harness.builders.base import BuilderInputBundle
 from eval_harness.builders.executor_skill import ExecutorSkillBuilder
 from eval_harness.builders.inputs import load_builder_input_bundle
-from eval_harness.capabilities import ExecutorOutput
+from eval_harness.capabilities import ExecutorCapabilities, ExecutorInput, ExecutorOutput
 from eval_harness.evaluators.base import (
     EvaluationPlan,
     EvaluationRequest,
@@ -94,6 +95,7 @@ def _load_json_object(text: str) -> JsonObject:
 class _FakeBenchmark(Benchmark):
     name = "reasoning-benchmark"
     revision = "reasoning-revision"
+    revision_availability = Availability.AVAILABLE
 
     def __init__(self, task_count: int = 2) -> None:
         self.tasks = tuple(BenchmarkTask(TaskSpec(f"task-{index}", f"prompt-{index}")) for index in range(task_count))
@@ -135,6 +137,10 @@ class _FakeExecutor(Executor):
     invocation_mode = "fake-codex"
     network_access_enabled: bool = False
     reasoning_effort: ReasoningEffortOption
+    capabilities = ExecutorCapabilities(
+        inputs=frozenset({ExecutorInput.PROMPT_TEXT, ExecutorInput.WORKSPACE_FILES}),
+        outputs=frozenset({ExecutorOutput.ARTIFACT_FILES, ExecutorOutput.FINAL_TEXT}),
+    )
 
     def __init__(self, reasoning_effort: ReasoningEffortOption, *, skill: bool = False) -> None:
         self.reasoning_effort = reasoning_effort
@@ -173,7 +179,7 @@ class _FakeExecutor(Executor):
             started_at="started",
             finished_at="finished",
             exit_code=0,
-            available_outputs=frozenset({ExecutorOutput.FINAL_TEXT}),
+            available_outputs=frozenset({ExecutorOutput.ARTIFACT_FILES, ExecutorOutput.FINAL_TEXT}),
             failure=None,
             output_text="answer",
             reasoning_effort_requested=self.reasoning_effort,
@@ -299,11 +305,18 @@ class ReasoningEffortContractTests(unittest.TestCase):
                     "network_policy",
                     "limit",
                     "timeout_seconds",
-                    "runtime_layout",
+                },
+            )
+            self.assertEqual(baseline_metadata["runtime_layout"], "run-output")
+            self.assertEqual(
+                baseline_executor["capabilities"],
+                {
+                    "inputs": ["prompt_text", "workspace_files"],
+                    "outputs": ["artifact_files", "final_text"],
                 },
             )
             self.assertNotIn("reasoning_effort_requested", baseline_metadata)
-            self.assertNotIn("reasoning_effort_requested", baseline_executor)
+            self.assertIsNone(baseline_executor["reasoning_effort_requested"])
             self.assertEqual(
                 baseline_metadata["configuration_sha256"],
                 canonical_json_sha256(baseline_configuration),

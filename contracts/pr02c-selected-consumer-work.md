@@ -1,0 +1,26 @@
+<!-- SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved. -->
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+
+# PR02c selected consumer and typed fixture work
+
+Status: initialized bounded implementation batch; no edits or validation performed yet.
+
+- Parent/base: `3f37a1b7e7e6e74900d475dd018a25931acca04e`, tree `e12f03944e2123cdb75959b9c7715ee5718db444`.
+- Sole remote writer: root/Astra. Implementation: a dedicated Luna in its own `pr02c-fixtures` checkout. Sol owns design/review.
+- Branch: `checkpoint/pr-02c-selected-consumer`; this is part of PR02c, not a new migration slice or formal PR.
+- Fixed contract: `contracts/pr02c-fixture-migration-map-31307d4.md`, SHA-256 `37e848eafdd8bfc8ca5d2ce6612eb0cc325b641384f4c7648aedb9185f84de47`, copied/read back from Sol `b46537358ae0355be4d926a0d606a095a197273a`.
+- Edit allowlist: `eval_harness/experiments/runner.py` only `_SelectedTaskBenchmark`; `tests/harness/test_builder_experiment_runner.py`; `tests/harness/test_experiment_reliability.py`; `tests/harness/test_reasoning_effort.py`; `tests/harness/test_runner_reliability.py`; this work record owned by root.
+
+Preserve source/revision availability and the original adapter snapshot hooks. Execution wrapping uses the fresh canonical minimal task without evaluation/materialization metadata. Keep all original non-null fixture revisions and available-revision assertions, real materialized file bytes, named metrics, fixed denominators, typed primary failures and durable partial results. Add exact fake capabilities/provenance and authoritative nested-run loader assertions. Do not change production experiment orchestration, public schemas, CLI or Cursor files, weaken tests, add compatibility fallback, or fabricate persisted handoff records.
+
+Return one coherent <=15-minute editing batch before tests, next independent edit, local commit, or remote write. Root saves UTF-8 files with the required Mashimashica DCO, rechecks the ref, reads back exact bytes, and then validates this immutable saved head. Before combining into the primary PR02c branch, root verifies the common base blob for each changed source/test path is unchanged on the destination and applies only the reviewed delta; no force/history rewrite is used. The primary owner works on disjoint Cursor/CLI/handoff paths. Full PR02c gates run only after integration; passing this side batch alone is not acceptance.
+
+## Returned consumer and fixture batch
+
+Luna returned the five allowed source/test files without tests, local commits or remote writes. The existing selected-task adapter directly preserves source/revision availability and delegates acquisition hooks/source paths. Equality of the canonical TaskSpec replaces object identity; execution wrapping receives a fresh minimal BenchmarkTask, while acquisition retains the selected original metadata. A real custom snapshot regression checks separate execution/evaluation files, available source/revision and stripped execution metadata. Fixture revisions remain non-null and explicitly available; declared capabilities and timeout/interruption/process failures match typed results. Nested successful and failed runs are reopened through strict manifest, binding and bundle readers while keeping native metrics and partial-state assertions.
+
+Root inspected the complete diff and applied scoped Ruff import/format fixes. This checkpoint precedes tests and strict typing; no passing runtime validation or full PR02c acceptance is claimed. Next: validate this saved head in this isolated checkout, obtain independent source review, fix any concrete issues, then promote only these disjoint source/test blobs after common-base verification.
+
+## Strict fixture data assertion fix
+
+Exact saved head `3a077a4ad3bb68a27e3acd89b185bc04158f9afd` passes all 48 selected-consumer, Builder, experiment/reasoning and runner reliability tests, plus scoped Ruff. Strict mypy reports two test-only calls converting snapshot view data of type object with dict(). Luna returned exactly two assertion changes: compare the verified data directly to its expected mapping, with no conversion, ignore or Any cast. Root saves this bounded fix before rerunning the affected test and static checks. Independent source review and integrated full gates remain open.
