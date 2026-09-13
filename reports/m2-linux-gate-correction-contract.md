@@ -59,6 +59,52 @@ must pass on the promoted head; local classification alone is not acceptance.
 
 ## Remaining existing work
 
+### Source-backed prepared runtime locator and legacy deletion
+
+Sol additionally reviewed fixed `1df1ef8cbf363c7e69a43d119f816a6666f79b36` after
+the public-boundary draft exposed a missing connection from the standard factory and
+resource app to the installer layout. Parent accepts this finite clarification.
+
+The single trusted host setting is `BIGCODEBENCH_GRADER_SETUP_ROOT`. It supplies only
+an absolute, canonical, physical setup directory, never a manifest path, policy role or
+candidate selector. Missing, relative, dot/dot-dot aliases and symlink roots fail closed.
+Code derives exactly these installer-owned locations beneath it:
+
+- `pr04-bigcodebench-runtime/runtime-manifest.json`
+- `pr04-bigcodebench-resources`
+- `pr04-bigcodebench-venv`
+- `pr04-cpython-3.11.16+20260901`
+- `pr04-bwrap-0.12.0/bin/bwrap`
+
+Runtime resolved_paths are used only for complete equality checks against those derived
+paths (including the fixed NLTK child), not as executable-path inputs before verification.
+No resource-local manifest shadow, arbitrary redirect, YAML/source-root fallback or new
+GraderSandboxSpec field is authorized. Every production spec keeps manifest_path=None
+and selects only the accepted manifest. Candidate CI continues to use its explicit trusted
+candidate spec, not this factory/app environment path. The locator setting never appears
+in the sandbox's literal environment allowlist and must be absent in a real child.
+
+Permit `eval_harness/evaluators/registry.py` only for the BigCodeBench descriptor's
+assets/status/isolation provenance and its BigCodeBench factory branch reading this
+trusted root and passing the derived prepared resource path through the existing
+constructor. Other descriptors, selection behavior and central CLI/runner remain unchanged.
+Permit only the corresponding old-.bcb_venv assertion port in
+`tests/harness/test_evaluator_registry.py`; no other test behavior changes in that file.
+Resource app uses the same helper and removes source/YAML resource fallbacks.
+
+Delete `resources_servers/bigcodebench/setup_bcb_venv.py` entirely; shared host resolution
+makes its new compatibility wrapper redundant and prohibited. The existing CI strict-mypy
+invocation may remove only that now-nonexistent path; all remaining authored resolver code
+stays in measured/strict eval_harness. Remove old imports/calls/tests, not replace them with
+ignored aliases or wrappers. No interpreter may be executed before its full trusted
+expected identity is verified.
+
+Required regressions include standard factory and app reaching the same fixed resolver
+with a configured root; missing/relative/alias/symlink root rejection; every path redirect
+and source-local shadow rejected; explicit candidate data under a production root refused;
+the locator variable absent inside the sandbox; and no legacy symbol/path remaining.
+This is not an accepted environment or a change to CVE/security gates.
+
 The six strict-mypy errors are all in the legacy resource app already assigned for shared
 caller replacement. Do not remove that file from typing. All 610 Linux unit methods and
 CLI self-tests pass, but 11047/11791 = 93.69% coverage fails 96%; authored worker/host
