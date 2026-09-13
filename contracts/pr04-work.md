@@ -3,6 +3,33 @@
 
 # PR04 implementation work record
 
+## Stopped after second corrective failure, 2026-09-13T08:46:00Z
+
+The user explicitly resumed at 08:42:27 UTC without resetting the prior failure count.
+Parent tested saved implementation `7757c8ae9cd18681c789e2294d02597bcc4c39e3` in the
+clean detached review worktree. Ten of eleven preparation unit methods pass; the official
+uv suffix regression errors. Strict mypy of the three scoped Python files, Ruff lint and
+format, and shell syntax pass. This is partial validation, not preparation or PR04 closure.
+
+The same fixed-tool compatibility problem remains: `_verify_uv_version` takes the suffix
+starting at `len(prefix)`, which retains its leading space, then requires it to start with
+`(`. It rejects the official `uv 0.11.29 (...)` output. Sol independently confirms this
+second corrective failure. Parent applies the user's stop rule: no third correction,
+no new implementation, installation, CI or other validation starts.
+
+Sol additionally confirms `_install_nltk_package` deletes an existing archive when its
+exclusive-create attempt raises FileExistsError, because cleanup unlinks the destination
+without confirming that this attempt created it. Preserve existing files on refusal.
+Other prior findings have not received additional independent closure after the stop;
+do not infer their acceptance from the ten passing unit methods.
+
+Source and tests are unchanged by this final record-only checkpoint. Exact grouped results
+and review are stored in control `reports/m2-preparation-second-correction.json`. All
+commands finished; Luna and Sol were told to stop and no background jobs were launched.
+The source remains recoverable from 7757c8ae; control records this enclosing checkpoint's
+exact SHA after remote ref/blob readback. Further implementation needs explicit user
+direction addressing the two-failure stop; a generic resume must not reset the count.
+
 ## Paused at the user's request, 2026-09-13T07:57:15Z
 
 The user requested a safe pause because communication may become unstable. No further
