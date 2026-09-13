@@ -6,17 +6,22 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Mapping
+from typing import Mapping, cast
 
-from eval_harness.bigcodebench_runner import BigCodeBenchGradeRequest, NativeStatus
+from eval_harness.bigcodebench_runner import (
+    MAX_IDENTIFIER_BYTES,
+    BigCodeBenchGradeRequest,
+    NativeStatus,
+    ProtocolError,
+)
 from eval_harness.grader_sandbox import (
     GraderInfrastructureError,
     GraderSandboxPreflight,
     GraderSandboxSpec,
-    LimitKind,
     preflight_bigcodebench_sandbox,
     resolve_bigcodebench_sandbox_spec,
     run_bigcodebench_sandbox,
+    sandbox_provenance,
 )
 from eval_harness.evaluators.base import (
     EvaluationPlan,
@@ -48,7 +53,6 @@ def _native_bigcodebench_evaluate(
     verifier_metadata: Mapping[str, object],
     *,
     resource_dir: Path,
-    bcb_python: Path | None = None,
     sandbox_spec: GraderSandboxSpec | None = None,
     sandbox_preflight: GraderSandboxPreflight | None = None,
 ) -> dict[str, object]:
@@ -56,7 +60,31 @@ def _native_bigcodebench_evaluate(
 
     from resources_servers.bigcodebench.code_extraction import preprocess_code_completion
 
-    del bcb_python
+    if sandbox_spec is None:
+        sandbox_spec = resolve_bigcodebench_sandbox_spec(resource_dir)
+    if sandbox_preflight is None:
+        sandbox_preflight = preflight_bigcodebench_sandbox(sandbox_spec)
+    if not sandbox_preflight.ok:
+        raise GraderInfrastructureError("BigCodeBench sandbox preflight failed")
+    if type(output_text) is not str or type(resource_dir) is not Path:
+        raise GraderInfrastructureError("BigCodeBench evaluator input is invalid")
+    code_prompt = verifier_metadata.get("code_prompt")
+    test_code = verifier_metadata.get("test")
+    entry_point = verifier_metadata.get("entry_point")
+    task_id = verifier_metadata.get("task_id", "BigCodeBench")
+    if any(type(value) is not str for value in (code_prompt, test_code, entry_point, task_id)):
+        raise GraderInfrastructureError("BigCodeBench verifier metadata is invalid")
+    code_prompt = cast(str, code_prompt)
+    test_code = cast(str, test_code)
+    entry_point = cast(str, entry_point)
+    task_id = cast(str, task_id)
+    if (
+        not isinstance(task_id, str)
+        or not task_id
+        or len(task_id.encode("utf-8")) > MAX_IDENTIFIER_BYTES
+        or "\x00" in task_id
+    ):
+        raise GraderInfrastructureError("BigCodeBench task identity is invalid")
     extracted = preprocess_code_completion(output_text)
     if not extracted:
         return {
@@ -64,39 +92,36 @@ def _native_bigcodebench_evaluate(
             "status": "no_code_block",
             "extracted_model_code": None,
             "details": None,
+            "grader_provenance": sandbox_provenance(sandbox_preflight),
         }
-
-    code_prompt = str(verifier_metadata["code_prompt"])
     calibrated = code_prompt + "\n    pass\n" + extracted
-    if sandbox_spec is None:
-        sandbox_spec = resolve_bigcodebench_sandbox_spec(resource_dir)
-    if sandbox_preflight is None:
-        sandbox_preflight = preflight_bigcodebench_sandbox(sandbox_spec)
-    if not sandbox_preflight.ok:
-        raise GraderInfrastructureError("BigCodeBench sandbox preflight failed")
-    request = BigCodeBenchGradeRequest(
-        schema_version=1,
-        code=calibrated,
-        test_code=str(verifier_metadata["test"]),
-        entry_point=str(verifier_metadata["entry_point"]),
-        task_id=str(verifier_metadata.get("task_id", "BigCodeBench")),
-    )
+    try:
+        request = BigCodeBenchGradeRequest(
+            schema_version=1,
+            code=calibrated,
+            test_code=test_code,
+            entry_point=entry_point,
+            task_id=task_id,
+        )
+    except ProtocolError as exc:
+        raise GraderInfrastructureError("BigCodeBench verifier metadata is invalid") from exc
     result = run_bigcodebench_sandbox(request, spec=sandbox_spec, preflight=sandbox_preflight)
+    provenance = sandbox_provenance(sandbox_preflight)
     if result.limit_kind is not None:
         status = "candidate_resource_limit"
-        details: object = {"limit_kind": result.limit_kind.value}
+        details: object = {"limit_kind": result.limit_kind.value, "grader_provenance": provenance}
         reward = 0.0
     elif result.native_status is NativeStatus.PASS:
         status = "passed"
-        details = None
+        details = {"grader_provenance": provenance}
         reward = 1.0
     elif result.native_status is NativeStatus.FAIL:
         status = "failed_tests"
-        details = None
+        details = {"grader_provenance": provenance}
         reward = 0.0
     elif result.native_status is NativeStatus.TIMEOUT:
         status = "candidate_timeout"
-        details = None
+        details = {"grader_provenance": provenance}
         reward = 0.0
     else:
         raise GraderInfrastructureError("sandbox returned an unknown native outcome")
@@ -105,6 +130,7 @@ def _native_bigcodebench_evaluate(
         "status": status,
         "extracted_model_code": extracted,
         "details": details,
+        "grader_provenance": provenance,
     }
 
 
@@ -141,7 +167,8 @@ class BigCodeBenchEvaluator(Evaluator):
                 details=("BigCodeBench grader directory must be separate from the evaluator run directory",),
             )
         try:
-            spec = resolve_bigcodebench_sandbox_spec(grader_root)
+            forbidden_roots = (run_dir,) if run_dir is not None else ()
+            spec = resolve_bigcodebench_sandbox_spec(grader_root, forbidden_roots=forbidden_roots)
             result = preflight_bigcodebench_sandbox(spec)
         except GraderInfrastructureError as exc:
             self._sandbox_spec = None
@@ -177,10 +204,17 @@ class BigCodeBenchEvaluator(Evaluator):
         required_metadata = ("test", "entry_point", "code_prompt")
         if any(key not in request.metadata for key in required_metadata):
             raise ValueError("BigCodeBench evaluator requires test, entry_point, and code_prompt metadata")
+        metadata_task_id = request.metadata.get("task_id")
+        if metadata_task_id is not None and (
+            type(metadata_task_id) is not str or metadata_task_id != request.task_id
+        ):
+            raise GraderInfrastructureError("BigCodeBench task identity does not match the request")
         details: dict[str, object] = {
             "execution_status": candidate.execution.status.value,
             "grader": "eval_harness/grader_sandbox.py",
             "grader_invoked": False,
+            "dataset_revision": self.revision,
+            "grader_provenance": sandbox_provenance(self._sandbox_preflight),
         }
         if candidate.execution.status.value not in _TERMINAL_SUCCESS:
             return EvaluationResult(
@@ -191,7 +225,7 @@ class BigCodeBenchEvaluator(Evaluator):
             )
         output_text = candidate.execution.output_text or ""
         if not output_text.strip():
-            details["status"] = "empty_output"
+            details["native_status"] = "empty_output"
             return EvaluationResult(
                 task_id=request.task_id,
                 status=EvaluationStatus.COMPLETED,
@@ -208,9 +242,10 @@ class BigCodeBenchEvaluator(Evaluator):
         )
         details.update(
             {
-                "status": native.get("status"),
+                "native_status": native.get("status"),
                 "extracted_model_code": native.get("extracted_model_code"),
                 "grader_details": native.get("details"),
+                "grader_provenance": native.get("grader_provenance"),
                 "grader_invoked": True,
                 "grader_root": str(grader_root),
                 "executor_workspace": str(workspace),

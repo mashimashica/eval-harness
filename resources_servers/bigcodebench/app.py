@@ -3,12 +3,11 @@
 
 import asyncio
 from typing import cast
-from pathlib import Path
 
 from fastapi import FastAPI
 from resources_servers.bigcodebench.code_extraction import preprocess_code_completion
 
-from eval_harness.bigcodebench_runner import BigCodeBenchGradeRequest, NativeStatus
+from eval_harness.bigcodebench_runner import MAX_IDENTIFIER_BYTES, BigCodeBenchGradeRequest, NativeStatus
 from eval_harness.grader_sandbox import (
     GraderInfrastructureError,
     GraderSandboxPreflight,
@@ -61,8 +60,8 @@ class BigCodeBenchResourcesServer(SimpleResourcesServer):
         del context
         self._semaphore = _BIGCODEBENCH_SEMAPHORE
         resource_dir = resolve_bigcodebench_resource_dir()
-        self._sandbox_spec = resolve_bigcodebench_sandbox_spec(resource_dir)
-        self._sandbox_preflight = preflight_bigcodebench_sandbox(self._sandbox_spec)
+        self._sandbox_spec: GraderSandboxSpec = resolve_bigcodebench_sandbox_spec(resource_dir)
+        self._sandbox_preflight: GraderSandboxPreflight = preflight_bigcodebench_sandbox(self._sandbox_spec)
         if not self._sandbox_preflight.ok:
             detail = "; ".join(self._sandbox_preflight.details)
             raise GraderInfrastructureError(f"BigCodeBench sandbox preflight failed: {detail}")
@@ -116,7 +115,18 @@ class BigCodeBenchResourcesServer(SimpleResourcesServer):
         model_out = body.response.output_text or ""
         meta = body.verifier_metadata or {}
         task_value = meta.get("task_id")
-        task_id = task_value if isinstance(task_value, str) else None
+        code_prompt_value = meta.get("code_prompt")
+        test_code = meta.get("test")
+        entry_point = meta.get("entry_point")
+        if any(type(value) is not str for value in (code_prompt_value, test_code, entry_point, task_value)):
+            raise GraderInfrastructureError("BigCodeBench verifier metadata is invalid")
+        task_id = cast(str, task_value)
+        if (
+            not task_id
+            or len(task_id.encode("utf-8")) > MAX_IDENTIFIER_BYTES
+            or "\x00" in task_id
+        ):
+            raise GraderInfrastructureError("BigCodeBench task identity is invalid")
 
         if not model_out.strip():
             return BigCodeBenchVerifyResponse(
@@ -139,12 +149,9 @@ class BigCodeBenchResourcesServer(SimpleResourcesServer):
         # Skills passes ``calibrated=True`` to bigcodebench.evaluate, which prepends
         # ``code_prompt + "\n    pass\n"`` to the model's solution before running the test.
         # That ensures the entry_point function exists even if the model returned only the body.
-        code_prompt_value = meta.get("code_prompt")
-        test_code = meta.get("test")
-        entry_point = meta.get("entry_point")
-        if not isinstance(code_prompt_value, str) or not isinstance(test_code, str) or not isinstance(entry_point, str):
-            raise ValueError("BigCodeBench verifier metadata is incomplete")
-        code_prompt = code_prompt_value
+        code_prompt = cast(str, code_prompt_value)
+        test_code = cast(str, test_code)
+        entry_point = cast(str, entry_point)
         calibrated = code_prompt + "\n    pass\n" + extracted
 
         async with self._semaphore:
@@ -166,14 +173,19 @@ class BigCodeBenchResourcesServer(SimpleResourcesServer):
         status_value = result.get("status")
         status = status_value if isinstance(status_value, str) else None
         details_value = result.get("details")
-        details = details_value if isinstance(details_value, dict) else None
+        details = cast(dict[str, object] | None, details_value) if isinstance(details_value, dict) else None
+        provenance = result.get("grader_provenance")
+        if isinstance(provenance, dict):
+            if details is None:
+                details = {}
+            details["grader_provenance"] = provenance
         return BigCodeBenchVerifyResponse(
             **body.model_dump(),
             reward=1.0 if status == "passed" else 0.0,
             extracted_model_output=model_out,
             extracted_model_code=extracted,
             status=status,
-            details=cast(dict[str, object] | None, details),
+            details=details,
             task_id=task_id,
         )
 
@@ -194,7 +206,11 @@ class BigCodeBenchResourcesServer(SimpleResourcesServer):
             preflight=sandbox_preflight,
         )
         if native.limit_kind is not None:
-            return {"status": "candidate_resource_limit", "details": {"limit_kind": native.limit_kind.value}}
+            return {
+                "status": "candidate_resource_limit",
+                "details": {"limit_kind": native.limit_kind.value},
+                "grader_provenance": sandbox_provenance(sandbox_preflight),
+            }
         if native.native_status is NativeStatus.PASS:
             return {"status": "passed", "details": None, "grader_provenance": sandbox_provenance(sandbox_preflight)}
         if native.native_status is NativeStatus.FAIL:

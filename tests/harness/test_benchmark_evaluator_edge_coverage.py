@@ -515,12 +515,28 @@ class NativeEvaluatorCoverageTests(unittest.TestCase):
         metadata = {"test": "assert True", "entry_point": "solve", "code_prompt": "def solve():"}
         with tempfile.TemporaryDirectory() as tmp:
             resource = Path(tmp)
-            with patch(
-                "resources_servers.bigcodebench.code_extraction.preprocess_code_completion",
-                return_value="",
+            fake_spec = cast(GraderSandboxSpec, MagicMock())
+            fake_preflight = GraderSandboxPreflight(
+                True, "0.12.0", "bigcodebench-bwrap-v1", "spec", "manifest", "attestation", ()
+            )
+            with (
+                patch(
+                    "resources_servers.bigcodebench.code_extraction.preprocess_code_completion",
+                    return_value="",
+                ),
+                patch(
+                    "eval_harness.evaluators.bigcodebench.resolve_bigcodebench_sandbox_spec",
+                    return_value=fake_spec,
+                ),
+                patch(
+                    "eval_harness.evaluators.bigcodebench.preflight_bigcodebench_sandbox",
+                    return_value=fake_preflight,
+                ),
             ):
                 no_code = bigcodebench_evaluator._native_bigcodebench_evaluate(
-                    "plain text", metadata, resource_dir=resource
+                    "plain text",
+                    metadata,
+                    resource_dir=resource,
                 )
             self.assertEqual(no_code["status"], "no_code_block")
             self.assertEqual(no_code["reward"], 0.0)

@@ -3,6 +3,34 @@
 
 # PR04 implementation work record
 
+## Public-boundary correction checkpoint, 2026-09-13T10:46Z
+
+Base `3978d08e6226dc48f3b16c4fa304231bec56dbae`; same Luna implementation owner,
+Sol read-only review and Astra save/integration. This coherent twelve-path correction
+adds the trusted prepared-root connection, runtime/source inventory comparisons,
+identity-before-execution and cached identity checks, NLTK/build-lock validation,
+bounded probes and shared caller/status/provenance/cancellation handling. It ports the
+authorized registry/workflow/tests and deletes setup_bcb_venv.py entirely. No compatibility
+wrapper is intended. Source claims still require actual regression and review evidence.
+
+Scope remains the frozen PR04 contract/appendix/code-start amendments plus control
+`8edac72035afae50029c9f57e2df7c0f57797704`,
+`reports/m2-linux-gate-correction-contract.md`. The eleven prior findings and prior
+grouped-check failures remain unclosed until this saved correction is tested/reviewed.
+No tests, strict mypy, Ruff lint or formatting have run on this batch. Save precedes
+grouped verification. The separate capability-check correction and exact secret baseline
+are still pending. Do not execute an unreviewed public boundary in real Linux.
+
+Formal PR #43 remains `d3dc022f6eae7d2fbc12a1078ef7e8079e813782` with only the
+reviewed Ninja subset; source histories deliberately differ. Actual Linux there passes
+611 unit methods and bubblewrap compilation, but five upstream sandbox/namespace scripts
+skip and installation stops at getcap lookup. Coverage 11047/11791 fails 96%; old app
+typing, secret baseline and the known NLTK CVE remain red. No real boundary or 1140 parity
+has run, and no PR/migration acceptance is claimed.
+
+The interval is 10:32–12:02 UTC; the current coherent implementation assignment is due
+11:15 UTC. Continue autonomously after save/readback, with all failure histories retained.
+
 ## Timed security-correction work-in-progress save, 2026-09-13T10:26:10Z
 
 Base `1df1ef8cbf363c7e69a43d119f816a6666f79b36`. At the 15-minute persistence

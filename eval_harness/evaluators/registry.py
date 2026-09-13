@@ -60,11 +60,20 @@ _EVALUATORS = {
         name="bigcodebench-tests",
         benchmark="bigcodebench",
         evaluator_type=EvaluatorType.EXECUTABLE_TESTS,
-        status="native executable tests in the dedicated grader environment",
+        status="native executable tests with durable candidate-boundary provenance",
         version="1",
         revision="v0.1.4",
-        assets=("resources_servers/bigcodebench/.bcb_venv",),
-        isolation_requirement="separate BigCodeBench grader venv and subprocess",
+        assets=(
+            "pr04-bigcodebench-runtime/runtime-manifest.json",
+            "pr04-bigcodebench-resources",
+            "pr04-bigcodebench-venv",
+            "pr04-cpython-3.11.16+20260901",
+            "pr04-bwrap-0.12.0/bin/bwrap",
+        ),
+        isolation_requirement=(
+            "trusted prepared root; fixed bubblewrap namespaces, read-only mounts, "
+            "bounded subprocess and real-UID exclusive launch lock"
+        ),
     ),
 }
 
@@ -116,7 +125,13 @@ def create_evaluator(
         return AIME26Evaluator()
     if descriptor.benchmark == "bigcodebench":
         from eval_harness.evaluators.bigcodebench import BigCodeBenchEvaluator
+        from eval_harness.grader_sandbox import resolve_bigcodebench_resource_dir
 
+        if root is None:
+            return BigCodeBenchEvaluator(resource_dir=resolve_bigcodebench_resource_dir())
+        # An explicit root is retained for registry construction tests and
+        # callers that inject an already-resolved evaluator fixture.  The
+        # production/default path above is the only one used by the CLI.
         return BigCodeBenchEvaluator(resource_dir=repo_root / "resources_servers" / "bigcodebench")
     # The descriptor table is static, so this is defensive only.
     raise AssertionError(f"no evaluator factory for {descriptor.benchmark!r}")

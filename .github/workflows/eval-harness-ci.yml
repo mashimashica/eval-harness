@@ -190,7 +190,6 @@ jobs:
             scripts/ci/run_eval_harness_coverage.py \
             scripts/ci/install_bigcodebench_grader.py \
             resources_servers/bigcodebench/app.py \
-            resources_servers/bigcodebench/setup_bcb_venv.py \
             scripts/update_env_list.py \
             tests/test_update_env_list.py \
             tests/unit_tests/test_update_env_list.py \

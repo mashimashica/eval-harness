@@ -125,7 +125,7 @@ class BigCodeBenchBenchmarkTests(unittest.TestCase):
                 "eval_harness.evaluators.bigcodebench._native_bigcodebench_evaluate",
                 return_value={
                     "reward": 1.0,
-                    "status": "pass",
+                    "status": "passed",
                     "extracted_model_code": "return 42",
                     "details": {},
                 },
@@ -135,7 +135,7 @@ class BigCodeBenchBenchmarkTests(unittest.TestCase):
             native.assert_called_once()
             self.assertEqual(native.call_args.kwargs["resource_dir"], grader.resolve())
             self.assertEqual(evaluation.metrics, {"pass_rate": 1.0})
-            self.assertEqual(evaluation.details["status"], "pass")
+            self.assertEqual(evaluation.details["native_status"], "passed")
             self.assertNotEqual(evaluation.details["grader_root"], evaluation.details["executor_workspace"])
 
     def test_preflight_checks_runner_and_dedicated_venv_before_execution(self) -> None:
@@ -156,7 +156,7 @@ class BigCodeBenchBenchmarkTests(unittest.TestCase):
                 return_value=fake_preflight,
             ) as preflight:
                 result = evaluator.preflight(root / "run")
-            resolve.assert_called_once_with(grader.resolve())
+            resolve.assert_called_once_with(grader.resolve(), forbidden_roots=(root / "run",))
             preflight.assert_called_once_with(fake_spec)
             self.assertTrue(result.ok)
             self.assertEqual(result.details, ())

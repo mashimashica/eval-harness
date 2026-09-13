@@ -1,19 +1,24 @@
 # SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 # SPDX-License-Identifier: Apache-2.0
 
-from typing import Generator
+from pathlib import Path
+from collections.abc import Generator
+from typing import cast
 from unittest.mock import MagicMock
 
 import pytest
-from app import (
+import resources_servers.bigcodebench.app as app_module
+from resources_servers.bigcodebench.app import (
     BigCodeBenchResourcesServer,
     BigCodeBenchResourcesServerConfig,
     BigCodeBenchVerifyRequest,
     BigCodeBenchVerifyResponse,
 )
-from code_extraction import preprocess_code_completion
+from resources_servers.bigcodebench.code_extraction import preprocess_code_completion
 from fastapi.testclient import TestClient
+from _pytest.monkeypatch import MonkeyPatch
 
+from eval_harness.grader_sandbox import GraderSandboxPreflight, GraderSandboxSpec
 from nemo_gym.openai_utils import NeMoGymResponse
 from nemo_gym.server_utils import ServerClient
 
@@ -119,7 +124,21 @@ _META = {
 
 
 @pytest.fixture(scope="module")
-def server(monkeypatch_module) -> BigCodeBenchResourcesServer:
+def server(monkeypatch_module: MonkeyPatch) -> BigCodeBenchResourcesServer:
+    resource_dir = Path(__file__).resolve().parents[1]
+    sandbox_spec = MagicMock(spec=GraderSandboxSpec)
+    sandbox_preflight = GraderSandboxPreflight(
+        ok=True,
+        sandbox_version="0.12.0",
+        policy_revision="bigcodebench-bwrap-v1",
+        spec_sha256="spec",
+        manifest_sha256="manifest",
+        attestation_sha256="attestation",
+        details=(),
+    )
+    monkeypatch_module.setattr(app_module, "resolve_bigcodebench_resource_dir", lambda: resource_dir)
+    monkeypatch_module.setattr(app_module, "resolve_bigcodebench_sandbox_spec", lambda _: sandbox_spec)
+    monkeypatch_module.setattr(app_module, "preflight_bigcodebench_sandbox", lambda _: sandbox_preflight)
     return BigCodeBenchResourcesServer(
         config=BigCodeBenchResourcesServerConfig(
             host="0.0.0.0",
@@ -127,14 +146,12 @@ def server(monkeypatch_module) -> BigCodeBenchResourcesServer:
             entrypoint="",
             name="",
         ),
-        server_client=MagicMock(spec=ServerClient),
+        server_client=cast(ServerClient, MagicMock(spec=ServerClient)),
     )
 
 
 @pytest.fixture(scope="module")
-def monkeypatch_module() -> Generator:
-    from _pytest.monkeypatch import MonkeyPatch
-
+def monkeypatch_module() -> Generator[None, None, None]:
     mp = MonkeyPatch()
     yield mp
     mp.undo()
@@ -147,10 +164,10 @@ def client(server: BigCodeBenchResourcesServer) -> Generator[TestClient, None, N
         yield c
 
 
-def test_verify_pass(client: TestClient, monkeypatch_module) -> None:
-    def fake_run(self, code, test_code, entry_point, task_id):
+def test_verify_pass(client: TestClient, monkeypatch_module: MonkeyPatch) -> None:
+    def fake_run(self: BigCodeBenchResourcesServer, code: str, test_code: str, entry_point: str, task_id: str) -> dict[str, object]:
         del code, test_code, entry_point, task_id
-        return {"status": "pass", "details": {}}
+        return {"status": "passed", "details": {}}
 
     monkeypatch_module.setattr(BigCodeBenchResourcesServer, "_run_sandbox", fake_run)
 
@@ -160,17 +177,17 @@ def test_verify_pass(client: TestClient, monkeypatch_module) -> None:
         verifier_metadata=_META,
     )
     resp = client.post("/verify", json=req.model_dump())
-    res = BigCodeBenchVerifyResponse.model_validate(resp.json())
+    res = BigCodeBenchVerifyResponse.model_validate(cast(dict[str, object], resp.json()))
     assert res.reward == 1.0
-    assert res.status == "pass"
+    assert res.status == "passed"
     assert "task_func" in res.extracted_model_code
     assert res.task_id == "BigCodeBench/0"
 
 
-def test_verify_fail(client: TestClient, monkeypatch_module) -> None:
-    def fake_run(self, code, test_code, entry_point, task_id):
+def test_verify_fail(client: TestClient, monkeypatch_module: MonkeyPatch) -> None:
+    def fake_run(self: BigCodeBenchResourcesServer, code: str, test_code: str, entry_point: str, task_id: str) -> dict[str, object]:
         del code, test_code, entry_point, task_id
-        return {"status": "fail", "details": {"test_one": "AssertionError: 5 != 4"}}
+        return {"status": "failed_tests", "details": {"test_one": "AssertionError: 5 != 4"}}
 
     monkeypatch_module.setattr(BigCodeBenchResourcesServer, "_run_sandbox", fake_run)
 
@@ -180,14 +197,14 @@ def test_verify_fail(client: TestClient, monkeypatch_module) -> None:
         verifier_metadata=_META,
     )
     resp = client.post("/verify", json=req.model_dump())
-    res = BigCodeBenchVerifyResponse.model_validate(resp.json())
+    res = BigCodeBenchVerifyResponse.model_validate(cast(dict[str, object], resp.json()))
     assert res.reward == 0.0
-    assert res.status == "fail"
+    assert res.status == "failed_tests"
 
 
-def test_empty_output_short_circuits(client: TestClient, monkeypatch_module) -> None:
+def test_empty_output_short_circuits(client: TestClient, monkeypatch_module: MonkeyPatch) -> None:
     # No subprocess invocation should happen when output is empty.
-    def fake_run(self, code, test_code, entry_point, task_id):
+    def fake_run(self: BigCodeBenchResourcesServer, code: str, test_code: str, entry_point: str, task_id: str) -> dict[str, object]:
         del code, test_code, entry_point, task_id
         raise AssertionError("subprocess should not be invoked for empty output")
 
@@ -199,13 +216,13 @@ def test_empty_output_short_circuits(client: TestClient, monkeypatch_module) -> 
         verifier_metadata=_META,
     )
     resp = client.post("/verify", json=req.model_dump())
-    res = BigCodeBenchVerifyResponse.model_validate(resp.json())
+    res = BigCodeBenchVerifyResponse.model_validate(cast(dict[str, object], resp.json()))
     assert res.reward == 0.0
     assert res.status == "empty_output"
 
 
-def test_unclosed_fence_returns_no_code_block(client: TestClient, monkeypatch_module) -> None:
-    def fake_run(self, code, test_code, entry_point, task_id):
+def test_unclosed_fence_returns_no_code_block(client: TestClient, monkeypatch_module: MonkeyPatch) -> None:
+    def fake_run(self: BigCodeBenchResourcesServer, code: str, test_code: str, entry_point: str, task_id: str) -> dict[str, object]:
         del code, test_code, entry_point, task_id
         raise AssertionError("subprocess should not be invoked when extraction returns ''")
 
@@ -217,7 +234,7 @@ def test_unclosed_fence_returns_no_code_block(client: TestClient, monkeypatch_mo
         verifier_metadata=_META,
     )
     resp = client.post("/verify", json=req.model_dump())
-    res = BigCodeBenchVerifyResponse.model_validate(resp.json())
+    res = BigCodeBenchVerifyResponse.model_validate(cast(dict[str, object], resp.json()))
     assert res.reward == 0.0
     assert res.status == "no_code_block"
 

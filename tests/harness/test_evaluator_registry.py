@@ -18,7 +18,16 @@ class EvaluatorRegistryTests(unittest.TestCase):
 
         bigcode = get_evaluator_descriptor("bigcodebench")
         self.assertEqual(bigcode.version, "1")
-        self.assertEqual(bigcode.assets, ("resources_servers/bigcodebench/.bcb_venv",))
+        self.assertEqual(
+            bigcode.assets,
+            (
+                "pr04-bigcodebench-runtime/runtime-manifest.json",
+                "pr04-bigcodebench-resources",
+                "pr04-bigcodebench-venv",
+                "pr04-cpython-3.11.16+20260901",
+                "pr04-bwrap-0.12.0/bin/bwrap",
+            ),
+        )
         self.assertEqual(bigcode.evaluator_type, EvaluatorType.EXECUTABLE_TESTS)
 
     def test_gdpval_descriptor_is_external_and_has_no_default_judge(self) -> None:

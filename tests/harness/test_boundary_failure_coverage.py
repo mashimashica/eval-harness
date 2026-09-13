@@ -560,6 +560,14 @@ class EvaluatorBoundaryTests(unittest.TestCase):
             with patch(
                 "resources_servers.bigcodebench.code_extraction.preprocess_code_completion",
                 return_value="",
+            ), patch(
+                "eval_harness.evaluators.bigcodebench.resolve_bigcodebench_sandbox_spec",
+                return_value=cast(GraderSandboxSpec, MagicMock()),
+            ), patch(
+                "eval_harness.evaluators.bigcodebench.preflight_bigcodebench_sandbox",
+                return_value=GraderSandboxPreflight(
+                    True, "0.12.0", "bigcodebench-bwrap-v1", "spec", "manifest", "attestation", ()
+                ),
             ):
                 self.assertEqual(
                     _native_bigcodebench_evaluate(
@@ -694,7 +702,7 @@ class EvaluatorBoundaryTests(unittest.TestCase):
                 "eval_harness.evaluators.bigcodebench.preflight_bigcodebench_sandbox",
                 return_value=fake_preflight,
             ):
-                ready = bigcode.preflight(root / "run")
+                ready = evaluator.preflight(root / "run")
             self.assertTrue(ready.ok)
 
             candidate = _candidate(root, output_text="code")

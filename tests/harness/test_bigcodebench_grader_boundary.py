@@ -28,10 +28,54 @@ from eval_harness.grader_sandbox import (
     canonical_json_bytes,
     file_inventory_sha256,
     load_canonical_manifest,
+    resolve_bigcodebench_resource_dir,
 )
 
 
 class BigCodeBenchBoundaryPreparationTests(unittest.TestCase):
+    def test_prepared_root_locator_requires_fixed_physical_layout(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary) / "setup"
+            runtime = root / "pr04-bigcodebench-runtime"
+            resource = root / "pr04-bigcodebench-resources"
+            venv = root / "pr04-bigcodebench-venv"
+            prefix = root / "pr04-cpython-3.11.16+20260901"
+            bwrap = root / "pr04-bwrap-0.12.0" / "bin" / "bwrap"
+            for directory in (runtime, resource / "nltk_data", venv, prefix, bwrap.parent):
+                directory.mkdir(mode=0o700, parents=True)
+            bwrap.write_bytes(b"bwrap")
+            runtime_manifest = {
+                "resolved_paths": {
+                    "base_prefix": str(prefix),
+                    "bwrap": str(bwrap),
+                    "grader_venv": str(venv),
+                    "nltk_data": str(resource / "nltk_data"),
+                    "resource_dir": str(resource),
+                }
+            }
+            (runtime / "runtime-manifest.json").write_bytes(
+                canonical_json_bytes(runtime_manifest, final_newline=True)
+            )
+            with mock.patch.dict(os.environ, {"BIGCODEBENCH_GRADER_SETUP_ROOT": str(root)}, clear=False):
+                self.assertEqual(resolve_bigcodebench_resource_dir(), resource)
+
+                redirected = root / "redirected"
+                redirected.mkdir(mode=0o700)
+                (root / "pr04-bigcodebench-resources").rename(redirected / "resources")
+                (root / "pr04-bigcodebench-resources").symlink_to(redirected / "resources")
+                with self.assertRaises(GraderInfrastructureError):
+                    resolve_bigcodebench_resource_dir()
+
+            with mock.patch.dict(os.environ, {}, clear=True):
+                with self.assertRaises(GraderInfrastructureError):
+                    resolve_bigcodebench_resource_dir()
+
+            alias = Path(temporary) / "setup-alias"
+            alias.symlink_to(root)
+            with mock.patch.dict(os.environ, {"BIGCODEBENCH_GRADER_SETUP_ROOT": str(alias)}, clear=False):
+                with self.assertRaises(GraderInfrastructureError):
+                    resolve_bigcodebench_resource_dir()
+
     def test_candidate_manifest_and_lock_are_explicitly_nonacceptance(self) -> None:
         resource_dir = Path(__file__).parents[2] / "resources_servers" / "bigcodebench"
         manifest_path = resource_dir / "grader-manifest.candidate.json"
