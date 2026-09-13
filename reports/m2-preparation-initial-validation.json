@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "tested_commit": "88fdbcffead2adb63c0f1871fd4805cf6c07d056",
+  "tree": "d279ff0193694cd4f6b10f1d0b558c49b32ad1c3",
+  "platform": "macOS arm64",
+  "python": "3.13.14",
+  "source_isolation": "clean detached review worktree at fixed commit",
+  "unittest": {
+    "command": "../pr04/.venv/bin/python -m unittest discover -s tests/harness -p test_bigcodebench_grader_boundary.py -v",
+    "methods": 5,
+    "passed": 4,
+    "errors": 1,
+    "elapsed_seconds": 0.012,
+    "decisive_error": "GraderInfrastructureError: manifest is not canonical"
+  },
+  "mypy": {
+    "command": "../pr04/.venv/bin/mypy --strict --explicit-package-bases --show-error-codes eval_harness/grader_sandbox.py scripts/ci/install_bigcodebench_grader.py tests/harness/test_bigcodebench_grader_boundary.py",
+    "checked_files": 3,
+    "errors": 2,
+    "findings": ["test line 65: object is not indexable", "test line 102: untyped lambda call"]
+  },
+  "ruff": {"lint": "passed", "format": "passed", "checked_files": 3},
+  "shell_syntax": {"command": "bash -n scripts/ci/install_bubblewrap.sh", "result": "passed"},
+  "initial_implementation_validation": true,
+  "corrective_rounds_executed": 0,
+  "independent_review": "in progress on the fixed head",
+  "real_installation_executed": false,
+  "real_sandbox_verified": false,
+  "native_parity_verified": false,
+  "pr04_accepted": false
+}
