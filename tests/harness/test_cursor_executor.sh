@@ -83,50 +83,26 @@ prompt_log="$work/prompt.log"
 : >"$args_log"
 out="$work/run"
 
-PATH="$fake_bin:$PATH" \
-XDG_CONFIG_HOME="$config_home" \
-CURSOR_API_KEY="must-not-leak" \
-CURSOR_AUTH_TOKEN="token-must-not-leak" \
-FAKE_CURSOR_ARGS_LOG="$args_log" \
-FAKE_CURSOR_PROMPT_LOG="$prompt_log" \
-GDPVAL_BENCHMARK_JSONL="$benchmark" \
-./gdpval run --executor cursor --limit 1 --out "$out" --no-metadata
-
-test -f "$out/deliverables/task_task-cursor/repeat_0/nested/result.txt"
-test -f "$out/deliverables/task_task-cursor/repeat_0/reference_files/input.txt"
-test "$(cat "$out/deliverables/task_task-cursor/repeat_0/reference_files/input.txt")" = "reference-original"
-test -f "$out/deliverables/task_task-cursor/repeat_0/finish_params.json"
-test -f "$out/tasks/task-cursor/executor/stdout.log"
-test -f "$out/tasks/task-cursor/executor/stderr.log"
-test -f "$out/tasks/task-cursor/executor/prompt.txt"
-test -f "$out/tasks/task-cursor/executor/metadata.json"
-test -d "$out/tasks/task-cursor/workspace/reference_files"
-test ! -L "$out/tasks/task-cursor/workspace/reference_files"
-grep -q '^-p ' "$args_log"
-grep -q '^status --format json$' "$args_log"
-cmp -- "$prompt_log" "$out/tasks/task-cursor/executor/prompt.txt"
-grep -q -- '--trust' "$args_log"
-if grep -q -- '--force' "$args_log"; then
-  echo "Cursor executor unexpectedly used --force" >&2
+legacy_stderr="$work/legacy.stderr"
+if PATH="$fake_bin:$PATH" \
+  XDG_CONFIG_HOME="$config_home" \
+  CURSOR_API_KEY="must-not-leak" \
+  CURSOR_AUTH_TOKEN="token-must-not-leak" \
+  FAKE_CURSOR_ARGS_LOG="$args_log" \
+  FAKE_CURSOR_PROMPT_LOG="$prompt_log" \
+  GDPVAL_BENCHMARK_JSONL="$benchmark" \
+  ./gdpval run --executor cursor --limit 1 --out "$out" --no-metadata \
+  >"$work/legacy.stdout" 2>"$legacy_stderr"; then
+  echo "Cursor run with legacy reference_files unexpectedly succeeded" >&2
   exit 1
 fi
-grep -q -- '--workspace ' "$args_log"
-grep -q -- '--output-format json' "$args_log"
-grep -q -- '--sandbox enabled' "$args_log"
-grep -q '"auth_mode": "cursor-account"' "$out/tasks/task-cursor/executor/metadata.json"
-grep -q '"reference_integrity_verified": true' "$out/tasks/task-cursor/executor/metadata.json"
-grep -q '"default": "deny"' "$out/tasks/task-cursor/workspace/.cursor/sandbox.json"
-grep -q 'WebFetch(\*)' "$out/tasks/task-cursor/workspace/.cursor/cli.json"
-python3 - "$out/tasks/task-cursor/executor/stderr.log" "$out/tasks/task-cursor/executor/task-prompt.txt" <<'PY'
-from pathlib import Path
-import sys
-assert "\ufffd" in Path(sys.argv[1]).read_text(encoding="utf-8")
-assert Path(sys.argv[2]).read_bytes() == b"Create a professional work product."
-PY
-if grep -R -q 'must-not-leak\|token-must-not-leak\|fixture-access-only\|fixture-refresh-only' "$out"; then
-  echo "Cursor secret leaked into run output" >&2
+grep -Fq 'Cursor executor does not accept the legacy reference_files input namespace' "$legacy_stderr"
+if grep -q '^-p ' "$args_log"; then
+  echo "Cursor legacy-input rejection issued a model execution" >&2
   exit 1
 fi
+test ! -e "$out/deliverables/task_task-cursor/repeat_0/nested/result.txt"
+test "$(cat "$ref")" = "reference-original"
 
 : >"$args_log"
 if PATH="$fake_bin:$PATH" \

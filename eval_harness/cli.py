@@ -74,6 +74,11 @@ def _parser() -> argparse.ArgumentParser:
         help="Requested Codex model reasoning effort (recorded configuration; default: unset)",
     )
     run_parser.add_argument("--out", type=Path)
+    run_parser.add_argument(
+        "--runtime-root",
+        type=Path,
+        help="Store disposable executor workspaces and logs outside the durable run output",
+    )
     run_parser.add_argument("--executor-timeout", type=float, default=12600.0)
     run_parser.add_argument("--network", action="store_true", help="Explicitly enable policy-executor network access")
     run_parser.add_argument("--claude-max-turns", type=int, default=250)
@@ -194,6 +199,7 @@ def _run(args: argparse.Namespace) -> int:
         evaluator,
         executor,
         out_dir=out_dir,
+        runtime_root=args.runtime_root,
         limit=args.limit,
         model=args.model,
         timeout_seconds=args.executor_timeout,
