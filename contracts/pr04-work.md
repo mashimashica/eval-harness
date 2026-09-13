@@ -3,6 +3,25 @@
 
 # PR04 implementation work record
 
+## Resumed host-supervisor segment, 2026-09-13
+
+Current state: protocol/worker checkpoint `aa7e2cc9df25795be50559ea5c5d986af020c933`
+recovered in an independent worktree. Root checkout remains clean on `main`.
+Control recovery is `02cba161d480f45d3eb955eaad035488bde936c4`; the control branch is
+not an implementation base. Draft PR heads 38–42 and design refs match the recovery index.
+
+- Owners: Astra parent/checkpoint/acceptance; Luna implementation; Sol read-only independent review.
+- Fixed implementation base: `aa7e2cc9df25795be50559ea5c5d986af020c933`; accepted dependency is PR02c `6038a7828d62247ad98d000bc6e71c706f6d14a4`.
+- Working allowance: 2026-09-13T05:58:23Z through 2026-09-13T07:28:23Z, maximum 90 minutes including recovery; no silent extension.
+- Next batch: host policy, bounded supervisor and associated unit regressions in `eval_harness/grader_sandbox.py` and `tests/harness/test_bigcodebench_runner.py`. Root alone edits this record and remote refs. Save before tests and within 15 minutes.
+- Frozen contract SHA-256: `03f3d13954135fa3a1802bbda1146ff2c4305925edaa35a7339fc403dab621c1`; appendix `da2efc8cd3703dd6d65df02f80156e280c8824c4e251712cf62f0faf4463edde`; amendment `f6237fa9264fa2168ac5ac2472c0544ecad00b010aa728e0f5636ec6717c3350`.
+- Validation: no new test run. Previous worker evidence applies only to its exact recorded head. New supervisor tests, strict typing, Ruff and independent fixed-commit review are required; real sandbox/native parity and whole-head gates remain open.
+- NLTK acceptance remains blocked; closed dependency investigation and rejected patches are not reopened. Candidate environments cannot be selected by production constructors.
+- Latest user requirement: remove all tracked `contracts/*.md` from the final implementation head after integrating necessary permanent specification into formal documentation. Preserve history/checkpoints. This takes priority over saved designs.
+- Stop conditions: second failed correction for one problem, permission obstacle, or allowance expiry; preserve source and evidence and report the unfinished scope.
+
+## Earlier records
+
 State: exact frozen inputs recovered; code not started.
 
 - Owner: Luna implementation, Sol independent contract/delta review, Astra scope/checkpoint/acceptance.
