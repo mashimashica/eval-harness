@@ -3,6 +3,31 @@
 
 # PR04 implementation work record
 
+## User-authorized test-first continuation, 2026-09-13T06:54:57Z
+
+Fixed implementation base: `7be35da9fae98c5e56ba14bf13a15a4cdbb9a8e7`;
+control recovery: `2d36c56c8056bd34186ed11da5004e0e01188dc8`. Both refs and clean local
+worktrees match; no repeated plan/design/dependency investigation is needed. Root remains
+on main. Astra, Luna and Sol retain their previous ownership and separate write scopes.
+
+This user-authorized segment ends no later than `2026-09-13T08:24:57Z` (90 minutes).
+First create deterministic reproductions of the two saved P1 findings in only
+`tests/harness/test_bigcodebench_runner.py`, save them and demonstrate failure on the
+unchanged host. Then Luna fixes both in `eval_harness/grader_sandbox.py` with associated
+regressions; save once before combined unit/strict-mypy/Ruff checks and fixed-head Sol
+review. No third failed correction for the same issue in this new segment is permitted.
+The expected red baseline is reproduction evidence, not a failed corrective verification.
+
+After closure, continue the existing PR04 design: fixed environment and offline bootstrap,
+attestation/preflight, shared callers, old runner deletion, real Linux probes and 1,140-task
+parity. CVE-only blockers hold acceptance but do not block independent implementation;
+no audit workaround, accepted candidate manifest, new design or model experiment is allowed.
+PR05–11 follow sequentially from their frozen designs. Final old-route/contract deletion,
+fourth benchmark and all original quality gates remain mandatory. Save and read back within
+15 minutes. Parent uses the existing DCO/non-force UTF-8 API checkpoint helper; source and
+work record are saved together before validation. Report functions/findings/barriers,
+not checkpoint count. No new validation has run at this record-only save.
+
 ## Resumed host-supervisor segment, 2026-09-13
 
 Current state: stopped under the user's two-failed-correction rule; PR04 is not accepted.
