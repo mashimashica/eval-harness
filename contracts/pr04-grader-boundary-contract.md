@@ -224,9 +224,9 @@ The installation manifest is JSON containing Python/build provenance, platform, 
 
 ### Unresolved NLTK acceptance gate
 
-Strict `pip-audit` 2.10.1 reports exactly NLTK 3.10.3 `PYSEC-2026-3740`, aliases `CVE-2026-81726` and `GHSA-8mgp-746c-j5xp`, with no fix. The preserved source-reviewed backport and deterministic wheel are a concrete remediation option, but ordinary audit cannot attest its truthful local version and is not clean.
+Strict `pip-audit` 2.10.1 reports exactly NLTK 3.10.3 `PYSEC-2026-3740`, aliases `CVE-2026-81726` and `GHSA-8mgp-746c-j5xp`, with no fix. The preserved minimal backport and deterministic wheel are **rejected evidence**, not a remediation option: independent controls reproduce a benign `load_from_json` `NameError` and outside-victim truncation through an allowed-root hardlink before `PermissionError`.
 
-Do not ignore the CVE, spoof a version, rename the package, or claim the backport satisfies the standard gate. Gate A remains red until an official fixed NLTK release produces a clean regenerated lock. Any exception or replacement audit policy requires the user’s explicit plan amendment; an internal reviewer cannot weaken this gate.
+Do not install that wheel, ignore the CVE, spoof a version, rename the package, or claim a local backport satisfies the standard gate. Gate A remains red until an official fixed NLTK release produces a clean regenerated lock. Any exception or replacement audit policy requires the user’s explicit plan amendment; an internal reviewer cannot weaken this gate. Research on a replacement backport, if retained, must port the official companion behavior and test validate-before-truncate, hardlinks for every write sink, FIFOs/devices/sockets without blocking, default paths, direct path-shaped inputs, and benign in-root roundtrips; it still cannot turn standard audit green.
 
 ### Exact CPython and bubblewrap setup path
 

@@ -29,13 +29,16 @@ first resolution target was CPython 3.10.21 on
 | `bigcodebench-v0.2.5-candidate-py311-pip-audit.json` | Full strict aliased audit | One NLTK finding, no fix |
 | `bigcodebench-v0.2.5-candidate-py311-sync-dryrun.txt` | Exact uv 0.11.29 hash-required sync dry run | Resolves all 160 |
 | `nltk-3.10.3-pypi.json` | Official PyPI release/artifact metadata | Provenance |
-| `nltk-3.10.3-ghsa-8mgp-minimal.patch` | Narrow source-reviewed advisory backport | Option only |
-| `test_nltk_ghsa_8mgp_backport.py` | Negative-control plus all-advisory-API regression | 9/9 patched; 8 failures pristine |
-| `nltk-backport-validation.md` | Commands, deterministic wheel hash and truthful audit limitation | Evidence |
+| `nltk-3.10.3-ghsa-8mgp-minimal.patch` | Narrow advisory experiment | **Rejected; do not install** |
+| `test_nltk_ghsa_8mgp_backport.py` | Incomplete negative-control/advisory-API regression | 9/9 patched, but insufficient |
+| `nltk-backport-validation.md` | Historical commands/build/audit record | Rejected evidence |
+| `nltk-backport-rejection-review.md` | Independent normal-path/hardlink review | Decisive rejection |
+| `test_nltk_backport_rejection_repro.py` | Exact benign-roundtrip/destructive-hardlink reproducer | Fails rejected patch |
 | `nltk-data-index-550b6625.xml` | Exact official data index at commit `550b6625...` | Data-lock input |
 | `cpython-3.11.16-20260901-provenance.md` | Immutable interpreter asset/API/source and extraction evidence | Artifact selected; CI install unvalidated |
 | `requirements-bwrap-build.in` | Exact Meson/Ninja build-tool input | Research input |
-| `requirements-bwrap-build.lock` | uv 0.11.29 hash-complete Meson/Ninja lock | Sync/audit not yet validated |
+| `requirements-bwrap-build.lock` | uv 0.11.29 hash-complete Meson/Ninja lock | Sync and `pip check` passed |
+| `requirements-bwrap-build-pip-audit.json` | Strict aliased pip-audit 2.10.1 report | Two distributions, zero findings |
 
 The audit invocation was equivalent to:
 
@@ -57,9 +60,10 @@ candidate leaves these material findings:
 `cryptography` and `keras` can be investigated in an explicit CPython 3.11.16
 grader environment. That candidate clears their findings and leaves only NLTK.
 NLTK remains a hard acceptance blocker: the official advisory marks versions
-through 3.10.3 affected and lists no patched release. The preserved narrow
-backport is testable and reproducibly buildable, but its truthful local version
-cannot be attested by ordinary strict pip-audit. PR04 must not claim otherwise.
+through 3.10.3 affected and lists no patched release. The preserved narrow backport is rejected: the added independent controls expose
+a normal-load regression and destructive hardlink truncation. Its truthful local
+version also cannot be attested by ordinary strict pip-audit. PR04 must not install
+or claim this patch as remediation.
 
 ## Primary provenance
 

@@ -3,9 +3,9 @@ SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All 
 SPDX-License-Identifier: Apache-2.0
 -->
 
-# NLTK GHSA-8mgp minimal-backport validation
+# Rejected NLTK GHSA-8mgp minimal-backport validation
 
-**State:** reviewed remediation option, not an accepted dependency and not a clean standard audit result.
+**State:** **REJECTED** remediation experiment, not an acceptable dependency and not a clean standard audit result. The narrow test/build results below remain factual but were insufficient. Independent controls in `nltk-backport-rejection-review.md` show a benign load `NameError` and destructive hardlink truncation before rejection.
 
 ## Exact source and patch
 
@@ -29,7 +29,7 @@ PYTHONPATH=<patched-source> python -m unittest -v \
 # Ran 9 tests in 1.213s: OK.
 ```
 
-The deliberate compatibility change is that `PerceptronTagger.save_to_json()` no longer authorizes an arbitrary private destination or the historical shared `/tmp` default. Callers must choose a path already under an NLTK allowed root. PR04 must run all affected dataset canonical solutions, not only this security regression, before accepting the patch.
+That narrow matrix omitted normal allowed-root roundtrips, validate-before-truncate hardlink controls, FIFO/device/socket handling, default-path behavior, and complete companion changes. The rejected patch also left a deleted-helper call in `load_from_json`. Passing these nine tests therefore provides no acceptance evidence.
 
 ## Deterministic wheel build
 
@@ -55,9 +55,9 @@ Omitting `PYTHONHASHSEED=0` changed only ordering of `Requires-Dist` entries in 
 
 The unmodified Python 3.11.16 lock resolves 160 distributions and strict `pip-audit` 2.10.1 reports exactly NLTK `PYSEC-2026-3740`, aliases `CVE-2026-81726` and `GHSA-8mgp-746c-j5xp`, with no fix version.
 
-A truthful local-version wheel cannot be represented as a clean ordinary audit:
+The deterministic wheel contains the rejected code and must not be installed. Independently, a truthful local-version wheel cannot be represented as a clean ordinary audit:
 
 - strict hashed requirements audit rejects the direct URL: `nltk: URL requirements cannot be pinned to a specific package version`;
 - strict installed-path audit exits 1: `Dependency not found on PyPI and could not be audited: nltk (3.10.3+evalharness.ghsa8mgp1)`.
 
-Changing the distribution name, pretending it is upstream 3.10.4, or ignoring the finding would evade rather than satisfy the gate. The existing clean standard audit gate remains unresolved. Acceptance requires either an official fixed release and regenerated clean lock, or an explicit policy revision that preserves the original finding and independently attests the base source, patch, reproducible artifact, license, and regression suite without claiming that `pip-audit` passed.
+Changing the distribution name, pretending it is upstream 3.10.4, or ignoring the finding would evade rather than satisfy the gate. The existing clean standard audit gate remains unresolved. Under the unchanged migration gate, acceptance requires an official fixed release and a regenerated clean lock. Any alternate audit policy would require the user’s explicit plan amendment. No such amendment exists.

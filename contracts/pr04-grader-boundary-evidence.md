@@ -73,15 +73,17 @@ Astral's immutable `python-build-standalone` release `20260901` supplies exact a
 
 Fresh archive inspection found only 3,858 regular files and 1,048 contained relative symbolic links under `python/`; no path escape or special file. Extracted execution reports CPython 3.11.16, x86-64, GNU SOABI `cpython-311-x86_64-linux-gnu`. The exact release/API/source/executable/license evidence and safe-extraction requirements are preserved in `pr04-evidence/cpython-3.11.16-20260901-provenance.md`. This closes artifact selection, while full venv install/inventory and hosted-CI validation remain implementation proofs.
 
-## NLTK advisory and bounded backport evidence
+## NLTK advisory and rejected backport evidence
 
 Official advisory [`GHSA-8mgp-746c-j5xp`](https://github.com/nltk/nltk/security/advisories/GHSA-8mgp-746c-j5xp) affects NLTK through 3.10.3 and lists no patched release. The named APIs are `TransitionParser.train`/`parse`, `AveragedPerceptron.save`/`load`, `PerceptronTagger.save_to_json`, and `save_maxent_params`; each bypasses `pathsec` in the published source.
 
 The evidence directory contains a minimal patch from exact NLTK tag commit `303f6e2ba8e4548a5f54fd65d86bb5c9a949f1db`, focused regression, PyPI metadata, and deterministic-build record. The patch derives from three fixes already merged to official NLTK `develop` (`a44a7af69bca87e92d9c4a701fcbbe4512e8d450`, `2a92b71827d754ae8920261e7ed0c4bb283ab2d7`, `cbc98458b43de5f792f0382583c16df39e5c5117`), not the broad open PR 3753.
 
-The nine-test regression passes 9/9 against patched source and fails 8/9 against pristine 3.10.3; the only pristine pass is the negative control. Two clean builds with fixed `PYTHONHASHSEED=0` and `SOURCE_DATE_EPOCH=1786571315` produced byte-identical 1,799,409-byte wheels, SHA-256 `1a2006cfdb05170246aecfe84d24ffa7d659fc67055d9ef8e297d1b5715605a0`. The truthful version is `3.10.3+evalharness.ghsa8mgp1`, license Apache-2.0.
+The nine-test regression passes 9/9 against patched source and fails 8/9 against pristine 3.10.3; the only pristine pass is the negative control. Two clean builds with fixed `PYTHONHASHSEED=0` and `SOURCE_DATE_EPOCH=1786571315` produced byte-identical 1,799,409-byte wheels, SHA-256 `1a2006cfdb05170246aecfe84d24ffa7d659fc67055d9ef8e297d1b5715605a0`. Those facts are retained for provenance, but the matrix was insufficient and the wheel is rejected.
 
-Standard strict audit cannot attest that local patch: hashed direct-URL audit rejects the URL as not pinnable to a version, and installed-path audit exits 1 because the local version is absent from PyPI. This is decisive: the backport is a reviewable remediation option, not a clean ordinary audit. A clean gate needs an official fixed release; otherwise root must explicitly approve an independent patch-attestation policy while retaining the original finding. No ignore, rename or version spoof is valid.
+Independent review at source checkpoint `9948455de7b953de63053f389a837ce580b16e7d` found that the patch leaves a call to deleted `_authorize_private_dir`, so a benign `PerceptronTagger` save/load roundtrip errors. Worse, its pathsec writer opens with `O_TRUNC` before checking link count, so rejecting an allowed-root hardlink first destroys the outside victim; the tagger-local opener omits the hardlink check. FIFO opening can block before post-open type validation, and historical tagger/maxent `/tmp` defaults fail. Exact review and repro bytes are copied into this evidence directory. The earlier narrow validation must not be treated as security proof.
+
+Standard strict audit also cannot attest a truthful local patch: hashed direct-URL audit rejects the URL as not pinnable to a version, and installed-path audit exits 1 because the local version is absent from PyPI. The unchanged gate needs an official fixed release and regenerated clean lock. No ignore, rename, version spoof, internal exception, or installation of this rejected wheel is valid.
 
 ## Dataset and NLTK-data evidence
 
@@ -100,7 +102,7 @@ Official repository: [containers/bubblewrap](https://github.com/containers/bubbl
 - The pinned [`README.md`](https://github.com/containers/bubblewrap/blob/v0.12.0/README.md) says bubblewrap constructs an empty mount-namespace root, uses user namespaces for unprivileged operation, always creates a mount namespace, can make mounts read-only/nodev, and can add PID/network/IPC/UTS namespaces. It also says security depends entirely on caller arguments and `--new-session` is needed against TIOCSTI when no seccomp filter supplies that protection.
 - The pinned [`bwrap.xml`](https://github.com/containers/bubblewrap/blob/v0.12.0/bwrap.xml) defines explicit mandatory namespace flags, `--disable-userns`, `--clearenv`, `--size`/`--tmpfs`, `--ro-bind`, `--proc`, `--dev`, `--new-session`, and `--die-with-parent`. It states `--unshare-all` uses `--unshare-user-try` and `--unshare-cgroup-try`; therefore it is unsuitable for a fail-closed proof. The new `--not-a-security-boundary` flag deliberately makes some setup failures nonfatal and must be forbidden.
 
-Bubblewrap is a mechanism, not a complete policy. The proposed contract supplies the mount/env/namespace/resource/process arguments and verifies their effects in a real probe. The build-tool input and hash-complete Meson 1.9.1/Ninja 1.13.0 lock are preserved; their strict audit and an exact hosted build remain unvalidated at this checkpoint.
+Bubblewrap is a mechanism, not a complete policy. The proposed contract supplies the mount/env/namespace/resource/process arguments and verifies their effects in a real probe. The Meson 1.9.1/Ninja 1.13.0 build-tool lock synced with uv 0.11.29 under CPython 3.13.14; `uv pip check` passed and strict aliased pip-audit 2.10.1 found zero vulnerabilities across both distributions. An exact hosted bubblewrap build remains unvalidated.
 
 ## CI platform evidence and observed local limitation
 
