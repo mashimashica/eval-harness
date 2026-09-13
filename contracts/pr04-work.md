@@ -5,20 +5,48 @@
 
 ## Resumed host-supervisor segment, 2026-09-13
 
-Current state: protocol/worker checkpoint `aa7e2cc9df25795be50559ea5c5d986af020c933`
-recovered in an independent worktree. Root checkout remains clean on `main`.
+Current state: stopped under the user's two-failed-correction rule; PR04 is not accepted.
+The protocol/worker checkpoint `aa7e2cc9df25795be50559ea5c5d986af020c933`
+was recovered in an independent worktree. Root checkout remains clean on `main`.
 Control recovery is `02cba161d480f45d3eb955eaad035488bde936c4`; the control branch is
 not an implementation base. Draft PR heads 38–42 and design refs match the recovery index.
 
 - Owners: Astra parent/checkpoint/acceptance; Luna implementation; Sol read-only independent review.
 - Fixed implementation base: `aa7e2cc9df25795be50559ea5c5d986af020c933`; accepted dependency is PR02c `6038a7828d62247ad98d000bc6e71c706f6d14a4`.
 - Working allowance: 2026-09-13T05:58:23Z through 2026-09-13T07:28:23Z, maximum 90 minutes including recovery; no silent extension.
-- Next batch: host policy, bounded supervisor and associated unit regressions in `eval_harness/grader_sandbox.py` and `tests/harness/test_bigcodebench_runner.py`. Root alone edits this record and remote refs. Save before tests and within 15 minutes.
+- Next authorized continuation: close the saved teardown-budget and resource-enforcement race findings in `eval_harness/grader_sandbox.py` and `tests/harness/test_bigcodebench_runner.py`. No third corrective round is started in this segment. Root alone edits this record and remote refs.
 - Frozen contract SHA-256: `03f3d13954135fa3a1802bbda1146ff2c4305925edaa35a7339fc403dab621c1`; appendix `da2efc8cd3703dd6d65df02f80156e280c8824c4e251712cf62f0faf4463edde`; amendment `f6237fa9264fa2168ac5ac2472c0544ecad00b010aa728e0f5636ec6717c3350`.
 - Validation: no new test run. Previous worker evidence applies only to its exact recorded head. New supervisor tests, strict typing, Ruff and independent fixed-commit review are required; real sandbox/native parity and whole-head gates remain open.
 - NLTK acceptance remains blocked; closed dependency investigation and rejected patches are not reopened. Candidate environments cannot be selected by production constructors.
 - Latest user requirement: remove all tracked `contracts/*.md` from the final implementation head after integrating necessary permanent specification into formal documentation. Preserve history/checkpoints. This takes priority over saved designs.
 - Stop conditions: second failed correction for one problem, permission obstacle, or allowance expiry; preserve source and evidence and report the unfinished scope.
+
+### Segment stopped after independent correction review, 2026-09-13T06:33:12Z
+
+Latest source/test head `5678340634362d155a5b98f296b1a75a34c8dc07`, tree
+`55941cbeba7255823d4b6a5b64d907e238231871`, passes all 31 unittest methods on CPython
+3.13.14, strict mypy of the two changed authored files, and Ruff lint/format. No warnings
+remain. Control `reports/m2-host-local-validation.json` records exact commands and source
+blobs. This is local partial verification only, not security or slice acceptance.
+
+Sol reviewed fixed host blob `254e90ebe0e77100fd751c938dde1d592c00b40e` at `058a5878`
+(unchanged at the tested head). Root confirmed two unresolved correctness defects:
+
+1. Post-exit draining starts a fresh teardown deadline instead of preserving the current
+   absolute phase/terminal deadline. Successful cleanup followed by the exception path
+   can start another full cleanup wait. The teardown budget can therefore be exceeded.
+2. A trusted process can exit between the caller's alive check and the termination helper's
+   poll. The helper then sends no kill, but the caller still returns a candidate resource
+   outcome. An infrastructure exit can therefore become a zero-scoring limit result.
+
+The same teardown-bound problem remained after the e839a8cb and 058a5878 correction
+reviews. Astra therefore applied the user's two-failed-correction stop condition before
+the 90-minute cap; no third correction or new implementation is authorized in this segment.
+The independent offline-bootstrap batch was stopped before any edits, so it remains
+unimplemented. No source changes are left unsaved. Parent preserves the review and control
+state next, then reports the partial state. Public preflight/launch, provisioning, shared
+caller replacement, old-runner deletion, real Linux sandbox and all-1,140 native parity,
+full-head quality gates, PR05–11 and final `contracts/*.md` removal remain unfinished.
 
 ### Lifecycle and procfs correction checkpoint
 
