@@ -50,6 +50,33 @@ check_ninja_version() {
     [ "$1" = "1.13.0" ] && [ "$2" = "1.13.0.git.kitware.jobserver-pipe-1" ]
 }
 
+check_bwrap_capabilities() {
+    local binary_path="$1"
+    if ! "$harness_python" -I -B - "$binary_path" <<'PY'
+from __future__ import annotations
+
+import errno
+import os
+import sys
+
+
+try:
+    value = os.getxattr(sys.argv[1], "security.capability", follow_symlinks=False)
+except OSError as error:
+    if error.errno == errno.ENODATA:
+        raise SystemExit(0)
+    raise SystemExit(1)
+except Exception:
+    raise SystemExit(1)
+if value is not None:
+    raise SystemExit(1)
+raise SystemExit(1)
+PY
+    then
+        die "bubblewrap capability inspection failed"
+    fi
+}
+
 runner_temp="${RUNNER_TEMP:?RUNNER_TEMP is required}"
 harness_python="${HARNESS_PYTHON:?HARNESS_PYTHON is required}"
 uv_bin="${UV_BIN:-uv}"
@@ -188,7 +215,7 @@ check_ninja_version "$ninja_distribution_version" "$ninja_binary_version" || die
     -Dselinux=disabled -Dman=disabled -Dtests=true \
     -Dbash_completion=disabled -Dzsh_completion=disabled
 "$meson_bin" compile -C "$build_dir"
-"$meson_bin" test -C "$build_dir" --print-errorlogs
+"$meson_bin" test -C "$build_dir" --print-errorlogs --verbose
 "$meson_bin" install -C "$build_dir" --no-rebuild
 
 binary="$prefix/bin/bwrap"
@@ -200,6 +227,5 @@ owner="$(stat -c '%u' "$binary")"
 [ "$("$binary" --version)" = "bubblewrap $BWRAP_VERSION" ] || die "bubblewrap version mismatch"
 [ "$(readelf -h "$binary" | awk -F: '/Class:/ {gsub(/[[:space:]]/, "", $2); print $2}')" = ELF64 ] || die "bubblewrap is not ELF64"
 [ "$(readelf -h "$binary" | awk -F: '/Machine:/ {gsub(/[[:space:]]/, "", $2); print $2}')" = AdvancedMicroDevicesX86-64 ] || die "bubblewrap architecture is not x86-64"
-command -v getcap >/dev/null 2>&1 || die "getcap is required"
-[ -z "$(getcap "$binary")" ] || die "bubblewrap binary has file capabilities"
+check_bwrap_capabilities "$binary"
 printf 'BUBBLEWRAP_PATH=%s\n' "$binary"

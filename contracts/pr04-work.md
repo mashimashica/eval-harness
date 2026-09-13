@@ -3,6 +3,30 @@
 
 # PR04 implementation work record
 
+## Reviewed capability/baseline selective Linux integration checkpoint
+
+Formal parent `d3dc022f6eae7d2fbc12a1078ef7e8079e813782`; source delta
+`67888fb29663f087f0c1309ecf8b41ca77732e3f`. Parent copies only the installer xattr/
+verbose change, its preparation regression/imports/assertion, and the exact 66-entry
+baseline. The public locator regression and all unclosed public host/caller code are
+excluded. Sol independently closed this source/test/baseline subset. Baseline JSON
+content matches the reviewed source; apply_patch adds only its final newline. The first
+mechanical patch was refused because git's no-newline marker is not apply_patch syntax;
+no file changed, and removal of that marker applied the intended finite patch.
+
+This full integration tree is saved to checkpoint/pr-04-linux-gate before scoped local
+validation. It is not yet a formal PR update or actual Linux result. The main PR04
+implementation remains on checkpoint/pr-04, not this selective integration branch.
+Verify preparation unit tests, strict typing, Ruff, shell syntax and full secret hook
+against this exact tree; only then update formal migration/04-isolated-grader without
+force from its existing parent. Preserve both histories and DCO/readback.
+
+The actual Linux Ninja/compile result is already closed; getcap had one initial actual
+failure and this first correction awaits real retry. Five upstream skips are not boundary
+proof. No grader provisioning, actual preflight, hostile fixtures or 1140 parity success
+is claimed. Whole coverage, legacy-app typing and NLTK audit remain unresolved on the
+formal context; no PR04 or migration acceptance is implied.
+
 ## Reviewed Ninja-only formal promotion, 2026-09-13
 
 Formal parent `0c919a5cd1256af121a912bef5a42cf41d5e360b`; copy only the reviewed
