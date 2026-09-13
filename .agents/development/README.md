@@ -83,12 +83,19 @@ instructions, development Skills, or unrelated condition data. A fresh session a
 
 ### Remote writes
 
-Use an available direct GitHub API for ordinary remote commits, branch updates, and PRs. Use UTF-8 content; do not use
-Actions, temporary workflows, or Base64 payload construction as editing mechanisms. On a recoverable conflict, reread the
-branch/files and retry against the new state without overwriting unrelated work. For an uncertain write response, inspect
-the resulting state before retrying. If the direct route is unavailable or denied, report the concrete cause and stop
-remote publication; independent local work may continue. Do not route around a denied operation. Merge, release, publish,
-and destructive history changes require their own applicable authorization. An internal acceptance is not that authority.
+Select an authorized publication route supported by the current environment. In a local checkout, use `git` for local
+commits and authenticated branch pushes, and `gh` for PR operations; an authorized repository Skill's CLI route may be
+used. Direct GitHub API integrations, including `gh api`, are also valid. A separate API connector is not a prerequisite,
+and its absence must not block a working authorized CLI route.
+
+Preserve DCO sign-off and unrelated edits. On a recoverable conflict, fetch or reread the current branch/files, reconcile
+the change, and retry without overwriting unrelated work. After an uncertain write response, inspect the resulting state
+before retrying. Do not bypass denied authority or branch protection by switching routes. If no authorized route is
+available, report the concrete cause and retain local work for the pending handoff; independent local work may continue.
+
+Do not use Actions, temporary workflows, or Base64 payload construction as editing mechanisms; normal CI use of Actions
+is allowed. Authorization for ordinary commits, pushes, and PR handoffs does not itself authorize merge, release, package
+publication, deployment, or destructive history changes. Those actions require their own applicable authorization.
 
 ## Context interface and information ownership
 
