@@ -3,6 +3,26 @@
 
 # PR04 implementation work record
 
+## Capability inspection correction ready for grouped validation
+
+Base `0d4a4b1ebf4e5b82152fc69fa35afd0c0f969d6f`. Luna returns the bounded
+installer/test correction authorized in control `8edac72035afae50029c9f57e2df7c0f57797704`.
+External getcap is removed; verified harness Python uses -I -B and a non-following
+security.capability xattr probe, with ENODATA alone passing and fixed redacted failures
+for attribute presence or any other error. Negative fixtures cover the approved cases.
+Meson verbose output is enabled solely to expose real upstream skip reasons.
+
+Scoped Ruff formatting and diff whitespace pass. Unit tests, strict typing, lint, shell
+syntax and secret detector have not yet run on this exact saved correction. The first
+getcap failure history remains one initial failure, with this first corrective attempt
+pending verification. Known Ninja closure and uv failed-attempt history are unchanged.
+The secret baseline is still unmodified; generate exact findings from this saved head,
+apply only the previously classified finite delta and save it before its final checks.
+
+The public boundary remains under Sol's fixed-head review at the preceding base, with
+no real sandbox execution authorized until defects close. Same sole Luna owner and path
+scope; no accepted manifest, dependency exception or PR/migration acceptance is implied.
+
 ## Public-boundary correction checkpoint, 2026-09-13T10:46Z
 
 Base `3978d08e6226dc48f3b16c4fa304231bec56dbae`; same Luna implementation owner,

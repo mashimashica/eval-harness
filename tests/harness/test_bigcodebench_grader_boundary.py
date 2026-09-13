@@ -5,6 +5,7 @@
 
 from __future__ import annotations
 
+import errno
 import hashlib
 import io
 import json
@@ -12,6 +13,7 @@ import os
 import shutil
 import stat
 import subprocess
+import sys
 import tarfile
 import tempfile
 import unittest
@@ -53,9 +55,7 @@ class BigCodeBenchBoundaryPreparationTests(unittest.TestCase):
                     "resource_dir": str(resource),
                 }
             }
-            (runtime / "runtime-manifest.json").write_bytes(
-                canonical_json_bytes(runtime_manifest, final_newline=True)
-            )
+            (runtime / "runtime-manifest.json").write_bytes(canonical_json_bytes(runtime_manifest, final_newline=True))
             with mock.patch.dict(os.environ, {"BIGCODEBENCH_GRADER_SETUP_ROOT": str(root)}, clear=False):
                 self.assertEqual(resolve_bigcodebench_resource_dir(), resource)
 
@@ -296,6 +296,7 @@ class BigCodeBenchBoundaryPreparationTests(unittest.TestCase):
     def test_shell_version_commands_support_whitespace_paths(self) -> None:
         script_path = Path(__file__).parents[2] / "scripts" / "ci" / "install_bubblewrap.sh"
         script = script_path.read_text(encoding="utf-8")
+        self.assertIn('"$meson_bin" test -C "$build_dir" --print-errorlogs --verbose', script)
         for command in (
             'uv_version="$("$uv_bin" --version)"',
             'harness_identity="$("$harness_python" -I -B -c',
@@ -344,6 +345,39 @@ printf '%s|%s|%s|%s\\n' "$uv_version" "$harness_identity" "$meson_version" "$nin
                 result.stdout,
                 "uv 0.11.29 (fixture)|3.13.14 x86_64|1.9.1|1.13.0.git.kitware.jobserver-pipe-1\n",
             )
+
+    def test_bwrap_capability_probe_only_accepts_enodata_and_redacts_failures(self) -> None:
+        script_path = Path(__file__).parents[2] / "scripts" / "ci" / "install_bubblewrap.sh"
+        script = script_path.read_text(encoding="utf-8")
+        self.assertNotIn("getcap", script)
+        start = script.index("check_bwrap_capabilities()")
+        source_start = script.index("from __future__", start)
+        source_end = script.index("\nPY", source_start)
+        probe_source = script[source_start:source_end]
+
+        def run_probe(*, return_value: bytes | None = None, side_effect: BaseException | None = None) -> int:
+            with (
+                mock.patch.object(
+                    os,
+                    "getxattr",
+                    return_value=return_value,
+                    side_effect=side_effect,
+                ) as getxattr,
+                mock.patch.object(sys, "argv", ["probe", "/private/fixed binary"]),
+            ):
+                with self.assertRaises(SystemExit) as raised:
+                    exec(compile(probe_source, "<capability-probe>", "exec"), {})
+            getxattr.assert_called_once_with("/private/fixed binary", "security.capability", follow_symlinks=False)
+            return int(raised.exception.code)
+
+        self.assertEqual(run_probe(side_effect=OSError(errno.ENODATA, "private")), 0)
+        for value in (b"", b"capability"):
+            with self.subTest(value=value):
+                self.assertEqual(run_probe(return_value=value), 1)
+        for error_number in (errno.EPERM, errno.EACCES, errno.ENOTSUP, errno.EIO):
+            with self.subTest(error_number=error_number):
+                self.assertEqual(run_probe(side_effect=OSError(error_number, "private")), 1)
+        self.assertEqual(run_probe(side_effect=RuntimeError("private")), 1)
 
     def test_shell_ninja_guard_requires_distribution_and_binary_identity(self) -> None:
         script_path = Path(__file__).parents[2] / "scripts" / "ci" / "install_bubblewrap.sh"
