@@ -22,6 +22,21 @@ not an implementation base. Draft PR heads 38–42 and design refs match the rec
 
 ## Earlier records
 
+### First host-supervisor batch saved before validation
+
+Luna added the explicit read-only bubblewrap command builder, trusted path separation,
+UID lock, host process/RSS sampling and bounded selector supervisor in the two-file scope.
+Four unit cases cover command policy, forbidden mounts, lock metadata and pre-launch input
+size rejection. No tests, strict typing or Ruff checks have run on this batch yet.
+Public preflight and launch still deliberately raise; this source cannot establish readiness
+or PR04 acceptance. Root inspected the scoped diff and whitespace check before API save.
+
+Next: Sol reviews this fixed source delta, while root runs focused correctness/static checks.
+Review must examine successful and failed cleanup, pre-START resource handling, bounded I/O
+and error classification as well as the command. Expand regressions with fixes before
+implementing attestation/provisioning. Full Linux probes, native parity, caller replacement,
+96% whole-head coverage, strict dependency audit and formal CI remain outstanding.
+
 State: exact frozen inputs recovered; code not started.
 
 - Owner: Luna implementation, Sol independent contract/delta review, Astra scope/checkpoint/acceptance.

@@ -1,22 +1,32 @@
 # SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 # SPDX-License-Identifier: Apache-2.0
 
-"""Frozen host-side types for the BigCodeBench grader boundary.
+"""Host-side policy and bounded process infrastructure for BigCodeBench.
 
-Process construction and sandbox enforcement are intentionally added in later
-PR04 batches.  The protocol types live in the stdlib-only runner module so the
-isolated runner can use them without importing this host module.
+The public preflight and grade entry points remain deliberately fail-closed
+until the manifest and attestation implementation is added.  The policy
+builder, lock and selector loop in this module are nevertheless complete
+building blocks: they have no unsandboxed fallback and are useful to the real
+boundary tests and the later attested launch path.
 """
 
 from __future__ import annotations
 
+import contextlib
+import fcntl
 import math
+import os
+import selectors
+import stat
+import subprocess
+import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Final
+from typing import Final, Iterator, Sequence
 
 from eval_harness.bigcodebench_runner import (
     BigCodeBenchGradeRequest,
+    AuthenticatedOutputParser,
     FrameType,
     GraderNativeResult,
     LimitKind,
@@ -24,6 +34,65 @@ from eval_harness.bigcodebench_runner import (
     NativeStatus,
     ProtocolError,
     parse_authenticated_output,
+)
+
+
+POLICY_REVISION: Final[str] = "bigcodebench-bwrap-v1"
+BUBBLEWRAP_VERSION: Final[str] = "0.12.0"
+RUNNER_GUEST_PATH: Final[str] = "/opt/bigcodebench/bigcodebench_runner.py"
+VENDOR_GUEST_PATH: Final[str] = "/opt/bigcodebench/vendor"
+NLTK_DATA_GUEST_PATH: Final[str] = "/opt/bigcodebench/nltk_data"
+LOCK_PATH_TEMPLATE: Final[str] = "/tmp/nemo-gym-bigcodebench-grader-{uid}.lock"
+DESCENDANT_SAMPLE_SECONDS: Final[float] = 0.025
+
+_FIXED_ENVIRONMENT: Final[tuple[tuple[str, str], ...]] = (
+    ("LANG", "C.UTF-8"),
+    ("LC_ALL", "C.UTF-8"),
+    ("TZ", "UTC"),
+    ("HOME", "/tmp/home"),
+    ("TMPDIR", "/tmp"),
+    ("MPLBACKEND", "Agg"),
+    ("NLTK_DATA", NLTK_DATA_GUEST_PATH),
+    ("BIGCODEBENCH_NLTK_OFFLINE", POLICY_REVISION),
+    ("XDG_CACHE_HOME", "/tmp/cache"),
+    ("XDG_CONFIG_HOME", "/tmp/config"),
+    ("XDG_DATA_HOME", "/tmp/data"),
+    ("MPLCONFIGDIR", "/tmp/matplotlib"),
+    ("NUMBA_CACHE_DIR", "/tmp/numba"),
+    ("TORCH_HOME", "/tmp/torch"),
+    ("HF_HOME", "/tmp/huggingface"),
+    ("JOBLIB_TEMP_FOLDER", "/tmp/joblib"),
+    ("CUDA_VISIBLE_DEVICES", ""),
+    ("TOKENIZERS_PARALLELISM", "false"),
+    ("OMP_NUM_THREADS", "1"),
+    ("OPENBLAS_NUM_THREADS", "1"),
+    ("MKL_NUM_THREADS", "1"),
+    ("VECLIB_MAXIMUM_THREADS", "1"),
+    ("NUMEXPR_NUM_THREADS", "1"),
+    ("BLIS_NUM_THREADS", "1"),
+    ("RAYON_NUM_THREADS", "1"),
+    ("TF_NUM_INTRAOP_THREADS", "1"),
+    ("TF_NUM_INTEROP_THREADS", "1"),
+)
+
+_SYSTEM_OPTIONAL_MOUNTS: Final[tuple[tuple[str, str], ...]] = (
+    ("/etc/ld.so.cache", "/etc/ld.so.cache"),
+    ("/etc/ssl/certs", "/etc/ssl/certs"),
+    ("/etc/fonts", "/etc/fonts"),
+    ("/etc/localtime", "/etc/localtime"),
+)
+_SYNTHETIC_ETC_FILES: Final[tuple[str, ...]] = ("hosts", "nsswitch.conf", "resolv.conf", "passwd", "group")
+_TMP_DIRS: Final[tuple[str, ...]] = (
+    "/tmp/home",
+    "/tmp/work",
+    "/tmp/cache",
+    "/tmp/config",
+    "/tmp/data",
+    "/tmp/matplotlib",
+    "/tmp/numba",
+    "/tmp/torch",
+    "/tmp/huggingface",
+    "/tmp/joblib",
 )
 
 
@@ -141,6 +210,476 @@ class GraderInfrastructureError(RuntimeError):
     """An evaluator or sandbox failure, distinct from a candidate result."""
 
 
+@dataclass(frozen=True, slots=True)
+class _ResolvedSandboxPaths:
+    """Resolved host paths used by the one policy builder."""
+
+    venv: Path
+    base_prefix: Path
+    runner: Path
+    vendor: Path
+    nltk_data: Path
+    sandbox_etc: Path
+
+
+def _real_path(path: Path, field: str, *, must_exist: bool = True) -> Path:
+    """Resolve one trusted path, rejecting relative and unresolvable values."""
+
+    if not path.is_absolute():
+        raise GraderInfrastructureError(f"{field} is not an absolute path")
+    try:
+        resolved = path.resolve(strict=must_exist)
+    except (OSError, RuntimeError) as exc:
+        raise GraderInfrastructureError(f"{field} cannot be resolved") from exc
+    if not resolved.is_absolute():
+        raise GraderInfrastructureError(f"{field} is not an absolute path")
+    return resolved
+
+
+def _venv_base_prefix(venv: Path) -> Path:
+    """Read the venv's trusted ``home`` value without consulting host env."""
+
+    config = venv / "pyvenv.cfg"
+    try:
+        lines = config.read_text(encoding="utf-8").splitlines()
+    except (OSError, UnicodeError) as exc:
+        raise GraderInfrastructureError("grader interpreter metadata is unavailable") from exc
+    for line in lines:
+        name, separator, value = line.partition("=")
+        if name.strip() == "home" and separator:
+            home = Path(value.strip())
+            if not home.is_absolute():
+                raise GraderInfrastructureError("grader interpreter metadata is invalid")
+            # pyvenv.cfg conventionally points at ``<prefix>/bin``.  Accept a
+            # direct prefix too, but never infer a host prefix from sys.path.
+            if home.name == "bin":
+                home = home.parent
+            return _real_path(home, "base interpreter prefix")
+    raise GraderInfrastructureError("grader interpreter metadata is unavailable")
+
+
+def _resolve_sandbox_paths(spec: GraderSandboxSpec) -> _ResolvedSandboxPaths:
+    resource_dir = _real_path(spec.resource_dir, "resource directory")
+    if spec.bwrap_path.is_symlink():
+        raise GraderInfrastructureError("bubblewrap executable is a symlink")
+    bwrap = _real_path(spec.bwrap_path, "bubblewrap executable")
+    if not bwrap.is_file() or bwrap.is_symlink():
+        raise GraderInfrastructureError("bubblewrap executable is not a regular file")
+    if spec.grader_python.is_symlink():
+        raise GraderInfrastructureError("grader interpreter is a symlink")
+    grader_python = _real_path(spec.grader_python, "grader interpreter")
+    if not grader_python.is_file() or grader_python.is_symlink():
+        raise GraderInfrastructureError("grader interpreter is not a regular file")
+    venv = _real_path(grader_python.parent.parent, "grader virtual environment")
+    base_prefix = _venv_base_prefix(venv)
+    runner = _real_path(Path(__file__).with_name("bigcodebench_runner.py"), "grader runner")
+    vendor = _real_path(resource_dir / "vendor", "vendored grader")
+    nltk_data = _real_path(resource_dir / "nltk_data", "grader data")
+    sandbox_etc = _real_path(resource_dir / "sandbox_etc", "sandbox etc")
+    paths = _ResolvedSandboxPaths(venv, base_prefix, runner, vendor, nltk_data, sandbox_etc)
+
+    selected = (paths.venv, paths.base_prefix, paths.runner, paths.vendor, paths.nltk_data, paths.sandbox_etc)
+    forbidden = tuple(_real_path(root, "forbidden root") for root in spec.forbidden_roots)
+    for candidate in selected:
+        for root in forbidden:
+            if candidate == root or candidate.is_relative_to(root) or root.is_relative_to(candidate):
+                raise GraderInfrastructureError("trusted mount intersects an untrusted root")
+    # The policy requires these trees to be independently attested.  A nested
+    # bind would make a later mutation observable through a second mount.
+    disjoint = (paths.venv, paths.base_prefix, paths.vendor, paths.nltk_data)
+    for index, candidate in enumerate(disjoint):
+        for other in disjoint[index + 1 :]:
+            if candidate == other or candidate.is_relative_to(other) or other.is_relative_to(candidate):
+                raise GraderInfrastructureError("trusted mount trees are not disjoint")
+    return paths
+
+
+def _count_real_uid_processes() -> int:
+    """Count processes owned by this real UID for the NPROC baseline."""
+
+    proc_root = Path("/proc")
+    uid = os.getuid()
+    count = 0
+    try:
+        entries = tuple(proc_root.iterdir())
+    except OSError as exc:
+        raise GraderInfrastructureError("process baseline is unavailable") from exc
+    for entry in entries:
+        if not entry.name.isdecimal():
+            continue
+        try:
+            if entry.stat().st_uid == uid:
+                count += 1
+        except OSError:
+            # Processes exiting during the baseline are not counted.  The
+            # lock prevents another grader launch, and the runner still has a
+            # hard NPROC limit below the measured headroom.
+            continue
+    if count <= 0:
+        raise GraderInfrastructureError("process baseline is invalid")
+    return count
+
+
+def _validate_process_limit(value: int) -> int:
+    if type(value) is not int or value <= 0 or value > (2**63 - 1):
+        raise GraderInfrastructureError("process limit is invalid")
+    return value
+
+
+def _build_bwrap_command(spec: GraderSandboxSpec, *, process_limit: int | None = None) -> tuple[str, ...]:
+    """Build the sole supported bubblewrap command, with no fallback flags."""
+
+    paths = _resolve_sandbox_paths(spec)
+    limits = spec.limits
+    baseline = _count_real_uid_processes() if process_limit is None else process_limit
+    if process_limit is None:
+        baseline = baseline + limits.process_headroom
+    baseline = _validate_process_limit(baseline)
+
+    command: list[str] = [
+        str(spec.bwrap_path.resolve()),
+        "--unshare-user",
+        "--unshare-ipc",
+        "--unshare-pid",
+        "--unshare-net",
+        "--unshare-uts",
+        "--disable-userns",
+        "--cap-drop",
+        "ALL",
+        "--clearenv",
+        "--new-session",
+        "--die-with-parent",
+        "--proc",
+        "/proc",
+        "--dev",
+        "/dev",
+        "--size",
+        str(limits.tmp_bytes),
+        "--tmpfs",
+        "/tmp",
+        "--size",
+        str(limits.shm_bytes),
+        "--tmpfs",
+        "/dev/shm",
+    ]
+    for directory in _TMP_DIRS:
+        command.extend(("--dir", directory))
+    command.append("--dir")
+    command.append("/etc")
+
+    # These are the only host paths visible in the mount namespace.  Every
+    # bind is read-only and keeps its resolved host spelling in the guest.
+    command.extend(("--ro-bind", str(paths.venv), str(paths.venv)))
+    command.extend(("--ro-bind", str(paths.base_prefix), str(paths.base_prefix)))
+    command.extend(("--ro-bind", str(paths.runner), RUNNER_GUEST_PATH))
+    command.extend(("--ro-bind", str(paths.vendor), VENDOR_GUEST_PATH))
+    command.extend(("--ro-bind", str(paths.nltk_data), NLTK_DATA_GUEST_PATH))
+    command.extend(("--ro-bind", "/usr", "/usr"))
+    for target, link in (("usr/bin", "/bin"), ("usr/sbin", "/sbin"), ("usr/lib", "/lib"), ("usr/lib64", "/lib64")):
+        command.extend(("--symlink", target, link))
+    for source, target in _SYSTEM_OPTIONAL_MOUNTS:
+        if Path(source).exists():
+            command.extend(("--ro-bind", source, target))
+    for name in _SYNTHETIC_ETC_FILES:
+        source = paths.sandbox_etc / name
+        if not source.is_file() or source.is_symlink():
+            raise GraderInfrastructureError("synthetic sandbox etc file is unavailable")
+        command.extend(("--ro-bind", str(source), f"/etc/{name}"))
+
+    environment = (("PATH", f"{paths.venv / 'bin'}:/usr/bin:/bin"),) + _FIXED_ENVIRONMENT
+    for name, value in environment:
+        command.extend(("--setenv", name, value))
+    command.extend(("--chdir", "/tmp/work", str(spec.grader_python.resolve()), "-I", "-B", RUNNER_GUEST_PATH))
+    cli_limits = (
+        ("--cpu-soft-seconds", limits.cpu_soft_seconds),
+        ("--cpu-hard-seconds", limits.cpu_hard_seconds),
+        ("--address-space-bytes", limits.address_space_bytes),
+        ("--data-bytes", limits.data_bytes),
+        ("--stack-bytes", limits.stack_bytes),
+        ("--file-bytes", limits.file_bytes),
+        ("--open-files", limits.open_files),
+        ("--processes", baseline),
+    )
+    for flag, value in cli_limits:
+        command.extend((flag, str(value)))
+    return tuple(command)
+
+
+@contextlib.contextmanager
+def _exclusive_grader_lock() -> Iterator[None]:
+    """Hold the secure per-real-UID launch lock across a complete grade."""
+
+    uid = os.getuid()
+    path = Path(LOCK_PATH_TEMPLATE.format(uid=uid))
+    flags = os.O_CREAT | os.O_CLOEXEC | os.O_NOFOLLOW
+    try:
+        fd = os.open(path, flags, 0o600)
+    except OSError as exc:
+        raise GraderInfrastructureError("grader lock unavailable") from exc
+    try:
+        metadata = os.fstat(fd)
+        if (
+            not stat.S_ISREG(metadata.st_mode)
+            or metadata.st_nlink != 1
+            or metadata.st_uid != uid
+            or stat.S_IMODE(metadata.st_mode) != 0o600
+        ):
+            raise GraderInfrastructureError("grader lock has unsafe metadata")
+        try:
+            fcntl.flock(fd, fcntl.LOCK_EX)
+        except OSError as exc:
+            raise GraderInfrastructureError("grader lock acquisition failed") from exc
+        yield
+    finally:
+        try:
+            os.close(fd)
+        except OSError:
+            pass
+
+
+def _proc_parent_map() -> dict[int, int]:
+    """Read a best-effort host-visible PID parent map."""
+
+    result: dict[int, int] = {}
+    try:
+        entries = tuple(Path("/proc").iterdir())
+    except OSError:
+        return result
+    for entry in entries:
+        if not entry.name.isdecimal():
+            continue
+        try:
+            raw = (entry / "stat").read_text(encoding="ascii")
+            tail = raw.rsplit(")", 1)[1].split()
+            if len(tail) >= 2:
+                result[int(entry.name)] = int(tail[1])
+        except (OSError, UnicodeError, ValueError, IndexError):
+            continue
+    return result
+
+
+def _descendant_pids(root_pid: int) -> set[int]:
+    parents = _proc_parent_map()
+    descendants: set[int] = set()
+    frontier = [root_pid]
+    while frontier:
+        parent = frontier.pop()
+        children = [pid for pid, ppid in parents.items() if ppid == parent and pid not in descendants]
+        descendants.update(children)
+        frontier.extend(children)
+    return descendants
+
+
+def _rss_bytes(pid: int) -> int:
+    try:
+        for line in (Path("/proc") / str(pid) / "status").read_text(encoding="ascii").splitlines():
+            if line.startswith("VmRSS:"):
+                fields = line.split()
+                if len(fields) >= 2 and fields[1].isdecimal():
+                    return int(fields[1]) * 1024
+    except (OSError, UnicodeError, ValueError):
+        pass
+    return 0
+
+
+def _sample_process_tree(root_pid: int) -> tuple[set[int], int]:
+    descendants = _descendant_pids(root_pid)
+    observed = descendants | {root_pid}
+    return descendants, sum(_rss_bytes(pid) for pid in observed)
+
+
+def _terminate_and_reap(process: subprocess.Popen[bytes], recorded: set[int], timeout: float) -> None:
+    """Kill only the outer bwrap PID and require its recorded tree to vanish."""
+
+    try:
+        if process.poll() is None:
+            process.kill()
+    except (OSError, ProcessLookupError) as exc:
+        raise GraderInfrastructureError("sandbox termination failed") from exc
+    deadline = time.monotonic() + timeout
+    while True:
+        live = {pid for pid in recorded if Path(f"/proc/{pid}").exists()}
+        live.update(_descendant_pids(process.pid))
+        if process.poll() is not None and not live:
+            return
+        if time.monotonic() >= deadline:
+            raise GraderInfrastructureError("sandbox descendants did not exit")
+        time.sleep(min(DESCENDANT_SAMPLE_SECONDS, max(0.0, deadline - time.monotonic())))
+
+
+def _run_bounded_supervisor(
+    command: Sequence[str],
+    input_bytes: bytes,
+    key: bytes,
+    limits: GraderSandboxLimits,
+) -> GraderNativeResult:
+    """Run bwrap with one bounded nonblocking selector loop.
+
+    This helper intentionally accepts an already encoded BCBI byte string and
+    a per-run key.  Attestation, canonical request construction and public
+    production wiring are added only in the following batch.
+    """
+
+    if type(input_bytes) is not bytes or len(input_bytes) > limits.stdin_bytes:
+        raise GraderInfrastructureError("grader input exceeds its size limit")
+    try:
+        process = subprocess.Popen(
+            tuple(command),
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            bufsize=0,
+            close_fds=True,
+            pass_fds=(),
+            start_new_session=True,
+        )
+    except (OSError, ValueError) as exc:
+        raise GraderInfrastructureError("sandbox launch failed") from exc
+    stdin = process.stdin
+    stdout = process.stdout
+    stderr = process.stderr
+    if stdin is None or stdout is None or stderr is None:
+        try:
+            process.kill()
+        except OSError:
+            pass
+        raise GraderInfrastructureError("sandbox pipes unavailable")
+
+    parser = AuthenticatedOutputParser(key)
+    selector = selectors.DefaultSelector()
+    output = bytearray()
+    diagnostics = bytearray()
+    recorded_descendants: set[int] = set()
+    started = False
+    terminal = False
+    enforced: LimitKind | None = None
+    input_offset = 0
+    stdin_open = bool(input_bytes)
+    now = time.monotonic()
+    deadline = now + limits.startup_seconds
+    next_sample = now
+    try:
+        for stream, events, name in (
+            (stdout, selectors.EVENT_READ, "stdout"),
+            (stderr, selectors.EVENT_READ, "stderr"),
+        ):
+            os.set_blocking(stream.fileno(), False)
+            selector.register(stream, events, name)
+        os.set_blocking(stdin.fileno(), False)
+        if stdin_open:
+            selector.register(stdin, selectors.EVENT_WRITE, "stdin")
+        else:
+            stdin.close()
+            stdin_open = False
+
+        while True:
+            now = time.monotonic()
+            if now >= deadline:
+                if not started:
+                    raise GraderInfrastructureError("grader startup timed out")
+                if terminal:
+                    raise GraderInfrastructureError("grader teardown timed out")
+                enforced = LimitKind.WALL
+            if enforced is None and now >= next_sample:
+                descendants, rss = _sample_process_tree(process.pid)
+                recorded_descendants.update(descendants)
+                if started and not terminal:
+                    if len(descendants) >= limits.process_headroom:
+                        enforced = LimitKind.PROCESSES
+                    elif rss >= limits.aggregate_rss_bytes:
+                        enforced = LimitKind.MEMORY
+                next_sample = now + DESCENDANT_SAMPLE_SECONDS
+            if enforced is not None:
+                _terminate_and_reap(process, recorded_descendants, limits.teardown_seconds)
+                if not started:
+                    raise GraderInfrastructureError("sandbox limit before grader start")
+                return GraderNativeResult(None, enforced)
+
+            timeout = max(0.0, min(deadline - now, max(0.0, next_sample - now)))
+            events = selector.select(timeout)
+            for selected_key, mask in events:
+                stream_name = selected_key.data
+                stream = selected_key.fileobj
+                if stream_name == "stdin" and mask & selectors.EVENT_WRITE:
+                    try:
+                        written = os.write(stream.fileno(), input_bytes[input_offset:])
+                    except (BlockingIOError, InterruptedError):
+                        continue
+                    except BrokenPipeError:
+                        selector.unregister(stream)
+                        stream.close()
+                        stdin_open = False
+                        continue
+                    if written <= 0:
+                        raise GraderInfrastructureError("grader input write failed")
+                    input_offset += written
+                    if input_offset >= len(input_bytes):
+                        selector.unregister(stream)
+                        stream.close()
+                        stdin_open = False
+                elif stream_name in ("stdout", "stderr") and mask & selectors.EVENT_READ:
+                    try:
+                        chunk = os.read(stream.fileno(), 64 * 1024)
+                    except (BlockingIOError, InterruptedError):
+                        continue
+                    if not chunk:
+                        selector.unregister(stream)
+                        stream.close()
+                        continue
+                    if stream_name == "stdout":
+                        if len(output) + len(chunk) > limits.protocol_bytes:
+                            raise GraderInfrastructureError("grader protocol exceeds its size limit")
+                        output.extend(chunk)
+                        try:
+                            frames = parser.feed(chunk)
+                        except ProtocolError as exc:
+                            raise GraderInfrastructureError("invalid grader protocol") from exc
+                        for frame in frames:
+                            if frame.frame_type is FrameType.START:
+                                if started:
+                                    raise GraderInfrastructureError("duplicate grader start")
+                                started = True
+                                deadline = time.monotonic() + limits.candidate_wall_seconds
+                            elif frame.frame_type in (FrameType.RESULT, FrameType.ERROR):
+                                terminal = True
+                                deadline = time.monotonic() + limits.teardown_seconds
+                    else:
+                        if len(diagnostics) + len(chunk) > limits.diagnostic_bytes:
+                            raise GraderInfrastructureError("grader diagnostics exceed its size limit")
+                        diagnostics.extend(chunk)
+
+            if process.poll() is not None and not selector.get_map():
+                break
+            # A process that closed stdout/stderr but left stdin registered is
+            # not allowed to keep the host loop alive forever.
+            if process.poll() is not None and stdin_open:
+                selector.unregister(stdin)
+                stdin.close()
+                stdin_open = False
+            if process.poll() is not None and not any(item.data != "stdin" for item in selector.get_map().values()):
+                break
+        try:
+            parser.finish()
+        except ProtocolError as exc:
+            raise GraderInfrastructureError("invalid grader protocol") from exc
+        if process.returncode != 0:
+            raise GraderInfrastructureError("trusted grader exited unexpectedly")
+        return parse_grader_output(bytes(output), key)
+    except GraderInfrastructureError:
+        _terminate_and_reap(process, recorded_descendants, limits.teardown_seconds)
+        raise
+    except (OSError, ValueError) as exc:
+        _terminate_and_reap(process, recorded_descendants, limits.teardown_seconds)
+        raise GraderInfrastructureError("sandbox I/O failed") from exc
+    finally:
+        selector.close()
+        for stream in (stdin, stdout, stderr):
+            try:
+                stream.close()
+            except OSError:
+                pass
+
+
 def parse_grader_output(data: bytes, key: bytes) -> GraderNativeResult:
     """Authenticate a complete stream and map its terminal outcome.
 
@@ -164,6 +703,25 @@ def parse_grader_output(data: bytes, key: bytes) -> GraderNativeResult:
     raise GraderInfrastructureError("grader result has no native outcome")
 
 
+def preflight_bigcodebench_sandbox(spec: GraderSandboxSpec) -> GraderSandboxPreflight:
+    """Fail closed until manifest, identity and namespace probes are bound."""
+
+    del spec
+    raise NotImplementedError("BigCodeBench sandbox attestation is not implemented in this batch")
+
+
+def run_bigcodebench_sandbox(
+    request: BigCodeBenchGradeRequest,
+    *,
+    spec: GraderSandboxSpec,
+    preflight: GraderSandboxPreflight,
+) -> GraderNativeResult:
+    """Fail closed until the attested public launch seam is implemented."""
+
+    del request, spec, preflight
+    raise NotImplementedError("BigCodeBench sandbox launch is not implemented in this batch")
+
+
 __all__ = [
     "BigCodeBenchGradeRequest",
     "GraderInfrastructureError",
@@ -174,6 +732,9 @@ __all__ = [
     "LimitKind",
     "NativeSignal",
     "NativeStatus",
+    "POLICY_REVISION",
     "PRODUCTION_GRADER_LIMITS",
+    "preflight_bigcodebench_sandbox",
     "parse_grader_output",
+    "run_bigcodebench_sandbox",
 ]

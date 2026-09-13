@@ -9,7 +9,9 @@ import hashlib
 import hmac
 import json
 import os
+import stat
 import sys
+import tempfile
 import types
 import unittest
 from collections.abc import Callable
@@ -17,6 +19,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 import eval_harness.bigcodebench_runner as runner_module
+import eval_harness.grader_sandbox as sandbox_module
 from eval_harness.bigcodebench_runner import (
     MAX_INPUT_FRAME_BYTES,
     MAX_OUTPUT_BYTES,
@@ -41,6 +44,7 @@ from eval_harness.bigcodebench_runner import (
     parse_authenticated_output,
 )
 from eval_harness.grader_sandbox import (
+    GraderInfrastructureError,
     PRODUCTION_GRADER_LIMITS,
     GraderSandboxLimits,
     GraderSandboxPreflight,
@@ -72,6 +76,86 @@ def frame_with_body(key: bytes, sequence: int, frame_type: FrameType, body: byte
 
 
 class TestBigCodeBenchRunner(unittest.TestCase):
+    def _sandbox_fixture(self, root: Path) -> GraderSandboxSpec:
+        resource = root / "resource"
+        venv = root / "venv"
+        base = root / "base"
+        directories = (resource / "vendor", resource / "nltk_data", resource / "sandbox_etc", venv / "bin", base / "bin")
+        for directory in directories:
+            directory.mkdir(parents=True, exist_ok=True)
+        for name in ("hosts", "nsswitch.conf", "resolv.conf", "passwd", "group"):
+            (resource / "sandbox_etc" / name).write_text("fixed\n", encoding="utf-8")
+        (venv / "pyvenv.cfg").write_text(f"home = {base / 'bin'}\n", encoding="utf-8")
+        python = venv / "bin" / "python"
+        bwrap = root / "bwrap"
+        python.write_text("python\n", encoding="utf-8")
+        bwrap.write_text("bwrap\n", encoding="utf-8")
+        python.chmod(0o755)
+        bwrap.chmod(0o755)
+        return GraderSandboxSpec(resource, bwrap, python)
+
+    def test_bwrap_policy_is_explicit_read_only_and_credential_free(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            spec = self._sandbox_fixture(Path(temporary))
+            command = sandbox_module._build_bwrap_command(spec, process_limit=123)
+        self.assertEqual(command[0], str(spec.bwrap_path))
+        self.assertIn("--unshare-user", command)
+        self.assertIn("--unshare-ipc", command)
+        self.assertIn("--unshare-pid", command)
+        self.assertIn("--unshare-net", command)
+        self.assertIn("--unshare-uts", command)
+        self.assertIn("--disable-userns", command)
+        self.assertIn("--cap-drop", command)
+        self.assertIn("--clearenv", command)
+        self.assertIn("--new-session", command)
+        self.assertIn("--die-with-parent", command)
+        ro_binds = tuple(
+            tuple(command[index : index + 3]) for index, value in enumerate(command) if value == "--ro-bind"
+        )
+        self.assertIn(("--ro-bind", "/usr", "/usr"), ro_binds)
+        self.assertNotIn("--unshare-all", command)
+        self.assertNotIn("--share-net", command)
+        self.assertNotIn("--not-a-security-boundary", command)
+        self.assertIn("--setenv", command)
+        self.assertNotIn("PYTHONPATH", command)
+        self.assertEqual(command[command.index("--processes") + 1], "123")
+        self.assertEqual(command[-6:], ("--file-bytes", "67108864", "--open-files", "256", "--processes", "123"))
+
+    def test_policy_rejects_mounts_under_forbidden_untrusted_root(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            spec = self._sandbox_fixture(root)
+            forbidden = root / "venv"
+            unsafe = GraderSandboxSpec(
+                spec.resource_dir,
+                spec.bwrap_path,
+                spec.grader_python,
+                forbidden_roots=(forbidden,),
+            )
+            with self.assertRaisesRegex(GraderInfrastructureError, "untrusted root"):
+                sandbox_module._build_bwrap_command(unsafe, process_limit=1)
+
+    def test_secure_uid_lock_requires_private_single_link_file(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            lock_template = str(Path(temporary) / "lock-{uid}")
+            with patch.object(sandbox_module, "LOCK_PATH_TEMPLATE", lock_template):
+                with sandbox_module._exclusive_grader_lock():
+                    lock_path = Path(lock_template.format(uid=os.getuid()))
+                    mode = stat.S_IMODE(lock_path.stat().st_mode)
+                    self.assertEqual(mode, 0o600)
+                lock_path.chmod(0o644)
+                with self.assertRaisesRegex(GraderInfrastructureError, "unsafe metadata"):
+                    with sandbox_module._exclusive_grader_lock():
+                        pass
+
+    def test_supervisor_rejects_oversized_input_before_launch(self) -> None:
+        with patch.object(sandbox_module.subprocess, "Popen") as popen:
+            with self.assertRaisesRegex(GraderInfrastructureError, "input exceeds"):
+                sandbox_module._run_bounded_supervisor(
+                    ("bwrap",), b"x" * (8 * 1024**2 + 1), KEY, GraderSandboxLimits()
+                )
+        popen.assert_not_called()
+
     def test_public_types_are_frozen_and_have_contract_defaults(self) -> None:
         limits = GraderSandboxLimits()
         self.assertEqual(limits, PRODUCTION_GRADER_LIMITS)
