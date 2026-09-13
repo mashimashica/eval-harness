@@ -5,15 +5,13 @@ SPDX-License-Identifier: Apache-2.0
 
 # PR04 dependency-lock research evidence
 
-Status: **research checkpoint; neither lock is accepted for production**.
+Status: **research checkpoint; no lock is accepted for production**.
 
 These files preserve the exact inputs, hash-locked resolutions, and decisive
 `pip-audit` JSON used while designing the BigCodeBench grader boundary. The
-resolution target was CPython 3.10.21 on
-`x86_64-unknown-linux-gnu`. Resolution ran with `uv 0.12.11`; the lock-file
-comments state that actual tool version. PR04's repository gate remains pinned
-to `uv 0.11.29`, so an accepted lock must be regenerated and compared with that
-exact binary before implementation.
+first resolution target was CPython 3.10.21 on
+`x86_64-unknown-linux-gnu`. The newer candidate explicitly targets CPython
+3.11.16 and was regenerated with the repository-pinned `uv 0.11.29`.
 
 ## Files
 
@@ -26,6 +24,15 @@ exact binary before implementation.
 | `bigcodebench-v0.2.5-candidate-py310.lock` | Hash-complete first-pass candidate resolution | Rejected by audit |
 | `bigcodebench-v0.2.5-candidate-py310-pip-audit.json` | Full audit result for the candidate resolution | Nine alias-inclusive findings across three distributions |
 | `bigcodebench-0.2.5-pypi.json` | PyPI project/release metadata captured for package provenance | Evidence |
+| `bigcodebench-v0.2.5-py311-security-overrides.txt` | Explicit Python 3.11.16 compatibility/security overrides | Research input |
+| `bigcodebench-v0.2.5-candidate-py311.lock` | uv 0.11.29, 160-distribution hash-complete candidate | Rejected by NLTK audit |
+| `bigcodebench-v0.2.5-candidate-py311-pip-audit.json` | Full strict aliased audit | One NLTK finding, no fix |
+| `bigcodebench-v0.2.5-candidate-py311-sync-dryrun.txt` | Exact uv 0.11.29 hash-required sync dry run | Resolves all 160 |
+| `nltk-3.10.3-pypi.json` | Official PyPI release/artifact metadata | Provenance |
+| `nltk-3.10.3-ghsa-8mgp-minimal.patch` | Narrow source-reviewed advisory backport | Option only |
+| `test_nltk_ghsa_8mgp_backport.py` | Negative-control plus all-advisory-API regression | 9/9 patched; 8 failures pristine |
+| `nltk-backport-validation.md` | Commands, deterministic wheel hash and truthful audit limitation | Evidence |
+| `nltk-data-index-550b6625.xml` | Exact official data index at commit `550b6625...` | Data-lock input |
 
 The audit invocation was equivalent to:
 
@@ -45,11 +52,11 @@ candidate leaves these material findings:
 | `nltk` | 3.10.3 | 1 | none |
 
 `cryptography` and `keras` can be investigated in an explicit CPython 3.11.16
-grader environment. They do not justify an interpreter fallback. NLTK remains
-a hard acceptance blocker: the official advisory marks versions through
-3.10.3 affected and lists no patched release. The open upstream remediation PR
-is broad (49 files and 5,170 additions at the observed head), so PR04 must not
-wholesale-backport it or claim that a local version string clears the audit.
+grader environment. That candidate clears their findings and leaves only NLTK.
+NLTK remains a hard acceptance blocker: the official advisory marks versions
+through 3.10.3 affected and lists no patched release. The preserved narrow
+backport is testable and reproducibly buildable, but its truthful local version
+cannot be attested by ordinary strict pip-audit. PR04 must not claim otherwise.
 
 ## Primary provenance
 
@@ -67,6 +74,15 @@ wholesale-backport it or claim that a local version string clears the audit.
 * Draft NLTK 3.10.4 release PR 3826, observed head
   `37da42aaad1e0a07699ddc4de1f7c2a8773f296a`:
   <https://github.com/nltk/nltk/pull/3826>
+* NLTK tag `3.10.3`, commit
+  `303f6e2ba8e4548a5f54fd65d86bb5c9a949f1db`:
+  <https://github.com/nltk/nltk/tree/303f6e2ba8e4548a5f54fd65d86bb5c9a949f1db>
+* Official merged minimal-fix commits:
+  <https://github.com/nltk/nltk/commit/a44a7af69bca87e92d9c4a701fcbbe4512e8d450>,
+  <https://github.com/nltk/nltk/commit/2a92b71827d754ae8920261e7ed0c4bb283ab2d7>,
+  <https://github.com/nltk/nltk/commit/cbc98458b43de5f792f0382583c16df39e5c5117>.
+* NLTK data index commit `550b6625bcef1f2abff2ff770a5a0d272c9c6b2a`:
+  <https://github.com/nltk/nltk_data/tree/550b6625bcef1f2abff2ff770a5a0d272c9c6b2a>.
 
 The JSON reports retain duplicate aliases because `--aliases` was deliberate;
 the counts above are report-entry counts, not unique root-cause counts.

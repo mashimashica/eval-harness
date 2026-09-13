@@ -48,6 +48,41 @@ Observed upstream execution behavior:
 
 Conclusion: pinning and calling `untrusted_check` preserves native metric semantics, but it cannot be credited as the host-security boundary.
 
+The accepted source-selection design vendors only the native metric's actual import closure rather than installing the wheel's unrelated generation/provider dependencies. Exact content evidence is:
+
+| Path | Git blob | SHA-256 of content |
+|---|---|---|
+| `bigcodebench/eval/__init__.py` | `3596f53ddbdf92455805890aba9d75e4e10a5e6f` | `d5fd553559ac1b76659ebc32ae30e3e779449ecd31c5201f2301319ceeee01fe` |
+| `bigcodebench/eval/utils.py` | `6d34de9971902dcf499ff5fb649e4abff3e7cd95` | `9061f74fe937c4eb7a1b2bc423f7acab547ae01804d5e25933e2aa8a3cc2d685` |
+| `bigcodebench/eval/_special_oracle.py` | `4311cc9b30e5f0d4abd742e0c632daf535be69e7` | `0cf930163987d30f455547aec6cbc500a154bc58a2eb109aa247ef4e0962448b` |
+| `LICENSE` | `27115b77b9e6c6c80f9b6987d8734fc8d532093c` | `a858540b8dfd0c74db6953edaae85bde0b671643a7e2fb04a065f4dfd25fc28c` |
+
+`__init__.py` imports only the two listed sibling modules plus NumPy and the standard library. Source parity and import-isolation tests are required so an installed `bigcodebench` cannot shadow or widen this closure.
+
+## Python 3.11.16 dependency candidate
+
+The explicit CPython 3.11.16 candidate was compiled for `x86_64-unknown-linux-gnu` with the repository-pinned uv 0.11.29. It resolves 160 exact, hash-complete distributions. `uv pip sync --require-hashes --dry-run` resolves all 160 and proposes no unpinned input. Lock SHA-256 is `8d62cac6880124652638ff8716532d46d459aaf5cbe6e8c36b506a4d1e4de9bd`.
+
+Strict aliased `pip-audit` 2.10.1 reports exactly one finding: NLTK 3.10.3, `PYSEC-2026-3740`, aliases `CVE-2026-81726` and `GHSA-8mgp-746c-j5xp`, with no fix version. Audit JSON SHA-256 is `3d18536f4070cd1eb90179203e84bf1d147c755bf44d577fddeb8de41532310a`. This candidate therefore remains rejected even though it clears every published finding observed in the Python 3.10 candidates.
+
+uv 0.11.29 can compile the lock when given an existing 3.11.16 interpreter, but its embedded managed-Python catalog returns `No download found` for that version. A newer uv installed the research interpreter. Production setup needs an independently pinned interpreter artifact/source route; silently using newer uv would violate the tool lock.
+
+## NLTK advisory and bounded backport evidence
+
+Official advisory [`GHSA-8mgp-746c-j5xp`](https://github.com/nltk/nltk/security/advisories/GHSA-8mgp-746c-j5xp) affects NLTK through 3.10.3 and lists no patched release. The named APIs are `TransitionParser.train`/`parse`, `AveragedPerceptron.save`/`load`, `PerceptronTagger.save_to_json`, and `save_maxent_params`; each bypasses `pathsec` in the published source.
+
+The evidence directory contains a minimal patch from exact NLTK tag commit `303f6e2ba8e4548a5f54fd65d86bb5c9a949f1db`, focused regression, PyPI metadata, and deterministic-build record. The patch derives from three fixes already merged to official NLTK `develop` (`a44a7af69bca87e92d9c4a701fcbbe4512e8d450`, `2a92b71827d754ae8920261e7ed0c4bb283ab2d7`, `cbc98458b43de5f792f0382583c16df39e5c5117`), not the broad open PR 3753.
+
+The nine-test regression passes 9/9 against patched source and fails 8/9 against pristine 3.10.3; the only pristine pass is the negative control. Two clean builds with fixed `PYTHONHASHSEED=0` and `SOURCE_DATE_EPOCH=1786571315` produced byte-identical 1,799,409-byte wheels, SHA-256 `1a2006cfdb05170246aecfe84d24ffa7d659fc67055d9ef8e297d1b5715605a0`. The truthful version is `3.10.3+evalharness.ghsa8mgp1`, license Apache-2.0.
+
+Standard strict audit cannot attest that local patch: hashed direct-URL audit rejects the URL as not pinnable to a version, and installed-path audit exits 1 because the local version is absent from PyPI. This is decisive: the backport is a reviewable remediation option, not a clean ordinary audit. A clean gate needs an official fixed release; otherwise root must explicitly approve an independent patch-attestation policy while retaining the original finding. No ignore, rename or version spoof is valid.
+
+## Dataset and NLTK-data evidence
+
+Official dataset commit `b74c0d0bf70d2c0bc459be537895cca163007f1a` supplies `data/v0.1.4-00000-of-00001.parquet`, SHA-256 `d9a4965821c9507ebdfb551c288656b2d5fe553234f5183044333ca8a4018267`, 2,362,110 bytes and 1,140 rows. Twenty-six rows declare NLTK. None contains the six advisory API names, but candidate code is arbitrary and can call them, so task occurrence cannot remove the dependency finding.
+
+Nine dataset rows call `nltk.download()`. Static task review plus runtime APIs require exactly these prepared resources: `stopwords`, `punkt`, `punkt_tab`, `averaged_perceptron_tagger`, `averaged_perceptron_tagger_eng`, `vader_lexicon`, and `words`. Their official metadata is pinned to `nltk/nltk_data` gh-pages commit `550b6625bcef1f2abff2ff770a5a0d272c9c6b2a`; exact index SHA-256 is `97dce5e72320cd9850b7c20130196006710c18f9c03134c822a37da330198bf6`. The full index is preserved for package hashes/licenses. Grade-time assets must be prepared and verified before the network namespace is created, then mounted read-only with a local index.
+
 ## Bubblewrap primary source
 
 Official repository: [containers/bubblewrap](https://github.com/containers/bubblewrap).
@@ -79,11 +114,12 @@ The boundary aims to contain host effects and bound denial of service. It does n
 
 ## Unvalidated items at this checkpoint
 
-- The hash-locked, solver-valid Python 3.10.21 dependency set is being produced elsewhere and has not been reviewed in this design checkpoint.
-- The minimal runtime mount list must be exercised against that completed lock; imports do not justify mounting home/repository trees.
-- Upstream compatibility with forced multiprocessing `spawn` and candidate FD-level output redirection needs a real test.
+- The Python 3.11.16 lock is solver-valid and its dry-run/audit are preserved, but it is rejected until the NLTK gate is resolved and a full install/inventory is tested.
+- CPython 3.11.16 needs a pinned artifact/source path independent of uv 0.11.29's unavailable managed download.
+- The exact runtime mount list and seven NLTK assets need all-1,140 canonical-solution validation; imports do not justify mounting home/repository trees.
+- Upstream compatibility with forced multiprocessing `spawn`, `PR_SET_DUMPABLE=0`, descriptor redirection and authenticated frames needs a real same-UID hostile test.
 - GitHub-hosted `ubuntu-24.04` has not yet run the exact mandatory namespace/probe command. PR04 acceptance requires that green execution.
-- Concrete resource numbers must be reconciled with upstream time-limit semantics and CI concurrency before Luna codes them.
+- The proposed exact limits must pass the full canonical corpus and hostile resource fixtures. `RLIMIT_NPROC`/RSS polling limitations remain explicit.
 
 ## Search/retrieval note
 

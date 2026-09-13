@@ -5,7 +5,7 @@ SPDX-License-Identifier: Apache-2.0
 
 # PR04 BigCodeBench grader boundary implementation contract
 
-**State:** DRAFT — design checkpoint; implementation and CI boundary proof are not yet validated.
+**State:** DRAFT — implementation and hosted-CI proof remain unvalidated. The NLTK audit gate is unresolved.
 
 **Review order:** Sol design/security review, then Luna implementation.
 
@@ -16,9 +16,10 @@ Implement a fail-closed host-security boundary for BigCodeBench native grading. 
 - Implementation base: `d5ce0c10162cad788a17cb90f34b8f60574e7f75` (tree `354943ebbb8ea81a30523bfdc12baf26771853b5`).
 - Control/checkpoint base: `8518f25d107d9043df449a9198fbb41b00ba1c22`.
 - Benchmark dataset revision remains `v0.1.4` and is recorded separately from the grader package.
-- Grader package is exactly BigCodeBench `v0.2.5`, tag commit `9bd90fedee89d7dc3676838c75d9642cb0cd0702`.
+- Native metric source is exactly BigCodeBench `v0.2.5`, tag commit `9bd90fedee89d7dc3676838c75d9642cb0cd0702`.
 - One supported sandbox: bubblewrap `v0.12.0`, tag commit `2a76602a8c71f36c1527cf9fc3417d9149822e0c`, source asset SHA-256 `9760d007363e3abba7c747489910f9f82d9fca53ba3bd3282e396fa3c97a3314`.
-- Supported validation platform: Linux x86-64 on a fixed `ubuntu-24.04` GitHub-hosted runner. Runtime setup and every grader launch run as the ordinary runner user. Unsupported platforms or blocked user namespaces fail preflight; there is no fallback.
+- Grader interpreter is exactly CPython `3.11.16` on Linux x86-64. This is an explicit policy revision, never a fallback.
+- Supported validation platform is a fixed `ubuntu-24.04` GitHub-hosted job. Every grader launch runs as the ordinary runner user. Unsupported platforms or blocked namespaces fail preflight; there is no fallback.
 
 ## Allowed implementation paths
 
@@ -31,6 +32,10 @@ Luna may change only these paths. A newly discovered need outside the list retur
 - `resources_servers/bigcodebench/setup_bcb_venv.py`
 - `resources_servers/bigcodebench/requirements-grader.in` (new)
 - `resources_servers/bigcodebench/requirements-grader.lock` (new, full hashes)
+- `resources_servers/bigcodebench/grader-manifest.json` (new)
+- `resources_servers/bigcodebench/nltk-data-manifest.json` and pinned local `index.xml` (new)
+- `resources_servers/bigcodebench/vendor/bigcodebench/{LICENSE,eval/__init__.py,eval/utils.py,eval/_special_oracle.py}` (new, exact upstream bytes)
+- `resources_servers/bigcodebench/sandbox_etc/{hosts,nsswitch.conf,resolv.conf,passwd,group}` (new, fixed non-secret inputs)
 - `resources_servers/bigcodebench/configs/bigcodebench.yaml`
 - `resources_servers/bigcodebench/README.md`
 - `eval_harness/benchmarks/registry.yaml` only for truthful grader/sandbox provenance wording
@@ -47,20 +52,39 @@ Do not edit central migration state, unrelated evaluators/executors, coverage/au
 `eval_harness/grader_sandbox.py` owns one immutable policy and exposes the following typed boundary. Names may change only with Sol approval; behavior may not.
 
 ```python
+class NativeStatus(StrEnum):
+    PASS = "pass"
+    FAIL = "fail"
+    TIMEOUT = "timeout"
+
+class LimitKind(StrEnum):
+    WALL = "wall"
+    CPU = "cpu"
+    MEMORY = "memory"
+    PROCESSES = "processes"
+    FILE_SIZE = "file_size"
+    OPEN_FILES = "open_files"
+    TMP = "tmp"
+
 @dataclass(frozen=True)
 class GraderSandboxLimits:
-    wall_seconds: float
-    cpu_seconds: int
-    address_space_bytes: int
-    data_bytes: int
-    stack_bytes: int
-    file_bytes: int
-    open_files: int
-    processes: int
-    tmp_bytes: int
-    stdin_bytes: int
-    stdout_bytes: int
-    stderr_bytes: int
+    startup_seconds: float = 20.0
+    candidate_wall_seconds: float = 250.0
+    teardown_seconds: float = 5.0
+    cpu_soft_seconds: int = 245
+    cpu_hard_seconds: int = 250
+    address_space_bytes: int = 8 * 1024**3
+    data_bytes: int = 6 * 1024**3
+    aggregate_rss_bytes: int = 6 * 1024**3
+    stack_bytes: int = 10 * 1024**2
+    file_bytes: int = 64 * 1024**2
+    open_files: int = 256
+    process_headroom: int = 32
+    tmp_bytes: int = 512 * 1024**2
+    shm_bytes: int = 64 * 1024**2
+    stdin_bytes: int = 8 * 1024**2
+    protocol_bytes: int = 16 * 1024
+    diagnostic_bytes: int = 32 * 1024
 
 @dataclass(frozen=True)
 class GraderSandboxPreflight:
@@ -70,40 +94,54 @@ class GraderSandboxPreflight:
     details: tuple[str, ...]
 
 @dataclass(frozen=True)
-class GraderSandboxResult:
-    returncode: int
-    stdout: bytes
-    stderr: bytes
-    wall_timed_out: bool
-    output_limited: bool
+class GraderNativeResult:
+    status: NativeStatus
 
 class GraderInfrastructureError(RuntimeError):
     """Stable, secret-free grader boundary failure."""
 
 def preflight_bigcodebench_sandbox(...) -> GraderSandboxPreflight: ...
-def run_bigcodebench_sandbox(payload: bytes, ...) -> GraderSandboxResult: ...
+def run_bigcodebench_sandbox(payload: bytes, ...) -> GraderNativeResult: ...
 ```
 
 The evaluator and resource server must call the same implementation. No direct `python bcb_runner.py` path may remain. `app.py` must not preserve an unsafe legacy route.
 
-Input is one UTF-8 JSON object with exactly `schema_version`, `code`, `test_code`, `entry_point`, `task_id`, `max_as_limit`, `max_data_limit`, `max_stack_limit`, `min_time_limit`, and `gt_time_limit`. Enforce field types, finite numeric ranges, and a configured byte limit before launch. Output is exactly one UTF-8 JSON object with a version, a closed status enum, and bounded, sanitized details. Reject trailing bytes, duplicate keys, NaN/infinity, oversized output, unknown fields/statuses, and nonzero exits unless explicitly mapped to a candidate resource outcome.
+Production limits are constants, not request fields. Public input has exactly `schema_version=1`, `code`, `test_code`, `entry_point`, and `task_id`. Limit the encoded object to 8 MiB, `code` to 2 MiB, `test_code` to 6 MiB, and each identifier to 256 UTF-8 bytes. Reject duplicate/unknown keys, invalid UTF-8, identifier NULs, non-string fields, and trailing input before importing the grader or spawning candidate code.
+
+## Exact native metric source selection
+
+Vendor only the three files imported by `untrusted_check`, byte-for-byte from BigCodeBench `v0.2.5`, plus its MIT license. Do not install the BigCodeBench wheel and its unrelated vLLM/provider/generation stack.
+
+| Upstream path | Git blob | Content SHA-256 |
+|---|---|---|
+| `bigcodebench/eval/__init__.py` | `3596f53ddbdf92455805890aba9d75e4e10a5e6f` | `d5fd553559ac1b76659ebc32ae30e3e779449ecd31c5201f2301319ceeee01fe` |
+| `bigcodebench/eval/utils.py` | `6d34de9971902dcf499ff5fb649e4abff3e7cd95` | `9061f74fe937c4eb7a1b2bc423f7acab547ae01804d5e25933e2aa8a3cc2d685` |
+| `bigcodebench/eval/_special_oracle.py` | `4311cc9b30e5f0d4abd742e0c632daf535be69e7` | `0cf930163987d30f455547aec6cbc500a154bc58a2eb109aa247ef4e0962448b` |
+| `LICENSE` | `27115b77b9e6c6c80f9b6987d8734fc8d532093c` | `a858540b8dfd0c74db6953edaae85bde0b671643a7e2fb04a065f4dfd25fc28c` |
+
+Preflight hashes every file. A source-isolation test makes importing any non-vendored BigCodeBench module fail, while known pass/fail/timeout fixtures prove native parity.
 
 ## Sandbox policy
 
-Every launch is built by one command builder and uses mandatory bubblewrap flags. It must contain explicit `--unshare-user`, `--unshare-ipc`, `--unshare-pid`, `--unshare-net`, `--unshare-uts`, `--disable-userns`, `--clearenv`, `--new-session`, and `--die-with-parent`. It must not contain `--unshare-all`, any `*-try` option, `--share-net`, `--not-a-security-boundary`, a writable host bind, or a D-Bus/agent/container socket.
+Every launch is built by one command builder and uses mandatory bubblewrap flags. It must contain explicit `--unshare-user`, `--unshare-ipc`, `--unshare-pid`, `--unshare-net`, `--unshare-uts`, `--disable-userns`, `--cap-drop ALL`, `--clearenv`, `--new-session`, and `--die-with-parent`. It must not contain `--unshare-all`, any `*-try` option, `--share-net`, `--not-a-security-boundary`, a writable host bind, or a D-Bus/agent/container socket.
 
 Bubblewrap starts from its empty mount-namespace root. Bind read-only only:
 
 - the grader virtual environment at its resolved absolute host path;
 - the virtual environment's resolved base-interpreter prefix at the same absolute path;
-- `bcb_runner.py` at its resolved absolute path;
-- the minimum host runtime trees required by the locked grader (`/usr`, existing `/lib` and `/lib64`, and individually justified certificate/loader files).
+- `bcb_runner.py` at `/opt/bigcodebench/bcb_runner.py`;
+- the exact vendored metric source at `/opt/bigcodebench/vendor`;
+- the hash-verified NLTK asset tree plus local index at `/opt/bigcodebench/nltk_data`;
+- `/usr`, existing `/lib` and `/lib64`, and only `/etc/ld.so.cache`, `/etc/ssl/certs`, `/etc/fonts`, and `/etc/localtime` when present;
+- committed synthetic `/etc/{hosts,nsswitch.conf,resolv.conf,passwd,group}` files, with no host identity or resolver data.
 
-Do not mount the repository root, executor workspace, run directory, home directory, host `/tmp`, `/run`, `/sys`, or arbitrary `/etc`. Add a new `/proc`, a minimal `/dev`, size-capped private tmpfs mounts for `/tmp` and `/dev/shm`, and a private empty home below `/tmp`. The command working directory is that private directory, never the resource directory.
+Do not mount the repository root, executor workspace, run directory, home directory, host `/tmp`, `/run`, `/sys`, arbitrary `/etc`, or source/download caches. Add a new `/proc`, a minimal `/dev`, a 512 MiB private tmpfs at `/tmp`, a 64 MiB private tmpfs at `/dev/shm`, and empty `/tmp/{home,work}`. Work in `/tmp/work`.
 
-Use `--clearenv` and a literal allowlist only: deterministic locale/TZ, `HOME`, `TMPDIR`, `PATH`, `PYTHONNOUSERSITE=1`, `PYTHONDONTWRITEBYTECODE=1`, `PYTHONHASHSEED=0`, cache/config paths below private `/tmp`, and bounded numerical-library thread counts. Do not pass host credentials, proxy variables, cloud variables, `SSH_AUTH_SOCK`, tool tokens, `PYTHONPATH`, or `BIGCODEBENCH_TIMEOUT_PER_TASK`.
+Use `--clearenv` and only literal values: `LANG=C.UTF-8`, `LC_ALL=C.UTF-8`, `TZ=UTC`, `HOME=/tmp/home`, `TMPDIR=/tmp`, venv-only `PATH`, `PYTHONNOUSERSITE=1`, `PYTHONDONTWRITEBYTECODE=1`, `PYTHONHASHSEED=0`, `PYTHONSAFEPATH=1`, `MPLBACKEND=Agg`, `NLTK_DATA=/opt/bigcodebench/nltk_data`, cache/config paths below `/tmp`, `CUDA_VISIBLE_DEVICES=`, and each common numerical-library thread count set to `1`. Do not pass host credentials, proxy variables, cloud variables, `SSH_AUTH_SOCK`, tool tokens, `PYTHONPATH`, or `BIGCODEBENCH_TIMEOUT_PER_TASK`.
 
-A trusted outer launcher applies hard `setrlimit` values before `execve(bwrap, ...)`: CPU, AS, DATA, STACK, FSIZE, NOFILE, NPROC, and CORE=0. It starts a new session, uses a parent wall-clock watchdog, kills the complete process group on timeout/output overflow, and reaps it. Pipe readers enforce bounds while the process runs; `subprocess.run(capture_output=True)` and `asyncio.communicate()` with unbounded buffers are forbidden. The private tmpfs size is an additional aggregate write bound.
+A trusted outer launcher sets `RLIMIT_CPU=(245,250)`, `AS=8 GiB`, `DATA=6 GiB`, `STACK=10 MiB`, `FSIZE=64 MiB`, `NOFILE=256`, `CORE=0`, and `NPROC=(baseline real-UID process count + 32)` before `execve`. Only one grader sandbox may run per real UID, enforced by one cross-process host lock shared by evaluator and resource server; resource-server concurrency is one. Poll descendants every 25 ms and kill at 32 descendants or 6 GiB summed RSS. Bound startup to 20 seconds, candidate phase to 250 seconds, teardown to 5 seconds, input to 8 MiB, authenticated protocol to 16 KiB and diagnostics to 32 KiB. Start a session; on a limit kill the session and bwrap process, then require PID-namespace-init death to remove escaped descendants. Unbounded `capture_output`/`communicate` is forbidden.
+
+`RLIMIT_NPROC` and RSS polling are not cgroups: the former is real-UID scoped and the latter has a sampling race. The single-launch lock, measured baseline/headroom, hard per-process limits, PID namespace and cleanup tests are the explicit rootless composition. If hosted CI cannot demonstrate the process/memory fixtures without host impact, implementation fails; no fallback or stronger aggregate claim is allowed.
 
 The path to bubblewrap is absolute and supplied by trusted configuration. Preflight requires exact version `0.12.0`, refuses a setuid/setgid or mutable executable, and runs the same policy builder used for grading. Runtime never downloads or installs anything.
 
@@ -111,7 +149,7 @@ The path to bubblewrap is absolute and supplied by trusted configuration. Prefli
 
 Preflight runs before benchmark preparation or any executor/model request. It performs all of these checks and returns `ok=False` on the first failure with a stable, secret-free reason:
 
-1. Linux x86-64, absolute bubblewrap path, exact version, acceptable ownership/mode, locked grader manifest, exact Python `3.10.21`, exact BigCodeBench `0.2.5`, `uv pip check`, runner/venv/base-prefix separation from the run and executor roots.
+1. Linux x86-64, absolute bubblewrap path, exact version, acceptable ownership/mode, locked grader manifest, exact Python `3.11.16`, exact vendored hashes, `uv pip check`, and runner/venv/base/vendor/data separation from run and executor roots.
 2. A real sandbox probe through the production command builder. Compare parent/child namespace inode IDs and require different mount, user, PID, network, IPC, and UTS namespaces; require `NoNewPrivs: 1`, zero effective capabilities, nested user namespaces disabled, a private `/proc`, and active configured rlimits.
 3. Put a random dummy secret in the parent environment and require it absent in the child. Put random read/write sentinels outside all mounts and require both open attempts to fail. Require writes to the runner, venv, `/usr`, and base prefix to fail while a bounded `/tmp` write succeeds.
 4. Start parent listeners on loopback and a non-loopback interface when available; require child IPv4/IPv6 connection attempts to fail and require a different network namespace. This is deterministic and does not depend on an external Internet host.
@@ -121,7 +159,16 @@ A local container that blocks user/network namespaces is unsupported and must fa
 
 ## Grader protocol and native outcomes
 
-The upstream checker is a metric implementation, not a security boundary. `bcb_runner.py` must force a multiprocessing mode that does not leak the trusted protocol descriptor into candidate children, redirect candidate stdout/stderr at file-descriptor level to bounded sinks, call the pinned `untrusted_check`, validate its return, and emit one bounded envelope. This behavior needs a real compatibility test with the pinned package. Do not return tracebacks or exception text across the boundary.
+The upstream checker is a metric implementation, not a security boundary. Candidate children share the sandbox UID/PID namespace, so `FD_CLOEXEC` alone is insufficient. The result channel is authenticated and must satisfy this exact sequence:
+
+1. Outer host creates a fresh 32-byte key with `os.getrandom()`. Input is magic `BCBI`, version byte `1`, four-byte big-endian payload length, key, then JSON. The key never appears in argv, environment, files, logs, or persisted results.
+2. At the first instruction in `main`, before reading the key, runner calls `prctl(PR_SET_DUMPABLE, 0)` through a fixed ctypes signature and verifies `PR_GET_DUMPABLE == 0`; failure is infrastructure.
+3. After exact bounded read plus EOF check, duplicate original stdout to one non-inheritable result FD and replace FDs 0, 1 and 2 with `/dev/null` before importing the metric, creating a Manager, or spawning candidate code.
+4. Call `multiprocessing.set_start_method("spawn", force=True)` and assert it. Keep the HMAC key local to runner `main`; never store it in a module global or multiprocessing argument.
+5. Emit authenticated `START` immediately before the native child starts and authenticated `RESULT` only after validating the native return. Each frame is `BCBO`, version `1`, sequence byte, type byte, four-byte body length, HMAC-SHA256 over header+canonical body, then the body. Result JSON contains only `schema_version` and `native_status`; no traceback/test text crosses.
+6. Host requires exactly `START(0)` then `RESULT(1)`, uses `compare_digest`, enforces 16 KiB total and rejects missing/reordered/duplicate/trailing bytes. Authenticated runner error before START is infrastructure. A supervisor limit becomes a candidate resource outcome only after valid START and direct observation that this supervisor enforced that limit; every unattributed signal/exit is infrastructure.
+
+The hostile fixture must show denial for `/proc/<runner-pid>/{fd,environ,mem}` and `process_vm_readv`, scan plausible raw FDs, spawn a grandchild, write forged frames, and kill the runner. Killing/corrupting the runner may deny a result but cannot create authenticated completion. HMAC protects channel authenticity; it does not make the Python Manager/status or native metric resistant to semantic gaming.
 
 The generic runner already persists and re-raises evaluator exceptions. Use that behavior for grader infrastructure failures; do not add `EvaluationStatus.FAILED` in this PR.
 
@@ -140,9 +187,17 @@ Never convert infrastructure failure to reward zero. Never include failed/skippe
 
 ## Dependency and provenance lock
 
-Replace the mutable `bigcodebench>=0.2.5` plus `main/Requirements/requirements-eval.txt` installer and `.installed` sentinel. Commit a solver-valid `requirements-grader.lock` with exact versions and SHA-256 hashes for every wheel/sdist. Install only with pinned uv and require hashes; do not use a resolver-bypass sequence or a runtime URL. The input records BigCodeBench `0.2.5` and the audited, explicit compatibility overrides needed for Python 3.10.21. If the upstream pins cannot form a coherent audited environment, PR04 is blocked; do not silently omit packages or retain the permissive pip install.
+Replace the mutable installer and `.installed` sentinel. Commit a solver-valid `requirements-grader.lock` with exact versions and SHA-256 hashes for every installed distribution. Generate and sync it with uv `0.11.29` for CPython `3.11.16` using `--require-hashes`; runtime never resolves/downloads. The current candidate has 160 distributions and covers every upstream task dependency plus the vendored metric's NumPy dependency, but it is **not acceptable** because strict audit still has one NLTK finding. Vendoring the exact three metric modules is source selection, not permission to omit an installed or task-required package from lock/audit.
 
-The installation manifest is JSON containing the Python full version, platform, lock-file SHA-256, installed-distribution inventory hash, BigCodeBench version/tag commit and inspected source blob SHAs, bubblewrap version/tag commit/source-asset SHA-256, and sandbox policy revision. Preflight recalculates and compares it. Dataset revision is a distinct metadata field.
+Pin NLTK data separately to official `nltk/nltk_data` gh-pages commit `550b6625bcef1f2abff2ff770a5a0d272c9c6b2a`, index SHA-256 `97dce5e72320cd9850b7c20130196006710c18f9c03134c822a37da330198bf6`. Prepare exactly `stopwords`, `punkt`, `punkt_tab`, `averaged_perceptron_tagger`, `averaged_perceptron_tagger_eng`, `vader_lexicon`, and `words` from manifest SHA-256 values and reject extra/missing files. The local index makes dataset `nltk.download()` calls deterministic/offline; grade-time data is read-only.
+
+The installation manifest is JSON containing Python/build provenance, platform, lock SHA-256, installed-distribution inventory hash, all vendored blob/content hashes, NLTK data commit/index/package hashes, bubblewrap version/tag/source SHA-256, and policy revision `bigcodebench-bwrap-v1`. Preflight recalculates and compares it. Dataset revision is separate.
+
+### Unresolved NLTK acceptance gate
+
+Strict `pip-audit` 2.10.1 reports exactly NLTK 3.10.3 `PYSEC-2026-3740`, aliases `CVE-2026-81726` and `GHSA-8mgp-746c-j5xp`, with no fix. The preserved source-reviewed backport and deterministic wheel are a concrete remediation option, but ordinary audit cannot attest its truthful local version and is not clean.
+
+Do not ignore the CVE, spoof a version, rename the package, or claim the backport satisfies the standard gate. Gate A remains red until an official fixed NLTK release produces a clean regenerated lock, or root explicitly revises policy to require separate source/patch/artifact/license/regression attestation while retaining the original audit finding.
 
 ## Required tests and expected results
 
@@ -153,10 +208,10 @@ The real test submits hostile candidate code through the public evaluator or the
 - dummy host env secrets and proxy/token-shaped values are absent;
 - a randomized prohibited file cannot be read, created, renamed, linked, or written, including via absolute symlinks and `/proc` paths;
 - the executor workspace, run directory, repository siblings, host home, and host `/tmp` sentinels are invisible;
-- IPv4, IPv6, DNS, Unix sockets, and parent listeners are unreachable except candidate-created loopback resources inside its own namespace;
-- fork/subprocess storms, memory allocation, descriptor creation, large files, private-tmp exhaustion, infinite loops, and output floods terminate within bounds and leave no descendant;
+- IPv4, IPv6, DNS and parent TCP/Unix listeners are unreachable; a candidate-created Unix socket under private `/tmp` works for native multiprocessing;
+- fork/subprocess storms, memory allocation, descriptor creation, large files, private-tmp exhaustion, infinite loops, and output floods terminate within the exact bounds and leave no descendant;
 - venv/runner/system mounts reject writes and private `/tmp` permits bounded writes;
-- candidate raw FD writes cannot forge or corrupt the outer protocol;
+- candidate raw FD writes, `/proc` reopening, `process_vm_readv`, child/grandchild inheritance and forged frames cannot produce an authenticated result;
 - known pass, known wrong answer, empty output, no-code extraction, candidate timeout/resource limit, and injected grader infrastructure failure produce the exact table above;
 - an intentionally unavailable sandbox fails evaluator preflight before a counting executor/model stub is called.
 
@@ -170,9 +225,9 @@ PR04 is done only after Sol reviews the implementation and CI logs show the real
 
 No model calls, production credentials, external grader service, container daemon socket, runtime network install, fallback sandbox, setuid helper, root runtime, mocked security acceptance, force push, PR merge, or workflow-as-editing-transport.
 
-## Open review items before Luna starts
+## Remaining implementation-time proofs
 
-- Confirm that forcing multiprocessing `spawn` plus descriptor-level redirection preserves BigCodeBench `v0.2.5` results while keeping the protocol descriptor out of candidate descendants.
-- Confirm the minimal read-only runtime mounts against the completed lock; do not broaden to the repository/home when an import fails.
-- Choose concrete numeric defaults from the existing benchmark limits and CI concurrency, then test every one. `RLIMIT_NPROC` is per real UID and therefore an imperfect concurrent aggregate; record that limitation and validate headroom.
-- CI has not yet demonstrated that the current hosted-runner kernel permits every mandatory namespace. That is an explicit acceptance test, not an assumption or a reason to add fallback behavior.
+- Install the 160-package lock, run all 1,140 canonical solutions under CPython 3.11.16 and the exact 8/6 GiB limits, compare to an unsandboxed exact-source reference, and investigate every delta.
+- Run all 26 NLTK tasks and all seven prepared data assets against any approved backport or official fixed release.
+- Demonstrate the production bubblewrap policy and same-UID spawn/FD/`/proc` protocol on hosted `ubuntu-24.04`.
+- Pin an independently verifiable CPython 3.11.16 artifact/source path. uv 0.11.29 can compile against an existing interpreter, but its embedded download catalog cannot install 3.11.16; setup must not silently invoke a newer uv.
