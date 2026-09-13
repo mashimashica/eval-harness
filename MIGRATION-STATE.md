@@ -3,7 +3,7 @@
 
 # Migration state
 
-Updated: 2026-09-13T09:50:33Z
+Updated: 2026-09-13T09:55:56Z
 
 Control branch: `checkpoint/migration-control`.
 Procedure: [MIGRATION-WORKFLOW.md](MIGRATION-WORKFLOW.md).
@@ -12,9 +12,20 @@ This record preserves recoverable work; it does not declare the migration accept
 ## Latest recovery point: fixed Linux CI promoted; public boundary implementation
 
 Implementation `checkpoint/pr-04` is saved at
-`7ebef3f004fad1a8df88792dfac6f0db7b1dd3c7`, tree
-`937e7d73b2179c0099b9f4a57279536beadb6c63`. Its source is the reviewed
-`0c919a5cd1256af121a912bef5a42cf41d5e360b` plus a saved next-batch work record.
+`fe23c09bedf07d51ec320373fd89f502428dff16`, tree
+`14516822b8e6e162c54dc65b67555dd927406f70`. This new unvalidated four-file draft
+adds public manifest/probe/run handling, connects evaluator/resource app to the shared
+seam and deletes bcb_runner. Sol is reviewing the fixed source by 10:20 UTC; no test,
+type or real-boundary success is claimed for this draft. Luna is now porting required
+regressions, removing remaining legacy API/config/setup behavior, and applying the
+source-backed Ninja/secret-baseline corrections by 10:30 UTC. Save before grouped checks
+and within 15 minutes. The finite new baseline path and exact Ninja identity interpretation
+are accepted by Sol in `reports/m2-linux-gate-correction-contract.md`, saved on control
+`df9be5942515b07b97523ef4d35488d4cea0e0b7`. Parent's first review-worktree checkout
+used an incorrect nonexistent SHA and was refused; it was then moved to the exact saved
+`fe23c09b`, clean. No source or branch was changed by the refused command.
+
+The formal Draft PR #43 remains at reviewed `0c919a5cd1256af121a912bef5a42cf41d5e360b`.
 It adds the fixed Ubuntu candidate
 provisioning/audit workflow and exact-vendor gate/attribution changes. Luna reports
 YAML/TOML parsing, shell syntax including added run blocks, exact vendor selector checks
@@ -34,14 +45,13 @@ has six legacy resource-app errors, within the already planned caller replacemen
 Candidate preparation stops at Ninja version validation before bubblewrap compilation:
 locked distribution 1.13.0 actually emits `1.13.0.git.kitware.jobserver-pipe-1`.
 Parent verified the exact Linux wheel hash and binary string; no corrective attempt yet.
-Secret scan reports entropy matches in two provenance manifests and installer hashes;
-Sol is classifying them read-only before any narrow false-positive treatment. Grader
+Secret scan has 62 source-verified provenance-only findings across five files. Sol
+authorizes only exact baseline entries with existing settings retained and a negative
+control; no detector exclusion is added. Grader
 audit still reports the one known NLTK finding, with no fixed release. Full evidence,
 synthetic merge/tree relationship and failure history are recorded in
 `reports/m2-linux-first-validation.json`. Nothing skipped or failed is accepted.
-Luna is assigned public attestation/run followed by shared callers/readonly environment
-resolution/old runner deletion, deadline 10:30 UTC, with coherent saves before validation
-and within 15 minutes. Parent collects CI evidence. No other PR is being implemented.
+Parent owns checkpoints/evidence and next reviewed promotion; no other PR is being implemented.
 
 The preceding preparation component is locally closed at `e2a5a6a7` (14 tests,
 strict typing, Ruff, shell syntax and Sol). A separate parent whole-suite baseline on
