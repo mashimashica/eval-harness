@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "tested_commit": "3081b86a71c8a0e11838cb4d4834dd0c038dda9f",
+  "tree": "da1bbabe52376ba3da4097dacf2276a7e54d4458",
+  "tested_at": "2026-09-13T07:03:31Z",
+  "python": "3.13.14",
+  "platform": "macOS arm64",
+  "host_unchanged_from": "7be35da9fae98c5e56ba14bf13a15a4cdbb9a8e7",
+  "command": ".venv/bin/python -m unittest tests.harness.test_bigcodebench_runner.TestBigCodeBenchRunner.test_supervisor_does_not_restart_teardown_after_terminal_before_outer_exit tests.harness.test_bigcodebench_runner.TestBigCodeBenchRunner.test_supervisor_does_not_restart_cleanup_budget_after_successful_result tests.harness.test_bigcodebench_runner.TestBigCodeBenchRunner.test_supervisor_rejects_limit_when_trusted_process_exits_during_reap_poll -v",
+  "expected_red_baseline": true,
+  "methods": 3,
+  "failures": 3,
+  "errors": 0,
+  "elapsed_seconds": 0.004,
+  "reproduced": [
+    {"case": "terminal_then_outer_exit_with_held_pipe", "observed_clock": 6.0, "required_maximum": 5.0},
+    {"case": "success_cleanup_then_exception_cleanup", "observed_clock": 2.0, "required_maximum": 1.0},
+    {"case": "natural_exit_between_limit_observation_and_reap_poll", "observed": "candidate resource result returned; GraderInfrastructureError not raised", "required": "infrastructure failure"}
+  ],
+  "corrective_verifications_failed_in_this_segment": 0,
+  "next": "same Luna owner performs one combined correction, preserving all three assertions; save before grouped verification and independent Sol review",
+  "pr04_accepted": false
+}

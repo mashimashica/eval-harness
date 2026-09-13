@@ -15,9 +15,16 @@ The user explicitly resumed from the saved implementation head and requires repr
 before the two P1 corrections. Verified recovery is implementation
 `7be35da9fae98c5e56ba14bf13a15a4cdbb9a8e7` and control
 `2d36c56c8056bd34186ed11da5004e0e01188dc8`; no local edits needed protection beyond
-keeping the clean main root untouched. The record-only implementation continuation is
-`4d6717771de4102005ad10e5d50aee520286429f`, tree
-`210ff93cf2882659d837fa82fffb20e72d589cdb`, saved and read back.
+keeping the clean main root untouched. Current implementation checkpoint is
+`3081b86a71c8a0e11838cb4d4834dd0c038dda9f`, tree
+`da1bbabe52376ba3da4097dacf2276a7e54d4458`, saved and read back.
+
+All three new reproductions fail as intended against the unchanged host: simulated
+terminal/exit teardown lasts 6 instead of 5 seconds, success/exception cleanup lasts 2
+instead of 1 second, and the natural-exit race returns a resource result without raising
+infrastructure error. See `reports/m2-host-red-reproductions.json`. These are expected-red
+baseline results, not failed corrections. Luna is performing the first combined correction
+in the two existing host/test files. Preserve all three strict reproduction assertions.
 
 New allowance: `2026-09-13T06:54:57Z`–`2026-09-13T08:24:57Z`, maximum 90 minutes.
 Luna first edits only the existing runner test file to reproduce late-exit/cleanup budget
