@@ -3,7 +3,7 @@
 
 # Migration state
 
-Updated: 2026-09-13T02:41:55.074Z
+Updated: 2026-09-13T02:56:24.190Z
 
 Control branch: `checkpoint/migration-control`.
 Procedure: [MIGRATION-WORKFLOW.md](MIGRATION-WORKFLOW.md).
@@ -77,18 +77,33 @@ from the restored plan and the immutable accepted source APIs; they are not reco
 
 ## Active work and reachable checkpoints
 
-Only PR02c implementation is active. Luna edits one bounded source/test batch at a time in an isolated checkout.
-Root owns remote checkpoint writes during the persistence correction described below.
+Only PR02c implementation is active. Luna owners edit bounded disjoint source/test batches in separate checkouts.
+Root owns all remote checkpoint writes, saves each batch before validation, and verifies common-base blobs before
+combining reviewed deltas. Each branch has one writer; no future migration slice is implemented in parallel.
 Sol design/review proceeds independently; drafts below are saved work, not implementation acceptance.
 
 | Slice | Checkpoint branch | Saved commit | Saved contract / state |
 | --- | --- | --- | --- |
-| 02c | `checkpoint/pr-02c` | `2cd4b02547bda84d230b46a0fbb0c20404089f66` | Review correction batch saved; exact clean head passes 63 focused tests, strict mypy and Ruff; final observed-read regressions, tamper/fixture/full gates remain |
-| 04 | `checkpoint/design-pr04` | `6aaf5d751848c427ddc3ed6c9d905eac1a254d4c` | Runtime/source/worker/CI and rejected patch evidence saved; strict NLTK audit red; offline data licensing and vendoring evidence pending |
-| 05 | `checkpoint/design-pr05` | `01f781cbeaff00aee3fb0bea3597dee3bd58e2df` | Final evaluation/generation resume and protected-role APIs saved; independent PR02c source review saved; implementation pending |
+| 02c | `checkpoint/pr-02c` | `3f37a1b7e7e6e74900d475dd018a25931acca04e` | Source at 32169815 passes 35 focused tests/types/Ruff and independent 25-test closure review; CLI/selected-consumer contract added; tamper/fixture/full gates remain |
+| 04 | `checkpoint/design-pr04` | `deb807e8454eb4fbb3652bb1f335489fa5325bea` | Final grader design/appendix, exact dependencies/source/licenses and rejected patch evidence saved; strict NLTK audit red; implementation pending |
+| 05 | `checkpoint/design-pr05` | `7e7629c330ca0841ee92612f534db72c0a459b2b` | Final PR05 APIs plus PR02c fixture/consumer amendment and four-finding closure review saved; implementation pending |
 | 06 | `checkpoint/design-pr06` | `f598dbe34b38dcb9f5bb8f9309283c88c7a2dab9` | Final GDPval API contract/appendix aligned with PR05 exact resume/events/aggregate interfaces; implementation pending |
 | 07 | `checkpoint/design-pr07` | `e0fab6018c59338f5301a13e29e6c5c39f5e3305` | Final Stirrup/provider/dependency/protected-role contract saved; real Apptainer CI and implementation remain |
 | 08 | `checkpoint/design-pr08` | `4579b77f14cb0b66e0fcdb207b6fe8b7af210686` | Final protocol/fixtures and 45+175 verified-prefix generation/resume contract saved; implementation pending |
+
+PR02c disjoint work branches, both based on `3f37a1b7e7e6e74900d475dd018a25931acca04e`:
+
+- `checkpoint/pr-02c-selected-consumer` at `a6c5fa47820d0fbc92ebaf7ac5986e03335c9a3b`: existing selected-task
+  adapter and four non-Cursor fixture files; initialized/saved before editing; no validation yet.
+- `checkpoint/pr-02c-cursor-fixtures` at `6fb7952b76587259d5145aaf6b83208cf20ca891`: two Cursor fixture files
+  only; initialized/saved before editing; no validation yet.
+
+Primary owner retains handoff tamper tests, CLI plumbing/integration and the legacy Cursor shell rejection test.
+All source/test scopes are disjoint. Side-branch bytes must be saved/read back and reviewed before combination.
+The four original production findings are independently closed at exact `32169815cd455f3c5929ca643ebc69fe00260969`;
+review record: `checkpoint/design-pr05:7e7629c330ca0841ee92612f534db72c0a459b2b`,
+`contracts/pr02c-closure-review-32169815.md`, SHA-256 `02a7d52c8d42fdc24a969e6d6c1dd2e360d818a8afb1719d8aecbd05795aaac7`.
+Independent verification passed 25 targeted tests; this does not close all PR02c gates.
 
 PR02c contract SHA-256: `a755aa7ef611238258308146ac8d602e4b9debd1e644a1e9b795616c95ce86fc`.
 Its two files and ref were read back and matched the saved bytes/Git blobs before implementation started.
