@@ -3,6 +3,26 @@
 
 # PR04 implementation work record
 
+## Fixed Ubuntu CI preparation path ready for review, 2026-09-13
+
+Base `e2a5a6a74c14a6577900859c7a4cc33d98482562` completed 14 preparation tests,
+scoped strict mypy/Ruff/shell checks and Sol closure. All earlier preparation failures
+remain in control evidence; this is component closure, not real installation or PR04.
+
+Luna's current CI/config batch changes only the existing eval-harness and copyright
+workflows, exact-vendor pre-commit/Ruff exclusions, attribution, and this work record.
+The Ubuntu 24.04 audit job keeps strict grader and build-lock audits with always-uploaded
+evidence. Its separately named non-acceptance candidate job uses fixed toolchains,
+actual pinned bubblewrap/grader installation, pip check, canonical runtime readback and
+the currently unimplemented public preflight seam. No mocked or skipped real security
+gate and no successful PR04 acceptance are claimed. Only logs/audit/runtime metadata,
+not data payloads or environments, may be uploaded. Original workflow triggers stay unchanged.
+
+This is saved before YAML/pre-commit validation and Sol review. Parent will promote only
+the reviewed delta to a Draft PR, then inspect actual Linux outcomes while the next
+public-boundary implementation proceeds. Future hostile/parity/coverage and clean-CVE
+gates are still required; no existing threshold is relaxed. No CI job has started yet.
+
 ## Final shell preparation correction ready, 2026-09-13
 
 Base `bbf96b7e3616d670cf784b2087aff39eab8d5e74` passed 13 preparation tests

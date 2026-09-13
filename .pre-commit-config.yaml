@@ -20,9 +20,11 @@ repos:
     - id: end-of-file-fixer
       # only include python files
       files: \.py$
+      exclude: '^resources_servers/bigcodebench/vendor/bigcodebench/eval/(?:__init__|utils|_special_oracle)\.py$'
     - id: trailing-whitespace
       # only include python files
       files: \.py$
+      exclude: '^resources_servers/bigcodebench/vendor/bigcodebench/eval/(?:__init__|utils|_special_oracle)\.py$'
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: "v0.12.11"

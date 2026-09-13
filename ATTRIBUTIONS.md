@@ -224,6 +224,22 @@ upstream copyright header and adds an NVIDIA modifications block.
 
 ---
 
+## Vendored Components (unmodified upstream source)
+
+BigCodeBench v0.2.5's native metric is vendored byte-for-byte at
+`resources_servers/bigcodebench/vendor/bigcodebench/` from commit
+`9bd90fedee89d7dc3676838c75d9642cb0cd0702`.
+
+- The upstream BigCodeBench project license is Apache-2.0:
+  https://github.com/bigcode-project/bigcodebench
+- `eval/__init__.py` and `eval/utils.py` retain the embedded OpenAI MIT notices.
+- `eval/_special_oracle.py` is an exact upstream source file without an
+  in-file notice; its repository attribution is recorded by `VENDORING.md`.
+- Exact source blobs, hashes, and provenance are recorded in
+  `resources_servers/bigcodebench/vendor/bigcodebench/VENDORING.md`.
+
+---
+
 ## Cloned and Modified Components
 
 | Component | License | Upstream | Notes |

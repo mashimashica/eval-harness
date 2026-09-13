@@ -797,6 +797,8 @@ extend-exclude = [
     "*.ipynb",
     # Vendored apple/ToolSandbox source — kept verbatim (see its VENDORING.md).
     "resources_servers/toolsandbox/tool_sandbox",
+    # Exact upstream BigCodeBench metric source — preserve its bytes.
+    "resources_servers/bigcodebench/vendor/bigcodebench",
 ]
 [tool.ruff.lint]
 # Configure linting rules

@@ -20,3 +20,5 @@ on:
 jobs:
   copyright-check:
     uses: NVIDIA-NeMo/FW-CI-templates/.github/workflows/_copyright_check.yml@d7f020b83b60462b762eca9c24403e976dc549f2 # v0.55.0
+    with:
+      additional-find-args: '-not -path "./resources_servers/bigcodebench/vendor/bigcodebench/eval/_special_oracle.py"'
