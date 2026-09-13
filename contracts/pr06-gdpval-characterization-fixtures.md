@@ -169,11 +169,13 @@ With one fake judge named `only`, the exact current outputs are:
 | `{"criteria_scores":[{"score":1},{"score":0.4},"ignored"]}` | `(0.7, metadata-with-the-same-criteria-and-judge)` | completed score `0.7` (mechanical valid-score parity) |
 | `{"overall_score":1.25}` | `(1.0, {"overall_score":1.25,"judge_name":"only"})` | completed score `1.0` if finite numeric clamping is retained by configuration |
 | `{"overall_score":-2}` | `(0.0, {"overall_score":-2,"judge_name":"only"})` | completed score `0.0` if finite numeric clamping is retained by configuration |
+| `{"overall_score":true}` | `(1.0, {"overall_score":true,"judge_name":"only"})` because `float(True) == 1.0` | `invalid_response`, score `null`; booleans are not numeric scores |
+| `{"overall_score":0.1,"overall_score":0.9}` | `(0.9, {"overall_score":0.9,"judge_name":"only"})` because `json.loads` keeps the last duplicate key | `invalid_response`, score `null`; duplicate keys are ambiguous |
 | `{"overall_score":"nan"}` | `(1.0, {"overall_score":"nan","judge_name":"only"})` | `invalid_response`, score `null` because non-finite values are forbidden |
 
 When raw response retention is enabled, a successful metadata object also gets `"raw_responses":[<exact response text>]`; the truncated case still returns null metadata. PR06 stores every attempt's raw-response digest and configured evidence reference, including invalid attempts.
 
-The current precedence for a valid overall score is `overall_score`, `total_score`, `score`, `average_score`, then `final_score`. If none exists, current code averages `criteria_scores[*].score` for dictionary entries, using zero when an entry lacks `score`. PR06 preserves this precedence and finite numeric clamping as pure scoring policy. JSON parse failure, absence of every score source, float conversion failure, and non-finite values become typed invalid responses under revision 2.
+The current precedence for a valid overall score is `overall_score`, `total_score`, `score`, `average_score`, then `final_score`. If none exists, current code averages `criteria_scores[*].score` for dictionary entries, using zero when an entry lacks `score`. PR06 preserves this precedence and finite numeric clamping as pure scoring policy. JSON parse failure, absence of every score source, boolean/float conversion ambiguity, duplicate keys, and non-finite values become typed invalid responses under revision 2.
 
 The binary template is 1,436 UTF-8 bytes with SHA-256 `f0af9a09cb0e067c53a7e51922064d89092dbc01857268add93e78d519587768`. Rendering the fixture values `Canonical task`, `Pretty rubric`, and `Deliverable` produces 1,399 characters with SHA-256 `eb2cdadcab2f620f7fae53d3ec46816bb79b1b07fe6c403e9e940caa88b15737`.
 
@@ -224,6 +226,8 @@ When all four formatting attempts are malformed, current output is:
 
 The current point maximum is the sum of numeric `score`, else numeric `weight`, for each list item or each item under a dictionary's `criteria`. Missing values contribute zero. With `[{'criterion':'x'}]` and `FINAL_SCORE[999] out of MAX_POSSIBLE_SCORE[-2]`, current output is normalized score `0.0` while metadata says average `999.0`, maximum `-2.0`, and one completed trial. Revision 2 requires a finite positive configured/computed maximum and `0 <= awarded <= maximum`; this fixture fails preflight or parsing and has no score.
 
+The current maximum check uses the inclusive effective condition `abs(parsed_max - computed_max) <= 0.01`. For computed maximum `5`, one trial `FINAL_SCORE[4] out of MAX_POSSIBLE_SCORE[5.009]` is accepted and returns normalized score `0.798562587342783`, while `MAX_POSSIBLE_SCORE[5.011]` is retried/rejected. With multiple valid trials, the current final denominator is the first valid trial's parsed maximum. PR06 preserves this tolerance and first-valid-denominator rule as mechanical rubric-score parity; the planned trial order makes it deterministic, and the accepted parsed maximum is stored in every semantic trial result.
+
 Current `parse_structured_score("FINAL_SCORE[4] FINAL_SCORE[1] MAX_POSSIBLE_SCORE[5] MAX_POSSIBLE_SCORE[9]")` returns `(4.0, 5.0)` by taking the first match of each tag. Revision 2 rejects duplicate/conflicting top-level tags as an invalid response.
 
 The structured prompt constant is 866 characters with SHA-256 `f993ab2daf3a5f7f47cbbac22fe6076f8923d8ce7bbb6b68d7526cf1eee49c72`.
@@ -260,7 +264,7 @@ Current panel summary is:
 ]
 ```
 
-Non-positive weights are treated as zero; when the total positive weight is zero, current code samples uniformly. PR06 pins this as a named selector revision and pre-resolves member IDs for every trial. Member IDs are unique, the ordered member/spec/capability/weight set has a panel digest, and credentials never enter the spec or digest.
+Non-positive weights are treated as zero; when the total positive weight is zero, current code samples uniformly. A one-member panel bypasses weight handling entirely, so even a non-finite weight selects that member; in a multi-member panel NaN is effectively zero while infinity can make `random.choices` raise. PR06 pins the finite-weight behavior as a named selector revision, rejects every non-finite configured weight, and pre-resolves member IDs for every trial. Member IDs are unique, the ordered member/spec/capability/weight set has a panel digest, and credentials never enter the spec or digest.
 
 Current AV filtering returns `["av"]` for the full panel. For `["zero","two"]` it returns the same incapable full panel. Direct `direct.mp4` and a zip containing `nested/audio.wav` both make `dir_contains_audio_video` return `true`. PR06 changes the incapable fallback under the panel/evaluator revision: capability insufficiency fails preflight before the first call and creates no successful trial records.
 
