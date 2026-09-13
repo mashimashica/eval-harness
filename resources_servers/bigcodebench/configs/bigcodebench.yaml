@@ -6,15 +6,6 @@ bigcodebench:
       verified: false
       description: Verifies model-generated Python solutions against the BigCodeBench unittest suite.
       value: Improve practical, library-rich Python coding capabilities.
-      num_processes: 8
-      venv_path: .bcb_venv
-      bcb_python_version: "3.10"
-      max_as_limit: 30720
-      max_data_limit: 30720
-      max_stack_limit: 10
-      min_time_limit: 1.0
-      gt_time_limit: 20.0
-      subprocess_timeout: 240.0
 bigcodebench_simple_agent:
   responses_api_agents:
     simple_agent:

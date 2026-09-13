@@ -7,17 +7,14 @@ suite. Each task ships its own `unittest.TestCase` class plus an
 (`code_prompt + "\n    pass\n" + extracted`) and run through
 `bigcodebench.eval.untrusted_check` in an isolated subprocess.
 
-## Why this server has its own venv
+## Provisioned grader runtime
 
-BigCodeBench tests import 70+ third-party libraries with versions pinned
-in [`Requirements/requirements-eval.txt`](https://raw.githubusercontent.com/bigcode-project/bigcodebench/main/Requirements/requirements-eval.txt)
-(`numpy==1.21.2`, `keras==2.11.0`, `tensorflow==2.11.0`, ...). Most of
-those pins are 3.10-only, while NeMo Gym ships Python 3.12. On startup
-the server uses `uv` to build a Python 3.10 venv at `.bcb_venv/` and
-installs `bigcodebench` + `requirements-eval.txt` into it. Each
-`/verify` shells out to `bcb_runner.py` running under that venv's
-`python`. First start is slow (~10 min on a fresh node); subsequent
-starts are instant.
+The fixed grader runtime is prepared by the reviewed CI provisioning job
+under a fresh private root. It contains the locked CPython 3.11.16 venv,
+vendored native metric, pinned offline NLTK data, and a read-only runtime
+manifest. This server only resolves that manifest and calls the shared
+attested host sandbox; it never creates a venv, resolves dependencies,
+downloads data, or launches an interpreter directly.
 
 ## Example usage
 

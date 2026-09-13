@@ -4,21 +4,28 @@
 from __future__ import annotations
 
 import json
-import subprocess
 import tempfile
 import unittest
 from pathlib import Path
-from unittest.mock import patch
+from typing import cast
+from unittest.mock import MagicMock, patch
 
 from eval_harness.benchmarks.bigcodebench import BigCodeBenchBenchmark
 from eval_harness.capabilities import ExecutorOutput
 from eval_harness.evaluators.base import EvaluationCandidate, EvaluationRequest, EvaluatorType
 from eval_harness.evaluators.bigcodebench import BigCodeBenchEvaluator, _native_bigcodebench_evaluate
+from eval_harness.grader_sandbox import GraderSandboxPreflight, GraderSandboxSpec
 from eval_harness.executors.base import ExecutionResult, ExecutionStatus
 from eval_harness.failures import Failure, FailureImpact, FailureKind
 
 
 class BigCodeBenchBenchmarkTests(unittest.TestCase):
+    def ready(self, evaluator: BigCodeBenchEvaluator) -> None:
+        evaluator._sandbox_spec = cast(GraderSandboxSpec, MagicMock())
+        evaluator._sandbox_preflight = GraderSandboxPreflight(
+            True, "0.12.0", "bigcodebench-bwrap-v1", "spec", "manifest", "attestation", ()
+        )
+
     def benchmark(self, root: Path) -> BigCodeBenchBenchmark:
         return BigCodeBenchBenchmark(
             root=root,
@@ -110,9 +117,8 @@ class BigCodeBenchBenchmarkTests(unittest.TestCase):
             root = Path(tmp)
             grader = root / "grader"
             grader.mkdir()
-            (grader / "bcb_runner.py").write_text("# fake runner\n", encoding="utf-8")
             evaluator = BigCodeBenchEvaluator(resource_dir=grader)
-            evaluator._bcb_python = grader / ".bcb_venv" / "bin" / "python"
+            self.ready(evaluator)
             result = self.result(root, output_text="```python\nreturn 42\n```")
 
             with patch(
@@ -137,26 +143,31 @@ class BigCodeBenchBenchmarkTests(unittest.TestCase):
             root = Path(tmp)
             grader = root / "grader"
             grader.mkdir()
-            (grader / "bcb_runner.py").write_text("# fake runner\n", encoding="utf-8")
-            venv_python = grader / ".bcb_venv" / "bin" / "python"
             evaluator = BigCodeBenchEvaluator(resource_dir=grader)
+            fake_spec = cast(GraderSandboxSpec, MagicMock())
+            fake_preflight = GraderSandboxPreflight(
+                True, "0.12.0", "bigcodebench-bwrap-v1", "spec", "manifest", "attestation", ()
+            )
             with patch(
-                "resources_servers.bigcodebench.setup_bcb_venv.ensure_bcb_venv",
-                return_value=venv_python,
-            ) as ensure:
+                "eval_harness.evaluators.bigcodebench.resolve_bigcodebench_sandbox_spec",
+                return_value=fake_spec,
+            ) as resolve, patch(
+                "eval_harness.evaluators.bigcodebench.preflight_bigcodebench_sandbox",
+                return_value=fake_preflight,
+            ) as preflight:
                 result = evaluator.preflight(root / "run")
-            ensure.assert_called_once_with(grader.resolve() / ".bcb_venv", "3.10")
+            resolve.assert_called_once_with(grader.resolve())
+            preflight.assert_called_once_with(fake_spec)
             self.assertTrue(result.ok)
-            self.assertIn("Python 3.10", result.details[0])
+            self.assertEqual(result.details, ())
 
     def test_failed_execution_scores_zero_without_invoking_grader(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             grader = root / "grader"
             grader.mkdir()
-            (grader / "bcb_runner.py").write_text("# fake runner\n", encoding="utf-8")
             evaluator = BigCodeBenchEvaluator(resource_dir=grader)
-            evaluator._bcb_python = grader / ".bcb_venv" / "bin" / "python"
+            self.ready(evaluator)
             result = self.result(root, output_text="```python\nreturn 42\n```", status=ExecutionStatus.FAILED)
 
             with patch("eval_harness.evaluators.bigcodebench._native_bigcodebench_evaluate") as native:
@@ -184,18 +195,15 @@ class BigCodeBenchBenchmarkTests(unittest.TestCase):
             grader = workspace / "grader"
             grader.mkdir(parents=True)
             evaluator = BigCodeBenchEvaluator(resource_dir=grader)
-            evaluator._bcb_python = grader / ".bcb_venv" / "bin" / "python"
+            self.ready(evaluator)
             result = self.result(root, output_text="```python\nreturn 42\n```")
 
             with self.assertRaisesRegex(RuntimeError, "grader directory must be separate"):
                 evaluator.evaluate(self.request(root, result))
 
-    def test_native_helper_uses_existing_extractor_venv_and_runner(self) -> None:
+    def test_native_helper_uses_the_shared_attested_sandbox(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             resource_dir = Path(tmp)
-            runner = resource_dir / "bcb_runner.py"
-            runner.write_text("# fake runner\n", encoding="utf-8")
-            venv_python = resource_dir / ".bcb_venv" / "bin" / "python"
             metadata = {
                 "task_id": "BigCodeBench/1",
                 "test": "test-code",
@@ -203,23 +211,20 @@ class BigCodeBenchBenchmarkTests(unittest.TestCase):
                 "code_prompt": "def solve():",
             }
 
-            def fake_run(
-                command: list[str], *, cwd: Path, errors: str, input: str, **kwargs: object
-            ) -> subprocess.CompletedProcess[str]:
-                del kwargs
-                self.assertEqual(command, [str(venv_python), str(runner)])
-                self.assertEqual(cwd, resource_dir)
-                self.assertEqual(errors, "replace")
-                payload = json.loads(input)
-                self.assertEqual(payload["code"], "def solve():\n    pass\nreturn 42")
-                self.assertEqual(payload["test_code"], "test-code")
-                self.assertEqual(payload["entry_point"], "solve")
-                return subprocess.CompletedProcess(
-                    command,
-                    0,
-                    stdout=json.dumps({"status": "pass", "details": {"tests": 1}}),
-                    stderr="",
-                )
+            fake_spec = cast(GraderSandboxSpec, MagicMock())
+            fake_preflight = GraderSandboxPreflight(
+                True, "0.12.0", "bigcodebench-bwrap-v1", "spec", "manifest", "attestation", ()
+            )
+
+            def fake_run(request: object, *, spec: object, preflight: object) -> object:
+                self.assertEqual(spec, fake_spec)
+                self.assertEqual(preflight, fake_preflight)
+                self.assertEqual(getattr(request, "code"), "def solve():\n    pass\nreturn 42")
+                self.assertEqual(getattr(request, "test_code"), "test-code")
+                self.assertEqual(getattr(request, "entry_point"), "solve")
+                from eval_harness.bigcodebench_runner import GraderNativeResult, NativeStatus
+
+                return GraderNativeResult(NativeStatus.PASS)
 
             with (
                 patch(
@@ -227,10 +232,14 @@ class BigCodeBenchBenchmarkTests(unittest.TestCase):
                     return_value="return 42",
                 ),
                 patch(
-                    "resources_servers.bigcodebench.setup_bcb_venv.ensure_bcb_venv",
-                    return_value=venv_python,
-                ) as ensure_venv,
-                patch("eval_harness.evaluators.bigcodebench.subprocess.run", side_effect=fake_run),
+                    "eval_harness.evaluators.bigcodebench.resolve_bigcodebench_sandbox_spec",
+                    return_value=fake_spec,
+                ),
+                patch(
+                    "eval_harness.evaluators.bigcodebench.preflight_bigcodebench_sandbox",
+                    return_value=fake_preflight,
+                ),
+                patch("eval_harness.evaluators.bigcodebench.run_bigcodebench_sandbox", side_effect=fake_run),
             ):
                 evaluation = _native_bigcodebench_evaluate(
                     "```python\nreturn 42\n```",
@@ -238,9 +247,8 @@ class BigCodeBenchBenchmarkTests(unittest.TestCase):
                     resource_dir=resource_dir,
                 )
 
-            ensure_venv.assert_called_once_with(resource_dir / ".bcb_venv", "3.10")
             self.assertEqual(evaluation["reward"], 1.0)
-            self.assertEqual(evaluation["status"], "pass")
+            self.assertEqual(evaluation["status"], "passed")
             self.assertEqual(evaluation["extracted_model_code"], "return 42")
 
 

@@ -120,19 +120,12 @@ _META = {
 
 @pytest.fixture(scope="module")
 def server(monkeypatch_module) -> BigCodeBenchResourcesServer:
-    # Skip the ~10-min Python 3.10 venv build during unit tests.
-    monkeypatch_module.setattr(
-        "app.ensure_bcb_venv",
-        lambda venv_path, python_version="3.10": venv_path / "bin" / "python",
-    )
     return BigCodeBenchResourcesServer(
         config=BigCodeBenchResourcesServerConfig(
             host="0.0.0.0",
             port=8080,
             entrypoint="",
             name="",
-            num_processes=1,
-            venv_path="/tmp/never_built_venv",
         ),
         server_client=MagicMock(spec=ServerClient),
     )
@@ -155,10 +148,11 @@ def client(server: BigCodeBenchResourcesServer) -> Generator[TestClient, None, N
 
 
 def test_verify_pass(client: TestClient, monkeypatch_module) -> None:
-    async def fake_run(self, code, test_code, entry_point):
+    def fake_run(self, code, test_code, entry_point, task_id):
+        del code, test_code, entry_point, task_id
         return {"status": "pass", "details": {}}
 
-    monkeypatch_module.setattr(BigCodeBenchResourcesServer, "_run_in_venv", fake_run)
+    monkeypatch_module.setattr(BigCodeBenchResourcesServer, "_run_sandbox", fake_run)
 
     req = BigCodeBenchVerifyRequest(
         responses_create_params={"input": [{"role": "user", "content": "double x"}]},
@@ -174,10 +168,11 @@ def test_verify_pass(client: TestClient, monkeypatch_module) -> None:
 
 
 def test_verify_fail(client: TestClient, monkeypatch_module) -> None:
-    async def fake_run(self, code, test_code, entry_point):
+    def fake_run(self, code, test_code, entry_point, task_id):
+        del code, test_code, entry_point, task_id
         return {"status": "fail", "details": {"test_one": "AssertionError: 5 != 4"}}
 
-    monkeypatch_module.setattr(BigCodeBenchResourcesServer, "_run_in_venv", fake_run)
+    monkeypatch_module.setattr(BigCodeBenchResourcesServer, "_run_sandbox", fake_run)
 
     req = BigCodeBenchVerifyRequest(
         responses_create_params={"input": [{"role": "user", "content": "double x"}]},
@@ -192,10 +187,11 @@ def test_verify_fail(client: TestClient, monkeypatch_module) -> None:
 
 def test_empty_output_short_circuits(client: TestClient, monkeypatch_module) -> None:
     # No subprocess invocation should happen when output is empty.
-    async def fake_run(self, code, test_code, entry_point):
+    def fake_run(self, code, test_code, entry_point, task_id):
+        del code, test_code, entry_point, task_id
         raise AssertionError("subprocess should not be invoked for empty output")
 
-    monkeypatch_module.setattr(BigCodeBenchResourcesServer, "_run_in_venv", fake_run)
+    monkeypatch_module.setattr(BigCodeBenchResourcesServer, "_run_sandbox", fake_run)
 
     req = BigCodeBenchVerifyRequest(
         responses_create_params={"input": [{"role": "user", "content": "x"}]},
@@ -209,10 +205,11 @@ def test_empty_output_short_circuits(client: TestClient, monkeypatch_module) -> 
 
 
 def test_unclosed_fence_returns_no_code_block(client: TestClient, monkeypatch_module) -> None:
-    async def fake_run(self, code, test_code, entry_point):
+    def fake_run(self, code, test_code, entry_point, task_id):
+        del code, test_code, entry_point, task_id
         raise AssertionError("subprocess should not be invoked when extraction returns ''")
 
-    monkeypatch_module.setattr(BigCodeBenchResourcesServer, "_run_in_venv", fake_run)
+    monkeypatch_module.setattr(BigCodeBenchResourcesServer, "_run_sandbox", fake_run)
 
     req = BigCodeBenchVerifyRequest(
         responses_create_params={"input": [{"role": "user", "content": "x"}]},

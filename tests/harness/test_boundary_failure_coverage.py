@@ -11,13 +11,14 @@ import tempfile
 import unittest
 from pathlib import Path
 from typing import Mapping, cast
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 from eval_harness.benchmarks.aime26 import AIME26Benchmark
 from eval_harness.benchmarks.base import Benchmark, BenchmarkTask
 from eval_harness.benchmarks.bigcodebench import BigCodeBenchBenchmark
 from eval_harness.benchmarks.gdpval import GDPvalBenchmark
 from eval_harness.benchmarks.registry import create_benchmark, get_benchmark_descriptor, list_benchmarks
+from eval_harness.bigcodebench_runner import GraderNativeResult, NativeStatus
 from eval_harness.capabilities import ExecutorOutput
 from eval_harness.evaluators.aime26 import AIME26Evaluator, _math_verify_preflight, _native_math_evaluate
 from eval_harness.evaluators.base import (
@@ -30,6 +31,7 @@ from eval_harness.evaluators.base import (
     require_two_candidates,
 )
 from eval_harness.evaluators.bigcodebench import BigCodeBenchEvaluator, _native_bigcodebench_evaluate
+from eval_harness.grader_sandbox import GraderInfrastructureError, GraderSandboxPreflight, GraderSandboxSpec
 from eval_harness.evaluators.exact import ExactMatchEvaluator
 from eval_harness.evaluators.gdpval import GDPvalExternalEvaluator
 from eval_harness.evaluators.pairwise import PairwiseJudgeEvaluator, sanitize_environment
@@ -112,6 +114,13 @@ def _candidate(
 ) -> EvaluationCandidate:
     result = _execution_result(root, status=status, output_text=output_text)
     return EvaluationCandidate(candidate_id, result, result.deliverables_dir)
+
+
+def _ready_bigcodebench(evaluator: BigCodeBenchEvaluator) -> None:
+    evaluator._sandbox_spec = cast(GraderSandboxSpec, MagicMock())
+    evaluator._sandbox_preflight = GraderSandboxPreflight(
+        True, "0.12.0", "bigcodebench-bwrap-v1", "spec", "manifest", "attestation", ()
+    )
 
 
 def _skill_source(root: Path, *, name: str = "demo-skill", body: str = "Use the supplied files.\n") -> Path:
@@ -674,17 +683,19 @@ class EvaluatorBoundaryTests(unittest.TestCase):
             self.assertFalse(overlap.ok)
             self.assertIn("separate", overlap.details[0])
             self.assertFalse(evaluator.preflight(root / "run").ok)
-            (grader / "bcb_runner.py").write_text("# deterministic fake runner\n", encoding="utf-8")
-            fake_python = grader / "python"
-            fake_python.write_text("fake", encoding="utf-8")
+            fake_spec = cast(GraderSandboxSpec, MagicMock())
+            fake_preflight = GraderSandboxPreflight(
+                True, "0.12.0", "bigcodebench-bwrap-v1", "spec", "manifest", "attestation", ()
+            )
             with patch(
-                "resources_servers.bigcodebench.setup_bcb_venv.ensure_bcb_venv",
-                return_value=fake_python,
-            ) as ensure:
-                ready = evaluator.preflight(root / "run")
+                "eval_harness.evaluators.bigcodebench.resolve_bigcodebench_sandbox_spec",
+                return_value=fake_spec,
+            ), patch(
+                "eval_harness.evaluators.bigcodebench.preflight_bigcodebench_sandbox",
+                return_value=fake_preflight,
+            ):
+                ready = bigcode.preflight(root / "run")
             self.assertTrue(ready.ok)
-            ensure.assert_called_once()
-            self.assertIn("dedicated Python 3.10", ready.details[0])
 
             candidate = _candidate(root, output_text="code")
             failed_request = EvaluationRequest(
@@ -714,7 +725,7 @@ class EvaluatorBoundaryTests(unittest.TestCase):
             self.assertEqual(empty.details["status"], "empty_output")
             with patch(
                 "eval_harness.evaluators.bigcodebench._native_bigcodebench_evaluate",
-                return_value={"reward": 1.0, "status": "pass", "extracted_model_code": "return 1", "details": None},
+                return_value={"reward": 1.0, "status": "passed", "extracted_model_code": "return 1", "details": None},
             ) as native:
                 passed = evaluator.evaluate(failed_request)
             self.assertEqual(passed.metrics, {"pass_rate": 1.0})
@@ -763,75 +774,66 @@ class EvaluatorBoundaryTests(unittest.TestCase):
     def test_bigcode_native_grader_timeout_oserror_and_malformed_json_are_safe(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            resource = root / "grader"
-            resource.mkdir()
-            python = resource / "python"
-            python.write_text("fake", encoding="utf-8")
+            fake_spec = cast(GraderSandboxSpec, MagicMock())
+            fake_preflight = GraderSandboxPreflight(
+                True, "0.12.0", "bigcodebench-bwrap-v1", "spec", "manifest", "attestation", ()
+            )
             metadata = {"test": "test", "entry_point": "solve", "code_prompt": "def solve():"}
             with patch(
                 "resources_servers.bigcodebench.code_extraction.preprocess_code_completion",
                 return_value="return 1",
             ):
                 with patch(
-                    "eval_harness.evaluators.bigcodebench.subprocess.run",
-                    side_effect=subprocess.TimeoutExpired(cmd=["fake"], timeout=1),
+                    "eval_harness.evaluators.bigcodebench.run_bigcodebench_sandbox",
+                    side_effect=GraderInfrastructureError("sandbox unavailable"),
                 ):
-                    timeout = _native_bigcodebench_evaluate(
-                        "```python\nreturn 1\n```", metadata, resource_dir=resource, bcb_python=python
-                    )
-                self.assertEqual(timeout["status"], "timeout")
-                with patch(
-                    "eval_harness.evaluators.bigcodebench.subprocess.run",
-                    side_effect=OSError("grader missing"),
-                ):
-                    failed = _native_bigcodebench_evaluate(
-                        "```python\nreturn 1\n```", metadata, resource_dir=resource, bcb_python=python
-                    )
-                self.assertEqual(failed["status"], "error")
-                with patch(
-                    "eval_harness.evaluators.bigcodebench.subprocess.run",
-                    return_value=subprocess.CompletedProcess([], 0, stdout="not json", stderr="stderr"),
-                ):
-                    malformed = _native_bigcodebench_evaluate(
-                        "```python\nreturn 1\n```", metadata, resource_dir=resource, bcb_python=python
-                    )
-                self.assertEqual(malformed["status"], "error")
+                    with self.assertRaises(GraderInfrastructureError):
+                        _native_bigcodebench_evaluate(
+                            "```python\nreturn 1\n```",
+                            metadata,
+                            resource_dir=root,
+                            sandbox_spec=fake_spec,
+                            sandbox_preflight=fake_preflight,
+                        )
 
     def test_bigcode_native_grader_reports_pass_and_failure_with_replacement_decoding(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             metadata = {"test": "assert f()", "entry_point": "f", "code_prompt": "def f():"}
-            fake_python = root / "python"
-            fake_python.write_text("fake", encoding="utf-8")
+            fake_spec = cast(GraderSandboxSpec, MagicMock())
+            fake_preflight = GraderSandboxPreflight(
+                True, "0.12.0", "bigcodebench-bwrap-v1", "spec", "manifest", "attestation", ()
+            )
             with patch(
                 "resources_servers.bigcodebench.code_extraction.preprocess_code_completion",
                 return_value="return 1",
             ):
                 with patch(
-                    "eval_harness.evaluators.bigcodebench.subprocess.run",
+                    "eval_harness.evaluators.bigcodebench.run_bigcodebench_sandbox",
                     side_effect=[
-                        subprocess.CompletedProcess(
-                            [], 0, stdout=json.dumps({"status": "pass", "details": {"ok": True}}), stderr=""
-                        ),
-                        subprocess.CompletedProcess(
-                            [], 0, stdout=json.dumps({"status": "fail", "details": {"ok": False}}), stderr=""
-                        ),
+                        GraderNativeResult(NativeStatus.PASS),
+                        GraderNativeResult(NativeStatus.FAIL),
                     ],
                 ) as run:
                     passed = _native_bigcodebench_evaluate(
-                        "```python\nreturn 1\n```", metadata, resource_dir=root, bcb_python=fake_python
+                        "```python\nreturn 1\n```",
+                        metadata,
+                        resource_dir=root,
+                        sandbox_spec=fake_spec,
+                        sandbox_preflight=fake_preflight,
                     )
                     failed = _native_bigcodebench_evaluate(
                         "```python\nreturn 1\n```",
                         metadata,
                         resource_dir=root,
-                        bcb_python=fake_python,
+                        sandbox_spec=fake_spec,
+                        sandbox_preflight=fake_preflight,
                     )
                 self.assertEqual(passed["reward"], 1.0)
-                self.assertEqual(passed["status"], "pass")
+                self.assertEqual(passed["status"], "passed")
                 self.assertEqual(failed["reward"], 0.0)
-                self.assertEqual(failed["status"], "fail")
-                self.assertEqual(run.call_args.kwargs["errors"], "replace")
+                self.assertEqual(failed["status"], "failed_tests")
+                self.assertEqual(run.call_count, 2)
 
     def test_gdpval_external_evaluator_publishes_and_rejects_unsafe_handoffs(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

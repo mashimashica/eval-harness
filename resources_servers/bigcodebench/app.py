@@ -3,16 +3,14 @@
 
 import asyncio
 from pathlib import Path
-from typing import Any, Dict, List, Optional
 
-from code_extraction import preprocess_code_completion
+from resources_servers.bigcodebench.code_extraction import preprocess_code_completion
 
 from eval_harness.bigcodebench_runner import BigCodeBenchGradeRequest, NativeStatus
 from eval_harness.grader_sandbox import (
     GraderInfrastructureError,
     GraderSandboxPreflight,
     GraderSandboxSpec,
-    LimitKind,
     preflight_bigcodebench_sandbox,
     resolve_bigcodebench_sandbox_spec,
     run_bigcodebench_sandbox,
@@ -34,40 +32,36 @@ _BIGCODEBENCH_SEMAPHORE = asyncio.Semaphore(1)
 
 
 class BigCodeBenchResourcesServerConfig(BaseResourcesServerConfig):
-    num_processes: int = 8
-    venv_path: str = ".bcb_venv"
-    bcb_python_version: str = "3.10"
-    max_as_limit: int = 30 * 1024
-    max_data_limit: int = 30 * 1024
-    max_stack_limit: int = 10
-    min_time_limit: float = 1.0
-    gt_time_limit: float = 20.0
-    subprocess_timeout: float = 240.0
+    # This is a trusted, absolute path emitted by the provisioning job.  It
+    # contains the read-only runtime manifest and never selects a candidate
+    # policy or causes installation.
+    resource_dir: Path | None = None
 
 
 class BigCodeBenchVerifyRequest(BaseVerifyRequest):
-    verifier_metadata: Optional[Dict[str, Any]] = None
+    verifier_metadata: dict[str, object] | None = None
 
 
 class BigCodeBenchVerifyResponse(BaseVerifyResponse):
-    extracted_model_output: Optional[str] = None
-    extracted_model_code: Optional[str] = None
-    status: Optional[str] = None
-    details: Optional[Dict[str, Any]] = None
-    task_id: Optional[str] = None
+    extracted_model_output: str | None = None
+    extracted_model_code: str | None = None
+    status: str | None = None
+    details: dict[str, object] | None = None
+    task_id: str | None = None
 
 
 class BigCodeBenchResourcesServer(SimpleResourcesServer):
     config: BigCodeBenchResourcesServerConfig
 
-    def model_post_init(self, context):
+    def model_post_init(self, context: object) -> None:
         del context
         self._semaphore = _BIGCODEBENCH_SEMAPHORE
         self._sandbox_spec: GraderSandboxSpec | None = None
         self._sandbox_preflight: GraderSandboxPreflight | None = None
         self._sandbox_error: GraderInfrastructureError | None = None
         try:
-            self._sandbox_spec = resolve_bigcodebench_sandbox_spec(Path(__file__).parent)
+            resource_dir = self.config.resource_dir or Path(__file__).parent
+            self._sandbox_spec = resolve_bigcodebench_sandbox_spec(resource_dir)
             self._sandbox_preflight = preflight_bigcodebench_sandbox(self._sandbox_spec)
             if not self._sandbox_preflight.ok:
                 self._sandbox_error = GraderInfrastructureError("BigCodeBench sandbox preflight failed")
@@ -75,18 +69,19 @@ class BigCodeBenchResourcesServer(SimpleResourcesServer):
             self._sandbox_error = exc
 
     @staticmethod
-    def _score_fn(r: dict) -> Dict[str, float]:
-        return {"accuracy": float(r["reward"] > 0)}
+    def _score_fn(r: dict[str, object]) -> dict[str, float]:
+        reward = r.get("reward")
+        return {"accuracy": float(isinstance(reward, (int, float)) and not isinstance(reward, bool) and reward > 0)}
 
-    def compute_metrics(self, tasks: List[List[Dict[str, Any]]]) -> Dict[str, Any]:
+    def compute_metrics(self, tasks: list[list[dict[str, object]]]) -> dict[str, object]:
         return compute_pass_majority_metrics(
             tasks,
             score_fn=self._score_fn,
             answer_key="extracted_model_code",
         )[0]
 
-    def get_key_metrics(self, agent_metrics: Dict[str, Any]) -> Dict[str, Any]:
-        key: Dict[str, Any] = {}
+    def get_key_metrics(self, agent_metrics: dict[str, object]) -> dict[str, object]:
+        key: dict[str, object] = {}
         for name in ("mean/input_tokens", "mean/output_tokens"):
             if name in agent_metrics:
                 key[name] = agent_metrics[name]
@@ -98,7 +93,8 @@ class BigCodeBenchResourcesServer(SimpleResourcesServer):
     async def verify(self, body: BigCodeBenchVerifyRequest) -> BigCodeBenchVerifyResponse:
         model_out = body.response.output_text or ""
         meta = body.verifier_metadata or {}
-        task_id = meta.get("task_id")
+        task_value = meta.get("task_id")
+        task_id = task_value if isinstance(task_value, str) else None
 
         if not model_out.strip():
             return BigCodeBenchVerifyResponse(
@@ -121,15 +117,20 @@ class BigCodeBenchResourcesServer(SimpleResourcesServer):
         # Skills passes ``calibrated=True`` to bigcodebench.evaluate, which prepends
         # ``code_prompt + "\n    pass\n"`` to the model's solution before running the test.
         # That ensures the entry_point function exists even if the model returned only the body.
-        code_prompt = meta.get("code_prompt", "")
+        code_prompt_value = meta.get("code_prompt")
+        test_code = meta.get("test")
+        entry_point = meta.get("entry_point")
+        if not isinstance(code_prompt_value, str) or not isinstance(test_code, str) or not isinstance(entry_point, str):
+            raise ValueError("BigCodeBench verifier metadata is incomplete")
+        code_prompt = code_prompt_value
         calibrated = code_prompt + "\n    pass\n" + extracted
 
         async with self._semaphore:
             result = await asyncio.to_thread(
-                self._run_in_venv,
+                self._run_sandbox,
                 code=calibrated,
-                test_code=str(meta["test"]),
-                entry_point=str(meta["entry_point"]),
+                test_code=test_code,
+                entry_point=entry_point,
                 task_id=str(task_id or "BigCodeBench"),
             )
 
@@ -144,7 +145,7 @@ class BigCodeBenchResourcesServer(SimpleResourcesServer):
             task_id=task_id,
         )
 
-    def _run_in_venv(self, code: str, test_code: str, entry_point: str, task_id: str) -> Dict[str, Any]:
+    def _run_sandbox(self, code: str, test_code: str, entry_point: str, task_id: str) -> dict[str, object]:
         if self._sandbox_error is not None:
             raise self._sandbox_error
         if self._sandbox_spec is None or self._sandbox_preflight is None or not self._sandbox_preflight.ok:

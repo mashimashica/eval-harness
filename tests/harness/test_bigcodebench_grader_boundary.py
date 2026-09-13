@@ -256,7 +256,8 @@ class BigCodeBenchBoundaryPreparationTests(unittest.TestCase):
             'uv_version="$("$uv_bin" --version)"',
             'harness_identity="$("$harness_python" -I -B -c',
             '[ "$("$meson_bin" --version)" = "1.9.1" ]',
-            '[ "$("$ninja_bin" --version)" = "1.13.0" ]',
+            'ninja_distribution_version="$("$build_venv/bin/python"',
+            'ninja_binary_version="$("$ninja_bin" --version)"',
         ):
             self.assertIn(command, script)
 
@@ -271,7 +272,7 @@ class BigCodeBenchBoundaryPreparationTests(unittest.TestCase):
                 (uv, "uv 0.11.29 (fixture)"),
                 (harness, "3.13.14 x86_64"),
                 (meson, "1.9.1"),
-                (ninja, "1.13.0"),
+                (ninja, "1.13.0.git.kitware.jobserver-pipe-1"),
             ):
                 executable.write_text(f"#!/bin/sh\nprintf '%s\\n' '{output}'\n", encoding="utf-8")
                 executable.chmod(0o700)
@@ -295,7 +296,42 @@ printf '%s|%s|%s|%s\\n' "$uv_version" "$harness_identity" "$meson_version" "$nin
                 check=False,
             )
             self.assertEqual(result.returncode, 0, result.stderr)
-            self.assertEqual(result.stdout, "uv 0.11.29 (fixture)|3.13.14 x86_64|1.9.1|1.13.0\n")
+            self.assertEqual(
+                result.stdout,
+                "uv 0.11.29 (fixture)|3.13.14 x86_64|1.9.1|1.13.0.git.kitware.jobserver-pipe-1\n",
+            )
+
+    def test_shell_ninja_guard_requires_distribution_and_binary_identity(self) -> None:
+        script_path = Path(__file__).parents[2] / "scripts" / "ci" / "install_bubblewrap.sh"
+        script = script_path.read_text(encoding="utf-8")
+        start = script.index("check_ninja_version()")
+        end = script.index("\n}\n", start) + 3
+        function_source = script[start:end]
+        cases: tuple[tuple[str, str, bool], ...] = (
+            ("1.13.0", "1.13.0.git.kitware.jobserver-pipe-1", True),
+            ("1.13.0", "1.13.0", False),
+            ("1.13.00", "1.13.0.git.kitware.jobserver-pipe-1", False),
+            ("1.13.0\n1.13.0", "1.13.0.git.kitware.jobserver-pipe-1", False),
+            ("1.13.0", "1.13.0.git.kitware.jobserver-pipe-1\n", False),
+            ("1.13.0", "1.13.0.git.kitware.jobserver-pipe-1\r", False),
+            ("1.13.0", "1.13.0.git.kitware.jobserver-pipe-2", False),
+        )
+        for distribution, binary, expected in cases:
+            result = subprocess.run(
+                [
+                    "bash",
+                    "-c",
+                    f'{function_source}\ncheck_ninja_version "$1" "$2"',
+                    "check-ninja",
+                    distribution,
+                    binary,
+                ],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                check=False,
+            )
+            self.assertEqual(result.returncode == 0, expected, (distribution, binary))
 
     def test_nltk_archive_install_preserves_existing_and_cleans_partial_output(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:

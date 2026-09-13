@@ -24,7 +24,7 @@ import unittest
 from collections.abc import Mapping
 from pathlib import Path
 from typing import cast
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import eval_harness.benchmarks.gdpval as gdpval_benchmark
 import eval_harness.evaluators.aime26 as aime26_evaluator
@@ -44,6 +44,7 @@ from eval_harness.evaluators.base import (
     EvaluationStatus,
 )
 from eval_harness.evaluators.bigcodebench import BigCodeBenchEvaluator
+from eval_harness.grader_sandbox import GraderInfrastructureError, GraderSandboxPreflight, GraderSandboxSpec
 from eval_harness.evaluators.exact import ExactMatchEvaluator
 from eval_harness.evaluators.gdpval import GDPvalExternalEvaluator
 from eval_harness.evaluators.pairwise import PairwiseJudgeEvaluator
@@ -100,6 +101,13 @@ def _single_request(
         metadata={} if metadata is None else metadata,
         candidates=(EvaluationCandidate("policy", result, result.deliverables_dir),),
         artifact_dir=artifact_dir,
+    )
+
+
+def _ready_bigcodebench(evaluator: BigCodeBenchEvaluator) -> None:
+    evaluator._sandbox_spec = cast(GraderSandboxSpec, MagicMock())
+    evaluator._sandbox_preflight = GraderSandboxPreflight(
+        True, "0.12.0", "bigcodebench-bwrap-v1", "spec", "manifest", "attestation", ()
     )
 
 
@@ -507,37 +515,15 @@ class NativeEvaluatorCoverageTests(unittest.TestCase):
         metadata = {"test": "assert True", "entry_point": "solve", "code_prompt": "def solve():"}
         with tempfile.TemporaryDirectory() as tmp:
             resource = Path(tmp)
-            (resource / "bcb_runner.py").write_text("runner", encoding="utf-8")
             with patch(
                 "resources_servers.bigcodebench.code_extraction.preprocess_code_completion",
                 return_value="",
             ):
                 no_code = bigcodebench_evaluator._native_bigcodebench_evaluate(
-                    "plain text", metadata, resource_dir=resource, bcb_python=resource / "python"
+                    "plain text", metadata, resource_dir=resource
                 )
             self.assertEqual(no_code["status"], "no_code_block")
             self.assertEqual(no_code["reward"], 0.0)
-
-            for process_error, status in (
-                (subprocess.TimeoutExpired(["python"], 1), "timeout"),
-                (OSError("runner unavailable"), "error"),
-            ):
-                with self.subTest(status=status):
-                    with (
-                        patch(
-                            "resources_servers.bigcodebench.code_extraction.preprocess_code_completion",
-                            return_value="return 1",
-                        ),
-                        patch("eval_harness.evaluators.bigcodebench.subprocess.run", side_effect=process_error),
-                    ):
-                        result = bigcodebench_evaluator._native_bigcodebench_evaluate(
-                            "```python\nreturn 1\n```",
-                            metadata,
-                            resource_dir=resource,
-                            bcb_python=resource / "python",
-                        )
-                    self.assertEqual(result["status"], status)
-                    self.assertEqual(result["reward"], 0.0)
 
             with (
                 patch(
@@ -545,18 +531,29 @@ class NativeEvaluatorCoverageTests(unittest.TestCase):
                     return_value="return 1",
                 ),
                 patch(
-                    "eval_harness.evaluators.bigcodebench.subprocess.run",
-                    return_value=subprocess.CompletedProcess(["python"], 4, stdout="not json", stderr="bad"),
+                    "eval_harness.evaluators.bigcodebench.resolve_bigcodebench_sandbox_spec",
+                    side_effect=GraderInfrastructureError("runtime unavailable"),
                 ),
             ):
-                malformed = bigcodebench_evaluator._native_bigcodebench_evaluate(
-                    "```python\nreturn 1\n```",
-                    metadata,
-                    resource_dir=resource,
-                    bcb_python=resource / "python",
-                )
-            self.assertEqual(malformed["status"], "error")
-            self.assertEqual(cast(dict[str, object], malformed["details"])["returncode"], 4)
+                with self.assertRaises(GraderInfrastructureError):
+                    bigcodebench_evaluator._native_bigcodebench_evaluate(
+                        "```python\nreturn 1\n```", metadata, resource_dir=resource
+                    )
+
+            with (
+                patch(
+                    "resources_servers.bigcodebench.code_extraction.preprocess_code_completion",
+                    return_value="return 1",
+                ),
+                patch(
+                    "eval_harness.evaluators.bigcodebench.resolve_bigcodebench_sandbox_spec",
+                    side_effect=GraderInfrastructureError("runtime unavailable"),
+                ),
+            ):
+                with self.assertRaises(GraderInfrastructureError):
+                    bigcodebench_evaluator._native_bigcodebench_evaluate(
+                        "```python\nreturn 1\n```", metadata, resource_dir=resource
+                    )
 
     def test_bigcodebench_evaluator_rejects_boundary_states_and_bad_reward(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -573,8 +570,7 @@ class NativeEvaluatorCoverageTests(unittest.TestCase):
                     )
                 )
 
-            (grader / "bcb_runner.py").write_text("runner", encoding="utf-8")
-            evaluator._bcb_python = grader / "python"
+            _ready_bigcodebench(evaluator)
             empty = evaluator.evaluate(
                 _single_request(
                     root,
@@ -613,16 +609,15 @@ class NativeEvaluatorCoverageTests(unittest.TestCase):
             self.assertIn("separate", overlap.details[0])
             missing = evaluator.preflight(root / "run")
             self.assertFalse(missing.ok)
-            self.assertIn("runner is missing", missing.details[0])
+            self.assertIn("runtime manifest", missing.details[0])
 
-            (grader / "bcb_runner.py").write_text("runner", encoding="utf-8")
             with patch(
-                "resources_servers.bigcodebench.setup_bcb_venv.ensure_bcb_venv",
-                side_effect=RuntimeError("venv unavailable"),
+                "eval_harness.evaluators.bigcodebench.resolve_bigcodebench_sandbox_spec",
+                side_effect=GraderInfrastructureError("runtime unavailable"),
             ):
                 failed = evaluator.preflight(root / "run")
             self.assertFalse(failed.ok)
-            self.assertIn("venv unavailable", failed.details[0])
+            self.assertIn("runtime unavailable", failed.details[0])
 
 
 class GDPvalEvaluatorSafetyCoverageTests(unittest.TestCase):

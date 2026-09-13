@@ -3,6 +3,30 @@
 
 # PR04 implementation work record
 
+## Regression/legacy/Ninja draft checkpoint, 2026-09-13
+
+Base `fe23c09bedf07d51ec320373fd89f502428dff16`. Luna returns ten files covering
+resource app/setup/config/README, its tests, four authorized harness test modules and
+the fixed Ninja distribution/binary comparison. Only diff whitespace passed. These
+ports and the initial Ninja correction are not yet unit/type/lint/Linux validated.
+The secret baseline is not changed yet. The public-boundary review remains open in
+control `b68b6dde817fce4cbdabfe0da3d6f96705c30777`, report
+`reports/m2-public-boundary-draft-review.md`; its eleven groups must be fixed before
+any claim of working attestation or formal promotion of this source.
+
+Parent additionally notes that setup_bcb_venv still exports an explicit compatibility
+wrapper named ensure_bcb_venv and evaluator still has its ignored bcb_python argument.
+Preserving old spellings is contrary to the user's no-wrapper requirement; remove those
+surfaces and port their tests instead. The new readonly resolver also must not execute
+an unverified interpreter or buffer unbounded output. This checkpoint preserves the
+draft and failed approach rather than accepting it. The next correction uses explicit
+negative old-symbol checks and identity-before-execution regressions.
+
+Formal PR #43 stays at `0c919a5c`. Save this batch before further edits, then Luna
+addresses the consolidated source review with its regressions and finite CI corrections.
+Deadline 10:30 UTC and interval deadline 10:33:34 UTC remain; unfinished safe work is
+saved and continued under the user's autonomous-interval rule, not silently accepted.
+
 ## Public launch and caller draft ready for validation, 2026-09-13
 
 Base `7ebef3f004fad1a8df88792dfac6f0db7b1dd3c7`; Luna returns one coherent
