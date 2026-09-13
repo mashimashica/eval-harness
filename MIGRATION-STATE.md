@@ -3,7 +3,7 @@
 
 # Migration state
 
-Updated: 2026-09-13T00:28:53.838Z
+Updated: 2026-09-13T00:41:47.141Z
 
 Control branch: `checkpoint/migration-control`.
 Procedure: [MIGRATION-WORKFLOW.md](MIGRATION-WORKFLOW.md).
@@ -83,13 +83,14 @@ Sol design/review proceeds independently; drafts below are saved work, not imple
 | Slice | Checkpoint branch | Saved commit | Saved contract / state |
 | --- | --- | --- | --- |
 | 02c | `checkpoint/pr-02c` | `039f5524b8fc4a7d51f2bf2521cbdbf1a71cc705` | `contracts/pr02c-reconstruction.md`, `contracts/pr02c-work.md`; design accepted, Luna implementing; no new test claim |
-| 04 | `checkpoint/design-pr04` | `31b3344c9c0f0f66d25265153f405d06dfa25c20` | Grader boundary contract, evidence, and checkpoint record; draft, remaining sandbox/lock proof |
-| 06 | `checkpoint/design-pr06` | `2b4a597d94f800fc28bcce70e6ccbfc419303f1c` | GDPval rubric/pairwise/panel design draft; exact fixtures still being completed |
-| 08 | `checkpoint/design-pr08` | `bd490241c0b29ceef11133693117ea6499c7e427` | AA-v2 protocol design draft; exact hashes/fixtures/resume rules being completed |
+| 04 | `checkpoint/design-pr04` | `a2a9f9adcc60a117ddafb5c58e8449936a76e793` | Grader contract plus exact rejected locks/audit evidence; draft, dependency CVE closure and real sandbox proof remain |
+| 06 | `checkpoint/design-pr06` | `5a35d85d0c6af63fd95c672fda2584d26be4ba70` | GDPval semantic contract and exact characterization fixtures saved; 26 baseline fake tests passed; implementation appendix pending |
+| 07 | `checkpoint/design-pr07` | `4ab6f321be221e5e8b393d6c905fbcd72512dc5b` | Stirrup generation contract draft saved; exact dependency resolution/audit pending |
+| 08 | `checkpoint/design-pr08` | `c7332a60fe7571014a0cefbee54be99a1977970c` | Protocol contract plus numeric and cross-stage occurrence fixtures saved; final PR05 API alignment pending |
 
 PR02c contract SHA-256: `a755aa7ef611238258308146ac8d602e4b9debd1e644a1e9b795616c95ce86fc`.
 Its two files and ref were read back and matched the saved bytes/Git blobs before implementation started.
-Sol also owns bounded PR05 and PR07 design work; no source implementation is running for those slices.
+Sol also owns bounded PR05 and PR09 design work; no source implementation is running for those slices.
 New design documents are reconstructions from the original plan and accepted APIs, not recovered lost files.
 
 Next actions, in order:
@@ -99,6 +100,18 @@ Next actions, in order:
 3. Root promotes the reviewed slice to the Draft stack, verifies the saved head and CI commit/tree evidence.
 4. Advance through PR04–09 one accepted implementation slice at a time.
 5. Delete replaced routes in PR10 and close fourth-benchmark/final-head acceptance in PR11.
+
+PR02c's task-input protection amendment is accepted locally (SHA-256
+`98c69de050dcbce42bad8db805243402f69633bb896a704e2a4628bdd9eba9c8`), and Luna must save it in
+its checkpoint before expanding code scope. Cursor must protect `task_inputs`; file interventions must reserve
+that namespace. No fix or test pass is claimed until its saved implementation is reviewed.
+
+PR04 dependency audit identified an unresolved official NLTK advisory
+[GHSA-8mgp-746c-j5xp / CVE-2026-81726](https://github.com/nltk/nltk/security/advisories/GHSA-8mgp-746c-j5xp).
+The official advisory reports no patched release as inspected on 2026-09-13. Exact rejected requirement locks
+and full audit reports are saved in the PR04 design checkpoint. Sol is evaluating an explicit newer grader
+interpreter and a minimal source-reviewed fix; no CVE ignore rule, false version, sandbox-based exemption, or
+acceptance claim is authorized by this investigation. Other authorized preparation continues.
 
 No merge, release, publish, or real-model experiment is part of this work.
 
