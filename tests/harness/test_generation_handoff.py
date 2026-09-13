@@ -17,7 +17,7 @@ from unittest.mock import patch
 
 import eval_harness.runner as runner_module
 from eval_harness.benchmarks.base import Benchmark, BenchmarkTask
-from eval_harness.benchmarks.snapshot import Availability, SnapshotTaskContent, open_verified_snapshot
+from eval_harness.benchmarks.snapshot import Availability, SnapshotError, SnapshotTaskContent, open_verified_snapshot
 from eval_harness.candidate_bundle import (
     CandidateBundleError,
     SnapshotReference,
@@ -58,6 +58,7 @@ from eval_harness.layout import candidate_layout
 from eval_harness.provenance import RepositoryProvenance
 from eval_harness.reasoning import ReasoningEffortOption
 from eval_harness.run_manifest import (
+    RunManifest,
     RunManifestError,
     RunResultRow,
     RunResultWriter,
@@ -441,6 +442,28 @@ class FixtureEvaluator(Evaluator):
 
 
 class GenerationHandoffTests(unittest.TestCase):
+    def _fresh_fixture_handoff(
+        self, root: Path
+    ) -> tuple[Path, FixtureEvaluator, FixtureExecutor, RunManifest, VerifiedSnapshotBinding]:
+        out = root / "run"
+        runtime = root / "runtime"
+        evaluator = FixtureEvaluator()
+        executor = FixtureExecutor()
+        run_benchmark(
+            FixtureBenchmark(task_count=1),
+            evaluator,
+            executor,
+            out_dir=out,
+            runtime_root=runtime,
+            limit=1,
+            intervention=FixtureIntervention(),
+        )
+        manifest = load_run_manifest(out)
+        binding = VerifiedSnapshotBinding.load(out / manifest.snapshot_path)
+        self.assertEqual(len(load_run_results(manifest, snapshot_binding=binding)), 1)
+        shutil.rmtree(runtime)
+        return out, evaluator, executor, manifest, binding
+
     def test_successful_handoff_seals_and_indexes_before_each_evaluation(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
@@ -540,6 +563,111 @@ class GenerationHandoffTests(unittest.TestCase):
                 self.assertEqual(
                     bundle.read_artifact("answer.txt"), f"artifact-{row.snapshot_reference.task_id}".encode()
                 )
+
+    def test_handoff_readers_reject_fresh_snapshot_and_candidate_tampering(self) -> None:
+        snapshot_cases = (
+            ("snapshot_execution_blob", "execution_view", "task_inputs/fixture-0.txt"),
+            ("snapshot_evaluation_blob", "evaluation_view", "task_inputs/fixture-0-evaluation-only.txt"),
+        )
+        for case, view_name, expected_path in snapshot_cases:
+            with self.subTest(case=case), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                out, evaluator, executor, manifest, binding = self._fresh_fixture_handoff(root)
+                snapshot_root = out / manifest.snapshot_path
+                snapshot_manifest_path = snapshot_root / "benchmark-snapshot.json"
+                snapshot_payload = _load_json(snapshot_manifest_path)
+                raw_tasks = snapshot_payload.get("tasks")
+                if type(raw_tasks) is not list or not raw_tasks or type(raw_tasks[0]) is not dict:
+                    raise AssertionError("fixture snapshot did not contain one task manifest")
+                task_payload = cast(JsonObject, raw_tasks[0])
+                view_payload = _json_object(task_payload[view_name])
+                raw_files = view_payload.get("files")
+                if type(raw_files) is not list:
+                    raise AssertionError("fixture snapshot view did not contain a file manifest")
+                file_payload = next(
+                    (
+                        cast(JsonObject, item)
+                        for item in raw_files
+                        if type(item) is dict and item.get("path") == expected_path
+                    ),
+                    None,
+                )
+                if file_payload is None or type(file_payload.get("sha256")) is not str:
+                    raise AssertionError(f"fixture snapshot did not contain {expected_path}")
+                (snapshot_root / "blobs" / "sha256" / cast(str, file_payload["sha256"])).write_bytes(
+                    b"tampered snapshot bytes"
+                )
+                with self.assertRaises(SnapshotError):
+                    VerifiedSnapshotBinding.load(snapshot_root)
+                self.assertEqual(len(evaluator.evaluation_requests), 1)
+                self.assertEqual(executor.execute_calls, 1)
+
+        candidate_cases = (
+            "candidate_artifact_blob",
+            "candidate_missing_blob",
+            "candidate_manifest_text",
+            "candidate_manifest_hash",
+        )
+        for case in candidate_cases:
+            with self.subTest(case=case), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                out, evaluator, executor, manifest, binding = self._fresh_fixture_handoff(root)
+                loaded = load_run_results(manifest, snapshot_binding=binding)
+                bundle_root = loaded[0][1].root
+                if case in {"candidate_artifact_blob", "candidate_missing_blob"}:
+                    artifact = loaded[0][1].outcome.artifacts[0]
+                    artifact_blob = bundle_root / "blobs" / "sha256" / artifact.sha256
+                    if case == "candidate_artifact_blob":
+                        artifact_blob.write_bytes(b"tampered artifact bytes")
+                    else:
+                        artifact_blob.unlink()
+                else:
+                    candidate_manifest_path = bundle_root / "candidate-bundle.json"
+                    candidate_payload = _load_json(candidate_manifest_path)
+                    candidate_payload["effective_executor_prompt"] = (
+                        "tampered candidate prompt"
+                        if case == "candidate_manifest_text"
+                        else candidate_payload["effective_executor_prompt"]
+                    )
+                    if case == "candidate_manifest_hash":
+                        candidate_payload["bundle_sha256"] = "0" * 64
+                    candidate_manifest_path.write_bytes(
+                        json.dumps(
+                            candidate_payload,
+                            ensure_ascii=False,
+                            sort_keys=True,
+                            separators=(",", ":"),
+                        ).encode("utf-8")
+                    )
+                with self.assertRaises(RunManifestError):
+                    load_run_results(manifest, snapshot_binding=binding)
+                self.assertEqual(len(evaluator.evaluation_requests), 1)
+                self.assertEqual(executor.execute_calls, 1)
+
+    def test_handoff_reader_rejects_fresh_malformed_and_changed_index_links(self) -> None:
+        cases = ("malformed", "changed_path", "changed_digest")
+        for case in cases:
+            with self.subTest(case=case), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                out, evaluator, executor, manifest, binding = self._fresh_fixture_handoff(root)
+                index_path = out / manifest.results_path
+                if case == "malformed":
+                    index_path.write_bytes(b"not-json\n")
+                else:
+                    lines = index_path.read_text(encoding="utf-8").splitlines()
+                    if len(lines) != 1:
+                        raise AssertionError("fixture run did not contain one result row")
+                    row_payload = _json_object(json.loads(lines[0]))
+                    row_payload["bundle_path"] = "../outside" if case == "changed_path" else row_payload["bundle_path"]
+                    if case == "changed_digest":
+                        row_payload["bundle_sha256"] = "0" * 64
+                    index_path.write_bytes(
+                        (json.dumps(row_payload, sort_keys=True, separators=(",", ":")) + "\n").encode("utf-8")
+                    )
+                with self.assertRaises(RunManifestError):
+                    load_run_results(manifest, snapshot_binding=binding)
+                self.assertEqual(len(evaluator.evaluation_requests), 1)
+                self.assertEqual(executor.execute_calls, 1)
 
     def test_snapshot_and_bound_materialization_are_single_pass_and_before_execution(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
