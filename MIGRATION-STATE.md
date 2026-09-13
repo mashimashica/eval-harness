@@ -83,15 +83,16 @@ Sol design/review proceeds independently; drafts below are saved work, not imple
 
 | Slice | Checkpoint branch | Saved commit | Saved contract / state |
 | --- | --- | --- | --- |
-| 02c | `checkpoint/pr-02c` | `621be5d6b43ef65b0f4c75d3c414aca0bb05a7f9` | Saved/read back; exact clean head passes all 48 Cursor/generic tests, scoped strict typing and Ruff; wrapper/handoff/fixture/full gates remain |
+| 02c | `checkpoint/pr-02c` | `6e7bc240de3a3ad0faaf05c4e2b4bde787314c4b` | GDPval task_inputs wrapper saved/read back; 31 snapshot/boundary tests, scoped strict typing and Ruff pass on exact clean head; handoff/fixture/full gates remain |
 | 04 | `checkpoint/design-pr04` | `a2a9f9adcc60a117ddafb5c58e8449936a76e793` | Grader contract plus exact rejected locks/audit evidence; draft, dependency CVE closure and real sandbox proof remain |
+| 05 | `checkpoint/design-pr05` | `a6a1e6b43819fbf4bf7be2e7b55001d7a899ea16` | Common evaluation/generation/role policy contract and PR02c review saved; Astra found generation and result resume gaps, amendments pending |
 | 06 | `checkpoint/design-pr06` | `5a35d85d0c6af63fd95c672fda2584d26be4ba70` | GDPval semantic contract and exact characterization fixtures saved; 26 baseline fake tests passed; implementation appendix pending |
 | 07 | `checkpoint/design-pr07` | `4ab6f321be221e5e8b393d6c905fbcd72512dc5b` | Stirrup generation contract draft saved; exact dependency resolution/audit pending |
 | 08 | `checkpoint/design-pr08` | `34138592e05959ff46e6234ae6fa7fa9654715ab` | Protocol/fixtures and one bound lazy generation plan aligned with PR05/06; design saved, implementation pending |
 
 PR02c contract SHA-256: `a755aa7ef611238258308146ac8d602e4b9debd1e644a1e9b795616c95ce86fc`.
 Its two files and ref were read back and matched the saved bytes/Git blobs before implementation started.
-PR09 draft is also reachable on `checkpoint/design-pr09` at `aa50f441f23397980b755b6296071f61803240a1`
+PR09 draft is also reachable on `checkpoint/design-pr09` at `2d9883a07598b74d73e3cb4e3dbb26c7cdb2660c`
 (`contracts/pr09-builder-experiment-contract.md`); exact API/source mapping is still being completed.
 Sol also owns bounded PR05 design work; no source implementation is running for those slices.
 New design documents are reconstructions from the original plan and accepted APIs, not recovered lost files.
@@ -126,8 +127,10 @@ ran 526 harness unit tests: one failure and 33 errors, identifying the scoped le
 Cursor/generic tests had two old metadata assertions to update; strict typing identified four concrete issues.
 The next bounded fix is saved/read back at `621be5d6b43ef65b0f4c75d3c414aca0bb05a7f9`; on that exact clean
 head, all 48 focused tests, strict mypy of three changed files, and Ruff lint/format pass. Full-suite/coverage and
-acceptance are not claimed. Luna is now applying the minimal GDPval `task_inputs` execution wrapper change.
-Remaining generation handoff, fixture and full-gate work is recorded with the code.
+acceptance are not claimed. The minimal GDPval `task_inputs` execution wrapper change is saved/read back at
+`6e7bc240de3a3ad0faaf05c4e2b4bde787314c4b`; that exact clean head passes all 31 snapshot and benchmark-boundary
+tests, scoped strict mypy of its three source/test files, and Ruff lint/format. Luna is adding the first bounded
+real generation handoff test file. Remaining failure/tamper handoff cases, fixture ports and full gates are open.
 
 PR04 dependency audit identified an unresolved official NLTK advisory
 [GHSA-8mgp-746c-j5xp / CVE-2026-81726](https://github.com/nltk/nltk/security/advisories/GHSA-8mgp-746c-j5xp).
