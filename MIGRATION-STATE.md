@@ -3,7 +3,7 @@
 
 # Migration state
 
-Updated: 2026-09-13T10:47:00Z
+Updated: 2026-09-13T11:00:00Z
 
 Control branch: `checkpoint/migration-control`.
 Procedure: [MIGRATION-WORKFLOW.md](MIGRATION-WORKFLOW.md).
@@ -12,12 +12,22 @@ This record preserves recoverable work; it does not declare the migration accept
 ## Latest recovery point: fixed Linux CI promoted; public boundary implementation
 
 Implementation `checkpoint/pr-04` is saved at
-`0d4a4b1ebf4e5b82152fc69fa35afd0c0f969d6f`, tree
-`b6fef0101fad38cbbdf22c71a3aecd7ed2ed101c`. Luna returned the coherent twelve-path
+`240d5d37d58c4456db936c6ea8a3b8bc65d4138a`, tree
+`a78b13b414f8e72a17536212163c298b0c1361de`. This preserves the independent installer
+capability correction at `833df6b9b5484f7fe4882259d93b30c518a81182` plus two fixture
+fixes. The first 833 preparation check had 15/17 pass and two fixture errors; 240d
+reports 17/17 pass. Sol closes the installer source, with one test typing error still
+open; metadata mocks are not Linux proof. The public source remains exact `0d4a4b1e`,
+which Sol's first corrective review rejects with concrete probe/identity/caller defects.
+Full diagnostics and the consolidated review are pending; do not promote public source.
+
+At `0d4a4b1ebf4e5b82152fc69fa35afd0c0f969d6f` Luna returned the coherent twelve-path
 public correction at the save boundary; parent saved/read back source and work record
 before any validation. It includes the trusted setup-root resolver, identity/inventory/
 probe changes, common callers, registry/test ports and entire legacy setup-file deletion.
-Tests, strict typing, Ruff and independent closure review have not run on this head.
+It was saved before tests. Subsequent related tests expose caller failures; strict typing
+and Ruff also fail. None is accepted. The capability-only source may be selectively
+promoted after its tests/static gates close; preserve the separate formal branch parent.
 The prior two-file WIP remains reachable at `3978d08e`. The preceding
 `1df1ef8cbf363c7e69a43d119f816a6666f79b36` adds ten-file legacy/test ports
 and exact Ninja identity checking to the preceding four-file public draft. Parent's
@@ -35,9 +45,11 @@ strict public types, accepted production limits, cancellation ownership and lega
 removal. Current drafts are not promoted to the real sandbox job. The latest setup
 draft reintroduced an explicit compatibility wrapper and evaluator's ignored legacy
 argument remains; preserving old spellings is rejected, not accepted as a migration.
-Luna next applies the independently approved capability inspection and exact secret
-baseline, then performs grouped validation by 11:15 UTC, saving within 15 minutes.
-Sol reviews the returned fixed public correction read-only; parent reconciles evidence.
+Luna completes the exact secret baseline and missing full strict/static diagnostic scope
+by 11:15 UTC, saving within 15 minutes. Parent installed only the isolated fixed
+detect-secrets 1.5.0 tool and verified its version, resolving an uncached offline command
+without changing project dependencies or audit rules. Sol is consolidating public source
+defects; parent reconciles evidence before returning the second corrective batch.
 The eleven public-boundary groups remain pending fixed-head correction review.
 
 The original four-file draft
