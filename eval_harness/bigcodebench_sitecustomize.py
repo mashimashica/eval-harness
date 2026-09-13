@@ -21,6 +21,7 @@ _POLICY_ENVIRONMENT_VARIABLE: Final[str] = "BIGCODEBENCH_NLTK_OFFLINE"
 _POLICY_REVISION: Final[str] = "bigcodebench-bwrap-v1"
 _NLTK_DATA_PATH: Final[str] = "/opt/bigcodebench/nltk_data"
 _NLTK_INDEX_URL: Final[str] = "file:///opt/bigcodebench/nltk_data/index.xml"
+_STARTUP_FAILURE_MESSAGE: Final[str] = "BigCodeBench NLTK offline bootstrap failed"
 
 
 class _Downloader(Protocol):
@@ -71,4 +72,17 @@ def configure_bigcodebench_nltk() -> None:
     nltk_module.download = bound_download
 
 
-configure_bigcodebench_nltk()
+def _configure_at_startup() -> None:
+    """Make automatic interpreter startup fail closed without exposing details."""
+
+    try:
+        configure_bigcodebench_nltk()
+    except Exception:
+        # CPython's site module suppresses ordinary import exceptions from
+        # sitecustomize.  SystemExit is deliberately outside that boundary,
+        # making a failed offline dependency a fatal startup error.  Keep the
+        # original exception and its potentially sensitive message private.
+        raise SystemExit(_STARTUP_FAILURE_MESSAGE) from None
+
+
+_configure_at_startup()

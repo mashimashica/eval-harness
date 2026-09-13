@@ -7,10 +7,15 @@ from __future__ import annotations
 
 import importlib
 import os
+import shutil
+import subprocess
 import sys
+import tempfile
 import types
 import unittest
+import venv
 from collections.abc import Callable
+from pathlib import Path
 from typing import cast
 from unittest.mock import patch
 
@@ -73,6 +78,41 @@ def _fake_modules(nltk_module: _FakeNltk, downloader_module: _FakeDownloaderModu
         "nltk.data": cast(types.ModuleType, nltk_module.data),
         "nltk.downloader": cast(types.ModuleType, downloader_module),
     }
+
+
+def _run_isolated_startup(
+    *,
+    policy: str | None,
+    nltk_files: dict[str, str] | None = None,
+) -> subprocess.CompletedProcess[str]:
+    """Run the copied bootstrap through a fresh standard-library venv."""
+
+    with tempfile.TemporaryDirectory() as temporary:
+        temporary_path = Path(temporary)
+        venv_path = temporary_path / "venv"
+        venv.EnvBuilder(with_pip=False, clear=True).create(venv_path)
+        python = venv_path / "bin" / "python"
+        site_packages = (
+            venv_path / "lib" / f"python{sys.version_info.major}.{sys.version_info.minor}" / "site-packages"
+        )
+        source = Path(cast(str, sitecustomize.__file__))
+        shutil.copyfile(source, site_packages / "sitecustomize.py")
+
+        for relative_path, contents in (nltk_files or {}).items():
+            fixture_path = site_packages / relative_path
+            fixture_path.parent.mkdir(parents=True, exist_ok=True)
+            fixture_path.write_text(contents, encoding="utf-8")
+
+        environment = {} if policy is None else {POLICY_ENVIRONMENT_VARIABLE: policy}
+        return subprocess.run(
+            [str(python), "-I", "-B", "-c", "print('BIGCODEBENCH_USER_CODE')"],
+            capture_output=True,
+            cwd=temporary,
+            env=environment,
+            text=True,
+            timeout=15,
+            check=False,
+        )
 
 
 class TestBigCodeBenchSitecustomize(unittest.TestCase):
@@ -148,3 +188,35 @@ class TestBigCodeBenchSitecustomize(unittest.TestCase):
         ):
             with self.assertRaises(AttributeError):
                 sitecustomize.configure_bigcodebench_nltk()
+
+    def test_isolated_startup_fails_closed_for_nltk_dependency_errors(self) -> None:
+        cases = (
+            ("missing", {}, None),
+            (
+                "malformed",
+                {
+                    "nltk/__init__.py": "class _Data:\n    path = []\ndata = _Data()\n",
+                    "nltk/downloader.py": "_downloader = object()\n",
+                },
+                None,
+            ),
+            (
+                "secret-bearing",
+                {"nltk/__init__.py": "raise RuntimeError('offline-secret-token')\n"},
+                "offline-secret-token",
+            ),
+        )
+        for name, nltk_files, secret in cases:
+            with self.subTest(name=name):
+                result = _run_isolated_startup(policy=POLICY_REVISION, nltk_files=nltk_files)
+                self.assertNotEqual(result.returncode, 0)
+                self.assertNotIn("BIGCODEBENCH_USER_CODE", result.stdout)
+                self.assertIn("BigCodeBench NLTK offline bootstrap failed", result.stderr)
+                if secret is not None:
+                    self.assertNotIn(secret, result.stdout + result.stderr)
+
+    def test_isolated_startup_without_policy_continues_without_nltk(self) -> None:
+        result = _run_isolated_startup(policy=None)
+        self.assertEqual(result.returncode, 0)
+        self.assertEqual(result.stdout, "BIGCODEBENCH_USER_CODE\n")
+        self.assertEqual(result.stderr, "")

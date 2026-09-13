@@ -27,6 +27,12 @@ error tests do not prove fatal startup failure. The same owner must add a secret
 fatal automatic entry and fresh isolated-interpreter tests using the copied bootstrap.
 This is not yet bootstrap component closure; real pinned NLTK/data/sandbox remain pending.
 
+The bootstrap correction now makes automatic configuration errors a fixed secret-free
+fatal SystemExit, while retaining direct-call exception propagation. New regressions
+copy the bootstrap into a fresh stdlib venv and use actual `-I -B` startup for missing,
+malformed and secret-bearing NLTK failures plus ordinary NLTK-free startup. Save before
+combined tests/strict typing/Ruff and independent fixed-head closure review.
+
 Fixed implementation base: `7be35da9fae98c5e56ba14bf13a15a4cdbb9a8e7`;
 control recovery: `2d36c56c8056bd34186ed11da5004e0e01188dc8`. Both refs and clean local
 worktrees match; no repeated plan/design/dependency investigation is needed. Root remains
