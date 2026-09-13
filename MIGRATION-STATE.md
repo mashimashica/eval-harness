@@ -38,8 +38,10 @@ Linux sandbox or PR04 acceptance. The first fixed-environment preparation batch 
 saved. Five preparation unit methods have four passes and one error (candidate JSON is
 not canonical); strict mypy finds two new test typing errors, while Ruff and shell syntax
 pass. Parent review additionally identifies incomplete NLTK layout/identity, bwrap mode
-handling and runtime provenance. Sol reviews this fixed delta independently; consolidate
-the findings and return one corrective batch to Luna before any real installation.
+handling and runtime provenance. Sol completed the fixed-head review and confirmed seven
+blocking preparation issues; `reports/m2-preparation-review-88fdbcff.md` records them.
+Luna owns one consolidated correction with actual archive/manifest/identity fixtures,
+before any real installation. Its bounded allowance is 12 minutes from about 07:35 UTC.
 This is initial implementation validation, not a failed corrective round. Host supervision
 remains unchanged except allowed preparation helpers. No Linux job or dependency install
 has executed, and common callers/preflight/old-runner removal remain outstanding.
