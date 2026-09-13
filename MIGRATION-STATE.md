@@ -3,7 +3,7 @@
 
 # Migration state
 
-Updated: 2026-09-13T04:47:39.388Z
+Updated: 2026-09-13T05:09:46.819Z
 
 Control branch: `checkpoint/migration-control`.
 Procedure: [MIGRATION-WORKFLOW.md](MIGRATION-WORKFLOW.md).
@@ -24,19 +24,25 @@ tests passing. Review and DCO are closed. Checkpoint `272092f26948bdce763c185333
 has the same tree. See `reports/m1-acceptance.md` and `reports/m1-evidence/acceptance.json`.
 
 M2 / PR04 is active from 2026-09-13T04:30:56.162Z (first 90-minute working allowance).
-Checkpoint branch `checkpoint/pr-04`, head `16d8447885f5c38372f5b4a2db8b2caa9756db95`, contains the exact
-frozen contract/appendix, reviewed finite code-start amendment, and hash-verified metric/build/data inputs.
-Its implementation base is accepted PR02c head `6038a782`. See `contracts/pr04-work.md` on that branch.
+Checkpoint branch `checkpoint/pr-04` is saved/read back at `03791275ade265013e1efb9c1d96c49df34be610`.
+Implementation base: accepted PR02c `6038a782`. Exact contracts, finite amendments and the work record
+are on this branch. Frozen vendor/build/data input hashes and interpreter executable/license hashes match.
 
-Sol's code-start review is closed: candidate-only functional manifest/CI sequencing retains failed CVE
-acceptance; the authenticated native-signal union and exact trusted-mount path clarification are frozen.
-Luna is implementing only public types and pure request/frame/state codecs in three files. No native
-process launch or real boundary evidence exists yet. Root saves the next coherent batch before tests;
-Sol reviews the immutable delta. Do not repeat the NLTK investigation or rejected patch.
+The pure request/result protocol foundation is reviewed and validated: all 10 unittest methods and
+subcases pass under exact Python 3.13.14 and 3.11.16; strict mypy of three files and scoped Ruff pass.
+Sol's three findings (identifier-only NUL rejection, cumulative stream cap, recursion error mapping)
+are closed in that immutable head. Seven unused aliases were removed and new tests join the existing
+unittest coverage driver. See `reports/m2-codec-validation.json` for the decisive local summary.
 
-The exact vendor-byte pre-commit exclusions and two stale grader test paths have a pending finite Sol
-scope review for subsequent batches. They are not permission to broaden authored-code exclusions.
-All ordinary stop conditions and the one-active-implementation rule remain in effect.
+Luna now owns the next two-file inner-worker batch: trusted dumpability/rlimits/input/FD setup,
+forced-spawn native call and authenticated status/signal/error output. It is not yet saved or validated.
+No host supervisor, real sandbox/provisioning/parity evidence, final caller replacement or PR04 CI exists.
+Root saves the returned coherent batch before tests and Sol reviews its immutable delta.
+
+The known NLTK CVE remains unresolved. The approved candidate-only functional environment/manifest/CI
+sequence may produce evidence but cannot satisfy acceptance or a production constructor. No repeated
+NLTK investigation, rejected patch, real-model run or concurrent future implementation is permitted.
+All existing stop conditions and the 90-minute working allowance remain in effect.
 
 ## Last durable implementation base
 
