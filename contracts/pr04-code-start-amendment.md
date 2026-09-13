@@ -81,3 +81,24 @@ device/devpts mounts at 1431–1478), and `bwrap.xml` blob
 remount semantics at 277–285 and 315–316). Source URLs:
 [implementation](https://github.com/containers/bubblewrap/blob/2a76602a8c71f36c1527cf9fc3417d9149822e0c/bubblewrap.c)
 and [option reference](https://github.com/containers/bubblewrap/blob/2a76602a8c71f36c1527cf9fc3417d9149822e0c/bwrap.xml).
+
+## Exact registry path and physical interpreter preparation
+
+At the user-authorized continuation, Astra checked the current source and uv 0.11.29
+help; Sol independently reviewed this finite correction at `4d6717771de4102005ad10e5d50aee520286429f`.
+The contract's allowed `eval_harness/benchmarks/registry.yaml` path is a transcription
+error: the existing file is `eval_harness/benchmarks/registry.py`. Permit only its
+BigCodeBench descriptor's grader/sandbox provenance wording, not registry behavior or
+other descriptors. Do not create a parallel YAML registry.
+
+Uv's `--link-mode copy` describes package-cache installation, not interpreter copying.
+Keep it explicit for the hash-locked package sync as well as the specified venv setup.
+After uv creates the venv, a `bin/python` absolute symlink may be replaced by a physical
+copy only when its resolved target is exactly the already-verified canonical CPython
+executable. Preserve `pyvenv.cfg` home, require the copy's executable hash, then execute
+that venv interpreter to read back Python `3.11.16`, architecture `x86_64` and SOABI
+`cpython-311-x86_64-linux-gnu`. Preserve relative aliases only when they resolve inside
+the venv; reject escaping aliases under the existing inventory rules. Verify all other
+prefix/venv entries with the original inventory contract. This setup-only normalization
+does not authorize an alternate interpreter, wider mount, runtime install, cache-linked
+package, weak inventory, or dependency/audit exception.

@@ -145,6 +145,120 @@ class _FakePopen:
         self._close_fd("_error_write")
 
 
+class _FakeClock:
+    def __init__(self) -> None:
+        self.value = 0.0
+
+    def monotonic(self) -> float:
+        return self.value
+
+    def sleep(self, seconds: float) -> None:
+        self.value += seconds
+
+
+class _ScriptedSelector:
+    def __init__(self, clock: _FakeClock, events: list[str | None]) -> None:
+        self._clock = clock
+        self._events = iter(events)
+        self._registered: dict[str, tuple[BinaryIO, int]] = {}
+
+    def register(self, fileobj: object, events: int, data: object = None) -> None:
+        if not isinstance(data, str):
+            raise AssertionError("scripted selector requires named streams")
+        self._registered[data] = (cast(BinaryIO, fileobj), events)
+
+    def unregister(self, fileobj: object) -> None:
+        for name, (registered, _events) in tuple(self._registered.items()):
+            if registered is fileobj:
+                del self._registered[name]
+                return
+        raise KeyError(fileobj)
+
+    def select(self, timeout: float | None = None) -> list[tuple[selectors.SelectorKey, int]]:
+        try:
+            name = next(self._events)
+        except StopIteration:
+            name = None
+        if name is None:
+            self._clock.sleep(timeout or 0.0)
+            return []
+        fileobj, events = self._registered[name]
+        key = selectors.SelectorKey(fileobj, fileobj.fileno(), events, name)
+        return [(key, events)]
+
+    def get_map(self) -> dict[int, selectors.SelectorKey]:
+        return {
+            fileobj.fileno(): selectors.SelectorKey(fileobj, fileobj.fileno(), events, name)
+            for name, (fileobj, events) in self._registered.items()
+        }
+
+    def close(self) -> None:
+        self._registered.clear()
+
+
+class _PipePopen:
+    def __init__(
+        self,
+        output: bytes,
+        *,
+        clock: _FakeClock | None = None,
+        exit_at: float | None = None,
+        exit_on_poll: int | None = None,
+        hold_pipes: bool = False,
+    ) -> None:
+        input_read, input_write = os.pipe()
+        output_read, output_write = os.pipe()
+        error_read, error_write = os.pipe()
+        self.stdin: BinaryIO = os.fdopen(input_write, "wb", buffering=0)
+        self.stdout: BinaryIO = os.fdopen(output_read, "rb", buffering=0)
+        self.stderr: BinaryIO = os.fdopen(error_read, "rb", buffering=0)
+        self.pid = 424244
+        self.returncode: int | None = None
+        self.killed = False
+        self.poll_calls = 0
+        self._input_read = input_read
+        self._output_write = output_write
+        self._error_write = error_write
+        self._clock = clock
+        self._exit_at = exit_at
+        self._exit_on_poll = exit_on_poll
+        os.write(output_write, output)
+        if not hold_pipes:
+            self._close_fd("_output_write")
+            self._close_fd("_error_write")
+
+    def _close_fd(self, name: str) -> None:
+        descriptor = cast(int, getattr(self, name))
+        if descriptor >= 0:
+            try:
+                os.close(descriptor)
+            except OSError:
+                pass
+            setattr(self, name, -1)
+
+    def poll(self) -> int | None:
+        self.poll_calls += 1
+        if self.returncode is None and self._exit_on_poll is not None and self.poll_calls >= self._exit_on_poll:
+            self.returncode = 0
+        if self.returncode is None and self._exit_at is not None and self._clock is not None:
+            if self._clock.value >= self._exit_at:
+                self.returncode = 0
+        return self.returncode
+
+    def kill(self) -> None:
+        self.killed = True
+        self.returncode = -9
+        for name in ("_output_write", "_error_write", "_input_read"):
+            self._close_fd(name)
+
+    def close_all(self) -> None:
+        for name in ("_output_write", "_error_write", "_input_read"):
+            self._close_fd(name)
+        self.stdin.close()
+        self.stdout.close()
+        self.stderr.close()
+
+
 class TestBigCodeBenchRunner(unittest.TestCase):
     def _sandbox_fixture(self, root: Path) -> GraderSandboxSpec:
         resource = root / "resource"
@@ -444,6 +558,93 @@ class TestBigCodeBenchRunner(unittest.TestCase):
             with self.assertRaisesRegex(GraderInfrastructureError, "invalid grader protocol"):
                 sandbox_module._run_bounded_supervisor(("bwrap",), b"", KEY, GraderSandboxLimits())
         self.assertFalse(fake.killed)
+
+    def test_supervisor_does_not_restart_teardown_after_terminal_before_outer_exit(self) -> None:
+        clock = _FakeClock()
+        fake = _PipePopen(
+            encode_start(KEY) + encode_result(KEY, NativeStatus.PASS),
+            clock=clock,
+            exit_at=1.0,
+            hold_pipes=True,
+        )
+        selector = _ScriptedSelector(clock, ["stdout"])
+        limits = GraderSandboxLimits(teardown_seconds=5.0)
+        try:
+            with (
+                patch.object(subprocess, "Popen", return_value=fake),
+                patch.object(
+                    selectors,
+                    "DefaultSelector",
+                    return_value=cast(selectors.BaseSelector, selector),
+                ),
+                patch.object(sandbox_module, "_sample_process_tree", return_value=(set(), 0)),
+                patch.object(sandbox_module, "_descendant_pids", return_value=set()),
+                patch.object(sandbox_module.time, "monotonic", side_effect=clock.monotonic),
+                patch.object(sandbox_module.time, "sleep", side_effect=clock.sleep),
+                patch.object(sandbox_module, "DESCENDANT_SAMPLE_SECONDS", 1.0),
+            ):
+                with self.assertRaises(GraderInfrastructureError):
+                    sandbox_module._run_bounded_supervisor(("bwrap",), b"", KEY, limits)
+            self.assertEqual(clock.value, limits.teardown_seconds)
+        finally:
+            fake.close_all()
+
+    def test_supervisor_does_not_restart_cleanup_budget_after_successful_result(self) -> None:
+        clock = _FakeClock()
+        fake = _PipePopen(
+            encode_start(KEY) + encode_result(KEY, NativeStatus.PASS),
+        )
+        fake.returncode = 0
+        selector = _ScriptedSelector(clock, ["stdout", "stderr"])
+        limits = GraderSandboxLimits(teardown_seconds=1.0)
+        try:
+            with (
+                patch.object(subprocess, "Popen", return_value=fake),
+                patch.object(
+                    selectors,
+                    "DefaultSelector",
+                    return_value=cast(selectors.BaseSelector, selector),
+                ),
+                patch.object(sandbox_module, "_descendant_pids", return_value={99}),
+                patch.object(sandbox_module.time, "monotonic", side_effect=clock.monotonic),
+                patch.object(sandbox_module.time, "sleep", side_effect=clock.sleep),
+                patch.object(sandbox_module, "DESCENDANT_SAMPLE_SECONDS", 1.0),
+            ):
+                with self.assertRaises(GraderInfrastructureError):
+                    sandbox_module._run_bounded_supervisor(("bwrap",), b"", KEY, limits)
+            self.assertEqual(clock.value, limits.teardown_seconds)
+        finally:
+            fake.close_all()
+
+    def test_supervisor_rejects_limit_when_trusted_process_exits_during_reap_poll(self) -> None:
+        clock = _FakeClock()
+        fake = _PipePopen(encode_start(KEY), clock=clock, exit_on_poll=5, hold_pipes=True)
+        selector = _ScriptedSelector(clock, ["stdout"])
+        try:
+            with (
+                patch.object(subprocess, "Popen", return_value=fake),
+                patch.object(
+                    selectors,
+                    "DefaultSelector",
+                    return_value=cast(selectors.BaseSelector, selector),
+                ),
+                patch.object(
+                    sandbox_module,
+                    "_sample_process_tree",
+                    side_effect=[(set(), 0), ({99}, 0)],
+                ),
+                patch.object(sandbox_module, "_descendant_pids", return_value=set()),
+                patch.object(sandbox_module.time, "monotonic", side_effect=clock.monotonic),
+                patch.object(sandbox_module.time, "sleep", side_effect=clock.sleep),
+                patch.object(sandbox_module, "DESCENDANT_SAMPLE_SECONDS", 0.0),
+            ):
+                with self.assertRaises(GraderInfrastructureError):
+                    sandbox_module._run_bounded_supervisor(
+                        ("bwrap",), b"", KEY, GraderSandboxLimits(process_headroom=1)
+                    )
+            self.assertFalse(fake.killed)
+        finally:
+            fake.close_all()
 
     def test_supervisor_bounds_drain_after_dead_process_with_held_pipes(self) -> None:
         fake = _FakePopen(b"", hold_pipes=True)

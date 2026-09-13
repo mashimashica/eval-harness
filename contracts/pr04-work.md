@@ -28,6 +28,16 @@ fourth benchmark and all original quality gates remain mandatory. Save and read 
 work record are saved together before validation. Report functions/findings/barriers,
 not checkpoint count. No new validation has run at this record-only save.
 
+### Test-first reproduction checkpoint
+
+Luna added three fake-clock/selector, pipe-backed regressions; production is unchanged.
+No unit run has occurred yet. Parent read-through identified two fixture corrections
+before the intended red baseline: drain stdout EOF so the success-cleanup case reaches
+the actual success cleanup, and trigger natural exit after the limit sample/caller poll
+rather than earlier in the event loop. These stay with Luna in the test-only scope.
+The same save includes Sol-reviewed finite registry-path and physical-interpreter setup
+clarifications; they do not alter this host source or relax any boundary/quality gate.
+
 ## Resumed host-supervisor segment, 2026-09-13
 
 Current state: stopped under the user's two-failed-correction rule; PR04 is not accepted.
