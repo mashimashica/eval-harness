@@ -95,7 +95,7 @@ def _run_isolated_startup(
         site_packages = (
             venv_path / "lib" / f"python{sys.version_info.major}.{sys.version_info.minor}" / "site-packages"
         )
-        source = Path(cast(str, sitecustomize.__file__))
+        source = Path(sitecustomize.__file__)
         shutil.copyfile(source, site_packages / "sitecustomize.py")
 
         for relative_path, contents in (nltk_files or {}).items():
@@ -190,7 +190,7 @@ class TestBigCodeBenchSitecustomize(unittest.TestCase):
                 sitecustomize.configure_bigcodebench_nltk()
 
     def test_isolated_startup_fails_closed_for_nltk_dependency_errors(self) -> None:
-        cases = (
+        cases: tuple[tuple[str, dict[str, str], str | None], ...] = (
             ("missing", {}, None),
             (
                 "malformed",

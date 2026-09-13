@@ -33,6 +33,11 @@ copy the bootstrap into a fresh stdlib venv and use actual `-I -B` startup for m
 malformed and secret-bearing NLTK failures plus ordinary NLTK-free startup. Save before
 combined tests/strict typing/Ruff and independent fixed-head closure review.
 
+At `8699bcee`, all six bootstrap tests (including real fresh-venv startup), Ruff and
+Sol's production review pass; startup failure is closed. This save fixes only two
+new fixture typing issues (redundant file-path cast and explicit case tuple type).
+Parent verifies the corrected bootstrap head before proceeding to fixed provisioning.
+
 Fixed implementation base: `7be35da9fae98c5e56ba14bf13a15a4cdbb9a8e7`;
 control recovery: `2d36c56c8056bd34186ed11da5004e0e01188dc8`. Both refs and clean local
 worktrees match; no repeated plan/design/dependency investigation is needed. Root remains
