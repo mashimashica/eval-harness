@@ -3,7 +3,7 @@
 
 # Migration state
 
-Updated: 2026-09-13T09:35:03Z
+Updated: 2026-09-13T09:44:20Z
 
 Control branch: `checkpoint/migration-control`.
 Procedure: [MIGRATION-WORKFLOW.md](MIGRATION-WORKFLOW.md).
@@ -12,12 +12,18 @@ This record preserves recoverable work; it does not declare the migration accept
 ## Latest recovery point: fixed Linux CI wiring under review
 
 Implementation `checkpoint/pr-04` is saved at
-`92408b9d506f6b287598616b7ac58e9e145713c7`, tree
-`3b38520b2eb62264e2a265db13c80ed65dc26dfc`. It adds the fixed Ubuntu candidate
+`0c919a5cd1256af121a912bef5a42cf41d5e360b`, tree
+`28ef134a48c04a783e98277c09bc6770d121996e`. It adds the fixed Ubuntu candidate
 provisioning/audit workflow and exact-vendor gate/attribution changes. Luna reports
 YAML/TOML parsing, shell syntax including added run blocks, exact vendor selector checks
-and scoped vendor pre-commit behavior passing. Sol is reviewing this exact delta before
-parent Draft PR promotion. No real Linux job has started yet.
+and scoped vendor pre-commit behavior passing at preceding `92408b9d`. Sol found two
+workflow defects, both reproduced and source-closed in this correction: the installer's
+resource directory is now physical/absolute, and preflight false/exception fails while
+true alone continues. Luna's grouped correction checks are pending. Parent ran
+`pre-commit run --all-files` on the exact correction in a separate temporary worktree:
+all applicable hooks pass and the worktree remains clean. See
+`reports/m2-ci-preparation-validation.json`. Draft PR promotion follows consolidated
+checks; no real Linux job has started yet.
 
 The preceding preparation component is locally closed at `e2a5a6a7` (14 tests,
 strict typing, Ruff, shell syntax and Sol). A separate parent whole-suite baseline on

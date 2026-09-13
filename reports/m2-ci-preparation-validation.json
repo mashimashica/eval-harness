@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "implementation_head": "0c919a5cd1256af121a912bef5a42cf41d5e360b",
+  "implementation_tree": "28ef134a48c04a783e98277c09bc6770d121996e",
+  "evidence_class": "local-ci-source-validation-not-pr04-acceptance",
+  "previous_head": "92408b9d506f6b287598616b7ac58e9e145713c7",
+  "previous_batch_checks": ["YAML/TOML parsing", "added shell blocks bash-n", "exact vendor selectors", "scoped vendor pre-commit"],
+  "review_findings": [
+    {"issue": "relative installer resource input rejected", "reproduced": true, "source_fix": "checkout pwd -P and readlink -f equality before GITHUB_ENV", "sol_source_closure": true},
+    {"issue": "unconditional exception after all public preflight returns", "reproduced": true, "source_fix": "false and exceptions fail, true continues as preparation-only", "sol_source_closure": true}
+  ],
+  "parent_pre_commit": {
+    "command": "pre-commit run --all-files",
+    "worktree": "/private/tmp/pr04-precommit.bu4pPP/worktree",
+    "log": "/private/tmp/pr04-precommit.bu4pPP/precommit.log",
+    "exit_code": 0,
+    "tracked_changes_after": [],
+    "passed": ["end-of-file", "trailing-whitespace", "Ruff lint", "Ruff import order", "Ruff format", "verified config flag", "upstream environment list"],
+    "not_applicable": ["Markdown underscore filename hook: no matching files"]
+  },
+  "correction_grouped_checks": "pending Luna return",
+  "real_linux_started": false,
+  "acceptance": "held: actual provisioning, public attestation, hostile sandbox tests, native parity, coverage and known NLTK audit remain open"
+}
