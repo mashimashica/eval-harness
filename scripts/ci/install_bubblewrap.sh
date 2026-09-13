@@ -36,6 +36,20 @@ uv_bin="${UV_BIN:-uv}"
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd -P)"
 require_absolute "$runner_temp" RUNNER_TEMP
 require_absolute "$harness_python" HARNESS_PYTHON
+runner_temp_real="$(readlink -f "$runner_temp")"
+harness_python_real="$(readlink -f "$harness_python")"
+[ "$runner_temp" = "$runner_temp_real" ] || die "RUNNER_TEMP must be a physical path"
+[ "$harness_python" = "$harness_python_real" ] || die "HARNESS_PYTHON must be a physical path"
+runner_temp="$runner_temp_real"
+harness_python="$harness_python_real"
+[ -d "$runner_temp" ] || die "RUNNER_TEMP is not a directory"
+case "$uv_bin" in
+    */*) require_absolute "$uv_bin" UV_BIN ;;
+    *) uv_bin="$(command -v "$uv_bin" || true)" ;;
+esac
+[ -n "$uv_bin" ] || die "uv executable is unavailable"
+uv_bin="$(readlink -f "$uv_bin")"
+[ -x "$uv_bin" ] || die "uv executable is not executable"
 [ -x "$harness_python" ] || die "HARNESS_PYTHON is not executable"
 [ "$(uname -s)" = Linux ] || die "Ubuntu Linux is required"
 [ "$(uname -m)" = x86_64 ] || die "Linux x86-64 is required"
@@ -43,7 +57,15 @@ require_absolute "$harness_python" HARNESS_PYTHON
 grep -q '^ID=ubuntu$' /etc/os-release || die "Ubuntu is required"
 grep -q '^VERSION_ID="24.04"$' /etc/os-release || die "Ubuntu 24.04 is required"
 uv_version="$($uv_bin --version)"
-[ "$uv_version" = "uv 0.11.29" ] || die "uv 0.11.29 is required"
+if ! printf '%s\n' "$uv_version" | awk '
+    $1 == "uv" && $2 == "0.11.29" {
+        suffix = substr($0, length($1) + length($2) + 3)
+        if (NF == 2 || suffix ~ /^\(.*\)$/) ok = 1
+    }
+    END { exit(ok ? 0 : 1) }
+'; then
+    die "uv 0.11.29 is required"
+fi
 harness_identity="$($harness_python -I -B -c 'import platform; print(platform.python_version(), platform.machine())')"
 [ "$harness_identity" = "3.13.14 x86_64" ] || die "locked harness Python 3.13.14 x86-64 is required"
 [ "$(sha256sum "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)/requirements-bwrap-build.lock" | awk '{print $1}')" = "$BUILD_LOCK_SHA256" ] || die "build lock hash mismatch"
@@ -65,6 +87,8 @@ sudo apt-get update
 sudo apt-get install --yes --no-install-recommends build-essential libcap-dev pkg-config
 dpkg-query --show build-essential gcc libc6-dev libcap-dev pkg-config > "$prefix/build-packages.txt"
 chmod 0600 "$prefix/build-packages.txt"
+[ "$(wc -l < "$prefix/build-packages.txt")" -eq 5 ] || die "build package record is incomplete"
+awk -F '\t' 'NF != 2 || seen[$1]++ { bad = 1 } END { exit(bad ? 1 : 0) }' "$prefix/build-packages.txt" || die "build package record is malformed"
 
 curl --fail --location --proto '=https' --tlsv1.2 \
     --connect-timeout 20 --max-time 300 --retry 2 --retry-all-errors \
@@ -132,9 +156,9 @@ if top is None:
     raise SystemExit("empty bubblewrap archive")
 PY
 
-"$uv_bin" venv --python "$harness_python" --no-managed-python --no-python-downloads "$build_venv"
+"$uv_bin" venv --python "$harness_python" --no-managed-python --no-python-downloads --link-mode copy "$build_venv"
 "$uv_bin" pip sync --python "$build_venv/bin/python" --no-managed-python \
-    --no-python-downloads --require-hashes --strict \
+    --no-python-downloads --require-hashes --strict --link-mode copy \
     "$repo_root/scripts/ci/requirements-bwrap-build.lock"
 "$build_venv/bin/meson" setup "$build_dir" "$source_dir" \
     --prefix="$prefix" --buildtype=release \

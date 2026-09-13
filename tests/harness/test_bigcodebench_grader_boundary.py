@@ -10,12 +10,14 @@ import io
 import json
 import os
 import stat
+import subprocess
 import tarfile
 import tempfile
 import unittest
 import zipfile
 from pathlib import Path
 from typing import cast
+from unittest import mock
 
 from scripts.ci import install_bigcodebench_grader as installer
 
@@ -98,7 +100,8 @@ class BigCodeBenchBoundaryPreparationTests(unittest.TestCase):
             duplicate_zip_out.mkdir(mode=0o700)
             with zipfile.ZipFile(duplicate_zip, "w") as archive:
                 archive.writestr("python/item", b"one")
-                archive.writestr("python/item", b"two")
+                with self.assertWarns(UserWarning):
+                    archive.writestr("python/item", b"two")
             with self.assertRaises(installer.ProvisioningError):
                 installer.safe_extract_zip(duplicate_zip, duplicate_zip_out, expected_root="python")
 
@@ -150,3 +153,104 @@ class BigCodeBenchBoundaryPreparationTests(unittest.TestCase):
                 installer.secure_new_directory(path)
         self.assertEqual(canonical_json_bytes({"b": 2, "a": 1}), b'{"a":1,"b":2}')
         self.assertEqual(canonical_json_bytes({"a": 1}, final_newline=True), b'{"a":1}\n')
+
+    def test_nltk_package_layout_preserves_category_and_id_and_zip_only_vader(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            data_root = root / "nltk_data"
+            data_root.mkdir(mode=0o700)
+            expanded = root / "stopwords.zip"
+            with zipfile.ZipFile(expanded, "w") as archive:
+                archive.writestr("stopwords/README", b"stopwords")
+            installed = installer._install_nltk_package(
+                expanded, data_root, subdir="corpora", package_id="stopwords", unzip=True
+            )
+            self.assertEqual(installed, data_root / "corpora" / "stopwords")
+            self.assertEqual((installed / "README").read_bytes(), b"stopwords")
+
+            vader = root / "vader_lexicon.zip"
+            with zipfile.ZipFile(vader, "w") as archive:
+                archive.writestr("vader_lexicon/vader_lexicon.txt", b"vader")
+            archive_path = installer._install_nltk_package(
+                vader, data_root, subdir="sentiment", package_id="vader_lexicon", unzip=False
+            )
+            self.assertEqual(archive_path, data_root / "sentiment" / "vader_lexicon.zip")
+            self.assertTrue(archive_path.is_file())
+            self.assertFalse((data_root / "sentiment" / "vader_lexicon").exists())
+            with self.assertRaises(installer.ProvisioningError):
+                installer._install_nltk_package(
+                    expanded, data_root, subdir="taggers", package_id="stopwords", unzip=True
+                )
+
+    def test_ubuntu_release_guard_rejects_other_and_malformed_metadata(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / "os-release"
+            path.write_text('NAME="Ubuntu 24.04 LTS"\nID=ubuntu\nVERSION_ID="24.04"\n', encoding="utf-8")
+            installer._verify_ubuntu_release(path)
+            for contents in (
+                'ID=debian\nVERSION_ID="24.04"\n',
+                'ID=ubuntu\nVERSION_ID="22.04"\n',
+                "ID=ubuntu\nVERSION_ID=24.04\nBROKEN\n",
+                'ID=ubuntu\nID=ubuntu\nVERSION_ID="24.04"\n',
+            ):
+                path.write_text(contents, encoding="utf-8")
+                with self.assertRaises(installer.ProvisioningError):
+                    installer._verify_ubuntu_release(path)
+
+    def test_uv_suffix_and_exact_version_parser(self) -> None:
+        with mock.patch.object(installer, "_run_checked") as run_checked:
+            run_checked.return_value = subprocess.CompletedProcess(
+                [], 0, stdout="uv 0.11.29 (901092ee1 2026-07-15 aarch64-apple-darwin)\n", stderr=""
+            )
+            installer._verify_uv_version(Path("/usr/bin/uv"))
+            for output in ("uv 0.11.290\n", "uv 0.11.29 extra\n"):
+                run_checked.return_value = subprocess.CompletedProcess([], 0, stdout=output, stderr="")
+                with self.assertRaises(installer.ProvisioningError):
+                    installer._verify_uv_version(Path("/usr/bin/uv"))
+
+    def test_build_package_record_requires_exact_names_versions_and_shape(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / "build-packages.txt"
+            valid = "".join(f"{name}\t1.0\n" for name in installer.BUILD_PACKAGE_NAMES)
+            path.write_text(valid, encoding="utf-8")
+            self.assertEqual(set(installer._parse_build_package_record(path)), set(installer.BUILD_PACKAGE_NAMES))
+            for contents in (
+                valid.replace("gcc\t1.0\n", ""),
+                valid + "extra\t1.0\n",
+                valid.replace("gcc\t1.0\n", "gcc\t1.0\ngcc\t1.1\n"),
+                valid.replace("gcc\t1.0", "gcc 1.0"),
+                "",
+            ):
+                path.write_text(contents, encoding="utf-8")
+                with self.assertRaises(installer.ProvisioningError):
+                    installer._parse_build_package_record(path)
+
+    def test_vendor_policy_requires_frozen_complete_keyset(self) -> None:
+        resource_dir = Path(__file__).parents[2] / "resources_servers" / "bigcodebench"
+        policy = cast(dict[str, object], json.loads((resource_dir / "grader-manifest.candidate.json").read_text()))
+        installer._verify_policy_inputs(resource_dir, policy, candidate=True)
+        for vendor in (
+            {},
+            {**installer.VENDOR_SHA256, "extra": "0"},
+            {key: value for key, value in installer.VENDOR_SHA256.items() if key != "LICENSE"},
+        ):
+            mutated = dict(policy)
+            mutated["vendor_sha256"] = vendor
+            with self.assertRaises(installer.ProvisioningError):
+                installer._verify_policy_inputs(resource_dir, mutated, candidate=True)
+
+    def test_content_and_full_inventory_have_distinct_contracts(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary) / "data"
+            root.mkdir(mode=0o700)
+            (root / "payload").write_bytes(b"payload")
+            content, count, size = installer._content_inventory(root)
+            full = canonical_file_inventory(root)
+            self.assertEqual((count, size), (1, 7))
+            self.assertNotEqual(content, full)
+            self.assertEqual(
+                json.loads(content)[0],
+                {"path": "payload", "sha256": hashlib.sha256(b"payload").hexdigest(), "size": 7},
+            )
+            self.assertEqual(json.loads(full)[0]["type"], "file")
+            self.assertIn("mode", json.loads(full)[0])

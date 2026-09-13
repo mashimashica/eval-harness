@@ -3,6 +3,33 @@
 
 # PR04 implementation work record
 
+## Paused at the user's request, 2026-09-13T07:57:15Z
+
+The user requested a safe pause because communication may become unstable. No further
+implementation, test, independent review or external job starts until explicit resume.
+This checkpoint saves Luna's returned second preparation correction, based on
+`d8e7653b704d2ba8a3b03ca966f9caf31b1f9bfc`, in exactly the installer Python/shell and
+preparation test files. It includes package/category placement, fixed host/tool/path
+guards, full vendor/build identity checks, ephemeral installed resources, separate
+inventory digests and corresponding fixtures. These are implementation claims awaiting
+verification, not accepted behavior. The author reports scoped Ruff/format/diff checks
+completed before the pause; parent unit/mypy and Sol fixed-head review have NOT run.
+
+One earlier corrective round failed to close preparation findings; this second correction
+is unverified, not a second failed validation. On explicit resume, first validate this
+exact saved head with the preparation unittest module, strict mypy of its installer/test
+and grader_sandbox helpers, Ruff and shell syntax together, then obtain Sol's read-only
+closure review. If the same issue remains after this second correction, save and stop
+under the user's rule. Do not start a third correction or unrelated implementation.
+
+Host findings and bootstrap component closures remain supported by their earlier exact
+head evidence. PR04 preflight/attested public launch, shared callers, old-runner removal,
+real Linux sandbox and 1,140-task parity are still unfinished; NLTK audit remains blocked.
+No real-model experiment, CI job, merge or release was launched in this segment. All
+local tool commands have completed; the implementation/reviewer were told to remain idle.
+Main stays clean and unchanged. The control branch records the enclosing exact resume SHA
+and ref/blob readback result after this save. No new validation is part of the pause.
+
 ## User-authorized test-first continuation, 2026-09-13T06:54:57Z
 
 ### Current component state: host/bootstrap closed; preparation batch saved for review

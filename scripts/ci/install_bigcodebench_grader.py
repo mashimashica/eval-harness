@@ -35,6 +35,7 @@ if str(_REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(_REPO_ROOT))
 
 from eval_harness.grader_sandbox import (  # noqa: E402
+    GraderInfrastructureError,
     canonical_file_inventory,
     canonical_json_bytes,
     file_inventory_sha256,
@@ -56,6 +57,7 @@ HARNESS_PYTHON_VERSION: Final[str] = "3.13.14"
 LOCK_SHA256: Final[str] = "8d62cac6880124652638ff8716532d46d459aaf5cbe6e8c36b506a4d1e4de9bd"
 BUILD_LOCK_SHA256: Final[str] = "32df6b18b4c96eb4146d18cd16adad24efecba5c4a5212115f5c6acea4749605"
 POLICY_REVISION: Final[str] = "bigcodebench-bwrap-v1"
+NLTK_SOURCE_COMMIT: Final[str] = "550b6625bcef1f2abff2ff770a5a0d272c9c6b2a"
 NLTK_MANIFEST_SHA256: Final[str] = "8cda33ca56e34b58702a16dd6b3b9160fd2e8f38d03b1062f83550c95a435938"
 NLTK_INDEX_SHA256: Final[str] = "27b1257a84cfec723c024c6762ed801ceb6984437d5438d4c7bed8bc6b52aafc"
 NLTK_TREE_SHA256: Final[str] = "5a30cfb5c9d2a0353a987535b261386244abe66ac898185c514c913ac518514a"
@@ -64,10 +66,114 @@ NLTK_TREE_BYTES: Final[int] = 85_741_209
 RUNTIME_MANIFEST_NAME: Final[str] = "runtime-manifest.json"
 BWRAP_VERSION: Final[str] = "0.12.0"
 BWRAP_SOURCE_SHA256: Final[str] = "9760d007363e3abba7c747489910f9f82d9fca53ba3bd3282e396fa3c97a3314"
+BUILD_PACKAGE_NAMES: Final[tuple[str, ...]] = (
+    "build-essential",
+    "gcc",
+    "libc6-dev",
+    "libcap-dev",
+    "pkg-config",
+)
+VENDOR_SHA256: Final[dict[str, str]] = {
+    "LICENSE": "a858540b8dfd0c74db6953edaae85bde0b671643a7e2fb04a065f4dfd25fc28c",
+    "VENDORING.md": "98ac6cfbe48cf3aef65ebe0efcae7bdd8def1adc2bb217ebae0654a2d971fd37",
+    "eval/__init__.py": "d5fd553559ac1b76659ebc32ae30e3e779449ecd31c5201f2301319ceeee01fe",
+    "eval/_special_oracle.py": "0cf930163987d30f455547aec6cbc500a154bc58a2eb109aa247ef4e0962448b",
+    "eval/utils.py": "9061f74fe937c4eb7a1b2bc423f7acab547ae01804d5e25933e2aa8a3cc2d685",
+}
+NLTK_PACKAGE_LAYOUT: Final[dict[str, tuple[str, bool]]] = {
+    "averaged_perceptron_tagger": ("taggers", True),
+    "averaged_perceptron_tagger_eng": ("taggers", True),
+    "punkt": ("tokenizers", True),
+    "punkt_tab": ("tokenizers", True),
+    "stopwords": ("corpora", True),
+    "vader_lexicon": ("sentiment", False),
+    "words": ("corpora", True),
+}
+RESOURCE_METADATA_FILES: Final[tuple[str, ...]] = (
+    "grader-manifest.candidate.json",
+    "index.xml",
+    "nltk-data-manifest.json",
+    "requirements-grader.lock",
+)
+SYNTHETIC_ETC_FILES: Final[tuple[str, ...]] = ("group", "hosts", "nsswitch.conf", "passwd", "resolv.conf")
 
 
 class ProvisioningError(RuntimeError):
     """A stable setup failure; no candidate or secret detail is included."""
+
+
+def _real_input(path: Path, field: str) -> Path:
+    """Return an existing absolute path without accepting symlink spelling."""
+
+    if not path.is_absolute():
+        raise ProvisioningError(f"{field} must be an absolute path")
+    try:
+        resolved = path.resolve(strict=True)
+    except (OSError, RuntimeError) as exc:
+        raise ProvisioningError(f"{field} cannot be resolved") from exc
+    if resolved != path:
+        raise ProvisioningError(f"{field} must be a physical path")
+    return resolved
+
+
+def _verify_ubuntu_release(path: Path = Path("/etc/os-release")) -> None:
+    """Require the exact Ubuntu release used by the reviewed provisioning job."""
+
+    try:
+        lines = path.read_text(encoding="utf-8").splitlines()
+    except (OSError, UnicodeError) as exc:
+        raise ProvisioningError("Ubuntu release metadata is unavailable") from exc
+    values: dict[str, str] = {}
+    for raw_line in lines:
+        line = raw_line.strip()
+        if not line or line.startswith("#"):
+            continue
+        name, separator, value = line.partition("=")
+        if not separator or not name.isidentifier() or name in values:
+            raise ProvisioningError("Ubuntu release metadata is malformed")
+        quoted = value.startswith('"') or value.endswith('"')
+        if quoted:
+            if len(value) < 2 or not value.startswith('"') or not value.endswith('"'):
+                raise ProvisioningError("Ubuntu release metadata is malformed")
+            value = value[1:-1]
+        if not value or (not quoted and any(character.isspace() for character in value)):
+            raise ProvisioningError("Ubuntu release metadata is malformed")
+        values[name] = value
+    if values.get("ID") != "ubuntu" or values.get("VERSION_ID") != "24.04":
+        raise ProvisioningError("Ubuntu 24.04 is required")
+
+
+def _resolve_uv(value: str) -> Path:
+    """Resolve the repository uv command to one absolute executable."""
+
+    if not value:
+        raise ProvisioningError("uv executable is unavailable")
+    if "/" in value:
+        candidate = Path(value)
+        if not candidate.is_absolute():
+            raise ProvisioningError("uv executable must be absolute")
+        selected = candidate
+    else:
+        selected_name = shutil.which(value)
+        if selected_name is None:
+            raise ProvisioningError("uv executable is unavailable")
+        selected = Path(selected_name)
+    try:
+        resolved = selected.resolve(strict=True)
+    except (OSError, RuntimeError) as exc:
+        raise ProvisioningError("uv executable cannot be resolved") from exc
+    if not resolved.is_file() or not os.access(resolved, os.X_OK):
+        raise ProvisioningError("uv executable is not executable")
+    return resolved
+
+
+def _verify_uv_version(uv: Path) -> None:
+    output = _run_checked([str(uv), "--version"]).stdout.strip()
+    prefix = "uv 0.11.29"
+    if output == prefix:
+        return
+    if not output.startswith(f"{prefix} ") or not output[len(prefix) :].startswith("(") or not output.endswith(")"):
+        raise ProvisioningError("uv version mismatch")
 
 
 def secure_new_directory(path: Path) -> Path:
@@ -139,7 +245,7 @@ def safe_extract_tar(archive_path: Path, destination: Path, *, expected_root: st
     """Extract a single-root tar without links, devices, or path traversal."""
 
     seen: set[str] = set()
-    symlink_members: list[tuple[PurePosixPath, str]] = []
+    symlink_members: list[tuple[Path, str]] = []
     regular_bytes = 0
     try:
         with tarfile.open(archive_path, mode="r:gz") as archive:
@@ -159,20 +265,20 @@ def safe_extract_tar(archive_path: Path, destination: Path, *, expected_root: st
                     regular_bytes += member.size
                     if regular_bytes > 4 * 1024**3:
                         raise ProvisioningError("archive expands beyond its fixed bound")
-                    stream = archive.extractfile(member)
-                    if stream is None:
+                    member_stream = archive.extractfile(member)
+                    if member_stream is None:
                         raise ProvisioningError("archive member is unreadable")
-                    with stream, output.open("xb") as target:
-                        shutil.copyfileobj(stream, target, length=1024 * 1024)
+                    with member_stream, output.open("xb") as target_file:
+                        shutil.copyfileobj(member_stream, target_file, length=1024 * 1024)
                     output.chmod(member.mode & 0o777)
                 elif member.issym():
                     _contained_link(PurePosixPath(member.name), member.linkname)
                     symlink_members.append((output, member.linkname))
                 else:
                     raise ProvisioningError("archive contains a special or hard-linked member")
-            for output, target in symlink_members:
-                output.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
-                output.symlink_to(target)
+            for link_output, link_target in symlink_members:
+                link_output.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
+                link_output.symlink_to(link_target)
     except ProvisioningError:
         raise
     except (OSError, tarfile.TarError) as exc:
@@ -288,7 +394,37 @@ def _verify_harness_python(path: Path) -> None:
         raise ProvisioningError("harness interpreter identity mismatch")
 
 
-def _verify_bwrap(path: Path) -> tuple[str, str]:
+def _parse_build_package_record(path: Path) -> dict[str, str]:
+    """Parse the exact dpkg-query package/version record emitted by setup."""
+
+    if path.is_symlink() or not path.is_file():
+        raise ProvisioningError("bubblewrap build provenance is unavailable")
+    try:
+        lines = path.read_text(encoding="utf-8").splitlines()
+    except (OSError, UnicodeError) as exc:
+        raise ProvisioningError("bubblewrap build provenance is unreadable") from exc
+    if len(lines) != len(BUILD_PACKAGE_NAMES):
+        raise ProvisioningError("bubblewrap build package record is invalid")
+    values: dict[str, str] = {}
+    for line in lines:
+        fields = line.split("\t")
+        if len(fields) != 2:
+            raise ProvisioningError("bubblewrap build package record is invalid")
+        name, version = fields
+        if (
+            name not in BUILD_PACKAGE_NAMES
+            or name in values
+            or not version
+            or any(character.isspace() for character in name + version)
+        ):
+            raise ProvisioningError("bubblewrap build package record is invalid")
+        values[name] = version
+    if set(values) != set(BUILD_PACKAGE_NAMES):
+        raise ProvisioningError("bubblewrap build package record is incomplete")
+    return {name: values[name] for name in BUILD_PACKAGE_NAMES}
+
+
+def _verify_bwrap(path: Path) -> tuple[str, str, dict[str, str]]:
     if path.is_symlink() or not path.is_file():
         raise ProvisioningError("bubblewrap binary is unavailable")
     try:
@@ -312,9 +448,8 @@ def _verify_bwrap(path: Path) -> tuple[str, str]:
     if capabilities:
         raise ProvisioningError("bubblewrap binary has file capabilities")
     package_record = path.parent.parent / "build-packages.txt"
-    if not package_record.is_file() or package_record.is_symlink():
-        raise ProvisioningError("bubblewrap build provenance is unavailable")
-    return _sha256_file(path), _sha256_file(package_record)
+    package_versions = _parse_build_package_record(package_record)
+    return _sha256_file(path), _sha256_file(package_record), package_versions
 
 
 def _verify_policy_inputs(resource_dir: Path, policy: dict[str, object], *, candidate: bool) -> None:
@@ -374,19 +509,38 @@ def _verify_policy_inputs(resource_dir: Path, policy: dict[str, object], *, cand
             "words",
         ],
         "prepared_tree_sha256": NLTK_TREE_SHA256,
-        "source_commit": "550b6625bcef1f2abff2ff770a5a0d272c9c6b2a",
+        "source_commit": NLTK_SOURCE_COMMIT,
         "source_index_sha256": "97dce5e72320cd9850b7c20130196006710c18f9c03134c822a37da330198bf6",
     }:
         raise ProvisioningError("NLTK policy provenance is invalid")
     vendor_values = policy.get("vendor_sha256")
-    if not isinstance(vendor_values, dict):
+    if vendor_values != VENDOR_SHA256:
         raise ProvisioningError("vendor policy provenance is invalid")
     vendor_root = resource_dir / "vendor" / "bigcodebench"
-    for relative, expected in vendor_values.items():
-        if not isinstance(relative, str) or not isinstance(expected, str):
-            raise ProvisioningError("vendor policy provenance is invalid")
-        if _sha256_file(vendor_root / relative) != expected:
+    try:
+        vendor_entries = cast(list[dict[str, object]], json.loads(canonical_file_inventory(vendor_root)))
+    except (ProvisioningError, ValueError, TypeError) as exc:
+        raise ProvisioningError("vendor provenance is unavailable") from exc
+    expected_vendor_paths = sorted(VENDOR_SHA256)
+    if [entry.get("path") for entry in vendor_entries] != expected_vendor_paths:
+        raise ProvisioningError("vendor provenance contains unexpected files")
+    for entry in vendor_entries:
+        relative = entry.get("path")
+        if (
+            not isinstance(relative, str)
+            or entry.get("type") != "file"
+            or entry.get("sha256") != VENDOR_SHA256[relative]
+        ):
             raise ProvisioningError("vendor provenance does not match policy")
+    synthetic_etc = resource_dir / "sandbox_etc"
+    try:
+        etc_entries = cast(list[dict[str, object]], json.loads(canonical_file_inventory(synthetic_etc)))
+    except (GraderInfrastructureError, ValueError, TypeError) as exc:
+        raise ProvisioningError("synthetic sandbox etc provenance is unavailable") from exc
+    if [entry.get("path") for entry in etc_entries] != sorted(SYNTHETIC_ETC_FILES) or any(
+        entry.get("type") != "file" for entry in etc_entries
+    ):
+        raise ProvisioningError("synthetic sandbox etc provenance is invalid")
     lock = resource_dir / "requirements-grader.lock"
     build_lock = _REPO_ROOT / "scripts" / "ci" / "requirements-bwrap-build.lock"
     if _sha256_file(lock) != LOCK_SHA256 or _sha256_file(build_lock) != BUILD_LOCK_SHA256:
@@ -498,11 +652,79 @@ def _content_inventory(root: Path) -> tuple[bytes, int, int]:
     return canonical_json_bytes(entries), len(entries), regular_bytes
 
 
+def _nltk_category_root(data_root: Path, subdir: str) -> Path:
+    category_root = data_root / subdir
+    try:
+        if category_root.exists() and (category_root.is_symlink() or not category_root.is_dir()):
+            raise ProvisioningError("NLTK package category is unsafe")
+        category_root.mkdir(mode=0o700, parents=True, exist_ok=True)
+    except ProvisioningError:
+        raise
+    except OSError as exc:
+        raise ProvisioningError("NLTK package destination is unavailable") from exc
+    return category_root
+
+
+def _install_nltk_package(archive: Path, data_root: Path, *, subdir: str, package_id: str, unzip: bool) -> Path:
+    """Install one package archive and preserve its category/id layout."""
+
+    expected_layout = NLTK_PACKAGE_LAYOUT.get(package_id)
+    if expected_layout != (subdir, unzip) or archive.is_symlink() or not archive.is_file():
+        raise ProvisioningError("NLTK package identity is invalid")
+    category_root = _nltk_category_root(data_root, subdir)
+    archive_destination = category_root / f"{package_id}.zip"
+    try:
+        archive_destination.open("xb").close()
+        shutil.copyfile(archive, archive_destination)
+        archive_destination.chmod(0o600)
+    except OSError as exc:
+        archive_destination.unlink(missing_ok=True)
+        raise ProvisioningError("NLTK package archive could not be installed") from exc
+    if not unzip:
+        return archive_destination
+    package_root = category_root / package_id
+    try:
+        package_root.mkdir(mode=0o700, exist_ok=False)
+    except OSError as exc:
+        raise ProvisioningError("NLTK package destination is unavailable") from exc
+    safe_extract_zip(archive, package_root, expected_root=package_id)
+    return package_root
+
+
+def _copy_resource_file(source: Path, destination: Path) -> None:
+    if source.is_symlink() or not source.is_file() or destination.exists() or destination.is_symlink():
+        raise ProvisioningError("resource input is not a fresh regular file")
+    try:
+        destination.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
+        shutil.copyfile(source, destination)
+        destination.chmod(0o600)
+    except OSError as exc:
+        raise ProvisioningError("resource input could not be copied") from exc
+
+
+def _prepare_resource_root(source: Path, destination: Path) -> Path:
+    """Copy only the reviewed resource inputs into a fresh ephemeral root."""
+
+    root = secure_new_directory(destination)
+    for relative in RESOURCE_METADATA_FILES:
+        _copy_resource_file(source / relative, root / relative)
+    for relative in VENDOR_SHA256:
+        _copy_resource_file(source / "vendor" / "bigcodebench" / relative, root / "vendor" / "bigcodebench" / relative)
+    for name in SYNTHETIC_ETC_FILES:
+        _copy_resource_file(source / "sandbox_etc" / name, root / "sandbox_etc" / name)
+    try:
+        (root / "nltk_data").mkdir(mode=0o700)
+    except OSError as exc:
+        raise ProvisioningError("resource data root could not be created") from exc
+    return root
+
+
 def _prepare_nltk_data(resource_dir: Path, data_root: Path, download_root: Path) -> str:
     manifest = _read_nltk_manifest(resource_dir / "nltk-data-manifest.json")
     packages = manifest.get("packages")
     if not isinstance(packages, list) or len(packages) != 7:
         raise ProvisioningError("NLTK package manifest is invalid")
+    seen_ids: set[str] = set()
     for raw_package in packages:
         if not isinstance(raw_package, dict):
             raise ProvisioningError("NLTK package manifest is invalid")
@@ -525,15 +747,24 @@ def _prepare_nltk_data(resource_dir: Path, data_root: Path, download_root: Path)
             or not filename.endswith(".zip")
         ):
             raise ProvisioningError("NLTK package manifest is invalid")
+        expected_layout = NLTK_PACKAGE_LAYOUT.get(package_id)
+        if (
+            expected_layout is None
+            or package_id in seen_ids
+            or subdir != expected_layout[0]
+            or unzip != expected_layout[1]
+            or filename != f"{subdir}/{package_id}.zip"
+            or url != f"https://raw.githubusercontent.com/nltk/nltk_data/{NLTK_SOURCE_COMMIT}/packages/{filename}"
+        ):
+            raise ProvisioningError("NLTK package manifest is invalid")
+        seen_ids.add(package_id)
         archive = download_verified(url, download_root / Path(filename).name, size, digest)
         relative_archive = PurePosixPath(filename)
         if relative_archive.is_absolute() or not relative_archive.parts or relative_archive.parts[0] != subdir:
             raise ProvisioningError("NLTK package path is invalid")
-        destination = data_root / filename
-        destination.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
-        shutil.copyfile(archive, destination)
-        if unzip:
-            safe_extract_zip(archive, data_root / subdir, expected_root=package_id)
+        _install_nltk_package(archive, data_root, subdir=subdir, package_id=package_id, unzip=unzip)
+    if seen_ids != set(NLTK_PACKAGE_LAYOUT):
+        raise ProvisioningError("NLTK package manifest is incomplete")
     index_source = resource_dir / "index.xml"
     index_destination = data_root / "index.xml"
     shutil.copyfile(index_source, index_destination)
@@ -593,21 +824,28 @@ def provision(
 ) -> Path:
     if platform.system() != "Linux" or platform.machine() != "x86_64":
         raise ProvisioningError("Ubuntu Linux x86-64 is required")
-    if not runner_temp.is_absolute() or not harness_python.is_absolute():
-        raise ProvisioningError("provisioning paths must be absolute")
+    runner_temp = _real_input(runner_temp, "RUNNER_TEMP")
+    harness_python = _real_input(harness_python, "HARNESS_PYTHON")
+    resource_dir = _real_input(resource_dir, "resource directory")
+    uv_path = _resolve_uv(uv)
+    expected_bwrap = runner_temp / "pr04-bwrap-0.12.0" / "bin" / "bwrap"
+    bwrap_path = _real_input(bwrap_path, "bubblewrap executable")
+    if bwrap_path != expected_bwrap:
+        raise ProvisioningError("bubblewrap executable is not the fixed build")
     if not harness_python.is_file() or harness_python.is_symlink():
         raise ProvisioningError("harness interpreter is unavailable")
+    _verify_ubuntu_release()
     _verify_harness_python(harness_python)
-    uv_version = _run_checked([uv, "--version"]).stdout.strip()
-    if uv_version != "uv 0.11.29":
-        raise ProvisioningError("uv version mismatch")
-    policy_path, policy, policy_digest = _load_policy_manifest(resource_dir, candidate)
+    _, policy, policy_digest = _load_policy_manifest(resource_dir, candidate)
     _verify_policy_inputs(resource_dir, policy, candidate=candidate)
-    bwrap_digest, build_package_digest = _verify_bwrap(bwrap_path)
+    _verify_uv_version(uv_path)
+    bwrap_digest, build_package_digest, build_package_versions = _verify_bwrap(bwrap_path)
     download_root = secure_new_directory(runner_temp / "pr04-grader-downloads")
     prefix = secure_new_directory(runner_temp / "pr04-cpython-3.11.16+20260901")
     grader_venv = secure_new_directory(runner_temp / "pr04-bigcodebench-venv")
-    data_root = secure_new_directory(runner_temp / "pr04-bigcodebench-nltk-data")
+    resource_root = _prepare_resource_root(resource_dir, runner_temp / "pr04-bigcodebench-resources")
+    data_root = resource_root / "nltk_data"
+    lock = resource_root / "requirements-grader.lock"
     runtime_root = secure_new_directory(runner_temp / "pr04-bigcodebench-runtime")
     archive = download_verified(
         PYTHON_ASSET_URL, download_root / "cpython.tar.gz", PYTHON_ASSET_SIZE, PYTHON_ASSET_SHA256
@@ -616,7 +854,7 @@ def provision(
     canonical_python = _verify_python(prefix)
     _run_checked(
         [
-            uv,
+            str(uv_path),
             "venv",
             "--python",
             str(canonical_python),
@@ -632,12 +870,11 @@ def provision(
     venv_python = grader_venv / "bin" / "python"
     _normalize_venv_interpreter(venv_python, canonical_python)
     _verify_venv_identity(venv_python, grader_venv, prefix)
-    lock = resource_dir / "requirements-grader.lock"
     if _sha256_file(lock) != LOCK_SHA256:
         raise ProvisioningError("grader lock is not the fixed candidate lock")
     _run_checked(
         [
-            uv,
+            str(uv_path),
             "pip",
             "sync",
             "--python",
@@ -652,41 +889,61 @@ def provision(
         ],
         timeout=600,
     )
-    _run_checked([uv, "pip", "check", "--python", str(venv_python)], timeout=120)
+    _run_checked([str(uv_path), "pip", "check", "--python", str(venv_python)], timeout=120)
     bootstrap = _copy_bootstrap(venv_python)
-    nltk_inventory = _prepare_nltk_data(resource_dir, data_root, download_root)
-    resource_data = resource_dir / "nltk_data"
-    if resource_data.exists() or resource_data.is_symlink():
-        raise ProvisioningError("refusing to replace existing NLTK data path")
-    try:
-        resource_data.symlink_to(data_root, target_is_directory=True)
-    except OSError as exc:
-        raise ProvisioningError("NLTK data path could not be bound") from exc
+    installed_policy_path, installed_policy, installed_digest = _load_policy_manifest(resource_root, candidate)
+    if installed_digest != policy_digest or installed_policy != policy:
+        raise ProvisioningError("installed policy changed during resource preparation")
+    _verify_policy_inputs(resource_root, installed_policy, candidate=candidate)
+    nltk_inventory = _prepare_nltk_data(resource_root, data_root, download_root)
+    content_inventory, content_count, content_bytes = _content_inventory(data_root)
+    content_digest = hashlib.sha256(content_inventory).hexdigest()
+    if content_digest != nltk_inventory or content_count != NLTK_TREE_FILE_COUNT or content_bytes != NLTK_TREE_BYTES:
+        raise ProvisioningError("NLTK content inventory changed during resource preparation")
+    content_entries = cast(list[dict[str, object]], json.loads(content_inventory))
+    full_inventory = canonical_file_inventory(data_root)
+    full_digest = hashlib.sha256(full_inventory).hexdigest()
+    full_entries = cast(list[dict[str, object]], json.loads(full_inventory))
     prefix_inventory = cast(list[dict[str, object]], json.loads(canonical_file_inventory(prefix)))
     venv_inventory = cast(list[dict[str, object]], json.loads(canonical_file_inventory(grader_venv)))
-    data_inventory = cast(list[dict[str, object]], json.loads(canonical_file_inventory(data_root)))
+    resource_inventory = cast(list[dict[str, object]], json.loads(canonical_file_inventory(resource_root)))
     runtime = {
         "acceptance_eligible": False,
         "build_package_record_sha256": build_package_digest,
+        "build_package_versions": build_package_versions,
         "bubblewrap_path": str(bwrap_path),
         "bubblewrap_sha256": bwrap_digest,
         "candidate_manifest_sha256": policy_digest,
+        "dependency_audit_state": "blocked",
         "grader_lock_sha256": LOCK_SHA256,
         "grader_venv_inventory": venv_inventory,
         "grader_venv_inventory_sha256": file_inventory_sha256(grader_venv),
         "manifest_role": policy.get("manifest_role"),
-        "nltk_data_path": str(resource_data),
-        "nltk_data_inventory": data_inventory,
-        "nltk_data_inventory_sha256": nltk_inventory,
+        "nltk_content_inventory": content_entries,
+        "nltk_content_inventory_sha256": content_digest,
+        "nltk_data_full_inventory": full_entries,
+        "nltk_data_full_inventory_sha256": full_digest,
+        "nltk_data_path": str(data_root),
         "policy_manifest_sha256": policy_digest,
-        "policy_manifest_path": str(policy_path),
+        "policy_manifest_path": str(installed_policy_path),
         "prefix_inventory": prefix_inventory,
         "prefix_inventory_sha256": file_inventory_sha256(prefix),
         "python_executable_sha256": _sha256_file(canonical_python),
+        "resource_dir": str(resource_root),
+        "resource_inventory": resource_inventory,
+        "resource_inventory_sha256": file_inventory_sha256(resource_root),
+        "resolved_paths": {
+            "base_prefix": str(prefix),
+            "bwrap": str(bwrap_path),
+            "grader_venv": str(grader_venv),
+            "nltk_data": str(data_root),
+            "resource_dir": str(resource_root),
+        },
         "runner_bootstrap_sha256": _sha256_file(bootstrap),
         "schema_version": 1,
         "source_provenance": {
             "build_lock_sha256": BUILD_LOCK_SHA256,
+            "build_package_versions": build_package_versions,
             "bubblewrap_source_sha256": BWRAP_SOURCE_SHA256,
             "python_asset_sha256": PYTHON_ASSET_SHA256,
             "policy_revision": POLICY_REVISION,
