@@ -18,10 +18,12 @@ The characterized source is `d5ce0c10162cad788a17cb90f34b8f60574e7f75`. The desi
 | Dependency | Required handoff value |
 |---|---|
 | Implementation base commit | `PR05_ACCEPTED_HEAD` -- must be replaced with one immutable commit before Luna starts |
+| Frozen PR05 design source | `checkpoint/design-pr05` commit `01f781cbeaff00aee3fb0bea3597dee3bd58e2df`, contract blob `837a4eb58802f0c151360d8bfbe014eb281d126f`; API source only, not an implementation base |
 | Candidate input | `eval_harness.candidate_bundle.BoundEvaluationView` and `CandidateBundle` from the accepted PR02 stack |
-| Common job/request/result | `eval_harness.evaluation_runner.EvaluationJob`, `EvaluationPlanRequest`, `EvaluationJobRequest`, `EvaluationFailure`, and `EvaluationRecordSink`; `eval_harness.evaluators.base.EvaluationResult` plus its accepted terminal invariants |
+| Common job/request/result | `eval_harness.evaluation_runner.EvaluationJob`, `EvaluationPlanRequest`, `EvaluationJobRequest`, `EvaluationFailure`, `EvaluationResumePolicy`, `EvaluationMetricAggregate`, `EvaluationAggregateRequest`, and `EvaluationAggregate`; `eval_harness.evaluators.base.EvaluationResult` plus its accepted terminal invariants |
 | Judge runtime | `eval_harness.judge_runtime.BlindJudgePolicy`, `JudgeRuntimePreflightRequest`, `JudgeRuntimePreflightResult`, `JudgeInvocationRequest`, `JudgeInvocationResult`, and abstract `JudgeRuntime` |
-| Durable sink calls | `EvaluationRecordSink.save_plan`, `.append_attempt_started`, `.append_attempt_terminal`, `.append_result`, and `.load_job` |
+| Durable records | `eval_harness.evaluation_records.EvaluationRecordSink`, `EvaluationEvidenceReference`, `EvaluationAttemptStarted`, `EvaluationAttemptTerminal`, `EvaluationAttemptRecord`, `EvaluatorEvent`, `EvaluationResultRevision`, and `EvaluationJobRecord` |
+| Durable sink calls | Common outer lifecycle: `.create`, `.resume`, `.save_plan`, `.append_attempt_started`, `.append_attempt_terminal`, `.append_result`, and `.load_job`; evaluator subtrial seam: `.append_evaluator_event` and `.load_evaluator_events` |
 
 `PR05_ACCEPTED_HEAD` is the only permitted unresolved token and is a hard blocker until the coordinator replaces it with the accepted immutable dependency head. It is not permission to create a PR06-private runner, sink, request envelope, compatibility alias, or metadata dictionary convention. If the accepted dependency lacks a required field, return the exact delta to Sol and the PR05 owner before editing production.
 
@@ -35,7 +37,7 @@ Only these production paths may change. `A` means add and `M` means modify.
 | A | `eval_harness/gdpval/scoring.py` | Versioned prompt loading, rubric definition validation, strict binary/structured/pairwise response parsing, and pure eligible-trial folds |
 | A | `eval_harness/gdpval/presentation.py` | Immutable anonymous projection, content blocks/filesystem materialization, Office/archive handling, and presentation/input manifests |
 | A | `eval_harness/gdpval/panel.py` | Typed member/panel specs, capability filtering, deterministic weighted selection, position policy, and fully resolved trial plans |
-| A | `eval_harness/gdpval/records.py` | Domain-separated identities, BattleRecord/result/attempt-history types, canonical serialization, integrity validation, and pure pairwise fold |
+| A | `eval_harness/gdpval/records.py` | Domain-separated identities, BattleRecord/results, strict shared-event payload projections, integrity validation, and pure folds; no filesystem journal |
 | A | `eval_harness/gdpval/prompts/gdpval_binary_rubric_v2.j2` | Licensed storage header plus exact versioned binary rubric payload extracted from the reviewed NVIDIA source |
 | A | `eval_harness/gdpval/prompts/gdpval_structured_rubric_v2.txt` | Licensed storage header plus exact versioned structured rubric instruction payload |
 | A | `eval_harness/gdpval/prompts/gdpval_pairwise_v2.j2` | Licensed storage header plus strict blind-pairwise payload with the characterized rendering |
@@ -105,6 +107,24 @@ class EvaluationFailure:
     retryable: bool
 
 @dataclass(frozen=True, slots=True)
+class EvaluationResumePolicy:
+    max_attempts_per_job: int
+    retry_interrupted: bool
+    retryable_failures: tuple[Failure, ...]
+    resume_skipped_after_retryable_run_stop: bool
+    configuration_sha256: str = field(init=False)
+
+class JudgeRuntimeStatus(StrEnum):
+    COMPLETED = "completed"
+    FAILED = "failed"
+    INTERRUPTED = "interrupted"
+
+@dataclass(frozen=True, slots=True)
+class BlindJudgePolicy:
+    root_policy: RootDenyRolePolicy
+    max_output_bytes: int
+
+@dataclass(frozen=True, slots=True)
 class JudgeRuntimeMember:
     member_id: str
     runtime_profile_id: str
@@ -121,6 +141,25 @@ class JudgeContentBlock:
     sha256: str
 
 @dataclass(frozen=True, slots=True)
+class JudgeRuntimePreflightRequest:
+    member: JudgeRuntimeMember
+    policy: BlindJudgePolicy
+    protected_roots: tuple[Path, ...]
+    probe_workspace: Path
+    required_capabilities: tuple[str, ...]
+
+@dataclass(frozen=True, slots=True)
+class JudgeRuntimePreflightResult:
+    member_id: str
+    ok: bool
+    runtime_version: str | None
+    auth_mode: str | None
+    capabilities: tuple[str, ...]
+    policy_revision: str
+    details: tuple[str, ...]
+    evidence_sha256: str
+
+@dataclass(frozen=True, slots=True)
 class JudgeInvocationRequest:
     trial_id: str
     member: JudgeRuntimeMember
@@ -131,6 +170,21 @@ class JudgeInvocationRequest:
     policy: BlindJudgePolicy
     protected_roots: tuple[Path, ...]
 
+@dataclass(frozen=True, slots=True)
+class JudgeInvocationResult:
+    trial_id: str
+    status: JudgeRuntimeStatus
+    output_bytes: bytes
+    output_text: str
+    exit_code: int | None
+    started_at: str
+    finished_at: str
+    runtime_version: str | None
+    auth_mode: str | None
+    policy_revision: str
+    evidence: Mapping[str, JSONValue]
+    failure: EvaluationFailure | None
+
 class EvaluationStatus(StrEnum):
     COMPLETED = "completed"
     PARTIAL = "partial"
@@ -139,7 +193,7 @@ class EvaluationStatus(StrEnum):
     INVALID = "invalid"
     SKIPPED = "skipped"
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class EvaluationResult:
     evaluation_job_id: str
     task_id: str
@@ -148,6 +202,89 @@ class EvaluationResult:
     metrics: Mapping[str, float] = field(default_factory=dict)
     outcomes: Mapping[str, JSONValue] = field(default_factory=dict)
     details: Mapping[str, JSONValue] = field(default_factory=dict)
+
+@dataclass(frozen=True, slots=True)
+class EvaluationEvidenceReference:
+    logical_path: str
+    size: int
+    sha256: str
+
+@dataclass(frozen=True, slots=True)
+class EvaluationAttemptStarted:
+    evaluation_job_id: str
+    attempt_id: str
+    attempt_number: int
+    started_at: str
+    previous_attempt_event_sha256: str | None
+    attempt_event_sha256: str
+
+@dataclass(frozen=True, slots=True)
+class EvaluationAttemptTerminal:
+    evaluation_job_id: str
+    attempt_id: str
+    attempt_number: int
+    status: EvaluationStatus
+    finished_at: str
+    evidence: tuple[EvaluationEvidenceReference, ...]
+    failure: EvaluationFailure | None
+    previous_attempt_event_sha256: str
+    attempt_event_sha256: str
+
+@dataclass(frozen=True, slots=True)
+class EvaluationAttemptRecord:
+    started: EvaluationAttemptStarted
+    terminal: EvaluationAttemptTerminal | None
+
+@dataclass(frozen=True, slots=True)
+class EvaluatorEvent:
+    evaluation_job_id: str
+    event_id: str
+    event_type: str
+    payload: Mapping[str, JSONValue]
+    evidence: tuple[EvaluationEvidenceReference, ...]
+    previous_event_sha256: str | None
+    event_sha256: str
+
+@dataclass(frozen=True, slots=True)
+class EvaluationResultRevision:
+    revision: int
+    attempt_number: int | None
+    result: EvaluationResult
+    previous_revision_sha256: str | None
+    result_revision_sha256: str
+
+@dataclass(frozen=True, slots=True)
+class EvaluationJobRecord:
+    job: EvaluationJob
+    attempts: tuple[EvaluationAttemptRecord, ...]
+    result_revisions: tuple[EvaluationResultRevision, ...]
+    current_result: EvaluationResult | None
+    semantic_result_sha256: str | None
+    history_sha256: str
+
+@dataclass(frozen=True, slots=True)
+class EvaluationMetricAggregate:
+    value: float
+    numerator: int | float | None
+    denominator: int | None
+
+@dataclass(frozen=True, slots=True)
+class EvaluationAggregateRequest:
+    jobs: tuple[EvaluationJob, ...]
+    records: tuple[EvaluationJobRecord, ...]
+    evaluator_events: Mapping[str, tuple[EvaluatorEvent, ...]]
+
+@dataclass(frozen=True, slots=True)
+class EvaluationAggregate:
+    evaluator_id: str
+    evaluator_revision: str | None
+    evaluator_config_sha256: str
+    planned_job_count: int
+    status_counts: Mapping[str, int]
+    metrics: Mapping[str, EvaluationMetricAggregate]
+    outcomes: Mapping[str, JSONValue]
+    coverage: Mapping[str, JSONValue]
+    aggregate_sha256: str
 
 def build_evaluation_job(
     *,
@@ -171,13 +308,42 @@ def plan_evaluation_job(
 class JudgeRuntime(ABC):
     def preflight(self, request: JudgeRuntimePreflightRequest) -> JudgeRuntimePreflightResult: ...
     def invoke(self, request: JudgeInvocationRequest) -> JudgeInvocationResult: ...
+
+class EvaluationRecordSink:
+    @classmethod
+    def create(
+        cls, result_root: Path, *, resume_policy: EvaluationResumePolicy
+    ) -> Self: ...
+
+    @classmethod
+    def resume(
+        cls, result_root: Path, *, resume_policy: EvaluationResumePolicy
+    ) -> Self: ...
+
+    def save_plan(self, job: EvaluationJob) -> None: ...
+    def append_attempt_started(self, record: EvaluationAttemptStarted) -> None: ...
+    def append_attempt_terminal(self, record: EvaluationAttemptTerminal) -> None: ...
+    def append_evaluator_event(self, event: EvaluatorEvent) -> None: ...
+    def append_result(
+        self, job: EvaluationJob, result: EvaluationResult
+    ) -> EvaluationJobRecord: ...
+    def load_evaluator_events(self, job: EvaluationJob) -> tuple[EvaluatorEvent, ...]: ...
+    def load_job(
+        self,
+        job: EvaluationJob,
+        *,
+        view: BoundEvaluationView,
+        candidates: tuple[CandidateBundle, ...],
+    ) -> EvaluationJobRecord | None: ...
 ```
 
 `JSONValue` is PR05's recursive strict JSON type. `ReasoningEffortOption`, `JudgeRuntimeMember`, `JudgeContentBlock`, and every invocation-request field shown above are also PR05-owned. Auth/environment values belong to operational configuration inside the injected runtime profile; they never enter the request or a semantic record. The shown `EvaluationResult` field order and six status literals are PR05-owned. PR06 constructs it by keyword, echoes `request.job.evaluation_job_id`, and emits only `completed`, `partial`, `failed`, or `interrupted`; the common runner owns any `invalid` or `skipped` job-boundary result. The staged legacy `external` status is not accepted by the common planner, runner, sink, or aggregate. `plan_evaluation_job` validates the evaluator's cardinality and configuration identity, calls `evaluator.plan(EvaluationPlanRequest(...))` for one opaque mapping, and passes that mapping to the sole identity constructor `build_evaluation_job`. That constructor strictly verifies one or two same-task/snapshot bundles against the bound view and computes the plan, input, and job hashes. PR06 must not implement another evaluation-input or evaluation-job hash builder. Its evaluator plan contains its fully resolved trial/member/slot/presentation plan; PR05 stores and hashes that mapping opaquely. Reusing an `evaluation_job_id` with a different `evaluator_plan_sha256` is a hard conflict.
 
 The runtime request binds `trial_id`, the exact selected `JudgeRuntimeMember`, anonymous prompt/workspace, required capabilities, `BlindJudgePolicy`, and protected roots. The result carries bounded raw bytes/text, exit/times/runtime-version/auth/policy/probe evidence and digests, plus a typed failure. Its terminal enum is exactly `completed`, `failed`, or `interrupted`; parser rejection is a PR06 `invalid_response`, never a runtime tie or runtime failure rewrite. PR05 adds `FailureKind.INVALID_RESPONSE = "invalid_response"`; it is permitted with `FailureImpact.TASK` and is not a forced-run failure. Runtime/envelope `PROTOCOL` remains run-impact. Attempt-terminal records and `EvaluationResult.failure` use `EvaluationFailure | None`.
 
-PR06 calls only `EvaluationRecordSink.save_plan`, `.append_attempt_started`, `.append_attempt_terminal`, `.append_result`, and `.load_job`. `save_plan` is atomic/content-addressed and precedes all calls. Append methods flush and fsync. Creating a job refuses occupied output; resume requires exact plan/input/evidence revalidation. Semantic results and attempt/evidence history remain separate. These storage and invocation mechanics remain PR05-owned.
+Every GDPval config requires one explicit `EvaluationResumePolicy`; there is no constructor or profile fallback. Its complete canonical payload and `configuration_sha256` enter `evaluator_config_sha256`. It validates an exact positive `max_attempts_per_job`, exact booleans, and a sorted duplicate-free tuple of exact stable `Failure` rules. The job bound is the common outer evaluator-invocation bound and is independent of PR06's positive `max_attempts_per_trial`. `EvaluationRecordSink.create(result_root, *, resume_policy=...)` rejects an occupied root; `.resume(...)` requires the exact stored policy and exact plan/input/evidence revalidation. Completed and eligible-partial current results never replay. Failed, invalid, interrupted, or skipped outer results advance only when their result retryability, the exact stored policy, and the remaining job-attempt bound all permit it.
+
+The common dispatcher alone calls `save_plan`, `append_attempt_started`, `append_attempt_terminal`, `append_result`, and `load_job` for the outer job lifecycle. PR06 directly calls only `append_evaluator_event` and `load_evaluator_events` for trial/BattleRecord durability. The job plan is already saved before PR06 appends an evaluator event. Every event append flushes and fsyncs; load revalidates the per-job hash chain and all referenced evidence. PR06 must not create a private trial journal or write subordinate records directly beneath `result_root`. `EvaluationResultRevision` history, the current semantic-result digest, and evaluator-event/attempt evidence remain distinct exactly as defined by PR05.
 
 `records.py` adds only the PR06 trial identity builder:
 
@@ -682,7 +848,11 @@ def fold_rubric_records(
 
 The canonical pairwise completed-result payload is schema `eval-harness.battle-result`, version 1, with `presented_verdict` and `winner={"kind": ..., "candidate_id": ...}`; tie requires `candidate_id=null`. The rubric equivalent is schema `eval-harness.rubric-trial-result`, version 1, with the three finite score fields. Each result hash is `canonical_result_sha256`. `battle_semantic_sha256` hashes schema `eval-harness.battle-semantic`, version 1, the exact canonical plan entry payload, and the corresponding completed-result payload. It is present only for `completed`. The builders reject every inconsistent status/result/failure/retryability combination and recompute rather than trust semantic digests.
 
-Attempt event IDs and objects use schemas `eval-harness.battle-attempt-id` and `eval-harness.battle-attempt-event`, version 1. `attempt_id` hashes `battle_record_id` plus positive `attempt_number`. Each event contains that identity, event kind `started` or `terminal`, lifecycle status, UTC timestamp, runtime/version/auth and role-policy/probe evidence, exit code, typed failure/retryability, raw stdout/stderr/response hashes, logical evidence references, and completed semantic digest when present. `attempt_event_sha256` hashes the whole event excluding its own hash. `attempt_history_sha256` hashes schema `eval-harness.battle-attempt-history`, version 1, `battle_record_id`, and the ordered exact event-digest list. Attempts/times/paths/raw evidence/history are excluded from `battle_semantic_sha256`.
+PR06 serializes trial history only through PR05's shared `EvaluatorEvent`; it never creates a subordinate file or JSONL stream. The exact `event_type` strings are `gdpval.battle-attempt-started.v1`, `gdpval.battle-attempt-terminal.v1`, and `gdpval.battle-record-reused.v1`. For each battle, `event_sequence` starts at one and is contiguous across those three types. `event_id` is `canonical_json_sha256` over schema `eval-harness.gdpval-evaluator-event-id`, version 1, `battle_record_id`, `event_sequence`, and `event_type`. The event's `evaluation_job_id` and per-job `previous_event_sha256` remain the shared wrapper fields.
+
+The started payload uses schema `eval-harness.gdpval-battle-attempt-started`, version 1, and has exactly `battle_record_id`, positive `event_sequence`, `attempt_id`, positive `attempt_number`, `battle_status="running"`, and `started_at`. `attempt_id` hashes schema `eval-harness.battle-attempt-id`, version 1, `battle_record_id`, and `attempt_number`. The terminal payload uses schema `eval-harness.gdpval-battle-attempt-terminal`, version 1, and has exactly the same battle/event/attempt identities plus terminal `battle_status`, `finished_at`, `runtime_status`, canonical `failure`, `canonical_result_sha256`, and `battle_semantic_sha256`. Completed requires runtime completed, null failure, and both result hashes; invalid response requires runtime completed, an `INVALID_RESPONSE/TASK` failure, and null result hashes; failed/interrupted require their matching runtime status and failure with null result hashes. Runtime/version/auth/policy/probe/exit/raw-output facts stay in the terminal event's validated evidence objects and `EvaluationEvidenceReference` tuple rather than semantic result fields.
+
+The reuse payload uses schema `eval-harness.gdpval-battle-record-reused`, version 1, and exactly `battle_record_id`, positive `event_sequence`, the already completed `battle_semantic_sha256`, and `reused_at`; it carries no attempt or new judge result. A reuse event is appended only after every bound input/plan/result/evidence byte has revalidated and causes no invocation. For started and terminal events, the contract name `attempt_event_sha256` means the enclosing shared `EvaluatorEvent.event_sha256`; it is not recursively repeated inside `payload`. `attempt_history_sha256` hashes schema `eval-harness.battle-attempt-history`, version 1, `battle_record_id`, and the ordered exact shared event SHA-256 list for that battle, including reuse events. A dangling start is closed as interrupted on explicit resume before the next positive attempt begins and consumes one per-trial attempt. Attempts/times/paths/raw evidence/history are excluded from `battle_semantic_sha256`.
 
 Invalid, failed, interrupted, planned, or running records have no result, semantic digest, winner, or vote. Failed/interrupted/invalid records carry one `EvaluationFailure`; planned/running/completed records carry none. An invalid response uses `FailureKind.INVALID_RESPONSE`, task impact, the stable `JudgeResponseError.code`, and the explicitly resolved retryability policy. Diagnostics and provider text are evidence, never failure codes. Aggregate counts partition every requested trial into valid, invalid, failed, interrupted, or unattempted; coverage is `valid_trials/requested_trials`. An aggregate with zero eligible records has no winner. Only a completed explicit `TIE` increments `ties`; the aggregate winner is candidate A when A wins exceed B wins, candidate B when B wins exceed A wins, otherwise an aggregate tie, but zero valid trials still has no winner. `valid_only` may publish only after its positive `min_valid` threshold and must return partial coverage; `require_complete` publishes only the exact complete set.
 
@@ -695,6 +865,7 @@ Invalid, failed, interrupted, planned, or running records have no result, semant
 class GDPvalRubricConfig:
     mode: RubricMode
     completion_policy: CompletionPolicy
+    resume_policy: EvaluationResumePolicy
     num_trials: int
     max_attempts_per_trial: int
     presentation: PresentationPolicy
@@ -708,6 +879,7 @@ class GDPvalRubricConfig:
 @dataclass(frozen=True, slots=True)
 class GDPvalPairwiseConfig:
     completion_policy: CompletionPolicy
+    resume_policy: EvaluationResumePolicy
     num_trials: int
     max_attempts_per_trial: int
     presentation: PresentationPolicy
@@ -724,26 +896,36 @@ class GDPvalPairwiseConfig:
 
 class GDPvalRubricEvaluator(Evaluator):
     def __init__(self, *, config: GDPvalRubricConfig) -> None: ...
+    @property
+    def resume_policy(self) -> EvaluationResumePolicy: ...
     def judge_runtime_preflight_requests(
         self, view: BoundEvaluationView
     ) -> tuple[JudgeRuntimePreflightRequest, ...]: ...
     def plan(self, request: EvaluationPlanRequest) -> Mapping[str, JSONValue]: ...
     def evaluate(self, request: EvaluationJobRequest) -> EvaluationResult: ...
+    def aggregate(self, request: EvaluationAggregateRequest) -> EvaluationAggregate: ...
 
 class GDPvalPairwiseEvaluator(Evaluator):
     def __init__(self, *, config: GDPvalPairwiseConfig) -> None: ...
+    @property
+    def resume_policy(self) -> EvaluationResumePolicy: ...
     def judge_runtime_preflight_requests(
         self, view: BoundEvaluationView
     ) -> tuple[JudgeRuntimePreflightRequest, ...]: ...
     def plan(self, request: EvaluationPlanRequest) -> Mapping[str, JSONValue]: ...
     def evaluate(self, request: EvaluationJobRequest) -> EvaluationResult: ...
+    def aggregate(self, request: EvaluationAggregateRequest) -> EvaluationAggregate: ...
 ```
 
-Each instance exposes its exact `evaluator_id`, revision `"2"`, required candidate count, and `evaluator_config_sha256`; the config digest binds every dataclass field plus parser/prompt/presenter/panel-policy revisions and prompt asset SHA-256 values. `judge_runtime_preflight_requests` returns one no-model request for every configured member that could be selected. Every request must pass before generation/evaluation proceeds; a failed member is not removed and the weights are not renormalized as an availability fallback. Candidate-artifact modalities cannot be known from the view alone, so `plan` later applies capability filtering and fails with `judge_capability_insufficient` before judge calls if the already-preflighted exact panel lacks support.
+Each instance exposes its exact `evaluator_id`, revision `"2"`, required candidate count, `resume_policy`, and `evaluator_config_sha256`; the config digest binds every dataclass field, the complete resume-policy payload/digest, parser/prompt/presenter/panel-policy revisions, and prompt asset SHA-256 values. `resume_policy` returns `config.resume_policy` exactly. `judge_runtime_preflight_requests` returns one no-model request for every configured member that could be selected. Every request must pass before generation/evaluation proceeds; a failed member is not removed and the weights are not renormalized as an availability fallback. Candidate-artifact modalities cannot be known from the view alone, so `plan` later applies capability filtering and fails with `judge_capability_insufficient` before judge calls if the already-preflighted exact panel lacks support.
 
 `plan` validates the bound view/bundles, computes the rubric and anonymous presentation manifests, filters capabilities, resolves every member and slot, and returns one strict JSON mapping with schema `eval-harness.gdpval-evaluator-plan` and version 1. The mapping has `evaluator_id`, `evaluator_revision`, `evaluator_config_sha256`, `completion_policy`, `panel_sha256`, `presentation_policy`, `num_trials`, and ordered `trials`. Each trial has `trial_index`, `judge_member_id`, `judge_member_spec_sha256`, the full presentation-manifest projection, `presentation_sha256`, and `judge_input_sha256`; rubric adds one `logical_candidate`, while pairwise adds `slot_a` and `slot_b`. It contains no attempt, timestamp, runtime path, secret, or AA field.
 
-The execution request supplies `job`, `view`, `candidates`, a fresh `result_root`, `record_sink`, and `judge_runtime`. GDPval requires a non-null runtime. Pairwise has exactly two candidates; rubric has exactly one. The evaluator verifies the request capabilities and every job/view/bundle/evaluator/config/plan hash before it asks the sink to save the immutable job/trial plan. It derives each `battle_record_id` from the now-complete `evaluation_job_id` plus trial index. Construction, plan validation, materialization, capability/member/position checks, runtime preflight, and `save_plan` all finish before the first invocation. Runtime preflight and every call use the exact resolved member and the accepted blind role policy. There is no fallback member, model, provider, transport, reasoning setting, API, resources server, or local judge runner.
+The execution request supplies `job`, `view`, `candidates`, a fresh or explicitly resumed `result_root`, `record_sink`, and `judge_runtime`. GDPval requires a non-null runtime. Pairwise has exactly two candidates; rubric has exactly one. Before dispatch, the common runner has verified the request, preflighted every potentially selectable judge member, saved the immutable job/opaque trial plan, and appended the outer attempt start. The evaluator revalidates every job/view/bundle/evaluator/config/plan hash, loads and verifies the complete evaluator-event prefix, and derives each `battle_record_id` from `evaluation_job_id` plus trial index. It appends a started event before every judge call and a terminal event immediately afterward; on an allowed outer resume it reuses only fully validated completed trial records and appends a reuse event. It never writes its own journal. Runtime preflight and every call use the exact resolved member and accepted blind role policy. There is no fallback member, model, provider, transport, reasoning setting, API, resources server, or local judge runner. After `evaluate` returns, the common runner appends the outer terminal and immutable `EvaluationResultRevision`.
+
+`aggregate` accepts only PR05's exact `EvaluationAggregateRequest`, revalidates that jobs, current records, and evaluator-event map have the same complete ordered job set, and returns PR05's `EvaluationAggregate`. Its `status_counts` contains all six exact `EvaluationStatus` strings. Its `coverage` mapping has exactly `planned_jobs`, `terminal_jobs`, `eligible_jobs`, `job_coverage`, `requested_trials`, `valid_trials`, and `trial_coverage`; both coverage ratios are zero when their denominator is zero. Its `outcomes` has exactly one key, `eligible_results`, whose value follows request job order and whose entries have exactly `evaluation_job_id`, `semantic_result_sha256`, `record_ids`, and `semantic_record_sha256s`, with both record arrays in trial-index order. Completed and policy-eligible partial jobs enter this list; other states do not.
+
+Rubric aggregation publishes `rubric_score` as an `EvaluationMetricAggregate` whose numerator is the finite sum over eligible current job results, denominator is the eligible job count, and value is numerator divided by denominator; it omits the metric when the denominator is zero. Pairwise aggregation always uses `metrics={}`. Neither aggregate invents values for ineligible jobs. Pairwise adds no Elo, universal reward, anchor, stage, or orientation field; PR08 consumes the exact completed semantic record set under its own profile rules. `aggregate_sha256` excludes evaluator-event history and runtime evidence but binds the exact current `semantic_result_sha256` values and normalized aggregate payload.
 
 Each bundle must be a verified successful `completed` or accepted `no_deliverable` outcome and must expose the output channel selected by the presentation policy. Bundle snapshot reference, task ID/hash, canonical prompt text/hash, candidate ID, and bundle digest must match the job/view exactly. Missing, failed, modified, incoherent, or duplicate pairwise candidates fail before sink intent or runtime invocation; identical artifact bytes for distinct candidate IDs remain valid.
 
@@ -830,9 +1012,9 @@ Every result uses the same detail keys in that order; arrays follow trial-index 
 
 `winner` is `{"kind":"candidate","candidate_id":"..."}` or `{"kind":"tie","candidate_id":null}` only when the completion policy is eligible; otherwise it is null and no score/reward/tie is inferred. Pairwise produces no rubric metric, universal score, Elo, anchor/stage/headline value, or orientation-dependent reward.
 
-`require_complete` is eligible only when all requested records are completed. `valid_only(min_valid=N)` is eligible when at least `N` records are completed, every requested trial is in a terminal state, and there is no run-impact failure or interruption; it returns `partial` whenever coverage is below 1.0. `completed` requires top-level `failure=null`. An eligible `partial` carries the first noncompleted trial's `Failure` in trial-index order, wrapped with `retryable=False`; the exact per-trial failures remain in their records. `failed` and `interrupted` also require a non-null top-level failure; interruption uses `FailureKind.INTERRUPTED`. A run-impact failure, any interruption, a remaining planned/running record, or insufficient valid count returns no metric/winner regardless of already valid records. Retryability controls whether another attempt may be appended under the configured attempt limit; it never changes a terminal invalid/failed record into a counted record.
+`require_complete` is eligible only when all requested records are completed. `valid_only(min_valid=N)` is eligible when at least `N` records are completed, every remaining trial is terminal `invalid_response`, and no runtime failure or interruption exists; it returns `partial` whenever coverage is below 1.0. `completed` requires top-level `failure=null`. An eligible `partial` uses exactly `EvaluationFailure(Failure(FailureKind.INVALID_RESPONSE, "gdpval_partial_valid_trials", FailureImpact.TASK), retryable=False)`; precise trial parser codes remain in the individual records. `failed` and `interrupted` require a non-null top-level failure and no metric; interruption uses `FailureKind.INTERRUPTED`. Any runtime failure, interruption, remaining planned/running record, or insufficient valid count returns no metric/winner regardless of already valid records. Retryability controls whether another attempt may be appended under the configured attempt limit; it never changes a terminal invalid/failed record into a counted record.
 
-Default configs are binary one trial/one attempt/`require_complete`; structured two trials/three attempts per trial/`valid_only(min_valid=1)`; pairwise four trials/one attempt/`alternating-a-first-v1`/`require_complete`. A parser-invalid structured attempt may retry while its fixed three-attempt budget remains; runtime-retryable failures use the same budget. Every retry keeps the planned member, presentation, and slots, receives the next positive attempt number, and is persisted. Counts are positive. Any supported override changes the configuration digest.
+Evaluator-internal defaults are binary one trial/one attempt per trial/`require_complete`; structured two trials/three attempts per trial/`valid_only(min_valid=1)`; pairwise four trials/one attempt per trial/`alternating-a-first-v1`/`require_complete`. Every profile must separately provide an explicit `EvaluationResumePolicy`; PR06 supplies no hidden job-resume default. A parser-invalid structured attempt may retry while its fixed three-attempt budget remains; runtime-retryable failures use the same per-trial budget. Every trial retry keeps the planned member, presentation, and slots, receives the next positive attempt number, and is persisted through evaluator events. Outer evaluator retries follow only the independently positive `max_attempts_per_job` and stored common policy. Counts are positive. Any supported override changes the configuration digest.
 
 ## Focused test inventory and exact commands
 
@@ -850,7 +1032,7 @@ Use these exact case names and keep each listed name as one collected case:
 | `test_gdpval_judge_runtime_v2.py` | `test_codex_preflight_environment_is_provenance_free`; `test_claude_preflight_fails_without_read_probe`; `test_safe_temp_root_is_disjoint_from_all_protected_roots`; `test_temp_overrides_do_not_copy_parent_paths`; `test_blind_role_argv_and_settings_reject_ordinary_executor_policy`; `test_outside_read_probe_and_protected_runtime_allowance_fail_closed`; `test_http_runtime_receives_only_anonymous_payload`; `test_terminal_runtime_evidence_is_typed_and_never_falls_back` |
 | `test_evaluator_registry.py` | retain `test_native_evaluator_versions_and_assets_are_advertised`; rename the GDPval case to `test_gdpval_descriptors_are_concrete_and_have_no_default_judge` |
 
-The cases collectively assert every exact current/revised output in the characterization file, the three golden identity values above, both completion policies, no-vote invalid responses, all-judge failure, AV insufficiency before calls, explicit four-trial A-first order, explicit member plans, occurrence separation, semantic/history digest separation, immutable source bytes, and anonymous prompt/workspace/payload/argv/environment. The eight runtime cases include the four existing `test_local_judge_isolation.py` meanings plus argv/settings inspection, failed outside-read probe, protected-root rejection, and HTTP payload/no-fallback isolation.
+The cases collectively assert every exact current/revised output in the characterization file, the three golden identity values above, both completion policies, no-vote invalid responses, all-judge failure, AV insufficiency before calls, explicit four-trial A-first order, explicit member plans, occurrence separation, semantic/history digest separation, immutable source bytes, and anonymous prompt/workspace/payload/argv/environment. They also assert exact resume-policy binding, plan-before-event ordering, immediate event durability, reload of a valid trial prefix, refusal of an event fork/evidence mismatch, no replay of completed/eligible-partial jobs, and an interrupted outer retry producing the same semantic result with a different common history digest. The eight runtime cases include the four existing `test_local_judge_isolation.py` meanings plus argv/settings inspection, failed outside-read probe, protected-root rejection, and HTTP payload/no-fallback isolation.
 
 From a clean accepted implementation checkout with the locked environment:
 
@@ -926,7 +1108,7 @@ Record exact commands, head/tree, counts, and decisive outputs in `contracts/pr0
 
 ## Completion conditions and prohibitions
 
-PR06 is complete only when the common runner selects each explicit evaluator ID, validates and saves its complete plan before calls, invokes only fake adapters in tests, persists attempt intent and terminal evidence immediately, returns the result shapes above, and passes every focused/full gate. `eval_harness/evaluators/gdpval.py` no longer reports successful external handoff for these modes. Existing old paths remain only as read-only characterization sources for scheduled PR10 removal and are never imported/called as fallback.
+PR06 is complete only when the common runner selects each explicit evaluator ID, binds the exact explicit resume policy, validates and saves its complete plan before calls, invokes only fake adapters in tests, and stores every GDPval subtrial through the shared evaluator-event chain before returning the result shapes above. Completed/eligible-partial jobs do not replay, resumable interrupted work reloads the exact valid prefix, and semantic result digests remain independent of outer revisions and evidence history. `eval_harness/evaluators/gdpval.py` no longer reports successful external handoff for these modes. Existing old paths remain only as read-only characterization sources for scheduled PR10 removal and are never imported/called as fallback.
 
 Do not run a real model, paid API, subscription-backed judge, or GitHub Action for a checkpoint. Do not modify source CandidateBundles or snapshots; put derived presentation and evidence in fresh roots. Do not pass TaskSpec evaluation data, candidate/model/condition identity, credentials, or unrestricted environment to a judge. Do not synthesize tie/zero/loss/success for invalid, truncated, missing, unsupported, all-failed, zero-trial, or interrupted work. Do not add AA-v2 stage/anchor/Elo/headline logic, Builder/Stirrup generation logic, benchmark path discovery, vendor transport duplication, silent fallback, compatibility wrappers, new dependencies, or unrelated refactors.
 
