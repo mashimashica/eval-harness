@@ -59,6 +59,37 @@ must pass on the promoted head; local classification alone is not acceptance.
 
 ## Remaining existing work
 
+### Second-Linux capability inspection and upstream skip diagnostics
+
+Sol reviewed formal `d3dc022f6eae7d2fbc12a1078ef7e8079e813782` and the second
+Linux evidence on control `3c10ebe0ac0d343667bc1af320f8ae38ef3754ca`. Ninja now
+passes actual configuration/build and is closed after one correction. The next failure
+is a distinct initial `getcap` lookup failure: installer PATH omits `/usr/sbin`;
+whether libcap2-bin was physically installed was not recorded. Do not repeat version
+investigation or infer that the host lacked the package.
+
+Replace only the external getcap inspection with the already verified harness Python,
+quoted and invoked with `-I -B`, calling
+`os.getxattr(binary, "security.capability", follow_symlinks=False)`. Only an OSError
+whose errno equals Linux `errno.ENODATA` proves absence and passes. Every returned
+value, including empty bytes, proves attribute presence and fails. Every other errno
+and unexpected exception fails with a fixed, secret-free diagnostic: no path, errno,
+traceback or exception text. Preserve existing regular/non-symlink, mode, link count,
+owner, version, ELF and subsequent content-hash checks. No new package, relaxed
+capability requirement, PATH fallback or elevated host-policy operation is permitted.
+
+Required negative controls cover empty/nonempty attributes, EPERM/EACCES/ENOTSUP/EIO,
+an unexpected exception, exact path and follow_symlinks=False, diagnostic redaction and
+absence of any remaining getcap command. ENODATA alone passes. This kernel-bounded
+metadata inspection removes an unnecessary external-tool dependency without weakening
+the frozen no-file-capabilities requirement. The issue has one initial failed run and
+zero corrective attempts before this change.
+
+Use Meson's verbose test output to retain actual reasons for the five upstream skips.
+Keep tests enabled, do not turn skip into pass or disable namespace restrictions, and
+do not change host sysctls/security policy. Real preflight, hostile fixtures and native
+parity remain independent required gates; none has yet run.
+
 ### Source-backed prepared runtime locator and legacy deletion
 
 Sol additionally reviewed fixed `1df1ef8cbf363c7e69a43d119f816a6666f79b36` after

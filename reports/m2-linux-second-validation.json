@@ -14,7 +14,12 @@
   "candidate_job": 103709165946,
   "completed": true,
   "harness_tests": {"methods": 611, "seconds": 28.012, "result": "pass"},
-  "coverage": {"displayed_percent": "93.69", "required_percent": 96, "result": "fail"},
+  "coverage": {"covered_lines": 11047, "statements": 11791, "missing_lines": 744, "displayed_percent": "93.69", "required_percent": 96, "integer_gate": "100 * 11047 < 96 * 11791", "result": "fail"},
+  "downloaded_evidence": [
+    {"artifact_id": 10315741856, "file": "bubblewrap-install.log", "sha256": "e443b3f622ac30d3467020f0f9491047d6e40c48661b53fe41d7898bc0d88b13"},
+    {"artifact_id": 10315771767, "file": "coverage.json", "sha256": "ab723ffc1f76d4ec2e6dfe935a9be75254baf36e2315d43d8c192ed7a944b926"},
+    {"artifact_id": 10315771767, "file": "test-gdpval-cli.log", "sha256": "abba33beaf7639ad6fb7d0a16c303aea023e85a0d8b6a2de9f735d2e3b0fc4c7"}
+  ],
   "strict_typing": {"result": "fail", "errors": 6, "error_files": 1, "checked_files": 120, "scope": "unchanged legacy resource app; pending replacement not included in selective promotion"},
   "passed": ["harness dependency audit", "build-tool dependency audit", "lint", "copyright"],
   "still_failed": ["known NLTK grader audit", "provenance-only secret findings pending baseline", "strict legacy app typing", "coverage", "candidate preparation"],
@@ -33,7 +38,7 @@
     "compile_and_link": "pass",
     "upstream_tests": {"passed": 1, "passed_utils_subtests": 26, "skipped": 5, "failed": 0, "sandbox_subtests_passed": 0},
     "skip_names": ["test-run.sh", "test-specifying-pidns.sh", "test-specifying-userns.sh", "test-seccomp.py", "test-sandbox.py"],
-    "skip_reason": "not exposed in current summarized Meson output; requires real diagnostic evidence, not an assumption",
+    "skip_reason": "not exposed in summarized Meson output; downloaded candidate artifact includes only bubblewrap-install.log, evidence-class.txt and uv-sync.log, not upstream meson-logs/testlog.txt. Verbose output is required next; reason is not assumed.",
     "actual_isolation_accepted": false
   },
   "getcap": {
