@@ -2,13 +2,21 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import asyncio
-import json
-import os
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from code_extraction import preprocess_code_completion
-from setup_bcb_venv import ensure_bcb_venv
+
+from eval_harness.bigcodebench_runner import BigCodeBenchGradeRequest, NativeStatus
+from eval_harness.grader_sandbox import (
+    GraderInfrastructureError,
+    GraderSandboxPreflight,
+    GraderSandboxSpec,
+    LimitKind,
+    preflight_bigcodebench_sandbox,
+    resolve_bigcodebench_sandbox_spec,
+    run_bigcodebench_sandbox,
+)
 
 from nemo_gym.base_resources_server import (
     BaseResourcesServerConfig,
@@ -20,6 +28,9 @@ from nemo_gym.reward_profile import (
     compute_pass_majority_metrics,
     highest_k_metrics,
 )
+
+
+_BIGCODEBENCH_SEMAPHORE = asyncio.Semaphore(1)
 
 
 class BigCodeBenchResourcesServerConfig(BaseResourcesServerConfig):
@@ -50,13 +61,18 @@ class BigCodeBenchResourcesServer(SimpleResourcesServer):
     config: BigCodeBenchResourcesServerConfig
 
     def model_post_init(self, context):
-        self._semaphore = asyncio.Semaphore(self.config.num_processes)
-
-        venv_path = Path(self.config.venv_path)
-        if not venv_path.is_absolute():
-            venv_path = (Path(__file__).parent / venv_path).resolve()
-        self._bcb_python = ensure_bcb_venv(venv_path, self.config.bcb_python_version)
-        self._runner_path = Path(__file__).parent / "bcb_runner.py"
+        del context
+        self._semaphore = _BIGCODEBENCH_SEMAPHORE
+        self._sandbox_spec: GraderSandboxSpec | None = None
+        self._sandbox_preflight: GraderSandboxPreflight | None = None
+        self._sandbox_error: GraderInfrastructureError | None = None
+        try:
+            self._sandbox_spec = resolve_bigcodebench_sandbox_spec(Path(__file__).parent)
+            self._sandbox_preflight = preflight_bigcodebench_sandbox(self._sandbox_spec)
+            if not self._sandbox_preflight.ok:
+                self._sandbox_error = GraderInfrastructureError("BigCodeBench sandbox preflight failed")
+        except GraderInfrastructureError as exc:
+            self._sandbox_error = exc
 
     @staticmethod
     def _score_fn(r: dict) -> Dict[str, float]:
@@ -109,10 +125,12 @@ class BigCodeBenchResourcesServer(SimpleResourcesServer):
         calibrated = code_prompt + "\n    pass\n" + extracted
 
         async with self._semaphore:
-            result = await self._run_in_venv(
+            result = await asyncio.to_thread(
+                self._run_in_venv,
                 code=calibrated,
-                test_code=meta["test"],
-                entry_point=meta["entry_point"],
+                test_code=str(meta["test"]),
+                entry_point=str(meta["entry_point"]),
+                task_id=str(task_id or "BigCodeBench"),
             )
 
         status = result.get("status")
@@ -126,48 +144,31 @@ class BigCodeBenchResourcesServer(SimpleResourcesServer):
             task_id=task_id,
         )
 
-    async def _run_in_venv(self, code: str, test_code: str, entry_point: str) -> Dict[str, Any]:
-        req_payload = json.dumps(
-            {
-                "code": code,
-                "test_code": test_code,
-                "entry_point": entry_point,
-                "max_as_limit": self.config.max_as_limit,
-                "max_data_limit": self.config.max_data_limit,
-                "max_stack_limit": self.config.max_stack_limit,
-                "min_time_limit": self.config.min_time_limit,
-                "gt_time_limit": self.config.gt_time_limit,
-            }
+    def _run_in_venv(self, code: str, test_code: str, entry_point: str, task_id: str) -> Dict[str, Any]:
+        if self._sandbox_error is not None:
+            raise self._sandbox_error
+        if self._sandbox_spec is None or self._sandbox_preflight is None or not self._sandbox_preflight.ok:
+            raise GraderInfrastructureError("successful BigCodeBench sandbox preflight is required")
+        native = run_bigcodebench_sandbox(
+            BigCodeBenchGradeRequest(
+                schema_version=1,
+                code=code,
+                test_code=test_code,
+                entry_point=entry_point,
+                task_id=task_id,
+            ),
+            spec=self._sandbox_spec,
+            preflight=self._sandbox_preflight,
         )
-
-        proc = await asyncio.create_subprocess_exec(
-            str(self._bcb_python),
-            str(self._runner_path),
-            stdin=asyncio.subprocess.PIPE,
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE,
-            env={**os.environ},
-        )
-        try:
-            stdout, stderr = await asyncio.wait_for(
-                proc.communicate(req_payload.encode()),
-                timeout=self.config.subprocess_timeout,
-            )
-        except asyncio.TimeoutError:
-            proc.kill()
-            await proc.wait()
-            return {"status": "timeout", "details": {"reason": "outer_subprocess_timeout"}}
-
-        try:
-            return json.loads(stdout.decode("utf-8", errors="replace"))
-        except json.JSONDecodeError:
-            return {
-                "status": "error",
-                "details": {
-                    "stderr": stderr.decode("utf-8", errors="replace")[:2000],
-                    "stdout": stdout.decode("utf-8", errors="replace")[:2000],
-                },
-            }
+        if native.limit_kind is not None:
+            return {"status": "candidate_resource_limit", "details": {"limit_kind": native.limit_kind.value}}
+        if native.native_status is NativeStatus.PASS:
+            return {"status": "pass", "details": None}
+        if native.native_status is NativeStatus.FAIL:
+            return {"status": "fail", "details": None}
+        if native.native_status is NativeStatus.TIMEOUT:
+            return {"status": "timeout", "details": None}
+        raise GraderInfrastructureError("sandbox returned an unknown native outcome")
 
 
 if __name__ == "__main__":

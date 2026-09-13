@@ -3,6 +3,35 @@
 
 # PR04 implementation work record
 
+## Public launch and caller draft ready for validation, 2026-09-13
+
+Base `7ebef3f004fad1a8df88792dfac6f0db7b1dd3c7`; Luna returns one coherent
+four-file source batch: public manifest/runtime binding and probe/run seam in
+grader_sandbox, evaluator and resource-app connections to that seam, and deletion of
+the legacy executable bcb_runner. No worker/bootstrap/vendor/lock identity changes.
+This is a draft checkpoint, not proof that all frozen probes or caller semantics work.
+Only diff whitespace passed; tests, strict typing, Ruff and real Linux remain unrun.
+Required regression ports, residual legacy setup/config/API cleanup, final provenance
+and complete boundary acceptance must be checked before component closure.
+
+First actual Ubuntu CI on promoted `0c919a5c` passed all 610 unit methods and CLI
+self-tests, applicable lint/copyright and harness/build-tool audits. Coverage is
+11047/11791 = 93.69%, six old resource-app type errors remain, and preparation stops
+at Ninja distribution-versus-binary version comparison. Grader audit retains the
+known NLTK finding. Exact evidence is control report `m2-linux-first-validation.json`.
+Sol approves the finite gate-correction contract saved on control
+`df9be5942515b07b97523ef4d35488d4cea0e0b7`, report
+`reports/m2-linux-gate-correction-contract.md`: retain Ninja package/hash pins and
+verify its exact actual binary output; permit only exact provenance false positives
+in the existing secret baseline while retaining all detector settings and a negative
+control. No implementation fix for those CI findings has run yet.
+
+Next: Sol reviews this fixed source against the frozen contract read-only, while
+Luna ports the allowed regression fixtures and performs the finite CI corrections.
+Save the next coherent batch before grouped validation. Parent integrates only the
+returned fixed source/evidence; Draft PR #43 stays unchanged until scoped checks and
+review close. PR04, real isolation, parity, coverage and CVE acceptance remain open.
+
 ## Attested public boundary and shared callers assigned, 2026-09-13
 
 Reviewed CI head `0c919a5cd1256af121a912bef5a42cf41d5e360b` is promoted unchanged
