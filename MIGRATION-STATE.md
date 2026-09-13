@@ -3,7 +3,7 @@
 
 # Migration state
 
-Updated: 2026-09-13T02:56:24.190Z
+Updated: 2026-09-13T03:09:14.600Z
 
 Control branch: `checkpoint/migration-control`.
 Procedure: [MIGRATION-WORKFLOW.md](MIGRATION-WORKFLOW.md).
@@ -84,7 +84,7 @@ Sol design/review proceeds independently; drafts below are saved work, not imple
 
 | Slice | Checkpoint branch | Saved commit | Saved contract / state |
 | --- | --- | --- | --- |
-| 02c | `checkpoint/pr-02c` | `3f37a1b7e7e6e74900d475dd018a25931acca04e` | Source at 32169815 passes 35 focused tests/types/Ruff and independent 25-test closure review; CLI/selected-consumer contract added; tamper/fixture/full gates remain |
+| 02c | `checkpoint/pr-02c` | `549339ab6f36a788a5eb7fa83851af9d7546fcf6` | Saved handoff tamper batch passes 13 tests/strict typing/Ruff; independent review requests two bounded test refinements; CLI/fixture/full gates remain |
 | 04 | `checkpoint/design-pr04` | `deb807e8454eb4fbb3652bb1f335489fa5325bea` | Final grader design/appendix, exact dependencies/source/licenses and rejected patch evidence saved; strict NLTK audit red; implementation pending |
 | 05 | `checkpoint/design-pr05` | `7e7629c330ca0841ee92612f534db72c0a459b2b` | Final PR05 APIs plus PR02c fixture/consumer amendment and four-finding closure review saved; implementation pending |
 | 06 | `checkpoint/design-pr06` | `f598dbe34b38dcb9f5bb8f9309283c88c7a2dab9` | Final GDPval API contract/appendix aligned with PR05 exact resume/events/aggregate interfaces; implementation pending |
@@ -93,12 +93,15 @@ Sol design/review proceeds independently; drafts below are saved work, not imple
 
 PR02c disjoint work branches, both based on `3f37a1b7e7e6e74900d475dd018a25931acca04e`:
 
-- `checkpoint/pr-02c-selected-consumer` at `a6c5fa47820d0fbc92ebaf7ac5986e03335c9a3b`: existing selected-task
-  adapter and four non-Cursor fixture files; initialized/saved before editing; no validation yet.
+- `checkpoint/pr-02c-selected-consumer` at `3a077a4ad3bb68a27e3acd89b185bc04158f9afd`: existing selected-task
+  adapter and four non-Cursor fixture files saved/read back; 48 tests and scoped Ruff pass. Strict mypy finds two
+  test-only conversions from object to dict; a bounded fix and independent source review are active.
 - `checkpoint/pr-02c-cursor-fixtures` at `6fb7952b76587259d5145aaf6b83208cf20ca891`: two Cursor fixture files
   only; initialized/saved before editing; no validation yet.
 
-Primary owner retains handoff tamper tests, CLI plumbing/integration and the legacy Cursor shell rejection test.
+Primary owner is implementing the exact CLI runtime-root plumbing and legacy Cursor shell rejection in three disjoint files.
+Its following handoff integration batch also fixes the independently reviewed snapshot-missing-byte and valid-but-missing
+indexed-bundle-link test cases. The saved tamper source itself passes all 13 handoff tests, strict mypy and Ruff.
 All source/test scopes are disjoint. Side-branch bytes must be saved/read back and reviewed before combination.
 The four original production findings are independently closed at exact `32169815cd455f3c5929ca643ebc69fe00260969`;
 review record: `checkpoint/design-pr05:7e7629c330ca0841ee92612f534db72c0a459b2b`,
