@@ -11,6 +11,26 @@ This record preserves recoverable work; it does not declare the migration accept
 
 ## Current status: autonomous continuation under revised issue-level stop rule
 
+Preparation component local closure is verified at
+`e2a5a6a74c14a6577900859c7a4cc33d98482562`, tree
+`84afcaa43ab36e025bf741882731a127c81a54ff`: 14 unit tests, scoped strict mypy,
+Ruff lint/format, shell syntax and independent Sol review pass. See
+`reports/m2-preparation-local-closure.json`. The two historical official uv failures
+are retained, not reset. This is not Linux provisioning or PR04 acceptance.
+
+Next coherent PR04 batch: Luna adds the frozen Ubuntu 24.04 CI environment path to the
+existing eval-harness workflow, with strict audit kept red and a separately named
+non-acceptance candidate job using the saved installer. It must genuinely provision,
+run pip check and invoke the public preflight seam; the still-unimplemented seam must
+fail, not be mocked, skipped or reported as a completed boundary test. Add only the
+already authorized exact-vendor lint/copyright exclusions and source attribution needed
+for the PR gate. Parent then promotes the reviewed batch to a Draft PR against accepted
+`migration/02c-generation-handoff` (`6038a7828d62247ad98d000bc6e71c706f6d14a4`) and
+collects actual Linux evidence while Luna implements public attested launch/common callers.
+No new workflow is dispatched merely for checkpoint saving. All final security/parity/
+coverage gates remain mandatory. GitHub Actions is enabled; existing workflow triggers
+are pull requests and main pushes, so no merge or unreviewed dispatch is needed.
+
 Current saved/tested implementation is `bbf96b7e3616d670cf784b2087aff39eab8d5e74`,
 tree `05dc5cb7e8c06f65d73890f08b965a406f54428b`. All 13 preparation unit methods,
 strict mypy (three files), Ruff lint/format and shell syntax pass. Sol closes existing

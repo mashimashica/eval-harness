@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "tested_commit": "e2a5a6a74c14a6577900859c7a4cc33d98482562",
+  "tree": "84afcaa43ab36e025bf741882731a127c81a54ff",
+  "validation_owner": "Luna",
+  "reviewer": "Sol, independent read-only fixed delta",
+  "results": {
+    "preparation_unit_tests": "14 passed",
+    "strict_mypy_changed_test": "passed",
+    "ruff_lint_changed_test": "passed",
+    "ruff_format_changed_test": "passed",
+    "bash_syntax_installer": "passed",
+    "previous_unchanged_python_source_typing": "three-file strict mypy passed at bbf96b7e3616d670cf784b2087aff39eab8d5e74; Python installer and grader_sandbox unchanged",
+    "worktree": "clean, exact HEAD verified"
+  },
+  "closed_findings": [
+    "Four executable command substitutions preserve whitespace-containing absolute paths",
+    "Shell validator rejects internal and terminal carriage returns",
+    "Previous archive ownership, partial creation/copy cleanup, version grammar and preparation source closures retained"
+  ],
+  "failure_history": "Official uv suffix refusal: two failed corrections, followed by the authorized successful revised approach. All earlier evidence remains reachable. These records do not erase failed intermediate static/test batches.",
+  "acceptance_scope": "Local fixed-preparation component validation and source review only",
+  "remaining": ["Actual fixed Ubuntu provisioning", "Public attested preflight/run", "Common evaluator/resource-server callers", "Old runner deletion", "Real sandbox and hostile fixtures", "1140 native parity", "Strict NLTK CVE acceptance", "PR04/full migration quality gates"],
+  "pr04_accepted": false,
+  "migration_complete": false
+}
