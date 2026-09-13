@@ -3,7 +3,7 @@
 
 # Migration state
 
-Updated: 2026-09-13T10:13:17Z
+Updated: 2026-09-13T10:22:00Z
 
 Control branch: `checkpoint/migration-control`.
 Procedure: [MIGRATION-WORKFLOW.md](MIGRATION-WORKFLOW.md).
@@ -43,7 +43,17 @@ are accepted by Sol in `reports/m2-linux-gate-correction-contract.md`, saved on 
 used an incorrect nonexistent SHA and was refused; it was then moved to the exact saved
 `fe23c09b`, clean. No source or branch was changed by the refused command.
 
-The formal Draft PR #43 remains at reviewed `0c919a5cd1256af121a912bef5a42cf41d5e360b`.
+Formal Draft PR #43 is now `d3dc022f6eae7d2fbc12a1078ef7e8079e813782`, tree
+`bbfce4c2824f40595b73797ec5211bba89b431c4`, from preceding `0c919a5c` with only the
+reviewed Ninja installer/test pair plus a parent work record. Sol closed that two-file
+delta and parent verified copied bytes against fixed `1df1ef8c`. No unaccepted public
+boundary/caller code is promoted. Actual Linux rebuild is starting; result pending.
+Checkpoint and formal histories now deliberately differ: future promotions must copy
+reviewed content with DCO/non-force API commits onto the current formal parent, not force
+or rewind either branch. Full source remains on checkpoint/pr-04. This selective update
+is meaningful real-build validation, not a workflow-as-checkpoint transport.
+
+The original reviewed `0c919a5cd1256af121a912bef5a42cf41d5e360b`
 It adds the fixed Ubuntu candidate
 provisioning/audit workflow and exact-vendor gate/attribution changes. Luna reports
 YAML/TOML parsing, shell syntax including added run blocks, exact vendor selector checks
