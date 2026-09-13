@@ -3,7 +3,7 @@
 
 # Migration state
 
-Updated: 2026-09-13T02:35:14.408Z
+Updated: 2026-09-13T02:41:55.074Z
 
 Control branch: `checkpoint/migration-control`.
 Procedure: [MIGRATION-WORKFLOW.md](MIGRATION-WORKFLOW.md).
@@ -95,7 +95,10 @@ Its two files and ref were read back and matched the saved bytes/Git blobs befor
 PR09 contract is reachable on `checkpoint/design-pr09` at `a26a92a31a7657799573337dc8c9876b440b5842`
 (`contracts/pr09-builder-experiment-contract.md`), with frozen input/barrier/namespace/protection/resume semantics.
 PR10/11 bounded deletion/acceptance task contracts are started on `checkpoint/design-pr10-11` at
-`3eb2d84ed8dafd8284abebfea695be61e04b98f9`; exact final source inventory is still being completed.
+`7a3ce1d3859dca02d43828db6d970d7c0b47c45d`; exact legacy removal/behavior-port inventory and add-only fourth-fixture
+acceptance contracts are frozen. The PR08 formal CLI spelling and future accepted implementation heads remain explicit
+acceptance-time inputs. The fourth fixture uses fresh registries, ordinary execute() for typed fake failures, real
+handoff/loaders, unchanged production coverage scope, and an offline diff check with the base provisioned in CI setup.
 Sol also owns bounded PR05 design work; no source implementation is running for those slices.
 New design documents are reconstructions from the original plan and accepted APIs, not recovered lost files.
 
