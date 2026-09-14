@@ -69,7 +69,8 @@ For development directly from source, prefix commands with `PYTHONPATH=harness/s
 Codex tools can write only to a fresh participant workspace; model tools cannot read account credentials, the development
 checkout, or another condition. Evaluation workspaces are read-only. Claude safe/restricted mode disables ambient
 instructions, Skills and plugins. The `files` mode disables shell/network tools; `sandboxed_shell` exposes only Bash,
-with native filesystem enforcement, no network and no unsandboxed fallback. Each selected SKILL.md body is included in the recorded prompt and its supporting files are staged; native discovery is disabled. Claude uses standard context with fast mode disabled. Its reported
+for filesystem access, with native enforcement, no network and no unsandboxed fallback. Grading also enables the native
+StructuredOutput response tool. Each selected SKILL.md body is included in the recorded prompt and its supporting files are staged; native discovery is disabled. Claude uses standard context with fast mode disabled. Its reported
 USD value is an API-equivalent estimate, not a subscription charge. Preflight requires an active subscription and
 extra usage disabled; it refuses unconfirmed billing status. It checks exact model selection and effort without
 generating a response. Successful account metadata is shared for at most five minutes within one CLI process to avoid
@@ -91,8 +92,8 @@ The existing `claude-sonnet-4-6` ID remains accepted for saved configurations. M
 follow the [Claude Code model configuration](https://code.claude.com/docs/en/model-config). A short availability check
 is not a quality measurement or proof that every model/effort combination has been benchmarked.
 
-For Claude GDPval execution or judging, select `tool_mode: sandboxed_shell`. The harness enables only the native Bash
-tool; it supplies an isolated `python-openpyxl` command for reading/writing XLSX using the locked openpyxl dependency.
+For Claude GDPval execution or judging, select `tool_mode: sandboxed_shell`. The harness provides filesystem access only through native Bash
+and supplies an isolated `python-openpyxl` command for reading/writing XLSX using the locked openpyxl dependency.
 Original reference files, selected Skills and creator inputs are read-only. Application outputs may be written within
 the workspace; evaluator workspaces are entirely read-only. Ambient Python packages, account credentials, development
 files and other conditions are not tool inputs. Unsupported operating systems or unavailable sandbox prerequisites
