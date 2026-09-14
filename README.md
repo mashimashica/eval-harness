@@ -16,7 +16,7 @@ Read the [Local Eval Harness guide](fern/versions/latest/pages/get-started/eval-
 - Runs Codex CLI and Claude Code with account or subscription authentication.
 - Compares no-Skill, existing-Skill, and independently created-Skill conditions.
 - Separates creation, application, and grading sessions and preserves their inputs, logs, artifacts, and hashes.
-- Supports mechanical grading, AI scoring, anonymous pairwise comparison, and human criterion ratings with comments.
+- Supports mechanical grading, independent AI judge panels, anonymous pairwise comparison, and human criterion ratings with comments.
 - Re-evaluates saved artifacts and compares reports without regenerating participant outputs.
 - Runs GDPval and GSM8K with deterministic task selection, repeats, and bounded retries.
 
@@ -42,7 +42,7 @@ uv run --project harness --no-sync eval-harness run harness/examples/gsm8k-one-t
 uv run --project harness --no-sync eval-harness compare runs/gsm8k-one-task --out reports/gsm8k-one-task
 ```
 
-The example uses one Codex application call and benchmark-owned mechanical grading without a judge model. For GDPval, see the guide's verified spreadsheet example, which uses Codex with spreadsheet-capable tools.
+The example uses one Codex application call and benchmark-owned mechanical grading without a judge model. For GDPval, see the guide's verified spreadsheet example, which includes Codex and Claude configurations with spreadsheet tools.
 
 ## Verified scope
 
@@ -50,7 +50,7 @@ The currently verified local setup is:
 
 - macOS with Python 3.13.14, uv 0.12.13, and the project-local harness environment.
 - Standalone Codex CLI 0.154.0 and Claude Code 2.1.270, authenticated through their account or subscription flows.
-- GDPval execution and AI evaluation through Codex; the restricted Claude file-tool route cannot inspect or generate office-file contents through scripts.
+- GDPval execution and AI evaluation through Codex or Claude's sandboxed Bash route on macOS, including saved XLSX inspection.
 - GSM8K execution through Codex or Claude Code and mechanical evaluation without a judge CLI.
 - Serial scheduling with `limits.concurrency: 1`; task count, retries, and each CLI timeout are explicit bounds.
 

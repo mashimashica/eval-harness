@@ -11,6 +11,8 @@ tests/data/asr
 bert.pt.json
 work
 runs
+/evaluations/
+/reports/
 fastspeech_output
 .hydra
 .bash_history.local

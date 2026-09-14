@@ -49,6 +49,7 @@ class ExecutionRequest:
     model: str | None
     settings: Mapping[str, Any]
     purpose: str
+    response_schema: Mapping[str, Any] | None = None
 
 
 @dataclass(frozen=True)
@@ -85,6 +86,18 @@ class Executor(Protocol):
 
     def execute(self, request: ExecutionRequest) -> ExecutionResult:
         """Run one model invocation."""
+
+
+def preflight_executor(executor: Executor, model: str | None, settings: Mapping[str, Any], purpose: str) -> AuthStatus:
+    """Use a runtime's no-generation capability probe when it provides one."""
+    checker = getattr(executor, "check_runtime", None)
+    if checker is not None:
+        status: AuthStatus = checker(model, settings, purpose)
+    else:
+        status = executor.check_auth(settings)
+    if not status.available or not status.authenticated:
+        raise HarnessError(f"runtime authentication is unavailable: {status.detail}")
+    return status
 
 
 def _toml_key(value: str) -> str:
@@ -361,7 +374,7 @@ class CodexExecutor:
             )
             yield session
 
-    def _command(self, request: ExecutionRequest) -> list[str]:
+    def _command(self, request: ExecutionRequest, *, output_schema_path: Path | None = None) -> list[str]:
         if not request.model:
             raise HarnessError("an explicit Codex model is required")
         command = [
@@ -382,6 +395,10 @@ class CodexExecutor:
         reasoning = request.settings.get("reasoning_effort")
         if isinstance(reasoning, str) and reasoning:
             command.extend(["-c", "model_reasoning_effort=" + json.dumps(reasoning)])
+        if request.response_schema is not None:
+            if output_schema_path is None:
+                raise HarnessError("Codex output schema path is required for structured responses")
+            command.extend(["--output-schema", str(output_schema_path)])
         return command
 
     def check_auth(self, settings: Mapping[str, Any] | None = None) -> AuthStatus:
@@ -436,9 +453,21 @@ class CodexExecutor:
         with self._session(request.settings, request.cwd, read_only=read_only) as session:
             input_manifest = file_manifest(session.workspace)
             isolated = ExecutionRequest(
-                request.prompt, session.workspace, request.model, request.settings, request.purpose
+                request.prompt,
+                session.workspace,
+                request.model,
+                request.settings,
+                request.purpose,
+                request.response_schema,
             )
-            command = self._command(isolated)
+            output_schema_path: Path | None = None
+            if request.response_schema is not None:
+                output_schema_path = session.config_home / "response-schema.json"
+                output_schema_path.write_text(
+                    json.dumps(request.response_schema, sort_keys=True, separators=(",", ":")), encoding="utf-8"
+                )
+                output_schema_path.chmod(0o600)
+            command = self._command(isolated, output_schema_path=output_schema_path)
             try:
                 process = subprocess.Popen(
                     command,

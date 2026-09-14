@@ -1,0 +1,520 @@
+{
+  "anonymous_panel": {
+    "actual_judge_invocations": 13,
+    "criteria_sha256": "f22f1dc4debd100363c23ceb3ec5df35c54d3e974a74c0f721d08958673fe6f3",
+    "independent_judges": [
+      "gpt-5.6-sol medium",
+      "claude-opus-5 medium"
+    ],
+    "judgment_count": 12,
+    "pairs": [
+      [
+        "N",
+        "S"
+      ],
+      [
+        "N",
+        "A"
+      ],
+      [
+        "S",
+        "A"
+      ]
+    ],
+    "presentation_orders": 2,
+    "source_generations": 3,
+    "stage_metrics": {
+      "application": {
+        "actual_cost_usd": null,
+        "count": 3,
+        "elapsed_seconds_total": 32.75537245898158,
+        "reported_cost_usd": null
+      },
+      "creation": {
+        "actual_cost_usd": null,
+        "count": 2,
+        "elapsed_seconds_total": 125.63569462503074,
+        "reported_cost_usd": 0.7696135
+      },
+      "evaluation": {
+        "actual_cost_usd": null,
+        "all_attempts": {
+          "actual_cost_usd": null,
+          "count": 13,
+          "elapsed_seconds": 789.3462238339707,
+          "reported_cost_usd": null
+        },
+        "count": 12,
+        "elapsed_seconds_total": 189.29453087496222,
+        "reported_cost_usd": null
+      }
+    },
+    "statistics": {
+      "bootstrap": {
+        "ci95_lower": null,
+        "ci95_upper": null,
+        "cluster_unit": "task_id",
+        "reason": "fewer_than_two_usable_tasks",
+        "resamples": 1000,
+        "seed": 14
+      },
+      "collapsed_order_count": 12,
+      "collapsed_pair_count": 3,
+      "input_row_count": 12,
+      "judge_agreement": [
+        {
+          "agreement_count": 3,
+          "agreement_rate": 1.0,
+          "compared_pair_count": 3,
+          "disagreement_count": 0,
+          "excluded_pair_count": 0,
+          "judge_identities": [
+            "opus|runtime=6b8ba5ee84e0d09f1e4afd8e763914656a68d12c4bf424cee19234b2f22c453a|criteria=f22f1dc4debd100363c23ceb3ec5df35c54d3e974a74c0f721d08958673fe6f3",
+            "sol|runtime=f9e79b004f023bdb82858468c7d7058540453bcdd9c488f76652023ebe780a8f|criteria=f22f1dc4debd100363c23ceb3ec5df35c54d3e974a74c0f721d08958673fe6f3"
+          ],
+          "reason": null
+        }
+      ],
+      "judge_report_status_counts": {
+        "usable": 6
+      },
+      "pair_results": [
+        {
+          "condition_ids": [
+            "A",
+            "N"
+          ],
+          "judge_id": "opus",
+          "point_estimate_by_condition": {
+            "A": 0.5,
+            "N": 0.5
+          }
+        },
+        {
+          "condition_ids": [
+            "A",
+            "N"
+          ],
+          "judge_id": "sol",
+          "point_estimate_by_condition": {
+            "A": 0.5,
+            "N": 0.5
+          }
+        },
+        {
+          "condition_ids": [
+            "A",
+            "S"
+          ],
+          "judge_id": "opus",
+          "point_estimate_by_condition": {
+            "A": 0.5,
+            "S": 0.5
+          }
+        },
+        {
+          "condition_ids": [
+            "A",
+            "S"
+          ],
+          "judge_id": "sol",
+          "point_estimate_by_condition": {
+            "A": 0.5,
+            "S": 0.5
+          }
+        },
+        {
+          "condition_ids": [
+            "N",
+            "S"
+          ],
+          "judge_id": "opus",
+          "point_estimate_by_condition": {
+            "N": 0.5,
+            "S": 0.5
+          }
+        },
+        {
+          "condition_ids": [
+            "N",
+            "S"
+          ],
+          "judge_id": "sol",
+          "point_estimate_by_condition": {
+            "N": 0.5,
+            "S": 0.5
+          }
+        }
+      ],
+      "tie_credit": 0.5
+    },
+    "task_count": 1,
+    "timeout_attempt_usage": "unknown; only thread/turn started events before 600s timeout"
+  },
+  "candidate_code_commit": "000c2cc81890f0d5f819b0cb6fd48b638b0c6a80",
+  "environment": {
+    "authentication": "native account subscriptions; active Claude Max 20x, extra usage disabled; no API billing fallback",
+    "claude_code": "2.1.270",
+    "codex_cli": "0.154.0",
+    "platform": "macOS arm64",
+    "python": "3.13.14",
+    "uv": "0.12.13"
+  },
+  "limitations": [
+    "macOS and exact pinned CLI versions; unsupported routes fail preflight",
+    "Claude office sandbox includes isolated Python/openpyxl; formulas are never recalculated by graders",
+    "Native availability checks do not establish benchmark quality for all models/efforts",
+    "One-task smoke data cannot estimate a task-cluster confidence interval or ALPS superiority",
+    "Actual incremental subscription costs are unavailable (null); CLI USD values are estimates",
+    "Human ratings remain supported; synthetic human-path tests are not human quality reviews",
+    "Historical-evidence cleanup PR #50 remains separate"
+  ],
+  "model_availability": [
+    {
+      "effort": "medium",
+      "elapsed_seconds": 2.8249722919717897,
+      "model": "claude-fable-5-1",
+      "observed_models": [
+        "claude-fable-5-1"
+      ],
+      "returncode": 0
+    },
+    {
+      "effort": "medium",
+      "elapsed_seconds": 1.6401077920163516,
+      "model": "claude-opus-5",
+      "observed_models": [
+        "claude-opus-5"
+      ],
+      "returncode": 0
+    },
+    {
+      "effort": "medium",
+      "elapsed_seconds": 1.7820223339949735,
+      "model": "claude-sonnet-5",
+      "observed_models": [
+        "claude-sonnet-5"
+      ],
+      "returncode": 0
+    },
+    {
+      "effort": null,
+      "elapsed_seconds": 1.6235256670042872,
+      "model": "claude-haiku-4-5-20251001",
+      "observed_models": [
+        "claude-haiku-4-5-20251001"
+      ],
+      "returncode": 0
+    }
+  ],
+  "office": {
+    "completed_sol_judgment_unchanged_on_resume": true,
+    "corrected_opus_native_tools": [
+      "Bash",
+      "StructuredOutput"
+    ],
+    "corrected_opus_permission_denials": 0,
+    "criteria_sha256": "4adb9e3efc8eba9da5f9267b7ee050e48608c45c2774a9da892200de3825aaae",
+    "criteria_version": "gdpval-audit-source-aligned-v1",
+    "disagreement_note": "Sol failed sample arithmetic and fidelity; Opus passed them. Opus accepted rounded intermediate values despite the frozen no-rounding policy and treated documented mappings more leniently. Preserve both item-level reasons; neither a pooled score nor correctness of AI criteria application is asserted. The original malformed Opus attempt is archived, not selected as a score.",
+    "judges": [
+      {
+        "evaluation_attempt_count": 1,
+        "evaluation_status": "completed",
+        "item_statuses": {
+          "fidelity-coverage": "fail",
+          "sample-arithmetic": "fail",
+          "usability": "pass",
+          "variance": "pass"
+        },
+        "judge_elapsed_seconds": 229.9879438339849,
+        "judge_id": "sol",
+        "judge_runtime": {
+          "executor": "codex",
+          "model": "gpt-5.6-sol",
+          "settings": {
+            "reasoning_effort": "medium",
+            "timeout_seconds": 600
+          }
+        },
+        "score": 0.68253968
+      },
+      {
+        "evaluation_attempt_count": 2,
+        "evaluation_status": "completed",
+        "item_statuses": {
+          "fidelity-coverage": "pass",
+          "sample-arithmetic": "pass",
+          "usability": "pass",
+          "variance": "pass"
+        },
+        "judge_elapsed_seconds": 127.42486258299323,
+        "judge_id": "opus",
+        "judge_runtime": {
+          "executor": "claude-code",
+          "model": "claude-opus-5",
+          "settings": {
+            "max_turns": 16,
+            "reasoning_effort": "medium",
+            "timeout_seconds": 600,
+            "tool_mode": "sandboxed_shell"
+          }
+        },
+        "score": 0.9
+      }
+    ],
+    "sample_xlsx_sha256": "7a083095bba2abb865b0663c4d8146b7f9eda961e76b4ba6e5aac8edc945a9c5",
+    "source_run_unchanged": true,
+    "stage_metrics": {
+      "application": {
+        "actual_cost_usd": null,
+        "count": 1,
+        "elapsed_seconds_total": 224.43013591700583,
+        "reported_cost_usd": 1.0166110000000002
+      },
+      "creation": {
+        "actual_cost_usd": null,
+        "count": 0,
+        "elapsed_seconds_total": null,
+        "reported_cost_usd": null
+      },
+      "evaluation": {
+        "actual_cost_usd": null,
+        "all_attempts": {
+          "actual_cost_usd": null,
+          "count": 3,
+          "elapsed_seconds": 526.8882686669822,
+          "reported_cost_usd": null
+        },
+        "count": 2,
+        "elapsed_seconds_total": 357.4128064169781,
+        "reported_cost_usd": null
+      }
+    },
+    "task_id": "83d10b06-26d1-4636-a32c-23f92c57f30b"
+  },
+  "pull_request": "https://github.com/mashimashica/eval-harness/pull/51",
+  "raw_evidence": [
+    {
+      "hash_kind": "file_sha256",
+      "path": ".audit/claude-nsa/availability-a1/summary.json",
+      "sha256": "1764ced11d94472083ec3e321513d9c67095f76d202b6de97b45294501f5d4ec"
+    },
+    {
+      "hash_kind": "file_sha256",
+      "path": ".audit/claude-nsa/sandbox-probe/corrected-read-policy-evidence.json",
+      "sha256": "d7eb4dd21df78b140ce9d127841e9fdafd38abb6a60abd9361c708d88cf8076c"
+    },
+    {
+      "hash_kind": "file_sha256",
+      "path": ".audit/claude-nsa/final-tests.log",
+      "sha256": "fc9cc632fc03d10f31ed4d0bad042ca92bbef8673af95a0d4b6b7d886ba7c864"
+    },
+    {
+      "hash_kind": "file_sha256",
+      "path": ".audit/claude-nsa/dependency-audit.json",
+      "sha256": "a2842eb175fd17d2fd98f2b1f0d2609af4484778020a17564eface590d66a321"
+    },
+    {
+      "hash_kind": "file_sha256",
+      "path": ".audit/claude-nsa/publication-secrets.log",
+      "sha256": "38010530dee7c8b727926d5f56c00ab673e00e327ae5e61d20c9f3e005d28d3a"
+    },
+    {
+      "hash_kind": "file_manifest_sha256",
+      "path": "runs/claude-nsa-b1b",
+      "sha256": "52bc073a43eda8e150705eee0977d9916b3303dc28fdcbf0f9e656e80be1bc93"
+    },
+    {
+      "hash_kind": "file_manifest_sha256",
+      "path": "runs/claude-nsa-b2-fixed",
+      "sha256": "b046a1051645b8c064447866920f545ad4b623fb8b6445ca977da23511a47df8"
+    },
+    {
+      "hash_kind": "file_manifest_sha256",
+      "path": "runs/claude-office-c1",
+      "sha256": "70ff78d15b8cf960d8ff324db7cf139cc14d4f4209ad009a0402155bf698f464"
+    },
+    {
+      "hash_kind": "file_manifest_sha256",
+      "path": "evaluations/claude-nsa-b1b-mechanical",
+      "sha256": "e9004f5069e78f1b19b5571c49a47b48edb1c0e07791c90a8a76c10c295c407d"
+    },
+    {
+      "hash_kind": "file_manifest_sha256",
+      "path": "evaluations/claude-nsa-b2-mechanical",
+      "sha256": "4b7a385c859c5944c6a3ea45aafdeaeb124f2a5b65c1792b671db05e7b687efd"
+    },
+    {
+      "hash_kind": "file_manifest_sha256",
+      "path": "evaluations/claude-office-c1-panel",
+      "sha256": "5dee022b9a089cad3bd429f0f7011e9a6a8ad2ad65ae9bee072c0afdb88b4ec5"
+    },
+    {
+      "hash_kind": "file_manifest_sha256",
+      "path": "evaluations/claude-nsa-d1-panel",
+      "sha256": "65a38bbd73d4138bf02d7fbd516590a5dc3374f8d994bb104c3f31f38c59a9bd"
+    },
+    {
+      "hash_kind": "file_manifest_sha256",
+      "path": "reports/claude-nsa-b1-b2-mechanical",
+      "sha256": "24a411b4a76cef34070653a6703b98b7110090d70b7d8da5b919077e650f7ae5"
+    },
+    {
+      "hash_kind": "file_manifest_sha256",
+      "path": "reports/claude-office-c1-panel",
+      "sha256": "2ac46ffda42548d9e488d1f5640aa43f3c035fa5a26f0eecd4a830c5455a54a4"
+    },
+    {
+      "hash_kind": "file_manifest_sha256",
+      "path": "reports/claude-nsa-d1-panel",
+      "sha256": "c1265fbdcde803b17237cb22f1f42239b0cca351647515acc8d7b89a863719c8"
+    }
+  ],
+  "recorded_at": "2026-09-14T00:49:17.631681+00:00",
+  "schema_version": 1,
+  "scope": "Claude office execution and reliable matched N/S/A comparison infrastructure; small workflow validation, not official benchmark scores or a performance ranking",
+  "scope_verified": {
+    "claude-opus-5 medium": [
+      "Skill creation with explicit skill-creator and ALPS sources",
+      "GDPval XLSX creation using native sandboxed Bash",
+      "read-only saved XLSX scalar judging",
+      "anonymous text pairwise judging"
+    ],
+    "gpt-5.6-luna max": [
+      "matched GSM8K execution across independent Skill creations and fixed-Skill repetitions"
+    ],
+    "gpt-5.6-sol medium": [
+      "independent read-only saved XLSX scalar judging",
+      "anonymous text pairwise judging"
+    ],
+    "other_Claude_models": "exact-ID no-tool availability only; configured effort support was checked with native model/effort selection, not benchmarked at every effort"
+  },
+  "skills": [
+    {
+      "cohort": 0,
+      "condition": "A",
+      "creation_id": "e72b3361a6d6489185cec37352084211",
+      "generated_sha256": "2e7445dd4a989f92fa0257ca0512597be9b6a886b9b4029b33b1f5000faea097",
+      "manifest": {
+        "hash_kind": "file_sha256",
+        "path": "runs/claude-nsa-b1b/cohorts/creation_0/skills/A/word-problems/skill_manifest.json",
+        "sha256": "3c9d8ceefa03f1f1827a04f2cbf4dbfcc10a0e57ccffb30f2f8e0c49cecd4fec"
+      }
+    },
+    {
+      "cohort": 0,
+      "condition": "S",
+      "creation_id": "076b049b120f4185a950d814306a9c72",
+      "generated_sha256": "724a6e46e9c1ec428d10b7325ccbba5c3ba06a771eba595e3b5f050eddecfc3c",
+      "manifest": {
+        "hash_kind": "file_sha256",
+        "path": "runs/claude-nsa-b1b/cohorts/creation_0/skills/S/skill_manifest.json",
+        "sha256": "3910cc1074db1ab369ff64804aa1b2ecb2e18e09d6ce3853240205e1c310dc82"
+      }
+    },
+    {
+      "cohort": 1,
+      "condition": "A",
+      "creation_id": "6c3898689fc7484eab647c71fcd1b650",
+      "generated_sha256": "e00150390308939783b2fbf53c004c07b49c73f548472b0c3756106b6606c0d9",
+      "manifest": {
+        "hash_kind": "file_sha256",
+        "path": "runs/claude-nsa-b1b/cohorts/creation_1/skills/A/word-problems/skill_manifest.json",
+        "sha256": "1f546ed65813a38ea85280725f601cd29c3a3537b292921c3cc85972fbca5d7b"
+      }
+    },
+    {
+      "cohort": 1,
+      "condition": "S",
+      "creation_id": "86557001964e4ee7a8a254c5eb278dca",
+      "generated_sha256": "0a697fbb077dd4b2ccf7c323d1ce96caf6599bccf6880a13d4c7bca0770f51cb",
+      "manifest": {
+        "hash_kind": "file_sha256",
+        "path": "runs/claude-nsa-b1b/cohorts/creation_1/skills/S/word-problems/skill_manifest.json",
+        "sha256": "cbd896f438c15e0d2b4c7fd613e6e0b2067560ad1d11efc05fed74a495e18a79"
+      }
+    }
+  ],
+  "trial_envelope": {
+    "actual_cli_invocations": 37,
+    "applications": 13,
+    "automatic_retries": 0,
+    "availability": 4,
+    "availability_timeout_seconds": 120,
+    "claude_max_turns_flags": {
+      "availability": 2,
+      "creation_and_application": 24,
+      "evaluation": 16
+    },
+    "concurrency": 1,
+    "creations": 4,
+    "judgments_including_failed_format_and_timeout_attempts": 16,
+    "note": "CLI invocations are counted separately from internal model/tool turns. Explicit one-call C1R format/runtime and D1R stalled-session corrections retain both failed attempts.",
+    "other_timeout_seconds": 600
+  },
+  "two_repetition_designs": {
+    "benchmark": "gsm8k",
+    "fixed_skill": {
+      "execution_repeats_per_condition": 2,
+      "generations": 6,
+      "new_creations": 0,
+      "reused_cohort": 0
+    },
+    "generation_count_after_reevaluation_and_combined_compare": 12,
+    "independent_creation": {
+      "cohorts": 2,
+      "execution_repeats_per_condition_per_cohort": 1,
+      "generations": 6,
+      "skills_created": 4
+    },
+    "mechanical_correct": 12,
+    "stage_metrics": {
+      "application": {
+        "actual_cost_usd": null,
+        "count": 12,
+        "elapsed_seconds_total": 122.17848087789025,
+        "reported_cost_usd": null
+      },
+      "creation": {
+        "actual_cost_usd": null,
+        "count": 4,
+        "elapsed_seconds_total": 262.8476730840339,
+        "reported_cost_usd": 1.5701125
+      },
+      "evaluation": {
+        "actual_cost_usd": null,
+        "all_attempts": {
+          "actual_cost_usd": null,
+          "count": 12,
+          "elapsed_seconds": 0.0,
+          "reported_cost_usd": null
+        },
+        "count": 12,
+        "elapsed_seconds_total": 0.0,
+        "reported_cost_usd": null
+      }
+    },
+    "task_id": "gsm8k-0001"
+  },
+  "usage_evidence": "Detailed per-stage/per-judge tokens, measured/missing counts and CLI USD estimates are preserved in the referenced reports. Unknown totals and actual subscription costs remain null.",
+  "verification": {
+    "ci_candidate_code": "https://github.com/mashimashica/eval-harness/actions/runs/34793197763",
+    "dependency_audit": "no known vulnerabilities",
+    "documentation_links": "14 passed",
+    "fern": "0 errors / 1 existing warning",
+    "fresh_checkout": {
+      "hash_kind": "file_sha256",
+      "path": ".audit/claude-nsa/fresh-checkout-verification.json",
+      "sha256": "b99970569f89e0fe581b213471ef9503cfea0ee17b1d91b28274bb607dcab8ab"
+    },
+    "mypy": "20 source files passed",
+    "production_sandbox_independent_review": "Sol: cached-cell and ZIP member reads allowed, application writes allowed, credentials/development/outside reads and evaluator/context/runtime writes denied; zero model/network calls",
+    "ruff": "passed",
+    "tests": {
+      "coverage_is_not_an_acceptance_threshold": true,
+      "coverage_percent": 82,
+      "passed": 151
+    }
+  }
+}

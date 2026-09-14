@@ -93,6 +93,38 @@ print(json.dumps({"type":"turn.completed","usage":{"input_tokens":10,"output_tok
     assert "--strict-config" in result.command
 
 
+def test_execution_passes_output_schema_outside_participant_workspace(tmp_path: Path) -> None:
+    source = auth_source(tmp_path)
+    binary = fake_cli(
+        tmp_path,
+        """import json, pathlib, sys
+sys.stdin.read()
+schema_path = pathlib.Path(sys.argv[sys.argv.index('--output-schema') + 1])
+schema = json.loads(schema_path.read_text())
+assert schema['properties']['score']['maximum'] == 1
+assert not schema_path.parent.joinpath('work').exists()
+response = json.dumps({'score': 0.5, 'rationale': 'native schema'})
+print(json.dumps({'type':'item.completed','item':{'type':'agent_message','text':response}}))
+print(json.dumps({'type':'turn.completed','usage':{'input_tokens':1,'output_tokens':1}}))
+""",
+    )
+    workspace = tmp_path / "workspace"
+    workspace.mkdir()
+    result = CodexExecutor(str(binary)).execute(
+        ExecutionRequest(
+            "judge",
+            workspace,
+            "recorded-model",
+            {"auth_source_home": str(source)},
+            "evaluation",
+            {"type": "object", "properties": {"score": {"type": "number", "maximum": 1}}},
+        )
+    )
+    assert result.status == "completed"
+    assert "--output-schema" in result.command
+    assert result.parsed.final_text == '{"score": 0.5, "rationale": "native schema"}'
+
+
 def test_exit_zero_without_terminal_completion_is_failure(tmp_path: Path) -> None:
     source = auth_source(tmp_path)
     binary = fake_cli(tmp_path, 'import sys\nsys.stdin.read()\nprint("premature exit")\n')

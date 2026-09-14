@@ -1,0 +1,33 @@
+# SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
+
+# Uses the retained GDPval task row 83d10b06-26d1-4636-a32c-23f92c57f30b
+# from resources_servers/gdpval/data/example.jsonl. The reference spreadsheet
+# is acquired separately by the local trial into .audit/inputs/gdpval; the
+# override keeps the committed benchmark row and the trial input immutable.
+benchmark: gdpval
+tasks:
+  path: ../../resources_servers/gdpval/data/example.jsonl
+  ids:
+    - 83d10b06-26d1-4636-a32c-23f92c57f30b
+  limit: 1
+  seed: 42
+  reference_file_overrides:
+    83d10b06-26d1-4636-a32c-23f92c57f30b:
+      - ../../.audit/inputs/gdpval/Population v2.xlsx
+repeats: 1
+limits:
+  max_tasks: 1
+  max_retries: 0
+  concurrency: 1
+application:
+  executor: claude-code
+  model: claude-opus-5
+  settings:
+    reasoning_effort: medium
+    timeout_seconds: 600
+    tool_mode: sandboxed_shell
+    max_turns: 24
+conditions:
+  - id: baseline
+    intervention: null

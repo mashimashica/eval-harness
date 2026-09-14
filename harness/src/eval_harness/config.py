@@ -18,23 +18,14 @@ from typing import Any, Mapping, Sequence
 import yaml
 
 from .errors import ConfigError
+from .grading_criteria import load_criteria
+from .models import CLAUDE_EFFORTS, CODEX_EFFORTS, MODEL_EFFORTS
 
 _SECRET_KEY_MARKERS = ("api_key", "access_token", "password", "secret", "token")
-_SUPPORTED_CODEX_MODELS = {
-    "gpt-5.6-luna",
-    "gpt-5.6-sol",
-    "gpt-5.6-terra",
-    "gpt-6-astra",
-}
-_SUPPORTED_CLAUDE_MODELS = {"claude-sonnet-4-6"}
+_SUPPORTED_CODEX_MODELS = set(CODEX_EFFORTS)
+_SUPPORTED_CLAUDE_MODELS = set(CLAUDE_EFFORTS)
 _SUPPORTED_REASONING_EFFORTS = {"minimal", "low", "medium", "high", "xhigh", "max", "ultra"}
-_MODEL_REASONING_EFFORTS: dict[str, frozenset[str]] = {
-    "gpt-5.6-luna": frozenset({"low", "medium", "high", "xhigh", "max"}),
-    "gpt-5.6-sol": frozenset({"low", "medium", "high", "xhigh", "max", "ultra"}),
-    "gpt-5.6-terra": frozenset({"low", "medium", "high", "xhigh", "max", "ultra"}),
-    "gpt-6-astra": frozenset({"low", "medium", "high", "xhigh", "max", "ultra"}),
-    "claude-sonnet-4-6": frozenset({"low", "medium", "high", "max"}),
-}
+_MODEL_REASONING_EFFORTS = MODEL_EFFORTS
 
 
 @dataclass(frozen=True)
@@ -77,11 +68,22 @@ class ConditionConfig:
 
 
 @dataclass(frozen=True)
+class JudgeConfig:
+    """A named independent panel member; the ID is not shown to other judges."""
+
+    id: str
+    runtime: RuntimeConfig
+
+
+@dataclass(frozen=True)
 class EvaluationConfig:
     """A grading configuration independent from task execution."""
 
     method: str
     runtime: RuntimeConfig
+    judges: tuple[JudgeConfig, ...] = ()
+    criteria: dict[str, Any] | None = None
+    pairs: tuple[tuple[str, str], ...] | None = None
 
 
 @dataclass(frozen=True)
@@ -107,6 +109,8 @@ class ExperimentConfig:
     limits: LimitsConfig
     raw: dict[str, Any]
     source_bytes: bytes
+    comparison_design: str = "general"
+    creation_repeats: int = 1
 
 
 def _mapping(value: Any, field: str) -> dict[str, Any]:
@@ -164,7 +168,7 @@ def _runtime(
     mapping = _mapping(value, field)
     allowed_fields = {"executor", "model", "settings"}
     if field == "evaluation":
-        allowed_fields.add("method")
+        allowed_fields.update({"method", "judges", "criteria", "pairs"})
     if field == "build":
         allowed_fields.update({"name", "prompt", "instructions", "inputs", "input_paths", "skills", "creator_skills"})
     unknown_fields = sorted(set(mapping) - allowed_fields)
@@ -320,8 +324,37 @@ def _evaluation(raw: Any, config_dir: Path) -> EvaluationConfig | None:
     mapping = _mapping(raw, "evaluation")
     method = _string(mapping.get("method"), "evaluation.method")
     assert method is not None
-    runtime = _runtime(mapping, "evaluation", base_dir=config_dir)
-    return EvaluationConfig(method=method, runtime=runtime)
+    judges_value = mapping.get("judges", [])
+    if not isinstance(judges_value, list):
+        raise ConfigError("evaluation.judges must be a list")
+    judges: list[JudgeConfig] = []
+    for index, value in enumerate(judges_value):
+        judge = _mapping(value, f"evaluation.judges[{index}]")
+        identifier = _string(judge.pop("id", None), f"evaluation.judges[{index}].id")
+        assert identifier is not None
+        judges.append(JudgeConfig(identifier, _runtime(judge, f"evaluation.judges[{index}]", base_dir=config_dir)))
+    runtime_mapping = {**mapping}
+    if judges and "executor" not in mapping:
+        if "model" in mapping or "settings" in mapping:
+            raise ConfigError("with judges, put model/settings on each panel member and pairs at evaluation.pairs")
+        runtime_mapping.update(runtime_snapshot(judges[0].runtime))
+    runtime = _runtime(runtime_mapping, "evaluation", base_dir=config_dir)
+    criteria = load_criteria(mapping.get("criteria"), config_dir)
+    pairs = mapping.get("pairs")
+    if pairs is not None:
+        if not isinstance(pairs, list) or any(
+            not isinstance(pair, list)
+            or len(pair) != 2
+            or any(not isinstance(item, str) or not item.strip() for item in pair)
+            or pair[0] == pair[1]
+            for pair in pairs
+        ):
+            raise ConfigError("evaluation.pairs must be a list of two distinct condition IDs")
+        if "pairs" in runtime.settings:
+            raise ConfigError("specify evaluation.pairs or legacy settings.pairs, not both")
+    return EvaluationConfig(
+        method, runtime, tuple(judges), criteria, tuple(tuple(p) for p in pairs) if pairs is not None else None
+    )
 
 
 def load_experiment(path: str | Path) -> ExperimentConfig:
@@ -364,6 +397,8 @@ def load_experiment(path: str | Path) -> ExperimentConfig:
         limits=limits,
         raw=raw,
         source_bytes=source_bytes,
+        comparison_design=str(raw.get("comparison_design", "general")),
+        creation_repeats=_integer(raw.get("creation_repeats"), "creation_repeats", default=1),
     )
     errors = validate_config(config)
     if errors:
@@ -382,10 +417,8 @@ def load_evaluation_config(path: str | Path) -> EvaluationConfig:
     raw = _mapping(loaded, "evaluation configuration")
     if "evaluation" in raw:
         raw = _mapping(raw["evaluation"], "evaluation")
-    method = _string(raw.get("method"), "evaluation.method")
-    assert method is not None
-    runtime = _runtime(raw, "evaluation", base_dir=config_path.parent)
-    result = EvaluationConfig(method=method, runtime=runtime)
+    result = _evaluation(raw, config_path.parent)
+    assert result is not None
     errors = validate_evaluation_config(result)
     if errors:
         raise ConfigError("evaluation configuration is invalid:\n" + "\n".join(f"- {error}" for error in errors))
@@ -412,7 +445,10 @@ def _validate_runtime(
             + ", ".join(sorted(_SUPPORTED_CODEX_MODELS))
         )
     elif runtime.executor == "claude-code" and runtime.model not in _SUPPORTED_CLAUDE_MODELS:
-        errors.append(f"{field}.model={runtime.model!r} is unsupported for Claude Code; choose claude-sonnet-4-6")
+        errors.append(
+            f"{field}.model={runtime.model!r} is unsupported for Claude Code; choose an exact model ID: "
+            + ", ".join(sorted(_SUPPORTED_CLAUDE_MODELS))
+        )
     allowed_settings = {
         "timeout_seconds",
         "reasoning_effort",
@@ -421,6 +457,7 @@ def _validate_runtime(
     } | extra_settings
     if runtime.executor == "claude-code":
         allowed_settings.add("max_turns")
+        allowed_settings.add("tool_mode")
     for key in runtime.settings:
         if key not in allowed_settings:
             errors.append(f"{field}.settings.{key} is unsupported for this runtime and operation")
@@ -441,6 +478,8 @@ def _validate_runtime(
         turns = runtime.settings["max_turns"]
         if isinstance(turns, bool) or not isinstance(turns, int) or turns < 1:
             errors.append(f"{field}.settings.max_turns must be a positive integer")
+    if "tool_mode" in runtime.settings and runtime.settings["tool_mode"] not in {"files", "sandboxed_shell"}:
+        errors.append(f"{field}.settings.tool_mode must be files or sandboxed_shell")
     if "auth_source_home" in runtime.settings:
         source_home = runtime.settings["auth_source_home"]
         if not isinstance(source_home, str) or not source_home.strip():
@@ -462,8 +501,12 @@ def _validate_runtime(
         supported_efforts = _MODEL_REASONING_EFFORTS.get(runtime.model)
         if supported_efforts is not None and effort not in supported_efforts:
             errors.append(
-                f"{field}.settings.reasoning_effort={effort!r} is unsupported for {runtime.model}; choose one of "
-                + ", ".join(sorted(supported_efforts))
+                f"{field}.settings.reasoning_effort={effort!r} is unsupported for {runtime.model}; "
+                + (
+                    "choose one of " + ", ".join(sorted(supported_efforts))
+                    if supported_efforts
+                    else "omit reasoning_effort"
+                )
             )
     read_paths = runtime.settings.get("toolchain_read_paths")
     if read_paths is not None:
@@ -481,6 +524,18 @@ def _validate_runtime(
 def validate_evaluation_config(config: EvaluationConfig) -> list[str]:
     """Return all actionable errors for an evaluation configuration."""
 
+    panel_errors: list[str] = []
+    if config.pairs is not None and config.method != "pairwise":
+        panel_errors.append("evaluation.pairs is supported only for pairwise grading")
+    if config.judges:
+        if config.method not in {"scalar", "pairwise"}:
+            panel_errors.append("evaluation.judges is supported only for scalar or pairwise AI grading")
+        if len({judge.id for judge in config.judges}) != len(config.judges):
+            panel_errors.append("evaluation.judges IDs must be unique")
+        if config.runtime != config.judges[0].runtime:
+            panel_errors.append("top-level evaluation runtime must match the first panel member or be omitted")
+        for judge in config.judges:
+            panel_errors.extend(_validate_runtime(judge.runtime, f"evaluation.judges.{judge.id}"))
     if config.method == "mechanical":
         errors: list[str] = []
         if config.runtime.executor != "none":
@@ -488,7 +543,7 @@ def validate_evaluation_config(config: EvaluationConfig) -> list[str]:
         if config.runtime.model is not None:
             errors.append("evaluation.model must be omitted for mechanical grading")
         errors.extend(_validate_settings_without_runtime(config.runtime.settings, "evaluation"))
-        return errors
+        return errors + panel_errors
     if config.method == "human":
         errors = _validate_settings_without_runtime(
             config.runtime.settings,
@@ -531,7 +586,7 @@ def validate_evaluation_config(config: EvaluationConfig) -> list[str]:
                 or float(high) <= float(low)
             ):
                 errors.append("evaluation.settings.score_scale must have finite min and max with max greater than min")
-        return errors
+        return errors + panel_errors
     errors = _validate_runtime(
         config.runtime,
         "evaluation",
@@ -557,7 +612,7 @@ def validate_evaluation_config(config: EvaluationConfig) -> list[str]:
         errors.append(
             f"evaluation.method={config.method!r} is unsupported; choose scalar, pairwise, mechanical, or human"
         )
-    return errors
+    return errors + panel_errors
 
 
 def _validate_settings_without_runtime(
@@ -591,6 +646,21 @@ def validate_config(config: ExperimentConfig) -> list[str]:
         errors.append("tasks.ids cannot contain more entries than tasks.limit")
     if config.repeats < 1:
         errors.append("repeats must be at least 1")
+    if config.creation_repeats < 1:
+        errors.append("creation_repeats must be at least 1")
+    if config.creation_repeats > 1:
+        interventions = [
+            condition.intervention for condition in config.conditions if condition.intervention is not None
+        ]
+        if not interventions or any(intervention.build is None for intervention in interventions):
+            errors.append("creation_repeats > 1 requires build configurations for every Skill condition")
+    if config.comparison_design not in {"general", "matched_skills"}:
+        errors.append("comparison_design must be general or matched_skills")
+    if config.comparison_design == "matched_skills":
+        if any(condition.application != config.application for condition in config.conditions):
+            errors.append("matched_skills requires identical application model and settings for every condition")
+        if config.evaluation is not None and config.evaluation.criteria is None:
+            errors.append("matched_skills requires explicit versioned grading criteria before automatic evaluation")
     if config.limits.max_tasks < 1:
         errors.append("limits.max_tasks must be at least 1")
     if config.tasks.limit > config.limits.max_tasks:
@@ -617,30 +687,45 @@ def validate_config(config: ExperimentConfig) -> list[str]:
     if config.evaluation is not None and config.evaluation.method == "pairwise":
         if len(config.conditions) < 2:
             errors.append("pairwise evaluation requires at least two conditions")
-        pairs = config.evaluation.runtime.settings.get("pairs")
-        if isinstance(pairs, list):
+        pairs = config.evaluation.pairs or config.evaluation.runtime.settings.get("pairs")
+        if isinstance(pairs, (list, tuple)):
             known_conditions = {condition.id for condition in config.conditions}
             for index, pair in enumerate(pairs):
-                if isinstance(pair, list) and len(pair) == 2 and all(isinstance(value, str) for value in pair):
+                if (
+                    isinstance(pair, (list, tuple))
+                    and len(pair) == 2
+                    and all(isinstance(value, str) for value in pair)
+                ):
                     unknown = [value for value in pair if value not in known_conditions]
                     if unknown:
                         errors.append(
                             f"evaluation.settings.pairs[{index}] references unknown condition id(s): "
                             + ", ".join(unknown)
                         )
-    if config.benchmark == "gdpval" and config.evaluation is not None and config.evaluation.method == "mechanical":
+    if (
+        config.benchmark == "gdpval"
+        and config.evaluation is not None
+        and config.evaluation.method == "mechanical"
+        and config.evaluation.criteria is None
+    ):
         errors.append("GDPval does not provide a mechanical grader in this slice; use scalar or pairwise evaluation")
     if (
         config.benchmark == "gdpval"
         and config.evaluation is not None
         and config.evaluation.method in {"scalar", "pairwise"}
-        and config.evaluation.runtime.executor == "claude-code"
     ):
-        errors.append("GDPval AI evaluation requires Codex because Claude's restricted evaluator cannot inspect XLSX")
+        for runtime in [judge.runtime for judge in config.evaluation.judges] or [config.evaluation.runtime]:
+            if runtime.executor == "claude-code" and runtime.settings.get("tool_mode", "files") != "sandboxed_shell":
+                errors.append("Claude Code GDPval evaluation requires tool_mode: sandboxed_shell to inspect XLSX")
     if config.benchmark == "gdpval":
         runtimes = [config.application, *(condition.application for condition in config.conditions)]
-        if any(runtime.executor == "claude-code" for runtime in runtimes):
-            errors.append("Claude Code is not enabled for GDPval in this slice; use Codex for spreadsheet tasks")
+        if any(
+            runtime.executor == "claude-code" and runtime.settings.get("tool_mode", "files") != "sandboxed_shell"
+            for runtime in runtimes
+        ):
+            errors.append(
+                "Claude Code GDPval requires tool_mode: sandboxed_shell; the file-only route cannot inspect XLSX"
+            )
     if config.evaluation is not None:
         errors.extend(validate_evaluation_config(config.evaluation))
     return errors
@@ -658,23 +743,22 @@ def _redact(value: Any, key: str | None = None) -> Any:
     return value
 
 
+def runtime_snapshot(runtime: RuntimeConfig) -> dict[str, Any]:
+    return {"executor": runtime.executor, "model": runtime.model, "settings": _redact(runtime.settings)}
+
+
 def snapshot_mapping(config: ExperimentConfig) -> dict[str, Any]:
     """Return a JSON-safe, redacted resolved configuration snapshot."""
 
     snapshot = _redact(config.raw)
     assert isinstance(snapshot, dict)
 
-    def runtime_snapshot(runtime: RuntimeConfig) -> dict[str, Any]:
-        return {
-            "executor": runtime.executor,
-            "model": runtime.model,
-            "settings": _redact(runtime.settings),
-        }
-
     snapshot["_resolved"] = {
         "config_path": str(config.config_path),
         "task_path": str(config.tasks.path) if config.tasks.path is not None else None,
         "repeats": config.repeats,
+        "creation_repeats": config.creation_repeats,
+        "comparison_design": config.comparison_design,
         "limits": {
             "max_tasks": config.limits.max_tasks,
             "max_retries": config.limits.max_retries,
@@ -697,14 +781,7 @@ def snapshot_mapping(config: ExperimentConfig) -> dict[str, Any]:
             }
             for condition in config.conditions
         ],
-        "evaluation": (
-            {
-                "method": config.evaluation.method,
-                **runtime_snapshot(config.evaluation.runtime),
-            }
-            if config.evaluation is not None
-            else None
-        ),
+        "evaluation": (evaluation_snapshot(config.evaluation) if config.evaluation is not None else None),
     }
     return snapshot
 
@@ -717,4 +794,7 @@ def evaluation_snapshot(config: EvaluationConfig) -> dict[str, Any]:
         "executor": config.runtime.executor,
         "model": config.runtime.model,
         "settings": _redact(config.runtime.settings),
+        "judges": [{"id": judge.id, **runtime_snapshot(judge.runtime)} for judge in config.judges],
+        "criteria": config.criteria,
+        "pairs": [list(pair) for pair in config.pairs] if config.pairs is not None else None,
     }

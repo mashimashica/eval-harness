@@ -43,15 +43,17 @@ from .config import (
     LimitsConfig,
     RuntimeConfig,
     TaskSelection,
+    _evaluation,
     _runtime,
     snapshot_mapping,
     validate_config,
 )
 from .errors import ArtifactError, ConfigError, HarnessError
-from .executor import AuthStatus, ExecutionRequest, ExecutionResult, Executor, ParsedCodexOutput
+from .executor import AuthStatus, ExecutionRequest, ExecutionResult, Executor, ParsedCodexOutput, preflight_executor
 from .skill_pipeline import (
     BuildConfig,
     ExecutorFactory,
+    _source_manifest,
     build_skill,
     copy_skill_for_application,
     freeze_build_config,
@@ -247,8 +249,10 @@ def _record_workspace(
     return record
 
 
-def _auth_or_raise(executor: Executor, settings: Mapping[str, Any]) -> AuthStatus:
-    auth = executor.check_auth(settings)
+def _auth_or_raise(
+    executor: Executor, settings: Mapping[str, Any], model: str | None = None, purpose: str = "application"
+) -> AuthStatus:
+    auth = preflight_executor(executor, model, settings, purpose)
     if not auth.available:
         raise HarnessError(auth.detail)
     if not auth.authenticated:
@@ -278,6 +282,8 @@ def _preflight_interventions(
 ) -> None:
     """Check all condition Skills and creator runtimes before the first model call."""
 
+    creator_runtimes: list[RuntimeConfig] = []
+    creator_bases: list[tuple[Any, Any]] = []
     for condition in config.conditions:
         intervention = condition.intervention
         if intervention is None:
@@ -287,12 +293,55 @@ def _preflight_interventions(
             # and complete tree are checked without changing the run output.
             with tempfile.TemporaryDirectory(prefix="eval-harness-skill-check-") as temporary:
                 stage_skill(intervention.path, Path(temporary) / "skill")
+            if config.comparison_design == "matched_skills":
+                source = intervention.path if intervention.path.is_dir() else intervention.path.parent
+                manifest_path = source / "skill_manifest.json"
+                if not manifest_path.is_file():
+                    raise ConfigError("matched_skills requires creator provenance for every existing Skill")
+                manifest = read_json(manifest_path)
+                creator_runtimes.append(_saved_runtime(manifest.get("runtime"), "Skill creator"))
+                if manifest.get("creator_status") != "completed":
+                    raise ConfigError("matched_skills requires completed creator provenance")
+                with tempfile.TemporaryDirectory(prefix="eval-harness-skill-content-") as directory:
+                    content = copy_skill_for_application(source, Path(directory) / "skill")
+                if manifest_hash(content) != manifest.get("generated_sha256"):
+                    raise ConfigError("matched_skills existing Skill differs from its recorded creation version")
+                snapshot = manifest.get("config_snapshot", {})
+                inputs = manifest.get("creation_inputs", [])
+                if not isinstance(snapshot, dict) or not isinstance(inputs, list):
+                    raise ConfigError("matched_skills requires recorded creation brief and inputs")
+                creator_bases.append(
+                    (
+                        snapshot.get("prompt", snapshot.get("instructions")),
+                        [(entry.get("kind"), entry.get("sha256")) for entry in inputs],
+                    )
+                )
         if intervention.build is not None:
             build_config = load_build_config(intervention.build)
+            creator_runtimes.append(build_config.runtime)
+            creator_bases.append(
+                (
+                    build_config.prompt,
+                    [(entry["kind"], entry["sha256"]) for entry in _source_manifest(build_config.input_paths)],
+                )
+            )
             _validate_creation_sources(build_config)
             if check_auth:
                 creator_executor = _executor_for(build_config.runtime, primary_executor, executor_factory)
-                _auth_or_raise(creator_executor, build_config.runtime.settings)
+                _auth_or_raise(
+                    creator_executor, build_config.runtime.settings, build_config.runtime.model, "skill_creation"
+                )
+    if config.comparison_design == "matched_skills":
+        if not creator_runtimes or any(runtime != creator_runtimes[0] for runtime in creator_runtimes):
+            raise ConfigError("matched_skills requires identical creator model and settings for S/A Skills")
+        if any(not isinstance(brief, str) or not brief for brief, _ in creator_bases) or any(
+            basis != creator_bases[0] for basis in creator_bases
+        ):
+            raise ConfigError("matched_skills requires identical creation briefs and input versions for S/A Skills")
+        if any(c.intervention is not None and c.intervention.prompt is not None for c in config.conditions):
+            raise ConfigError(
+                "matched_skills conditions must differ by selected Skill only; inline prompts are unsupported"
+            )
 
 
 def _preflight_evaluation(
@@ -317,8 +366,11 @@ def _preflight_evaluation(
         return None
     if evaluation.method == "mechanical" or not check_auth:
         return None
-    evaluator = _executor_for(evaluation.runtime, primary_executor, executor_factory)
-    return _auth_or_raise(evaluator, evaluation.runtime.settings)
+    status: AuthStatus | None = None
+    for runtime in [j.runtime for j in evaluation.judges] or [evaluation.runtime]:
+        evaluator = _executor_for(runtime, primary_executor, executor_factory)
+        status = _auth_or_raise(evaluator, runtime.settings, runtime.model, "evaluation")
+    return status
 
 
 def _freeze_condition_sources(config: ExperimentConfig, run_dir: Path) -> ExperimentConfig:
@@ -354,6 +406,10 @@ def _validate_and_load(config: ExperimentConfig) -> tuple[list[BenchmarkTask], l
     selected = select_tasks(tasks, config)
     for task in selected:
         reference_source_paths(task)
+        if config.evaluation is not None:
+            from .grading_criteria import criteria_for_task
+
+            criteria_for_task(config.evaluation.criteria, task.task_id, config.benchmark)
     return tasks, selected
 
 
@@ -383,6 +439,19 @@ def _prepare_condition_skill(
             "sha256": manifest_hash(entries),
             "skill_path": str(target.relative_to(run_dir)),
         }
+        if (target / "skill_manifest.json").is_file():
+            provenance = read_json(target / "skill_manifest.json")
+            for key in (
+                "creation_id",
+                "runtime",
+                "generated_sha256",
+                "creator_status",
+                "creator_elapsed_seconds",
+                "creator_usage",
+                "creator_cost_usd",
+            ):
+                metadata[key if key != "runtime" else "creator_runtime"] = provenance.get(key)
+            metadata["creation_in_this_run"] = False
         write_json(target / "application_skill.json", metadata)
         return target, metadata
     if intervention.build is None:
@@ -406,6 +475,8 @@ def _prepare_condition_skill(
         "source_config": str(build_config.config_path),
         "prompt": intervention.prompt,
         "creation_id": manifest.get("creation_id"),
+        "creator_runtime": manifest.get("runtime"),
+        "creation_in_this_run": True,
         "files": manifest.get("generated_files", []),
         "sha256": manifest.get("generated_sha256"),
         "name": manifest.get("name"),
@@ -435,6 +506,8 @@ def _built_skill_metadata(
         "source_config": str(source_config),
         "prompt": prompt,
         "creation_id": manifest.get("creation_id"),
+        "creator_runtime": manifest.get("runtime"),
+        "creation_in_this_run": True,
         "files": manifest.get("generated_files", []),
         "sha256": manifest.get("generated_sha256"),
         "name": manifest.get("name"),
@@ -573,6 +646,8 @@ def _execute_record(
                 "condition_id": condition.id,
                 "task_id": task.task_id,
                 "repeat": record.get("repeat"),
+                "creation_repeat": record.get("creation_repeat", 0),
+                "cohort_parent_id": record.get("cohort_parent_id"),
                 "execution_dir": record["execution_dir"],
                 "skill": record.get("skill"),
                 "attempt_count": attempt_number + 1,
@@ -680,6 +755,7 @@ def _auto_evaluate(
             evaluation_dir,
             evaluation_executor,
             check_auth=check_auth,
+            executor_factory=executor_factory,
         )
         evaluation_status = evaluation_summary.status
         from .compare_pipeline import compare_evaluations
@@ -719,7 +795,9 @@ def _resume_auto_evaluation(
     )
     comparison_dir: Path | None = None
     try:
-        summary = resume_evaluation(evaluation_dir, evaluation_executor, check_auth=check_auth)
+        summary = resume_evaluation(
+            evaluation_dir, evaluation_executor, check_auth=check_auth, executor_factory=executor_factory
+        )
         evaluation_status = summary.status
         from .compare_pipeline import compare_evaluations
 
@@ -777,16 +855,21 @@ def run_experiment(
     *,
     check_auth: bool = True,
     executor_factory: ExecutorFactory | None = None,
+    _prepare_only: bool = False,
 ) -> RunSummary:
     """Execute selected benchmark tasks and persist all inputs and outputs."""
 
+    if config.creation_repeats > 1:
+        from .replication_pipeline import run_cohorts
+
+        return run_cohorts(config, output_dir, executor, check_auth=check_auth, executor_factory=executor_factory)
     _, selected = _validate_and_load(config)
     if check_auth:
-        _auth_or_raise(executor, config.application.settings)
+        _auth_or_raise(executor, config.application.settings, config.application.model)
         for condition in config.conditions:
             condition_executor = _executor_for(condition.application, executor, executor_factory)
             if condition_executor is not executor or condition.application.settings != config.application.settings:
-                _auth_or_raise(condition_executor, condition.application.settings)
+                _auth_or_raise(condition_executor, condition.application.settings, condition.application.model)
     _preflight_interventions(config, executor, executor_factory, check_auth=check_auth)
     _preflight_evaluation(config, executor, executor_factory, check_auth=check_auth)
     run_dir = ensure_new_output(output_dir)
@@ -860,6 +943,8 @@ def run_experiment(
     skill_metadata: dict[str, dict[str, Any] | None] = {condition.id: None for condition in run_config.conditions}
     state = _planned_state(run_config, selected, run_dir, skill_metadata)
     write_json(run_dir / "run_state.json", state)
+    if _prepare_only:
+        return RunSummary(run_dir, run_id, "not_started", len(state), 0, 0, pending_count=len(state))
     skill_paths: dict[str, Path | None] = {}
     for condition in run_config.conditions:
         try:
@@ -1227,10 +1312,7 @@ def _saved_experiment(root: Path, manifest: Mapping[str, Any], state: Sequence[M
     if evaluation_value is not None:
         if not isinstance(evaluation_value, Mapping) or not isinstance(evaluation_value.get("method"), str):
             raise ArtifactError("run has invalid frozen evaluation")
-        evaluation = EvaluationConfig(
-            str(evaluation_value["method"]),
-            _saved_runtime(evaluation_value, "evaluation"),
-        )
+        evaluation = _evaluation(evaluation_value, root)
     raw = dict(snapshot)
     raw["benchmark"] = benchmark
     raw["tasks"] = {"rows": rows, "limit": len(rows), "ids": ids, "seed": 0}
@@ -1245,6 +1327,8 @@ def _saved_experiment(root: Path, manifest: Mapping[str, Any], state: Sequence[M
         limits=limits,
         raw=raw,
         source_bytes=(root / "config.source.yaml").read_bytes() if (root / "config.source.yaml").is_file() else b"",
+        comparison_design=str(resolved.get("comparison_design", "general")),
+        creation_repeats=int(resolved.get("creation_repeats", 1)),
     )
 
 
@@ -1290,6 +1374,10 @@ def resume_run(
 
     root = Path(run_dir).expanduser().resolve()
     manifest = read_json(root / "run_manifest.json")
+    if manifest.get("kind") == "creation_cohorts":
+        from .replication_pipeline import resume_cohorts
+
+        return resume_cohorts(root, executor, check_auth=check_auth, executor_factory=executor_factory)
     _verify_frozen_input_manifest(root, manifest)
     state = _load_state(root)
     config = _saved_experiment(root, manifest, state)
@@ -1297,11 +1385,11 @@ def resume_run(
     if errors:
         raise ConfigError("frozen run configuration is invalid:\n" + "\n".join(f"- {error}" for error in errors))
     if check_auth:
-        _auth_or_raise(executor, config.application.settings)
+        _auth_or_raise(executor, config.application.settings, config.application.model)
         for condition in config.conditions:
             condition_executor = _executor_for(condition.application, executor, executor_factory)
             if condition_executor is not executor or condition.application.settings != config.application.settings:
-                _auth_or_raise(condition_executor, condition.application.settings)
+                _auth_or_raise(condition_executor, condition.application.settings, condition.application.model)
     _preflight_interventions(config, executor, executor_factory, check_auth=check_auth)
     _preflight_evaluation(config, executor, executor_factory, check_auth=check_auth)
     selected = {task.task_id: task for task in _tasks_from_state(root, manifest, state, config.benchmark)}
@@ -1317,6 +1405,12 @@ def resume_run(
             if not target.is_dir():
                 raise ArtifactError(f"saved Skill path is missing: {target}")
             skill_paths[condition.id] = target
+            if not saved_skills.get(condition.id):
+                skill_path, metadata = _prepare_condition_skill(
+                    condition, root, executor, executor_factory, check_auth=check_auth
+                )
+                skill_paths[condition.id] = skill_path
+                saved_skills[condition.id] = metadata
         elif condition.intervention.build is None:
             if condition.intervention.prompt is None:
                 raise ArtifactError(f"condition {condition.id} has no saved Skill intervention")
@@ -1375,6 +1469,9 @@ def resume_run(
     if saved_skills:
         manifest["skills"] = saved_skills
         write_json(root / "run_manifest.json", manifest)
+        for record in state:
+            if record.get("execution_status") != "completed":
+                record["skill"] = saved_skills.get(record["condition_id"])
     was_evaluated = manifest.get("evaluation_status") not in {None, "not_started"}
     interrupted, changed = _execute_state(
         config,
