@@ -289,3 +289,100 @@ Content accepted: README reduced from293to100lines; all13remaining local links r
 BibTeX and external-materials notice suffix is unchanged. YAML parsing confirms the catalog hook is the only removed
 hook; other hook settings remain identical. Fern check passes with0errors/1existing warning; diff whitespace passes.
 No new benchmark page, generated table, runtime change or model trial was needed.
+
+## Claude office execution and reliable N/S/A comparison (2026-09-14)
+
+Owner-authorized expansion; preserve R01–R10, six-command meanings, all saved results and upstream reuse.
+Base `3edb1797adef6846d0b032fa190bc3e3dfda6828`; clean checkout; branch `codex/claude-nsa-comparison`.
+PR #50 remains separate and unmerged. This feature effort includes protected-main integration after acceptance/CI.
+Astra controls design, runtime boundaries, integration and acceptance. Luna max owns bounded implementation and
+self-verification assignments; at most one Sol max specialist for consequential boundary/statistical review.
+
+| Increment / acceptance | Status / next evidence |
+| --- | --- |
+| C1 (R03/R04/R08/R10): exact Fable 5.1, Opus 5, Sonnet 5, Haiku 4.5 IDs/efforts and subscription availability; preflight refusal; isolated office creation/application/read-only judging | A1 passed: four exact model IDs responded on active Max 20x with extra usage disabled; first three medium / Haiku no effort. Production native sandbox checks passed. C1 Opus office application completed with saved XLSX; independent read-only grading in progress. |
+| C2 (R01/R04/R05): independent creator/application/judge settings; matched S/A creators and N/S/A application settings | Matched application/creator runtime, creation brief/input fingerprints and existing Skill content/provenance validated; mismatch/reuse tests pass. General comparisons preserved. |
+| C3 (R02/R07/R08/R09): predeclared versioned arithmetic/required fields/units/rounding/tolerance/missing policies; mechanical findings separate from AI quality | Versioned policy + read-only decimal/Excel mechanical inspections implemented; 13 targeted criteria cases pass. Panel integration in progress. |
+| C4 (R07/R08/R09): all three condition pairs, both orders, Sol/Opus independent, win/loss/tie/unjudgeable and disagreement | Pending panel schedule, resume isolation, per-judge reports and agreement. |
+| C5 (R01/R09): explicit win credit, seeded task-cluster 95% bootstrap, deduplication and insufficient/degenerate refusal | Task-cluster bootstrap, order/duplicate handling and per-judge estimates implemented; Sol scoped review18tests passed. Parent added explicit agreement numerator/denominator and null combined score on disagreement;12focused stats tests pass. |
+| C6 (R05/R06/R09/R10): fixed-Skill execution repeats versus independent creation repeats; full identities/metrics/resume | Creation cohorts reuse ordinary frozen journals. Interrupted/fixed-reuse tests pass: 4 independent Skills, 12 completed generations, no duplicate completed work; stage/variance reporting pending. |
+| Delivery: existing/new regression tests, bounded actual CLI evidence, docs/examples, passing fork CI and main | Pending; no performance ranking or efficiency superiority is presumed. |
+
+Use the existing pipeline, artifact journals, Skill snapshots and retained GDPval/GSM8K data. Inspect upstream
+`resources_servers/gdpval/{comparison,judge_panel,scoring}.py` and repository bootstrap code before adapting statistics.
+Native Claude sandbox/file-tool capability must be established with a no-generation probe before running candidate
+code; do not re-enable unconfined Bash. Preserve exact model IDs, reject substitutions, and never enable paid extra
+usage or API credentials. Graders receive saved copies and may not rewrite or regenerate submissions.
+
+### Bounded real-trial envelope (recorded before calls)
+
+Discovery is read-only and makes no model calls: installed help/catalog, isolated auth status, account/model-access
+metadata and native sandbox/tool probes. Source documents: official Claude model-config/sandboxing, official Codex
+app-server model/list (OpenAI Docs), and pinned installed tools. Do not infer account access from a public catalog.
+
+Initial model availability batch: at most four calls, one per `claude-fable-5-1`, `claude-opus-5`,
+`claude-sonnet-5`, `claude-haiku-4-5-20251001`; medium effort for the first three, no effort for Haiku.
+A model must first pass subscription/billing eligibility and isolated configuration checks. Tiny no-tool response,
+max_turns 2, timeout 120 seconds, concurrency 1, retries 0. Record requested/observed identity and effort.
+Unavailable or credit-billed models are reported and blocked, not replaced.
+
+Further batches are reserved but must have concrete frozen configurations/source hashes recorded here before launch:
+up to four matched S/A Skill creations (Opus 5 medium, max_turns 24, timeout 600s); up to thirteen applications
+(twelve gpt-5.6-luna max plus one Opus 5 medium office check, timeout 600s, Claude max_turns 24); up to fourteen
+judgments (Sol medium and Opus 5 medium, timeout 600s, Claude max_turns 16), covering scalar office reads and all
+three pairs/both orders. Total ceiling 35 model-backed CLI invocations including the initial four, concurrency 1 and retries 0 throughout. Claude receives the listed max_turns flags; native num_turns telemetry may include additional internal events and is preserved as reported. CLI timeouts enforce a hard wall-clock bound. Internal turns are not separate experimental generations.
+Use the existing first GDPval task and/or a bounded retained GSM8K subset; no new benchmark/private data. Existing
+artifacts may be reused for judges. No statistical population claim from these small trials; task-cluster uncertainty
+and degenerate cases also require deterministic fixture tests. Any corrective batch must be separately recorded before
+launch, with its concrete reason and finite cap; never retry indefinitely or silently change model/billing route.
+
+### Availability batch A1 (authorized envelope, before execution)
+
+Reauthentication confirmed live OAuth profile/usage HTTP 200 on 2026-09-13 23:42 UTC: active Max 20x, extra usage disabled, credits never enabled. All four exact IDs were accepted by native `/model` with zero generation turns.
+A1 uses four serial calls, exactly `Reply with MODEL_OK only.` (UTF-8 SHA-256: 8a019a780d7e5bf9b0d0560c5f8ef5ef6618523ac0c97f1a4df63bdb222e0300), no tools, fresh safe/restricted session per call, first three models at medium and Haiku with effort omitted; 120 s timeout, max_turns 2, no retries. Fallback chains disabled and switchModelsOnFlag false. Native subscription credentials only; no extra usage opt-in. Outputs under `.audit/claude-nsa/availability-a1/`; any unavailable target is recorded without substitution.
+
+A1 result: all four calls completed using exactly the requested model. Raw native streams and zero-generation model/effort selection receipts are local under `.audit/claude-nsa/`. CLI USD values are token-price estimates; actual incremental subscription cost remains unknown (`null`), not zero. Preflight reads live native OAuth subscription/usage metadata and refuses enabled or unconfirmed extra usage. No payment route was changed.
+
+Implementation decisions: `comparison_design: matched_skills` enforces equal application runtime/settings and equal Skill creator runtime/settings with recorded provenance. `creation_repeats` creates independent ordinary run cohorts, all inputs frozen before any creator. `repeats` reuses each cohort's fixed Skill. Existing single-run layouts remain readable. Panel identities and frozen criteria remain evaluator-only.
+
+### Matched creation batch B1 (before execution)
+
+Ten serial model calls maximum: four creators (Opus 5 medium, max_turns24, timeout600s) and six applications (Luna max, timeout600s). Two independent creation cohorts, each N/S/A on retained GSM8K task gsm8k-0001, one execution per condition; no evaluation in this batch. Retries0, concurrency1. Creator S uses explicitly selected OpenAI skill-creator; A adds the two installed ALPS0.7.0 Skills. Both have identical generic brief/inputs/runtime and never receive this task, answer or grading criteria. Configs and every creator source hash are frozen locally under `.audit/claude-nsa/b1/`; output `runs/claude-nsa-b1`.
+
+Config SHA256: `dca1c6dcfd1ac867ac526272abef9c1f0649f8aa2aae35a1b0184b3fffb23d73`; full source-hash record SHA256: `1a412f244fe1f7cbb95ea5b206070a0d86f4d79a72dfb7f807bf07b85071a0fe`. This consumes10 of the31 calls remaining after A1; subsequent fixed-Skill reuse6, Claude office1 and panel/scalar14 stay within35 overall.
+
+B1 input preparation stopped before any model call when repeated account metadata requests hit HTTP429. Preserve `runs/claude-nsa-b1` as an incomplete preflight/input-freeze result; it has no creations or generated submissions. Fix: request only the live OAuth profile (which directly states active subscription and extra-usage status), share positive eligibility by credential fingerprint for at most300s in one process, and expose Retry-After. A no-generation recovery check at23:55:42UTC returned Retry-After178s. No retries before23:58:40UTC.
+
+B1 continuation uses identical config/source hashes and the same10-call cap, with a new output `runs/claude-nsa-b1b` because the first container did not complete input freeze. It begins after the advertised cooldown; this does not increase the35-call model ceiling.
+
+B1b first creator completed with a valid `word-problems/SKILL.md` under the named child folder, but the collector required the workspace root. No second creation call was made. Its saved bytes were verified against the sole native Write input, then collected with a local recovery receipt; raw attempt evidence was preserved. The collector now accepts either root or the exact named child, rejects ambiguity, and snapshots completed work before collection so resume never repeats completed generation. Eleven Skill/cohort regression tests pass. Resume B1b uses the same frozen configuration and remaining nine calls (three creators, six applications); no ceiling increase or model change.
+
+Sol's final production-helper sandbox probe passes for application and evaluation: XLSX reads allowed, application save allowed, evaluator/source/runtime/credential writes or reads denied as applicable; context and environment unchanged. No model calls. Integrated evidence SHA256 `87816715f8160dbf57ca49ea3912be05555b0e63dd5d0fffe5c47727f6cc93ec`, local `.audit/claude-nsa/sandbox-probe/integrated-sandbox-evidence.json`. Native CLI variadic tool-option parsing was corrected to equals-form arguments before acceptance.
+
+### Office C1 and independent panel D1 (frozen before execution)
+
+C1: one retained GDPval application, Opus5 medium, native sandboxed_shell, max_turns24, timeout600s; then two independent scalar judges, Sol medium and Opus5 medium (Claude sandboxed_shell max_turns16), timeout600s each. All serial, retries0. Source task remains `83d10b06-26d1-4636-a32c-23f92c57f30b`; source Population SHA256 `e64a9d3ba60bbaecef0e6685a57b618e9b321bcd813c79e4460be36bf8c79fb7`. Configs local `.audit/claude-nsa/c1-office/`: experiment SHA256 `8ba4815ad0a53b77ac2c57710384c44af43b7593f8d15732c8e628ba6d6b178a`, evaluation `773e97b3d0c7de30e3692fc00d329b880131fddee9163d6e820626b3ded379ca`. Criteria semantic SHA256 `4adb9e3efc8eba9da5f9267b7ee050e48608c45c2774a9da892200de3825aaae`. The retained prompt/rubric column/entity conflicts are declared before output: inspect source semantic headers and requested J/K output positions, preserve literal incompatible rubric assertions as unconfirmed, require explicit mappings; never silently invent data or reinterpret a score as official GDPval. Mechanical file/sheet checks and AI arithmetic/variance/coverage/usability findings remain separate. Missing formula caches are not recalculated.
+
+D1: cohort0 of completed B1b, same saved GSM8K task and N/S/A outputs, all three pairs, both presentation orders, Sol medium and Opus5 medium independent; twelve calls maximum, max_turns16 for Claude, timeout600s, serial, retries0. No regeneration. `.audit/claude-nsa/d1-panel/evaluation.yaml` SHA256 `7243d6399ba9d47c5b5d15cf79d24d6cc62d68f3715851521352cf0c766b4640`; criteria semantic SHA256 `f22f1dc4debd100363c23ceb3ec5df35c54d3e974a74c0f721d08958673fe6f3`. Criteria cover answer correctness, reasoning and clarity; ties/unjudgeable explicitly allowed. These batches consume the previously reserved1 office application and14 judgments, keeping the total ceiling35. C1/D1 launch only after B1b finishes, preserving concurrency1.
+
+B1b complete: four distinct Opus5 Skill creations and six Luna-max applications, all completed; first collector-only recovery added no model call. C1/D1 configs passed final parser validation before launch (flat panel runtime fields and exact executor name `claude-code`); hashes above identify the validated files. Actual calls so far14 of35.
+
+### Fixed-Skill application batch B2 (before execution)
+
+Six Luna-max applications, using the two completed cohort0 Skills unchanged, two execution repeats per N/S/A condition on gsm8k-0001. No new creations. Timeout600s, serial, retries0; no inline model grading. Config `.audit/claude-nsa/b2-fixed/experiment.yaml` SHA256 `0a5e997cefe6a12bb22d46a791a12733905c001292832a62043120910cbfcb1e`. S creation `076b049b120f4185a950d814306a9c72`, content hash `724a6e46e9c1ec428d10b7325ccbba5c3ba06a771eba595e3b5f050eddecfc3c`; A creation `e72b3361a6d6489185cec37352084211`, hash `2e7445dd4a989f92fa0257ca0512597be9b6a886b9b4029b33b1f5000faea097`. Common creator brief/input fingerprints and application settings are validated. Launch only when no other trial is active. The total35-call ceiling is unchanged. Mechanical reevaluation of B1/B2 and saved comparison/resume checks add zero model calls.
+
+C1 Opus application completed in224.43s with native Bash-only exposure (10 internal turns); saved Sample.xlsx SHA256 `7a083095bba2abb865b0663c4d8146b7f9eda961e76b4ba6e5aac8edc945a9c5`. B1 cohort-root mechanical evaluation completed6/6 with exact-answer score1.0 for all; evaluate/compare/resume add no calls and retain6 generation identities. Final source preservation and panel results await the ongoing C1/D1 batches.
+
+
+C1 independent scalar result: Sol completed; Opus completed native inspection but its explanatory preamble/fenced JSON failed the strict response parser. Both original native outputs and all source artifacts are preserved (full source-run manifest unchanged). Native permission checks rejected cached-cell Python reads as "computed path cannot be checked" and an attempted ZIP extraction (write). The literal workbook reads otherwise succeeded; do not treat all cached results as inspected. Corrective design: native structured response schemas, retaining strict parser validation, plus remove only the static Bash path heuristic while keeping the already verified native OS deny-all read/write/network boundaries. File-tool mode is unchanged. Verify the actual updated OS policy and cached-cell read with a zero-generation native probe before the next judge. No blanket permission bypass flag is used.
+
+Corrective C1R authorization envelope (before execution): at most one extra model-backed CLI invocation, Opus5 medium, same frozen C1 criteria, same saved outputs, native sandboxed_shell, max_turns16, timeout600s, serial, retries0. Resume the failed Opus judgment only; preserve the completed Sol record and the first Opus attempt. The total cap becomes36 CLI invocations (the original35 plus this single integration correction). This is a response-format/runtime verification, not selection of a favorable score. Any remaining failure remains recorded and will require a distinct cause/method decision before another call.
+
+
+Corrected production sandbox policy independently verified by Sol with zero model/network calls: literal cached-cell openpyxl reads and ZIP member reads succeed; credential/repository/outside reads, evaluator writes, and runtime/context writes remain denied. Evidence `.audit/claude-nsa/sandbox-probe/corrected-read-policy-evidence.json`, SHA256 `d7eb4dd21df78b140ce9d127841e9fdafd38abb6a60abd9361c708d88cf8076c`. The native OS sandbox remains strict; no unsandboxed fallback is enabled.
+
+B2 completed six fixed-Skill Luna-max generations, with no new creations. B1/B2 mechanical evaluation and combined saved comparison passed: twelve generated samples, all exact answers correct. Mechanical resume completed without model calls. Their four independent creation identities remain distinct from execution repetitions; reused Skill provenance is retained.
+
+Native evaluator responses now use Codex `--output-schema` and Claude `--json-schema` with the frozen item IDs; Claude reads native `structured_output`. Strict result validation remains in place and missing structured output fails. C1R will archive the first failed Opus attempt and retain the completed Sol judgment; comparison reports account for failed-attempt resource usage separately from generation counts.
+
+Upstream inspection resolved: existing task loaders, GSM8K exact grading, Skill snapshots, artifact journals and CLI isolation are reused. GDPval `comparison.py` trial/order design informed the existing pair path; its pooled Bradley–Terry/Elo and `judge_panel.py` weighted random judge routing do not implement a fixed independent panel. Arena `_bootstrap_per_category` and `fit_anchored_elo.py::bootstrap_ci` resample individual games and would overcount reversed orders/extra judges as independent observations. The new dependency-free task-cluster estimator preserves task pairing, judge protocols and saved-generation identities instead. No claim is made that upstream BT/Elo code is called by this estimator.

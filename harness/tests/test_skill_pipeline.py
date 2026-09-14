@@ -220,3 +220,50 @@ def test_input_freeze_failure_records_no_model_attempt(tmp_path: Path, monkeypat
     assert (output / ".creation/config/partial.txt").read_text() == "setup evidence"
     with pytest.raises(ArtifactError, match="snapshot is incomplete"):
         resume_skill_build(output, SkillExecutor())
+
+
+def test_named_skill_folder_and_collection_resume_do_not_regenerate(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from eval_harness import skill_pipeline
+
+    class NamedCreator(SkillExecutor):
+        calls = 0
+
+        def execute(self, request: ExecutionRequest) -> ExecutionResult:
+            self.calls += 1
+            result = super().execute(request)
+            folder = request.cwd / "arithmetic"
+            folder.mkdir()
+            (request.cwd / "SKILL.md").rename(folder / "SKILL.md")
+            return result
+
+    config_path = tmp_path / "build.yaml"
+    config_path.write_text("name: arithmetic\nexecutor: codex\nmodel: gpt-5.6-luna\nprompt: Create it.\n")
+    executor = NamedCreator()
+    collect = skill_pipeline._copy_created_skill
+
+    def failed_collection(*args: Any, **kwargs: Any) -> None:
+        raise ArtifactError("collection interrupted")
+
+    monkeypatch.setattr(skill_pipeline, "_copy_created_skill", failed_collection)
+    with pytest.raises(ArtifactError, match="collection interrupted"):
+        build_skill(load_build_config(config_path), tmp_path / "arithmetic", executor)
+    monkeypatch.setattr(skill_pipeline, "_copy_created_skill", collect)
+    output = resume_skill_build(tmp_path / "arithmetic", executor)
+    assert executor.calls == 1
+    assert (output / "SKILL.md").is_file()
+    assert not (output / "arithmetic").exists()
+    manifest = json.loads((output / "skill_manifest.json").read_text())
+    assert manifest["collection_resumed"] is True
+    assert manifest["attempt_count"] == 1
+
+
+def test_ambiguous_skill_output_is_rejected(tmp_path: Path) -> None:
+    from eval_harness.skill_pipeline import _copy_created_skill
+
+    (tmp_path / "SKILL.md").write_text("root")
+    (tmp_path / "arithmetic").mkdir()
+    (tmp_path / "arithmetic/SKILL.md").write_text("nested")
+    with pytest.raises(ArtifactError, match="ambiguous"):
+        _copy_created_skill(tmp_path, tmp_path / "output", expected_name="arithmetic")

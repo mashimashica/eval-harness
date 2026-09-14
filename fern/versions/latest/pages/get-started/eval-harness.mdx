@@ -60,17 +60,54 @@ For development directly from source, prefix commands with `PYTHONPATH=harness/s
 
 | Benchmark / operation | Codex CLI | Claude Code |
 | --- | --- | --- |
-| GDPval task execution and AI evaluation | Supported with native filesystem isolation and Python document libraries | Rejected before execution: the confined file-tool route cannot inspect or generate office-file contents via scripts |
+| GDPval task execution and AI evaluation | Supported with native filesystem isolation and Python document libraries | Supported on macOS with `tool_mode: sandboxed_shell`; Bash-only native isolation and a private openpyxl toolchain |
 | GSM8K task execution | Supported | Supported with confined Read/Write/Edit/Glob/Grep tools |
 | GSM8K mechanical evaluation | No model required | No model required |
-| Skill creation from explicit inputs | Supported | Supported for text/Markdown Skills using file tools |
-| Saved text scalar or anonymous pairwise evaluation | Read-only judge workspace | Read/Glob/Grep only |
+| Skill creation from explicit inputs | Supported | Supported using confined file tools or `sandboxed_shell` |
+| Saved text scalar or anonymous pairwise evaluation | Read-only judge workspace | Read/Glob/Grep in `files` mode, or read-only Bash in `sandboxed_shell` mode |
 
 Codex tools can write only to a fresh participant workspace; model tools cannot read account credentials, the development
 checkout, or another condition. Evaluation workspaces are read-only. Claude safe/restricted mode disables ambient
-instructions, Skills, plugins and shell/network tools. Each selected SKILL.md body is included in the recorded prompt and its supporting files are staged; native discovery is disabled. Claude uses standard context with fast mode disabled. Its reported
-USD value is an API-equivalent estimate, not a subscription charge. Keep optional paid overage disabled in your account
-when you intend to use only the subscription allowance.
+instructions, Skills and plugins. The `files` mode disables shell/network tools; `sandboxed_shell` exposes only Bash,
+with native filesystem enforcement, no network and no unsandboxed fallback. Each selected SKILL.md body is included in the recorded prompt and its supporting files are staged; native discovery is disabled. Claude uses standard context with fast mode disabled. Its reported
+USD value is an API-equivalent estimate, not a subscription charge. Preflight requires an active subscription and
+extra usage disabled; it refuses unconfirmed billing status. It checks exact model selection and effort without
+generating a response. Successful account metadata is shared for at most five minutes within one CLI process to avoid
+repeated requests for the same account; rate limits remain explicit failures.
+
+## Claude models and office tools
+
+The pinned CLI and this account were checked with these exact IDs. Account access can change, so preflight also checks
+the current subscription and native selection. No model is substituted when a check fails.
+
+| Exact model ID | Configurable `reasoning_effort` | Small live availability check |
+| --- | --- | --- |
+| `claude-fable-5-1` | low, medium, high, xhigh, max | Passed at medium |
+| `claude-opus-5` | low, medium, high, xhigh, max | Passed at medium |
+| `claude-sonnet-5` | low, medium, high, xhigh, max | Passed at medium |
+| `claude-haiku-4-5-20251001` | Omit this setting | Passed without effort override |
+
+The existing `claude-sonnet-4-6` ID remains accepted for saved configurations. Model names and native effort options
+follow the [Claude Code model configuration](https://code.claude.com/docs/en/model-config). A short availability check
+is not a quality measurement or proof that every model/effort combination has been benchmarked.
+
+For Claude GDPval execution or judging, select `tool_mode: sandboxed_shell`. The harness enables only the native Bash
+tool; it supplies an isolated `python-openpyxl` command for reading/writing XLSX using the locked openpyxl dependency.
+Original reference files, selected Skills and creator inputs are read-only. Application outputs may be written within
+the workspace; evaluator workspaces are entirely read-only. Ambient Python packages, account credentials, development
+files and other conditions are not tool inputs. Unsupported operating systems or unavailable sandbox prerequisites
+are rejected before generation. The `files` route is still useful for text-only work.
+
+After acquiring the reference spreadsheet in the GDPval example below, run the same task with Claude:
+
+```bash
+uv run --project harness --no-sync eval-harness check harness/examples/claude-gdpval-audit.yaml
+uv run --project harness --no-sync eval-harness run harness/examples/claude-gdpval-audit.yaml --out runs/claude-audit
+uv run --project harness --no-sync eval-harness evaluate runs/claude-audit --config harness/examples/gdpval-audit-panel.yaml --out evaluations/claude-audit
+uv run --project harness --no-sync eval-harness compare evaluations/claude-audit --out reports/claude-audit
+```
+
+The supplied GDPval panel freezes task-specific criteria, including the known prompt/rubric column and entity conflicts, before grading. It keeps independent Sol and Opus findings rather than presenting an official GDPval score. The example makes one application call and two judge calls.
 
 ## The six commands
 
@@ -105,7 +142,7 @@ Inspect `runs/first/run_manifest.json`, `runs/first/run_state.json`, the saved `
 Task directory names are safe encoded identifiers; use paths from the journal when writing tooling.
 
 To use Claude for the text task, copy the example YAML and set `application.executor: claude-code`,
-`application.model: claude-sonnet-4-6` and `application.settings.reasoning_effort: medium`. Use a new output directory.
+`application.model: claude-sonnet-5` and `application.settings.reasoning_effort: medium`. Use a new output directory.
 
 For the GDPval audit example, acquire the referenced public spreadsheet separately. Preflight never downloads it:
 
@@ -151,7 +188,7 @@ containing the versions you intend to study. Paths may be absolute or relative t
 name: word-problems
 runtime:
   executor: claude-code
-  model: claude-sonnet-4-6
+  model: claude-opus-5
   settings:
     reasoning_effort: medium
     max_turns: 24
@@ -188,6 +225,8 @@ tasks:
   ids: [gsm8k-0001]
   limit: 1
   seed: 42
+comparison_design: matched_skills
+creation_repeats: 1
 repeats: 2
 limits:
   max_tasks: 1
@@ -197,8 +236,8 @@ application:
   executor: codex
   model: gpt-5.6-luna
   settings:
-    reasoning_effort: medium
-    timeout_seconds: 300
+    reasoning_effort: max
+    timeout_seconds: 600
 conditions:
   - id: N
     intervention: null
@@ -234,7 +273,8 @@ the run saves generation results for a later `evaluate` call.
 
 For GSM8K mechanical re-evaluation, save `method: mechanical` and `executor: none` in a new evaluation config.
 For scalar AI grading, use the same shape as `harness/examples/gdpval-audit-scalar.yaml`. A scalar judge must return
-a JSON object containing only a numeric `score` in [0, 1] and a non-empty `rationale`. Invalid judgments are failures,
+a JSON object containing a numeric `score` in [0, 1] and a non-empty `rationale`, plus item-level findings when explicit
+criteria are configured. Invalid judgments are failures,
 not zero scores. Judge settings are independent of application settings.
 
 For an anonymous comparison of N and A, save `experiments/pairwise.yaml`:
@@ -242,7 +282,7 @@ For an anonymous comparison of N and A, save `experiments/pairwise.yaml`:
 ```yaml
 method: pairwise
 executor: claude-code
-model: claude-sonnet-4-6
+model: claude-opus-5
 settings:
   reasoning_effort: medium
   timeout_seconds: 300
@@ -259,10 +299,93 @@ Pairs always match the same task and repeat. The judge receives only `submission
 and the applicable rubric; condition labels, runtime settings and creator context stay outside its workspace.
 Both presentation orders run in separate sessions. Two repeats and one pair require four judge calls. Omitting
 `pairs` selects every distinct condition pair, which would require twelve calls for three conditions and two repeats.
-The judge returns only `winner` (`A`, `B` or `tie`) and `rationale`. Reports give each condition win credit 1, 0 or
+The judge returns `winner` (`A`, `B`, `tie` or `unjudgeable`) and `rationale`, with item findings for explicit criteria. Reports give each condition win credit 1, 0 or
 0.5 for a tie and retain both order-specific judgments. Extra votes do not increase the number of generated samples.
 
+## Matched N/S/A panels and uncertainty
+
+For a comparison of Skill methods, add `comparison_design: matched_skills` to the experiment. S and A must use the same
+creation model/settings, and N/S/A must use the same application model/settings. Existing Skills need their creation
+manifest with matching content, and the S/A creation briefs and input versions must match. When the experiment has automatic evaluation, also set `evaluation.criteria: criteria.yaml` to the
+versioned file described below. A suitable configuration to investigate is creation with Sol or Opus 5, application with Luna max, and
+independent Sol/Opus 5 judges. This is an experimental configuration, not a claim that Luna max is most efficient.
+
+Use `repeats: 2` with `creation_repeats: 1` to reuse each fixed Skill twice. To measure variation from creating the Skill
+again, use `creation_repeats: 2` and reference `build` configs in both S/A conditions. Each creation cohort is an ordinary
+run under `cohorts/creation_<index>`; it has distinct Skill creation IDs and the same task IDs. `run`, `evaluate`,
+`compare` and `resume` also accept the cohort container. Compare creation cohorts separately from execution repeats.
+
+Before evaluation, create a versioned criteria file. Declare decimal arithmetic, rounding, tolerances, unit convention
+and missing-data treatment explicitly. Keep it out of creator/application inputs. This minimal text example can be
+saved as `experiments/criteria.yaml` for the GSM8K trial:
+
+```yaml
+version: gsm8k-quality-v1
+benchmark: gsm8k
+policy:
+  arithmetic: decimal
+  rounding: none
+  decimal_places: 0
+  absolute_tolerance: 0
+  relative_tolerance: 0
+  missing: unconfirmed
+  units: Preserve the units requested by the problem; the final numeric answer is exact.
+tasks:
+  '*':
+    mechanical:
+      - {id: response, description: Saved final response, kind: file_exists, path: agent_response.txt}
+    ai:
+      - {id: correctness, description: Check the final answer against the benchmark answer and show arithmetic evidence.}
+      - {id: clarity, description: Judge whether the explanation is concise and sufficient to verify the answer.}
+```
+
+Without explicit criteria, the GSM8K `mechanical` method uses the benchmark's exact-answer grader. Explicit criteria replace that grade with their declared mechanical checks. Explicit machine checks can inspect
+JSON numbers, text, workbook sheets/cells, sums and units. Formula execution is disabled: uncached formulas are
+unconfirmed or failed according to the declared policy. A quality judgment is stored separately from these checks.
+Choose task-appropriate criteria before viewing results; the example is not an official benchmark score definition.
+
+Use `harness/examples/gsm8k-independent-panel.yaml` with its supplied criteria, or save this independent panel as `experiments/panel.yaml`:
+
+```yaml
+method: pairwise
+criteria: criteria.yaml
+pairs: [[N, S], [N, A], [S, A]]
+judges:
+  - id: sol
+    executor: codex
+    model: gpt-5.6-sol
+    settings: {reasoning_effort: medium, timeout_seconds: 600}
+  - id: opus
+    executor: claude-code
+    model: claude-opus-5
+    settings: {reasoning_effort: medium, max_turns: 16, timeout_seconds: 600}
+```
+
+```bash
+uv run --project harness --no-sync eval-harness evaluate runs/nsa --config experiments/panel.yaml --out evaluations/panel
+uv run --project harness --no-sync eval-harness compare evaluations/panel --seed 42 --resamples 1000 --out reports/panel
+uv run --project harness --no-sync eval-harness resume evaluations/panel
+```
+
+One task, one execution repeat, three pairs, two presentation orders and two judges require 12 judgment calls. A new
+evaluation copies saved artifacts and creates no new generation. Each judge sees neither condition labels nor another
+judge's result. Win/loss/tie/unjudgeable, order disagreement and judge disagreement remain distinct.
+
+Reports show tie credit 0.5 explicitly. Usable executions are averaged within each task; tasks receive equal weight.
+The 95% bootstrap resamples whole tasks with replacement, preserving matched conditions and repeats. Seed, resample
+count and aggregation unit are recorded. Repeated votes/order reversals do not add tasks. Fewer than two usable tasks
+or identical task scores yield null confidence bounds and a reason. Read judge-specific rates and disagreement
+reasons; different criterion versions or judge settings are different protocols. Agreement reports retain the numerator, mutually usable generation-pair denominator, exclusions and disagreement details; a disagreement has no combined numeric score.
+
+Time, token usage and known costs remain separated by creation, application and evaluation. `reported_cost_usd` is
+Claude's CLI estimate; actual incremental subscription `cost_usd` is null when unavailable. A reused Skill retains
+creation provenance but does not count as a new creation. Evaluation `all_attempts` metrics include archived failed
+calls as well as the current judgment; these retries add neither generations nor independent votes. Native structured
+JSON responses are validated against the frozen item IDs; invalid results remain failed attempts.
+
 ## Enter human ratings
+
+For a `creation_repeats` container, evaluate each `cohorts/creation_<index>` child run separately. The root rejects human input because condition/task/repeat identities would otherwise be ambiguous across creations.
 
 Create `experiments/human.yaml` to open an evaluation with no initial ratings:
 

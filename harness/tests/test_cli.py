@@ -40,7 +40,9 @@ def test_resume_run_uses_frozen_executor_without_loading_source_yaml(tmp_path: P
     def resume(root: Path, executor: object, **kwargs: object) -> Any:
         calls["root"] = root
         calls["executor"] = executor
-        return SimpleNamespace(execution_status="completed", completed_count=1, failed_count=0)
+        return SimpleNamespace(
+            execution_status="completed", evaluation_status="not_started", completed_count=1, failed_count=0
+        )
 
     monkeypatch.setattr(cli, "_executor_factory", factory)
     monkeypatch.setattr(cli, "load_experiment", fail_load)
@@ -65,7 +67,7 @@ def test_resume_evaluation_uses_frozen_claude_executor(tmp_path: Path, monkeypat
         calls["executor_name"] = name
         return sentinel
 
-    def resume(root: Path, executor: object) -> Any:
+    def resume(root: Path, executor: object, **kwargs: object) -> Any:
         calls["root"] = root
         calls["executor"] = executor
         return SimpleNamespace(status="completed", valid_count=1)

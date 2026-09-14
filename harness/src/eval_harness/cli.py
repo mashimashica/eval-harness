@@ -17,7 +17,7 @@ from .compare_pipeline import compare_evaluations
 from .config import load_evaluation_config, load_experiment, validate_config
 from .errors import ConfigError, HarnessError
 from .evaluate_pipeline import evaluate_run, resume_evaluation
-from .executor import CodexExecutor
+from .executor import CodexExecutor, preflight_executor
 from .run_pipeline import _preflight_evaluation, _preflight_interventions, resume_run, run_experiment
 from .skill_pipeline import build_skill, load_build_config
 
@@ -47,6 +47,8 @@ def _parser() -> argparse.ArgumentParser:
     compare = subparsers.add_parser("compare", help="aggregate saved evaluations without model calls")
     compare.add_argument("inputs", nargs="+", type=Path)
     compare.add_argument("--out", required=True, type=Path)
+    compare.add_argument("--seed", type=int, default=0, help="task-cluster bootstrap random seed")
+    compare.add_argument("--resamples", type=int, default=1000, help="task-cluster bootstrap resamples")
 
     resume = subparsers.add_parser("resume", help="continue an incomplete run or evaluation")
     resume.add_argument("result_dir", type=Path)
@@ -80,14 +82,20 @@ def _check(experiment_path: Path) -> int:
     selected = select_tasks(tasks, config)
     for task in selected:
         reference_source_paths(task)
+        if config.evaluation is not None:
+            from .grading_criteria import criteria_for_task
+
+            criteria_for_task(config.evaluation.criteria, task.task_id, config.benchmark)
     executor = _executor_factory(config.application.executor)
-    auth = executor.check_auth(config.application.settings)
+    auth = preflight_executor(executor, config.application.model, config.application.settings, "application")
     if not auth.authenticated:
         raise HarnessError(f"{config.application.executor} account authentication is unavailable: {auth.detail}")
     condition_auth: dict[str, str] = {}
     for condition in config.conditions:
         condition_executor = _executor_factory(condition.application.executor)
-        condition_status = condition_executor.check_auth(condition.application.settings)
+        condition_status = preflight_executor(
+            condition_executor, condition.application.model, condition.application.settings, "application"
+        )
         if not condition_status.authenticated:
             raise HarnessError(
                 f"condition {condition.id} account authentication is unavailable: {condition_status.detail}"
@@ -104,6 +112,15 @@ def _check(experiment_path: Path) -> int:
             "available_task_count": len(tasks),
             "selected_task_ids": [task.task_id for task in selected],
             "condition_ids": [condition.id for condition in config.conditions],
+            "comparison_design": config.comparison_design,
+            "creation_repeats": config.creation_repeats,
+            "execution_repeats": config.repeats,
+            "planned_generation_count": len(selected)
+            * len(config.conditions)
+            * config.repeats
+            * config.creation_repeats,
+            "planned_creation_count": config.creation_repeats
+            * sum(c.intervention is not None and c.intervention.build is not None for c in config.conditions),
             "application_executor": config.application.executor,
             "application_model": config.application.model,
             "evaluation": config.evaluation.method if config.evaluation else None,
@@ -158,7 +175,7 @@ def _evaluate(run_dir: Path, evaluation_path: Path, output: Path) -> int:
     executor = (
         _executor_factory(config.runtime.executor) if config.method not in {"mechanical", "human"} else CodexExecutor()
     )
-    summary = evaluate_run(run_dir, config, output, executor)
+    summary = evaluate_run(run_dir, config, output, executor, executor_factory=_executor_factory_fn)
     _print(
         {
             "status": summary.status,
@@ -191,7 +208,12 @@ def _resume(result_dir: Path) -> int:
                 "failed_count": run_summary.failed_count,
             }
         )
-        return 0 if run_summary.execution_status == "completed" else 1
+        return (
+            0
+            if run_summary.execution_status == "completed"
+            and run_summary.evaluation_status in {"completed", "not_started"}
+            else 1
+        )
     if (root / "evaluation_manifest.json").is_file():
         manifest = read_json(root / "evaluation_manifest.json")
         snapshot = manifest.get("config_snapshot")
@@ -203,7 +225,7 @@ def _resume(result_dir: Path) -> int:
             executor = _executor_factory(executor_name)
         else:
             raise HarnessError("evaluation manifest does not contain a frozen evaluator executor")
-        evaluation_summary = resume_evaluation(root, executor)
+        evaluation_summary = resume_evaluation(root, executor, executor_factory=_executor_factory_fn)
         _print(
             {
                 "status": evaluation_summary.status,
@@ -227,7 +249,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         if args.command == "evaluate":
             return _evaluate(args.run_dir, args.config, args.out)
         if args.command == "compare":
-            report_dir = compare_evaluations(args.inputs, args.out)
+            report_dir = compare_evaluations(args.inputs, args.out, seed=args.seed, bootstrap_resamples=args.resamples)
             _print({"status": "completed", "report_dir": str(report_dir)})
             return 0
         if args.command == "resume":

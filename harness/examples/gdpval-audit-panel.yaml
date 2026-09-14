@@ -1,0 +1,20 @@
+# SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
+
+method: scalar
+judges:
+- id: sol
+  executor: codex
+  model: gpt-5.6-sol
+  settings:
+    reasoning_effort: medium
+    timeout_seconds: 600
+- id: opus
+  executor: claude-code
+  model: claude-opus-5
+  settings:
+    reasoning_effort: medium
+    timeout_seconds: 600
+    max_turns: 16
+    tool_mode: sandboxed_shell
+criteria: gdpval-audit-criteria.yaml

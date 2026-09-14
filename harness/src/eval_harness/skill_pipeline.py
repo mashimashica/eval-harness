@@ -27,7 +27,7 @@ from .artifacts import (
 )
 from .config import RuntimeConfig, _mapping, _runtime, _string, _validate_runtime
 from .errors import ArtifactError, ConfigError, HarnessError
-from .executor import ExecutionRequest, Executor
+from .executor import ExecutionRequest, Executor, preflight_executor
 
 ExecutorFactory = Callable[[str], Executor]
 
@@ -149,6 +149,13 @@ def _validate_skill_document(path: Path, *, expected_name: str | None = None) ->
 def _copy_created_skill(workspace: Path, output_dir: Path, *, expected_name: str) -> list[dict[str, Any]]:
     """Copy generated Skill files while excluding staged creation context."""
 
+    named = workspace / expected_name
+    if (workspace / "SKILL.md").is_file() and (named / "SKILL.md").is_file():
+        raise ArtifactError("creator produced ambiguous root and named-folder Skills")
+    if not (workspace / "SKILL.md").is_file() and (named / "SKILL.md").is_file():
+        if named.is_symlink():
+            raise ArtifactError("symbolic link in generated Skill")
+        workspace = named
     generated = workspace / "SKILL.md"
     if not generated.is_file():
         raise ArtifactError("Skill creator completed without writing SKILL.md in its workspace")
@@ -218,7 +225,7 @@ def _load_frozen_build(root: Path) -> BuildConfig:
 
 def _run_creation(config: BuildConfig, output: Path, executor: Executor, *, check_auth: bool) -> Path:
     if check_auth:
-        auth = executor.check_auth(config.runtime.settings)
+        auth = preflight_executor(executor, config.runtime.model, config.runtime.settings, "skill_creation")
         if not auth.available or not auth.authenticated:
             raise HarnessError(f"Skill creator authentication is unavailable: {auth.detail}")
     manifest = read_json(output / "skill_manifest.json")
@@ -265,6 +272,7 @@ def _run_creation(config: BuildConfig, output: Path, executor: Executor, *, chec
                 "creator_cost_usd": result.parsed.usage.get("cost_usd"),
             }
         )
+        manifest["workspace_files"] = file_manifest(workspace)
         write_json(audit / "execution.json", manifest)
         if result.status != "completed":
             raise HarnessError(result.error or "Skill creator did not complete")
@@ -353,6 +361,28 @@ def resume_skill_build(output_dir: str | Path, executor: Executor, *, check_auth
             "creation input snapshot is incomplete; no model was called; preserve this setup evidence and use a new build"
         )
     config = _load_frozen_build(output / ".creation" / "config")
+    count = int(manifest.get("attempt_count", 0))
+    if count:
+        audit = output / ".creation" / "attempts" / str(count - 1)
+        execution_path = audit / "execution.json"
+        if execution_path.is_file():
+            execution = read_json(execution_path)
+            if execution.get("creator_status") == "completed":
+                workspace = audit / "workspace"
+                expected = execution.get("workspace_files")
+                if expected is None or file_manifest(workspace) != expected:
+                    raise ArtifactError("completed creator workspace is unverified or changed; will not regenerate it")
+                entries = _copy_created_skill(workspace, output, expected_name=config.name)
+                manifest.update(execution)
+                manifest.update(
+                    creator_status="completed",
+                    creator_error=None,
+                    collection_resumed=True,
+                    generated_files=entries,
+                    generated_sha256=manifest_hash(entries),
+                )
+                write_json(output / "skill_manifest.json", manifest)
+                return output
     return _run_creation(config, output, executor, check_auth=check_auth)
 
 

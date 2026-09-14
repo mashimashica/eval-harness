@@ -501,7 +501,7 @@ def test_config_rejects_reasoning_effort_not_supported_by_selected_model(tmp_pat
         load_experiment(config_path)
 
 
-def test_config_rejects_claude_gdpval_ai_evaluation(tmp_path: Path) -> None:
+def test_config_rejects_claude_gdpval_evaluation_without_office_tools(tmp_path: Path) -> None:
     source = _task_source(tmp_path)
     config_path = _config(tmp_path, source)
     config_path.write_text(
@@ -510,7 +510,7 @@ def test_config_rejects_claude_gdpval_ai_evaluation(tmp_path: Path) -> None:
         encoding="utf-8",
     )
 
-    with pytest.raises(ConfigError, match="GDPval AI evaluation requires Codex"):
+    with pytest.raises(ConfigError, match="Claude Code GDPval evaluation requires tool_mode: sandboxed_shell"):
         load_experiment(config_path)
 
 

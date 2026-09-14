@@ -1,0 +1,29 @@
+# SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
+
+version: gsm8k-reasoning-v1
+benchmark: gsm8k
+policy:
+  arithmetic: decimal
+  rounding: none
+  decimal_places: 8
+  absolute_tolerance: 1.0e-06
+  relative_tolerance: 1.0e-06
+  missing: unconfirmed
+  units: Use the task-stated units and answer the question asked. Exact integer counts;
+    no unexplained unit changes.
+tasks:
+  '*':
+    mechanical: []
+    ai:
+    - id: answer
+      description: Verify final numeric answer against the task and the retained benchmark
+        answer; count arithmetic and unit errors as failures. Do not reward verbosity.
+    - id: reasoning
+      description: Check each stated calculation and relationship, with no invented
+        data. An explicit correct short solution is sufficient; mark unstated reasoning
+        unconfirmed rather than invented.
+    - id: clarity
+      description: Judge whether the solution clearly answers the asked quantity,
+        with appropriate unit and a concise understandable explanation. Ties and unjudgeable
+        outcomes are allowed; prefer only a concrete material quality difference.
