@@ -6,13 +6,28 @@ from __future__ import annotations
 
 import json
 import os
+import struct
 import tomllib
+import zlib
 from pathlib import Path
 
 import pytest
 
 from eval_harness.errors import HarnessError
 from eval_harness.executor import CodexExecutor, ExecutionRequest, parse_codex_jsonl
+
+
+def valid_png(payload: bytes) -> bytes:
+    def chunk(kind: bytes, value: bytes) -> bytes:
+        return struct.pack(">I", len(value)) + kind + value + struct.pack(">I", zlib.crc32(kind + value) & 0xFFFFFFFF)
+
+    ihdr = struct.pack(">IIBBBBB", 1, 1, 8, 6, 0, 0, 0)
+    return (
+        b"\x89PNG\r\n\x1a\n"
+        + chunk(b"IHDR", ihdr)
+        + chunk(b"IDAT", zlib.compress(b"\x00\x00\x00\x00" + payload))
+        + chunk(b"IEND", b"")
+    )
 
 
 def fake_cli(tmp_path: Path, body: str) -> Path:
@@ -190,3 +205,63 @@ def test_permission_overrides_cannot_expose_withheld_inputs(tmp_path: Path) -> N
     with pytest.raises(HarnessError, match="filesystem overrides"):
         with executor._session({"toolchain_read_paths": [str(tmp_path)]}):
             pytest.fail("untrusted configuration must be rejected before creating a session")
+
+
+def test_evaluation_attaches_native_images_at_isolated_paths_and_receipts_them(tmp_path: Path) -> None:
+    source = auth_source(tmp_path)
+    workspace = tmp_path / "workspace"
+    workspace.mkdir()
+    first = valid_png(b"payload-a")
+    second = valid_png(b"payload-b")
+    (workspace / "first.png").write_bytes(first)
+    (workspace / "second.png").write_bytes(second)
+    binary = fake_cli(
+        tmp_path,
+        """import json, pathlib, sys
+assert sys.argv[-1] == '-'
+image_args = [sys.argv[index + 1] for index, value in enumerate(sys.argv[:-1]) if value == '--image']
+assert len(image_args) == 2
+assert pathlib.Path(image_args[0]).read_bytes() == bytes.fromhex(%r)
+assert pathlib.Path(image_args[1]).read_bytes() == bytes.fromhex(%r)
+assert sys.stdin.read() == 'Image 1: first.png\\nImage 2: second.png'
+print(json.dumps({'type':'turn.completed','usage':{'input_tokens':1,'output_tokens':1}}))
+"""
+        % (first.hex(), second.hex()),
+    )
+    result = CodexExecutor(str(binary)).execute(
+        ExecutionRequest(
+            "Image 1: first.png\nImage 2: second.png",
+            workspace,
+            "recorded-model",
+            {"auth_source_home": str(source)},
+            "evaluation",
+            images=(Path("first.png"), Path("second.png")),
+        )
+    )
+    assert result.status == "completed"
+    assert all(str(workspace) not in argument for argument in result.command)
+    receipt = result.parsed.events[0]
+    assert receipt["type"] == "harness.image_input"
+    assert [item["path"] for item in receipt["images"]] == ["first.png", "second.png"]
+    assert "data" not in receipt["images"][0]
+    assert (workspace / "first.png").read_bytes() == first
+    assert (workspace / "second.png").read_bytes() == second
+
+
+def test_invalid_image_is_rejected_before_codex_launch(tmp_path: Path) -> None:
+    marker = tmp_path / "launched"
+    binary = fake_cli(tmp_path, f"import pathlib\npathlib.Path({str(marker)!r}).write_text('launched')\n")
+    workspace = tmp_path / "workspace"
+    workspace.mkdir()
+    with pytest.raises(HarnessError, match="traversal"):
+        CodexExecutor(str(binary)).execute(
+            ExecutionRequest(
+                "judge",
+                workspace,
+                "recorded-model",
+                {},
+                "evaluation",
+                images=(Path("../outside.png"),),
+            )
+        )
+    assert not marker.exists()

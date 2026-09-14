@@ -1,0 +1,273 @@
+{
+  "additional_cli_budget": {
+    "automatic_retries": 0,
+    "max_per_runtime": 2,
+    "max_sessions": 4,
+    "parallelism": 1,
+    "sessions_used": 2,
+    "timeout_seconds": 300
+  },
+  "baseline": "e14ef17e0b4c8f9c7e9c4aa0d26a36e4eec02458",
+  "candidate_files": [
+    {
+      "path": "harness/src/eval_harness/claude_executor.py",
+      "sha256": "f1670061120b6920cae7c46095c4a285242e7d1f105964706e227974669f2358"
+    },
+    {
+      "path": "harness/src/eval_harness/config.py",
+      "sha256": "2be5b8e2d5fada2839e2f1c9bf1127ce15b27cc648047adbee359d4033cc5a8a"
+    },
+    {
+      "path": "harness/src/eval_harness/evaluate_pipeline.py",
+      "sha256": "8f5c125391f5994630aa801589652006f1fefaeb5ebf4407e5f67d02323cf6b8"
+    },
+    {
+      "path": "harness/src/eval_harness/executor.py",
+      "sha256": "ada08f944522fa32215ddcef70572846dc9c8370e8f19f51afc227251026d5ad"
+    },
+    {
+      "path": "harness/src/eval_harness/image_inputs.py",
+      "sha256": "3f8fb5526b95640369946e9fb6c08241466f7e2c4d439d71044559fd8e53be76"
+    },
+    {
+      "path": "harness/src/eval_harness/office_rendering.py",
+      "sha256": "73c30cb35c80f72e3a8922c0170a52030a52fe70b9a41786d3ce134c522c6c8c"
+    },
+    {
+      "path": "harness/tests/test_claude_executor.py",
+      "sha256": "388d00e66bf50f284e016107bf6b04e83551a74d7da054ac584015c4caad73c8"
+    },
+    {
+      "path": "harness/tests/test_executor.py",
+      "sha256": "8d5d7d55ad437a56d20263715be4818f71ef201d011fbb73a7064b8d3b67bc5c"
+    },
+    {
+      "path": "harness/tests/test_image_inputs.py",
+      "sha256": "100664b90ca333b7adb70c3f6066c5ca9bf6575176a00249a0e12bd585c04d6e"
+    },
+    {
+      "path": "harness/tests/test_office_rendering.py",
+      "sha256": "2f084b669344f27fa8134eb7bf6cf756d63fce38bbab93ccce02e2d1a077d451"
+    }
+  ],
+  "cli_results": {
+    "opus": {
+      "elapsed_seconds": 60.85176554200007,
+      "error": null,
+      "outside_unchanged": true,
+      "source_unchanged": true,
+      "status": "completed",
+      "usage": {
+        "cache_creation_input_tokens": 20287,
+        "cached_input_tokens": 89579,
+        "cost_usd": null,
+        "input_tokens": 12,
+        "output_tokens": 4506,
+        "reasoning_tokens": 1299,
+        "reported_cost_usd": 0.3603695
+      }
+    },
+    "sol": {
+      "elapsed_seconds": 36.449790208018385,
+      "error": null,
+      "outside_unchanged": true,
+      "source_unchanged": true,
+      "status": "completed",
+      "usage": {
+        "cached_input_tokens": 15616,
+        "cost_usd": null,
+        "input_tokens": 32442,
+        "output_tokens": 1082,
+        "reasoning_tokens": 627
+      }
+    }
+  },
+  "discrepancies": [
+    "Opus free-text response initially set network_connect=true, then corrected it to false in the same response. The raw tool result is PermissionError/false. Both versions are retained; the initial statement is not used as isolation evidence."
+  ],
+  "evidence": [
+    {
+      "path": ".audit/office-visual/preflight.json",
+      "sha256": "9b36bf23192a30e3b3ecc0bf0d29f2c314103d2fd89693c3a8fc17240cf1e06f"
+    },
+    {
+      "path": ".audit/office-visual/native-image-equality.json",
+      "sha256": "fba773fa94b1e5639a25506f7c42ea91fb7bc9ae7de762b3feed4d676964c938"
+    },
+    {
+      "path": ".audit/office-visual/final-native-originals.json",
+      "sha256": "74050ea2c6ed1785ea3ba9117439ef3eefa86fb75a68b41f020ec4ee8577fcb9"
+    },
+    {
+      "path": ".audit/office-visual/pytest-final.log",
+      "sha256": "47ef8e416d8b215b46e1ede916b3bf7abef3bd5fc265ab6fac2b31500c8f755e"
+    },
+    {
+      "path": ".audit/office-visual/python-dependency-audit.json",
+      "sha256": "a2842eb175fd17d2fd98f2b1f0d2609af4484778020a17564eface590d66a321"
+    },
+    {
+      "path": ".audit/office-visual/fern-check-final.log",
+      "sha256": "da1fc3d25ded6163474677f5eb6cfc3c3fe5f799f0b7fda56c93f1725b499eef"
+    },
+    {
+      "path": ".audit/office-visual/cli-01-sol/result.json",
+      "sha256": "5d6175dfde40069fd2f27c93bf35ccba18f53bc4f77cf1d757bd18ab7ecf4622"
+    },
+    {
+      "path": ".audit/office-visual/cli-01-sol/events.jsonl",
+      "sha256": "86cae5e8eb5fed099c9eb20ffefdf1a323d0ee18a05ec292360ea098ed967ea9"
+    },
+    {
+      "path": ".audit/office-visual/cli-01-sol/response.txt",
+      "sha256": "09ddd62860884f43b06473bfbf3db1ce4fb17addb9b02cc30fd35c021c7ff85a"
+    },
+    {
+      "path": ".audit/office-visual/cli-02-opus/result.json",
+      "sha256": "31ac18b0258b2a3ac82d89d09679daf7f9c6dcc9a73cd2a69dc0e6f95e6d0d3d"
+    },
+    {
+      "path": ".audit/office-visual/cli-02-opus/events.jsonl",
+      "sha256": "7ce0d335b3d2438a51f7353cc397827452d233502f5e9d72394599d261b3c87f"
+    },
+    {
+      "path": ".audit/office-visual/cli-02-opus/response.txt",
+      "sha256": "00c7b1fbddfb3b19e953f3c168b990a8d740fecfdb3f9bd52016091d7cbf8341"
+    },
+    {
+      "path": ".audit/office-visual/final-native-cache/renderer.json",
+      "sha256": "90e70d540b23860c83187f02bc5feafc0db6dd5f89bcadd3a422386a2125939b"
+    },
+    {
+      "path": ".audit/office-visual/full-png-decode-check.json",
+      "sha256": "28f87e53fd5fee7bca277406e610c57e0850a1866e196b7857e6f98256c46f88"
+    }
+  ],
+  "final_profile_pngs_identical_to_cli_inputs": true,
+  "isolation": {
+    "renderer_input_write_denied": true,
+    "renderer_local_network_positive_control_passed": true,
+    "renderer_network_denied": true,
+    "renderer_output_write_allowed": true,
+    "renderer_outside_read_denied": true,
+    "renderer_outside_write_denied": true,
+    "renderer_read_control": true,
+    "sol_and_opus_raw_tool_results": {
+      "network_connect": false,
+      "read_control": true,
+      "read_outside": false,
+      "write_workspace": false
+    }
+  },
+  "limits": [
+    "Synthetic fixtures only, no task quality or ALPS comparison.",
+    "LibreOffice print view can differ from Microsoft Office, omit hidden/off-print-area spreadsheet content, or recalculate derivative values.",
+    "Native dependency source/CVE patch completeness is unconfirmed for this bundled LibreOffice development build; hashes and versions are recorded. Python audit does not cover native tool dependencies.",
+    "Input PNG bytes match. Provider-internal visual preprocessing is not observable.",
+    "Subscription charges remain unknown; Claude reported_cost_usd is API-equivalent, not billed cost."
+  ],
+  "observed_image_content": {
+    "both_correct": true,
+    "codes_in_order": [
+      "K7P4",
+      "V9C3",
+      "R2M8"
+    ],
+    "images": [
+      {
+        "bytes": 22065,
+        "height": 1600,
+        "path": "visuals/submission/document-001/page-001.png",
+        "sha256": "cc3349b9e30262d4b95c842bdbeb4c156a87a5a1ad2c03e85242f3c45ebb9371",
+        "width": 1237
+      },
+      {
+        "bytes": 26047,
+        "height": 1200,
+        "path": "visuals/submission/document-002/page-001.png",
+        "sha256": "2d996f289297176d13989f4e7cdca50e7ff2eb460673f6b23b25c98099426365",
+        "width": 1600
+      },
+      {
+        "bytes": 22563,
+        "height": 1132,
+        "path": "visuals/submission/document-003/page-001.png",
+        "sha256": "b829393d939a499202477e30836fc4f22a312a836d1e95407c5978ecdc010fec",
+        "width": 1600
+      }
+    ],
+    "ordered_inputs_identical": true
+  },
+  "platform": "macOS 26.6.2 arm64 / Python 3.13.14",
+  "primary_references": [
+    "https://code.claude.com/docs/en/cli-reference",
+    "https://help.libreoffice.org/latest/en-US/text/shared/guide/pdf_params.html",
+    "https://www.libreoffice.org/security/",
+    "https://poppler.freedesktop.org/"
+  ],
+  "rendering": [
+    {
+      "elapsed_seconds": 1.8633175829891115,
+      "format": ".pptx",
+      "source_unchanged": true,
+      "status": "completed"
+    },
+    {
+      "elapsed_seconds": 6.143263250007294,
+      "format": ".xlsx",
+      "source_unchanged": true,
+      "status": "completed"
+    },
+    {
+      "elapsed_seconds": 1.8619057500036433,
+      "format": ".docx",
+      "source_unchanged": true,
+      "status": "completed"
+    }
+  ],
+  "rendering_total_seconds": 9.868486583000049,
+  "rendering_total_seconds_definition": "Sum of three native per-document jobs; shared tool fingerprinting time is not included and was not separately measured in this development probe. Product rendering_status.json records preparation wall time.",
+  "review": {
+    "correction": "Bounded full Pillow PNG decode, no permissive truncation, no animated input; malformed-IDAT regression added",
+    "correction_review": "passed; independent reviewer ran 32 targeted checks; no remaining Blocker or Required findings",
+    "native_positive_evidence_retained": "All three original native CLI inputs fully decode with unchanged manifests under the corrected code",
+    "required_finding": "CRC-valid truncated PNG pixels were accepted before model invocation"
+  },
+  "runtime_versions": {
+    "claude_code": "2.1.270",
+    "codex": "0.154.0",
+    "libreoffice": "26.8.0.0.alpha0 2c87e51eeaa2b413ff4ae097b2705eea1995d8e5",
+    "pillow": "12.3.0 (already locked; now declared directly; no package versions changed)",
+    "poppler": "26.05.0"
+  },
+  "scope": "Office rendering, native image input, isolation verification only; no GDPval experiment resumed",
+  "tests": {
+    "after_png_decode_correction": {
+      "passed": 43,
+      "scope": [
+        "test_image_inputs.py",
+        "test_executor.py",
+        "test_claude_executor.py",
+        "test_office_rendering.py"
+      ],
+      "seconds": 8.8
+    },
+    "fern": "0 errors; redirect check unavailable without Fern authentication (existing warning); no routes changed",
+    "full_harness": {
+      "passed": 175,
+      "phase": "Before the final complete-PNG-decode correction; unaffected tests retained",
+      "seconds": 23.05
+    },
+    "mypy": "six changed source modules passed",
+    "python_dependency_audit": {
+      "known_vulnerabilities": 0,
+      "packages": 53
+    },
+    "reviewer_correction_check": {
+      "passed": 32,
+      "scope": "PNG input and both native executor unit tests"
+    },
+    "ruff": "changed source/tests passed",
+    "secret_scan": "Gitleaks scanned publication files; no findings"
+  }
+}

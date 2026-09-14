@@ -110,6 +110,57 @@ uv run --project harness --no-sync eval-harness compare evaluations/claude-audit
 
 The supplied GDPval panel freezes task-specific criteria, including the known prompt/rubric column and entity conflicts, before grading. It keeps independent Sol and Opus findings rather than presenting an official GDPval score. The example makes one application call and two judge calls.
 
+### Shared Office previews for independent judges
+
+Scalar and pairwise AI evaluations can opt into the same visual evidence for Codex and Claude:
+
+```yaml
+evaluation:
+  method: pairwise
+  office_rendering:
+    soffice: /absolute/path/LibreOffice.app/Contents/MacOS/soffice
+    pdftoppm: /absolute/path/self-contained-poppler/bin/pdftoppm
+  judges:
+    - id: sol
+      executor: codex
+      model: gpt-5.6-sol
+      settings: {reasoning_effort: max, timeout_seconds: 300}
+    - id: opus
+      executor: claude-code
+      model: claude-opus-5
+      settings: {reasoning_effort: max, timeout_seconds: 300, tool_mode: sandboxed_shell}
+```
+
+Paths must identify native macOS executables, rather than shell wrappers. LibreOffice must be in an app bundle;
+Poppler must have its own `bin` and `lib` prefix with all dependencies inside that prefix. The harness does not install
+or update these tools. Its saved renderer identity hashes their complete file trees. Other platforms fail before
+conversion; there is no unsandboxed fallback.
+
+Before the first judge call, the harness converts copied DOCX, XLSX and PPTX deliverables into PDF and ordered PNG
+pages. A separate macOS sandbox denies network access, reads outside the tool/input roots, and writes to the original
+copies. It verifies those restrictions with artificial sentinels and a local network control before conversion.
+The converter uses a fresh LibreOffice profile with the highest macro security level.
+Macro/embedded-object packages and external resources other than hyperlinks are rejected. Legacy DOC/XLS/PPT and
+macro-enabled formats are unsupported. Non-Office deliverables remain available as original files.
+
+`office_renders/` retains the PDFs, PNGs, source hashes, tool identity, conversion commands, timing and failure logs.
+`office_renders_manifest.json` and the evaluation manifest bind the saved derivatives. Every judge session receives
+the same PNG bytes through native image attachments: Codex `--image` and Claude structured image input. Claude's
+Bash-only tool boundary stays in place. Before runtime setup, bounded PNG validation checks complete pixel decoding,
+static-image dimensions and checksums; corrupted or animated input is rejected. Each anonymous workspace has `visuals_manifest.json`, mapping image order
+and hashes to submission files; native event logs include a redacted image-input receipt. Both presentation orders
+reuse the cache. Resume checks hashes and never silently replaces a failed or changed rendering.
+
+Conversion preserves original bytes and mechanical grading. Previews show LibreOffice's interpretation of the saved
+print layout: they can differ from Microsoft Office, omit hidden or off-print-area spreadsheet content, and display
+recalculated formula values. Use originals for formula/value checks and record unsupported or uninspected details as
+unconfirmed. Visual access alone does not establish grading accuracy or completeness.
+
+Each converter subprocess is limited to 120 seconds. Inputs are limited to 50 MiB compressed and 200 MiB expanded;
+each document may produce at most 20 pages. PNGs use 120 DPI with a 1600-pixel maximum dimension. A complete judge
+request may attach at most 20 PNGs, 5 MiB each and 32 MiB total. Exceeding a limit fails the dependent evaluation;
+pages are not silently truncated. Rendering time is separate from model-session usage; it consumes no model tokens.
+
 ## The six commands
 
 Paths passed on the command line are relative to your current directory. File references inside YAML are relative

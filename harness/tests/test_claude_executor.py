@@ -4,7 +4,11 @@
 
 from __future__ import annotations
 
+import base64
+import hashlib
 import json
+import struct
+import zlib
 from pathlib import Path
 
 import pytest
@@ -12,6 +16,19 @@ import pytest
 from eval_harness.claude_executor import ClaudeExecutor, parse_claude_jsonl
 from eval_harness.errors import HarnessError
 from eval_harness.executor import AuthStatus, ExecutionRequest
+
+
+def valid_png(payload: bytes) -> bytes:
+    def chunk(kind: bytes, value: bytes) -> bytes:
+        return struct.pack(">I", len(value)) + kind + value + struct.pack(">I", zlib.crc32(kind + value) & 0xFFFFFFFF)
+
+    ihdr = struct.pack(">IIBBBBB", 1, 1, 8, 6, 0, 0, 0)
+    return (
+        b"\x89PNG\r\n\x1a\n"
+        + chunk(b"IHDR", ihdr)
+        + chunk(b"IDAT", zlib.compress(b"\x00\x00\x00\x00" + payload))
+        + chunk(b"IEND", b"")
+    )
 
 
 def test_result_usage_preserves_missing_and_reported_cost() -> None:
@@ -190,3 +207,89 @@ print(json.dumps({"type":"result","subtype":"success","is_error":False,"result":
     )
     assert result.status == "failed"
     assert result.error and "model changed" in result.error
+
+
+def test_evaluation_sends_exact_native_image_payload_and_redacted_receipt(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(ClaudeExecutor, "check_runtime", lambda *args: AuthStatus(True, True, "test preflight"))
+    credentials = tmp_path / "credentials"
+    credentials.mkdir()
+    (credentials / ".credentials.json").write_text('{"claudeAiOauth": {}}')
+    workspace = tmp_path / "work"
+    workspace.mkdir()
+    image = valid_png(b"native-payload")
+    (workspace / "preview.png").write_bytes(image)
+    encoded = base64.b64encode(image).decode("ascii")
+    binary = tmp_path / "fake-claude"
+    binary.write_text(
+        """#!/usr/bin/env python3
+import base64, json, sys
+payload = json.loads(sys.stdin.read())
+assert payload['type'] == 'user'
+assert payload['message']['role'] == 'user'
+assert payload['parent_tool_use_id'] is None
+assert payload['session_id'] == ''
+content = payload['message']['content']
+assert content[0] == {'type':'text','text':'Image 1: preview.png'}
+assert content[1]['type'] == 'image'
+assert content[1]['source']['type'] == 'base64'
+assert content[1]['source']['media_type'] == 'image/png'
+assert base64.b64decode(content[1]['source']['data']) == bytes.fromhex(%r)
+print(json.dumps({'type':'result','subtype':'success','is_error':False,'result':'42'}))
+"""
+        % image.hex()
+    )
+    binary.chmod(0o700)
+
+    result = ClaudeExecutor(str(binary)).execute(
+        ExecutionRequest(
+            "Image 1: preview.png",
+            workspace,
+            "recorded-model",
+            {"auth_source_home": str(credentials)},
+            "evaluation",
+            images=(Path("preview.png"),),
+        )
+    )
+
+    assert result.status == "completed"
+    assert "--input-format" in result.command
+    assert result.command[result.command.index("--input-format") + 1] == "stream-json"
+    assert result.command[result.command.index("--tools") + 1] == "Read,Glob,Grep"
+    assert "Write" not in result.command and "Edit" not in result.command
+    receipt = result.parsed.events[0]
+    assert receipt["type"] == "harness.image_input"
+    assert receipt["images"][0]["sha256"] == hashlib.sha256(image).hexdigest()
+    assert encoded not in result.stdout
+    assert (workspace / "preview.png").read_bytes() == image
+
+
+def test_invalid_image_is_rejected_before_claude_preflight(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    credentials = tmp_path / "credentials"
+    credentials.mkdir()
+    (credentials / ".credentials.json").write_text('{"claudeAiOauth": {}}')
+    workspace = tmp_path / "work"
+    workspace.mkdir()
+    image = workspace / "preview.png"
+    image.write_bytes(valid_png(b"invalid"))
+    called = False
+
+    def preflight(*args: object) -> AuthStatus:
+        nonlocal called
+        called = True
+        raise AssertionError("preflight must not run for an application image request")
+
+    monkeypatch.setattr(ClaudeExecutor, "check_runtime", preflight)
+    with pytest.raises(HarnessError, match="evaluation"):
+        ClaudeExecutor("unused").execute(
+            ExecutionRequest(
+                "task",
+                workspace,
+                "recorded-model",
+                {"auth_source_home": str(credentials)},
+                "application",
+                images=(Path("preview.png"),),
+            )
+        )
+    assert not called

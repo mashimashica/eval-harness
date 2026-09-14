@@ -27,6 +27,12 @@ from typing import Any, Iterator, Mapping, Protocol
 
 from .artifacts import copy_files, file_manifest
 from .errors import HarnessError
+from .image_inputs import (
+    ImageInput,
+    image_input_receipt,
+    stage_image_inputs,
+    validate_image_inputs,
+)
 
 
 @dataclass(frozen=True)
@@ -50,6 +56,7 @@ class ExecutionRequest:
     settings: Mapping[str, Any]
     purpose: str
     response_schema: Mapping[str, Any] | None = None
+    images: tuple[Path, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -374,7 +381,13 @@ class CodexExecutor:
             )
             yield session
 
-    def _command(self, request: ExecutionRequest, *, output_schema_path: Path | None = None) -> list[str]:
+    def _command(
+        self,
+        request: ExecutionRequest,
+        *,
+        output_schema_path: Path | None = None,
+        image_inputs: tuple[ImageInput, ...] = (),
+    ) -> list[str]:
         if not request.model:
             raise HarnessError("an explicit Codex model is required")
         command = [
@@ -399,6 +412,12 @@ class CodexExecutor:
             if output_schema_path is None:
                 raise HarnessError("Codex output schema path is required for structured responses")
             command.extend(["--output-schema", str(output_schema_path)])
+        for image in image_inputs:
+            command.extend(["--image", str(request.cwd / image.path)])
+        if image_inputs:
+            # The explicit stdin positional tells the native CLI to consume
+            # the request prompt from stdin after all repeatable image args.
+            command.append("-")
         return command
 
     def check_auth(self, settings: Mapping[str, Any] | None = None) -> AuthStatus:
@@ -443,6 +462,7 @@ class CodexExecutor:
 
     def execute(self, request: ExecutionRequest) -> ExecutionResult:
         """Capture native output; only a terminal completed event establishes completion."""
+        image_inputs = validate_image_inputs(request.images, request.cwd, purpose=request.purpose)
         timeout = float(request.settings.get("timeout_seconds", 600))
         started = monotonic()
         stdout, stderr = "", ""
@@ -451,6 +471,7 @@ class CodexExecutor:
         returncode: int | None = None
         read_only = request.purpose == "evaluation"
         with self._session(request.settings, request.cwd, read_only=read_only) as session:
+            stage_image_inputs(session.workspace, image_inputs)
             input_manifest = file_manifest(session.workspace)
             isolated = ExecutionRequest(
                 request.prompt,
@@ -459,6 +480,7 @@ class CodexExecutor:
                 request.settings,
                 request.purpose,
                 request.response_schema,
+                request.images,
             )
             output_schema_path: Path | None = None
             if request.response_schema is not None:
@@ -467,7 +489,7 @@ class CodexExecutor:
                     json.dumps(request.response_schema, sort_keys=True, separators=(",", ":")), encoding="utf-8"
                 )
                 output_schema_path.chmod(0o600)
-            command = self._command(isolated, output_schema_path=output_schema_path)
+            command = self._command(isolated, output_schema_path=output_schema_path, image_inputs=image_inputs)
             try:
                 process = subprocess.Popen(
                     command,
@@ -493,9 +515,15 @@ class CodexExecutor:
                 if read_only and file_manifest(session.workspace) != input_manifest:
                     status, error = "failed", "evaluator modified the read-only input workspace"
                 shutil.rmtree(session.workspace / ".tmp", ignore_errors=True)
-                copy_files(session.workspace, request.cwd)
+                # Preserve the historical no-image capture path.  Image
+                # evaluations keep the caller's original bytes untouched even
+                # when an evaluator attempts to modify its staged copy.
+                if not read_only or not image_inputs:
+                    copy_files(session.workspace, request.cwd)
             except OSError as exc:
                 error = str(exc)
+            if image_inputs:
+                stdout = json.dumps(image_input_receipt(image_inputs), sort_keys=True) + "\n" + stdout
         parsed = parse_codex_jsonl(stdout)
         if parsed.errors:
             error = "; ".join(parsed.errors)
