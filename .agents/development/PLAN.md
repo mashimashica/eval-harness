@@ -1,6 +1,37 @@
 <!-- SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved. -->
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 
+## Active increment: Office visual evaluation (2026-09-14)
+
+Owner request: add immutable Office rendering, equal Sol/Opus image access, and isolation verification only.
+Baseline: `e14ef17e0b4c8f9c7e9c4aa0d26a36e4eec02458`; branch `codex/office-visual-evaluation`.
+The existing untracked `replication_pipeline 2.py` belongs to unrelated work and is excluded.
+GDPval pilot records and pinned inputs remain untouched; no experiment is resumed.
+
+Requirements R06–R10: explicit optional rendering for scalar/pairwise evaluation; render copied DOCX/XLSX/PPTX
+to PDF and PNG in a separate network-denied macOS sandbox; preserve original bytes and mechanical grading.
+Freeze derivatives once per source content, record source/PDF/PNG hashes, runtime identity, commands, elapsed time,
+and failures. Every judge/order consumes the saved PNG bytes; resume verifies them instead of regenerating.
+Both CLIs receive native image attachments without enabling additional participant file tools or personal settings.
+Unsupported input, unsafe references, rendering failure, excess image limits, or hash mismatch must stop dependent
+evaluation before a model call; no partial image set silently becomes an evaluation.
+
+Controller owns rendering/config/evaluation integration, documentation, and final acceptance. The implementation
+worker owns image transport in the two executors and its tests. Synthetic artifacts only for development checks.
+Additional inference CLI budget: at most four sessions, Sol `gpt-5.6-sol/max` and Opus `claude-opus-5/max`,
+at most two each, serial, no automatic retries, 300 seconds per session. Existing subscription routes only;
+authentication, availability, or uncertain billing failures stop model checks. Native non-model rendering and
+sandbox probes plus targeted tests establish the OS boundary before these image-recognition checks.
+Evidence: ignored `.audit/office-visual/`; no credentials. Accepted after complete Office rendering/isolation checks,
+Sol and Opus image recognition with identical PNG hashes, unchanged originals, 175 full-harness tests and 43 targeted
+checks after the final PNG-decoding correction. Mypy/Ruff passed. Fern has zero errors; its authenticated redirect
+check remains unavailable, with no routes changed. Python audit found zero known vulnerabilities in 53 packages;
+Gitleaks found no publication secrets. Independent review's malformed-PNG finding was corrected; 32 independent
+correction checks passed and no Blocker/Required findings remain. See `office-visual-verification.json` for usage,
+source/evidence hashes, native dependency limits, and Opus's corrected narration discrepancy. The two unused CLI
+sessions are not needed. GDPval has not resumed. Implementation is accepted; delivery is a draft PR via direct API,
+without merge. The local GitHub publication receipt records the final PR and commit identity.
+
 # Completion plan
 
 Controller: Astra; implementation/self-verification: Luna max; Sol max only for a consequential boundary review.

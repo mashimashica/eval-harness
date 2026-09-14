@@ -4,6 +4,7 @@
 
 from __future__ import annotations
 
+import base64
 import hashlib
 import json
 import os
@@ -28,6 +29,7 @@ from .executor import (
     RuntimeSession,
     _stop_process_group,
 )
+from .image_inputs import ImageInput, image_input_receipt, stage_image_inputs, validate_image_inputs
 from .models import CLAUDE_DISPLAY_NAMES, CLAUDE_EFFORTS
 
 
@@ -363,6 +365,42 @@ class ClaudeExecutor:
     def _base_command(self) -> list[str]:
         return [self.binary, "--safe-mode", "--restricted", "--setting-sources", "", "--strict-mcp-config"]
 
+    @staticmethod
+    def _input_payload(prompt: str, images: tuple[ImageInput, ...]) -> str:
+        """Encode an image request in Claude's native stream-json input format."""
+        if not images:
+            return prompt
+        content: list[dict[str, Any]] = [{"type": "text", "text": prompt}]
+        for index, image in enumerate(images, 1):
+            label = f"Image {index}: {image.path}"
+            # The evaluator prompt already carries this shared mapping.  Add
+            # a block only for direct executor callers whose prompt lacks it.
+            if label not in prompt:
+                content.append({"type": "text", "text": label})
+            content.append(
+                {
+                    "type": "image",
+                    "source": {
+                        "type": "base64",
+                        "media_type": "image/png",
+                        "data": base64.b64encode(image.data).decode("ascii"),
+                    },
+                }
+            )
+        return (
+            json.dumps(
+                {
+                    "type": "user",
+                    "message": {"role": "user", "content": content},
+                    "parent_tool_use_id": None,
+                    "session_id": "",
+                },
+                ensure_ascii=False,
+                separators=(",", ":"),
+            )
+            + "\n"
+        )
+
     def check_auth(self, settings: Mapping[str, Any] | None = None) -> AuthStatus:
         try:
             with self._session(settings or {}) as session:
@@ -407,6 +445,7 @@ class ClaudeExecutor:
             return AuthStatus(True, False, "Claude subscription login unavailable; run claude auth login")
 
     def execute(self, request: ExecutionRequest) -> ExecutionResult:
+        image_inputs = validate_image_inputs(request.images, request.cwd, purpose=request.purpose)
         if not request.model:
             raise HarnessError("an explicit Claude model is required")
         self.check_runtime(request.model, request.settings, request.purpose)
@@ -418,6 +457,7 @@ class ClaudeExecutor:
             self._session(request.settings, request.cwd) as session,
             self._invocation(session, request.model, request.settings, request.purpose) as (options, receipt),
         ):
+            stage_image_inputs(session.workspace, image_inputs)
             read_only = request.purpose == "evaluation"
             input_manifest = file_manifest(session.workspace)
             command = (
@@ -449,6 +489,9 @@ class ClaudeExecutor:
                     "--json-schema",
                     json.dumps(request.response_schema, sort_keys=True, separators=(",", ":"), ensure_ascii=False),
                 ]
+            if image_inputs:
+                command += ["--input-format", "stream-json"]
+            input_payload = self._input_payload(request.prompt, image_inputs)
             try:
                 process = subprocess.Popen(
                     command,
@@ -463,7 +506,7 @@ class ClaudeExecutor:
                 )
                 try:
                     stdout, stderr = process.communicate(
-                        request.prompt, timeout=float(request.settings.get("timeout_seconds", 600))
+                        input_payload, timeout=float(request.settings.get("timeout_seconds", 600))
                     )
                     returncode = process.returncode
                 except (subprocess.TimeoutExpired, KeyboardInterrupt) as exc:
@@ -483,6 +526,8 @@ class ClaudeExecutor:
                         copy_files(session.workspace, request.cwd)
             except (OSError, HarnessError) as exc:
                 error = str(exc)
+            if image_inputs:
+                stdout = json.dumps(image_input_receipt(image_inputs), sort_keys=True) + "\n" + stdout
             if receipt is not None:
                 stdout = json.dumps(receipt) + "\n" + stdout
         parsed = parse_claude_jsonl(stdout, require_structured_output=request.response_schema is not None)

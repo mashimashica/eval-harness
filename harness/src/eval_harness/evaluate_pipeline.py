@@ -14,6 +14,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
+from time import monotonic
 from typing import Any, Mapping, Sequence, TypeAlias
 
 from .artifacts import (
@@ -45,8 +46,65 @@ from .errors import ArtifactError, ConfigError, HarnessError
 from .executor import AuthStatus, ExecutionRequest, ExecutionResult, Executor, ParsedCodexOutput, preflight_executor
 from .gdpval import task_directory_name
 from .grading_criteria import criteria_for_task, criteria_hash, mechanical_findings
+from .office_rendering import OFFICE_SUFFIXES, attach_previews, parse_rendering, prepare_render_cache
 
 ExecutorFactory: TypeAlias = Callable[[str], Executor]
+
+
+def _prepare_office_previews(
+    source: Path,
+    state: Sequence[Mapping[str, Any]],
+    config: EvaluationConfig,
+    output: Path,
+) -> None:
+    """Render the frozen source once, before either judge can see it."""
+    if config.office_rendering is None:
+        return
+    manifest_path = output / "evaluation_manifest.json"
+    evaluation_manifest = read_json(manifest_path)
+    expected = evaluation_manifest.get("office_renders_sha256")
+    if expected is not None:
+        actual = file_manifest(output / "office_renders")
+        if actual != read_json(output / "office_renders_manifest.json") or manifest_hash(actual) != expected:
+            raise ArtifactError("saved Office previews changed; automatic re-render is forbidden")
+        return
+    sources: list[Path] = []
+    started = monotonic()
+    try:
+        for execution in state:
+            if execution.get("execution_status") != "completed":
+                continue
+            execution_dir = _source_execution_path(source, execution)
+            _verify_saved_artifact(execution, execution_dir)
+            for entry in file_manifest(execution_dir / "deliverables"):
+                path = execution_dir / "deliverables" / entry["path"]
+                if path.suffix.lower() in {".doc", ".xls", ".ppt", ".docm", ".xlsm", ".pptm"}:
+                    raise ArtifactError("Office preview supports DOCX/XLSX/PPTX only; no silent legacy/macro omission")
+                if path.suffix.lower() in OFFICE_SUFFIXES:
+                    sources.append(path)
+        prepare_render_cache(sources, output / "office_renders", config.office_rendering)
+    except Exception as exc:
+        write_json(
+            output / "rendering_status.json",
+            {
+                "status": "failed",
+                "error": str(exc),
+                "elapsed_seconds": monotonic() - started,
+            },
+        )
+        raise
+    write_json(
+        output / "rendering_status.json",
+        {
+            "status": "completed",
+            "source_file_count": len(sources),
+            "elapsed_seconds": monotonic() - started,
+        },
+    )
+    entries = file_manifest(output / "office_renders")
+    write_json(output / "office_renders_manifest.json", entries)
+    evaluation_manifest["office_renders_sha256"] = manifest_hash(entries)
+    write_json(manifest_path, evaluation_manifest)
 
 
 @dataclass(frozen=True)
@@ -939,7 +997,13 @@ def _evaluate_one(
     if task_criteria is not None and task_criteria.get("ai"):
         prompt += "Return criteria_results alongside score and rationale.\n"
     (judgment_dir / "evaluator_prompt.txt").write_text(prompt, encoding="utf-8")
+    images: tuple[Path, ...] = ()
     try:
+        if config.office_rendering is not None:
+            labels = ("submission_A", "submission_B") if config.method == "pairwise" else ("submission",)
+            images, visual_prompt = attach_previews(workspace, evaluation_dir / "office_renders", labels)
+            prompt += visual_prompt
+            (judgment_dir / "evaluator_prompt.txt").write_text(prompt, encoding="utf-8")
         result = executor.execute(
             ExecutionRequest(
                 prompt=prompt,
@@ -948,6 +1012,7 @@ def _evaluate_one(
                 settings=selected_judge.runtime.settings,
                 purpose="evaluation",
                 response_schema=_judge_response_schema("scalar", task_criteria),
+                images=images,
             )
         )
     except Exception as exc:
@@ -1143,7 +1208,13 @@ def _evaluate_pair(
         }
     prompt = _pairwise_prompt(task, task_criteria)
     (judgment_dir / "evaluator_prompt.txt").write_text(prompt, encoding="utf-8")
+    images: tuple[Path, ...] = ()
     try:
+        if config.office_rendering is not None:
+            labels = ("submission_A", "submission_B") if config.method == "pairwise" else ("submission",)
+            images, visual_prompt = attach_previews(workspace, evaluation_dir / "office_renders", labels)
+            prompt += visual_prompt
+            (judgment_dir / "evaluator_prompt.txt").write_text(prompt, encoding="utf-8")
         result = executor.execute(
             ExecutionRequest(
                 prompt=prompt,
@@ -1152,6 +1223,7 @@ def _evaluate_pair(
                 settings=selected_judge.runtime.settings,
                 purpose="evaluation",
                 response_schema=_judge_response_schema("pairwise", task_criteria),
+                images=images,
             )
         )
     except Exception as exc:
@@ -1250,6 +1322,7 @@ def _evaluate_pairwise_run(
     manifest = read_json(evaluation_dir / "evaluation_manifest.json")
     manifest["source_snapshot_dir"] = str(source_snapshot_dir)
     write_json(evaluation_dir / "evaluation_manifest.json", manifest)
+    _prepare_office_previews(source_snapshot_dir, state, config, evaluation_dir)
     condition_order = run_manifest.get("conditions")
     conditions = condition_order if isinstance(condition_order, list) else None
     selected_pairs = getattr(config, "pairs", None) or config.runtime.settings.get("pairs")
@@ -2098,6 +2171,7 @@ def _evaluation_config_from_snapshot(snapshot: Mapping[str, Any]) -> EvaluationC
         judges=tuple(judges),
         criteria=dict(criteria) if isinstance(criteria, Mapping) else None,
         pairs=pairs,
+        office_rendering=parse_rendering(snapshot.get("office_rendering"), Path.cwd()),
     )
 
 
@@ -2211,6 +2285,7 @@ def evaluate_run(
     manifest = read_json(evaluation_dir / "evaluation_manifest.json")
     manifest["source_snapshot_dir"] = str(source_snapshot_dir)
     write_json(evaluation_dir / "evaluation_manifest.json", manifest)
+    _prepare_office_previews(source_snapshot_dir, state, config, evaluation_dir)
     planned_generation_ids = [_generation_id(execution, source_run_id) for execution in state]
     panel = _evaluation_judges(config) if config.method != "mechanical" else (JudgeConfig("legacy", config.runtime),)
     if config.method == "mechanical":
@@ -2370,6 +2445,7 @@ def resume_evaluation(
     state = read_json(source_root / "run_state.json")
     if not isinstance(state, list) or any(not isinstance(item, Mapping) for item in state):
         raise ArtifactError("source run state is invalid")
+    _prepare_office_previews(source_root, state, config, root)
     if config.method == "pairwise":
         return _resume_pairwise_evaluation(
             root,

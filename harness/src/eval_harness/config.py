@@ -20,6 +20,7 @@ import yaml
 from .errors import ConfigError
 from .grading_criteria import load_criteria
 from .models import CLAUDE_EFFORTS, CODEX_EFFORTS, MODEL_EFFORTS
+from .office_rendering import OfficeRenderingConfig, parse_rendering
 
 _SECRET_KEY_MARKERS = ("api_key", "access_token", "password", "secret", "token")
 _SUPPORTED_CODEX_MODELS = set(CODEX_EFFORTS)
@@ -84,6 +85,7 @@ class EvaluationConfig:
     judges: tuple[JudgeConfig, ...] = ()
     criteria: dict[str, Any] | None = None
     pairs: tuple[tuple[str, str], ...] | None = None
+    office_rendering: OfficeRenderingConfig | None = None
 
 
 @dataclass(frozen=True)
@@ -168,7 +170,7 @@ def _runtime(
     mapping = _mapping(value, field)
     allowed_fields = {"executor", "model", "settings"}
     if field == "evaluation":
-        allowed_fields.update({"method", "judges", "criteria", "pairs"})
+        allowed_fields.update({"method", "judges", "criteria", "pairs", "office_rendering"})
     if field == "build":
         allowed_fields.update({"name", "prompt", "instructions", "inputs", "input_paths", "skills", "creator_skills"})
     unknown_fields = sorted(set(mapping) - allowed_fields)
@@ -353,7 +355,12 @@ def _evaluation(raw: Any, config_dir: Path) -> EvaluationConfig | None:
         if "pairs" in runtime.settings:
             raise ConfigError("specify evaluation.pairs or legacy settings.pairs, not both")
     return EvaluationConfig(
-        method, runtime, tuple(judges), criteria, tuple(tuple(p) for p in pairs) if pairs is not None else None
+        method,
+        runtime,
+        tuple(judges),
+        criteria,
+        tuple(tuple(p) for p in pairs) if pairs is not None else None,
+        parse_rendering(mapping.get("office_rendering"), config_dir),
     )
 
 
@@ -525,6 +532,8 @@ def validate_evaluation_config(config: EvaluationConfig) -> list[str]:
     """Return all actionable errors for an evaluation configuration."""
 
     panel_errors: list[str] = []
+    if config.office_rendering is not None and config.method not in {"scalar", "pairwise"}:
+        panel_errors.append("evaluation.office_rendering is supported only for scalar or pairwise AI grading")
     if config.pairs is not None and config.method != "pairwise":
         panel_errors.append("evaluation.pairs is supported only for pairwise grading")
     if config.judges:
@@ -797,4 +806,5 @@ def evaluation_snapshot(config: EvaluationConfig) -> dict[str, Any]:
         "judges": [{"id": judge.id, **runtime_snapshot(judge.runtime)} for judge in config.judges],
         "criteria": config.criteria,
         "pairs": [list(pair) for pair in config.pairs] if config.pairs is not None else None,
+        "office_rendering": config.office_rendering.snapshot() if config.office_rendering is not None else None,
     }
