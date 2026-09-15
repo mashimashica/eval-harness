@@ -1,0 +1,1307 @@
+{
+  "schema_version": 1,
+  "purpose": "GDPval infrastructure acceptance, not an ALPS comparison",
+  "date": "2026-09-16",
+  "baseline": "0cb774f706a50e8fc4117cd2903ee32b9b6b4069",
+  "branch": "codex/gdpval-capability-environment",
+  "status": "bounded_verification_complete; full_task_quality_acceptance_unconfirmed",
+  "change_request": "draft-1 plus user-supplied additional context",
+  "fixed_order": [
+    "9e39df84-ac57-4c9b-a2e3-12b8abf2c797",
+    "5d0feb24-e8b6-4ace-b64f-d5cd1a8b563d"
+  ],
+  "frozen_source_sha256": "4d58ee30485093010bf8b0a11708f80924831eef2a643db4c2d23b72fd426470",
+  "scope": {
+    "implementation": "explicit gdpval-v1 common MCP environment; isolated single foreground process; research receipts; original protection; incremental common PDFs; copied functional checks; explicit unconfirmed accounting",
+    "other_tasks": "All220 frozen tasks are organized into eight sections with independent content readiness, environment acceptance and current acceptance inclusion; prior partition retained only as history; fixed2 unchanged."
+  },
+  "envelope": {
+    "models": {
+      "codex": "gpt-5.6-sol",
+      "claude-code": "claude-opus-5"
+    },
+    "reasoning_effort": "medium",
+    "maximum_sessions": 11,
+    "applications": {
+      "count": 4,
+      "timeout_seconds": 900,
+      "claude_max_turns": 60
+    },
+    "evaluations": {
+      "count": 4,
+      "timeout_seconds": 600,
+      "claude_max_turns": 40
+    },
+    "known_multipage": {
+      "count": 3,
+      "timeout_seconds": 300,
+      "claude_max_turns": 20
+    },
+    "concurrency": 1,
+    "automatic_retries": 0,
+    "billing": "existing subscription accounts; Claude extra usage disabled; no API fallback or auxiliary AI",
+    "original_maximum_sessions": 10,
+    "amendment": {
+      "authorization": "User explicitly approved one additional Codex multipage session on2026-09-16",
+      "additional_sessions": 1,
+      "reason": "Correct native MCP approval configuration; preserve first failed model-backed probe",
+      "model": "gpt-5.6-sol",
+      "effort": "medium",
+      "timeout_seconds": 300,
+      "concurrency": 1,
+      "automatic_retries": 0
+    }
+  },
+  "inference_sessions_started": 11,
+  "preflight": {
+    "claude": {
+      "effort": "medium",
+      "exact_model": "claude-opus-5",
+      "native_sandbox_verified": true,
+      "subscription_extra_usage_disabled": true
+    },
+    "codex": {
+      "auth_type": "chatgpt",
+      "credits_available": false,
+      "efforts": [
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max",
+        "ultra"
+      ],
+      "inputModalities": [
+        "text",
+        "image"
+      ],
+      "model": "gpt-5.6-sol",
+      "ordinary_usage_allowed": true,
+      "plan_type": "pro",
+      "used_percent": 45
+    },
+    "elapsed_seconds": 23.28154970900505,
+    "inference_sessions": 0
+  },
+  "preserved_initial_failures": [
+    {
+      "kind": "no_model_preflight",
+      "issue": "CLI safe-mode disabled explicitly configured MCP; replaced only new-profile route with restricted explicit controls and verified empty ambient Skills/plugins"
+    },
+    {
+      "kind": "isolation_failure",
+      "issue": "double fork plus setsid escaped descendant polling; native kernel denies process-fork in corrected profile; existing evidence retained"
+    },
+    {
+      "kind": "infrastructure_failure",
+      "issue": "initial synthetic functional command used unsupported shell heredoc; split foreground exec calls verified21->33 on copies"
+    },
+    {
+      "kind": "no_model_preflight",
+      "issue": "Codex strict configuration rejected tools.view_image before inference; corrected to native features.view_image=false; preserved39.28s attempt; empty-stdin strict parse then passed with zero inference."
+    },
+    {
+      "kind": "infrastructure_failure",
+      "issue": "Codex model session completed but all shared work tools were refused by native MCP approval policy under auto; no pages viewed, scratch not created. Corrected to enabled_tools exact7/default_tools_approval_mode approve; OS boundary and global never unchanged; native no-model dispatch and separately authorized model-selected call verification passed."
+    }
+  ],
+  "non_model_evidence": [
+    {
+      "path": ".audit/acceptance/native-inspection-02/checks.json",
+      "sha256": "5c7308867a465b1c96f1f0e55beca2a0701adebb3bef406db923a55adf3cd25e"
+    },
+    {
+      "path": ".audit/acceptance/python-dependency-audit.json",
+      "sha256": "151560e0cc8f8806779aaeb4c8fb4b666d025ca54f012806a48544f6416653f7"
+    },
+    {
+      "path": ".audit/acceptance/fern-check.log",
+      "sha256": "871b252a90266f2968639ccc58bb88327bf249ef794aa3e167e0b36b0667045c"
+    },
+    {
+      "path": ".audit/capability-security-review.json",
+      "sha256": "025de5b9ea449a1a11f914221e9be6157d86646067cf201a3733996159ae1246"
+    },
+    {
+      "path": ".audit/acceptance/capability-service-no-model.json",
+      "sha256": "e8480a5f07a9256e6e6eee999bf09d0409fa6e82838d68649309bf9f87bff1d7"
+    },
+    {
+      "path": ".audit/acceptance/native-inspection-03/checks.json",
+      "sha256": "cc0bde10f12dc4edc8916b386071253b5525d4c9252aee5c5de97984dfaa4b6a"
+    },
+    {
+      "path": ".audit/acceptance/gdpval-task-readiness-triage.json",
+      "sha256": "1756e3b12a979c4eb8977c42147b1d1e25188690bca7bc582b90f59ade119ced"
+    },
+    {
+      "path": ".audit/native-cli-config-05/local-command.jsonl",
+      "sha256": "145c681ab77492f5f7a9ed9b97cf020ec95c22244d6b1ed6e7c19fc03425e089"
+    },
+    {
+      "path": ".audit/native-cli-config-06/receipt.json",
+      "sha256": "a7a1e7340c56d63e4f010120402e04bc81919a3fe2f42f3c854233d7b2eb62f0"
+    },
+    {
+      "path": ".audit/acceptance/probe-claude-verification.json",
+      "sha256": "48ae70e7281ac7481c35442139178ba82cfcf02966ad6bacf47766c0d722a116"
+    },
+    {
+      "path": ".audit/acceptance/codex-app-server-capability-probe-rerun-20260915T153949Z/receipt.json",
+      "sha256": "2478746d2ce0bdae2819c48ca4e7993501678bc26bfcf5029bdef1412b31cf46"
+    },
+    {
+      "path": ".audit/acceptance/multipage-both-clis-verification.json",
+      "sha256": "d3a9986977ae146f3ca6c44897203cbcbf8466b5a9e9f750e9d08d4c1602e769"
+    },
+    {
+      "path": ".audit/acceptance/application-1-claude-structure.json",
+      "sha256": "c13653a06db6aca92c83712aa674e9da2c74827f9a5e67d1fad84f9e4ed1bd34"
+    },
+    {
+      "path": ".audit/acceptance/application-1-claude-code-resume-check.json",
+      "sha256": "f7e3aea190b272cb84aa3e4a895778e180f10cc62606c82dd67d5781f4af2dc9"
+    },
+    {
+      "path": ".audit/acceptance/codex-app-server-capability-probe-rerun-20260915T154445Z/receipt.json",
+      "sha256": "2388148801a7df2cd47a058187a350684661aa348509a7bb87cf00658cf31a89"
+    },
+    {
+      "path": ".audit/acceptance/task-2/criterion-route-transmission.json",
+      "sha256": "f38383a3ef13596255c7460560a01eb7c50cdbf22e2515399df0b7c878f60e82"
+    },
+    {
+      "path": ".audit/acceptance/cleanup-order-version.json",
+      "sha256": "4647a8a52df40890842b06db1604125b1e3d795917a9f0d8b5918d8a32749916"
+    },
+    {
+      "path": ".audit/acceptance/cleanup-order-before.log",
+      "sha256": "462a611c3423797538dcb167c8f4914bf6157c2a2e51659357fe47d8ede76242"
+    },
+    {
+      "path": ".audit/acceptance/cleanup-order-after.log",
+      "sha256": "29bf7b42a40689693a168b375c63c5378818fb9ebdeb8f5cf1a5188509887754"
+    },
+    {
+      "path": ".audit/acceptance/pytest-final.log",
+      "sha256": "be8419e02e0bba3c9e995e28a3616ec402d01f8859656ffd992e7ed021fc3546"
+    },
+    {
+      "path": ".audit/acceptance/coverage-final.json",
+      "sha256": "0aace8249842f8113a7670e9a4e04b423ffcf5159d02493a8b5aa2dca577a71a"
+    },
+    {
+      "path": ".audit/acceptance/mypy-cleanup-final.log",
+      "sha256": "4c4a1f687213d361065f9094b27b15c087d3754121b66f0e8580a9c699ab6426"
+    },
+    {
+      "path": ".audit/acceptance/ruff-final.log",
+      "sha256": "e1882ce887984ba61814aa2fa5b61dcd7e35afc6b18647ddc6cadd265eb515be"
+    },
+    {
+      "path": ".audit/acceptance/format-final.log",
+      "sha256": "8ee7757c216eb6a9621be530d3b71f58405aa6f740ab474ece2fe5fe3fed94b3"
+    },
+    {
+      "path": ".audit/acceptance/docs-links-final.log",
+      "sha256": "f9a4091900a07bcd14d27a28e892ffcf39eecb27a92b9bc038040e0989cc022b"
+    },
+    {
+      "path": ".audit/acceptance/fern-check-final.log",
+      "sha256": "871b252a90266f2968639ccc58bb88327bf249ef794aa3e167e0b36b0667045c"
+    },
+    {
+      "path": ".audit/acceptance/application-1-codex-structure.json",
+      "sha256": "b54736d62430e0046d2fab022336896c36e25d93b5dde96823548a75ca588c09"
+    },
+    {
+      "path": ".audit/acceptance/dashboard-functional-summary.json",
+      "sha256": "c7d83bedadabdb9c08c2f9b11fb6ecbfef930dba64d09b1786ed23a7a6779614"
+    },
+    {
+      "path": ".audit/acceptance/evaluation-1-codex-evidence-audit.json",
+      "sha256": "ab5e7b3f2398035eeea91309f6ebeaac4c01f626d3fa3638bfcfd3684a0386e7"
+    },
+    {
+      "path": ".audit/acceptance/evaluation-1-claude-code-evidence-audit.json",
+      "sha256": "98c8c503c922bfd35b20ebb3f5d21965e7a060b3c52398c59d456e99cfc1a13c"
+    },
+    {
+      "path": ".audit/acceptance/evaluation-1-codex-source-preservation.json",
+      "sha256": "e70178719496a5dca705755969f8a825c7b5e38dd859b393f0b7cbfc65668b1a"
+    },
+    {
+      "path": ".audit/acceptance/evaluation-1-claude-code-source-preservation.json",
+      "sha256": "71013afc653f97b1d26a19309fd0d81e4e09cf655f928537cbe743cacfee9fa3"
+    },
+    {
+      "path": ".audit/acceptance/evaluation-1-codex-resume-check.json",
+      "sha256": "496b2567330af52f9b94e33182102a3c02efe2a0f222790b5d49f2d14e827cca"
+    },
+    {
+      "path": ".audit/acceptance/evaluation-1-claude-code-resume-check.json",
+      "sha256": "d0b7b26349e3ddfe4a42104252c2e0302b692f5fffe9be4460806e25e8ae7360"
+    },
+    {
+      "path": ".audit/acceptance/session-summary.json",
+      "sha256": "fb2af6f57b5ef0fa3213c5aecbf01726c251194a527c5c20190bed5cbfa3ca0c"
+    },
+    {
+      "path": ".audit/acceptance/source-row-hash-equivalence.json",
+      "sha256": "c361bc52fabd3c6c79bff2ade15b90431198e7e02962f609c72da2f4a2a0b380"
+    },
+    {
+      "path": ".audit/acceptance/saved-comparison-check.json",
+      "sha256": "16e7cd4c61772a18348360cf24def50e91e4bf7b9687cf8a300573826e58770a"
+    },
+    {
+      "path": ".audit/acceptance/ledger-generator-check.log",
+      "sha256": "5d4b6d285b77932e3d08212c3b4974d0a803f98ec60408ac6ccf6a063fa6c19e"
+    },
+    {
+      "path": ".audit/acceptance/application-2-claude-code-structure.json",
+      "sha256": "9760232bec998ce5c7b0a154e731099c764049278f82f80fb75d3b0214bd56f1"
+    },
+    {
+      "path": ".audit/acceptance/application-2-codex-structure.json",
+      "sha256": "4f12c59750b790da2a944d28b85116801f63c31220481777faeace9b0b2e6652"
+    },
+    {
+      "path": ".audit/acceptance/evaluation-2-claude-code-source-preservation.json",
+      "sha256": "b9e7d8b12526c77e68c3ed18c8f1fdd1ad809ffc5931c890ade961ecde17f7fd"
+    },
+    {
+      "path": ".audit/acceptance/evaluation-2-codex-source-preservation.json",
+      "sha256": "6c4f1726c5c19762c181d98884542ebf93698ae6da7a431fcd69efa5c4d69207"
+    },
+    {
+      "path": ".audit/acceptance/application-2-claude-code-resume-check.json",
+      "sha256": "89dfce733d82a68c5e69b29c527ff0e7a77455ade42d7236cdc0d16a80b0adda"
+    },
+    {
+      "path": ".audit/acceptance/application-2-codex-resume-check.json",
+      "sha256": "d94efce146091f765cc4fbc2d26a5fff6e1611954ec21c597f5bb34f0d5bb1af"
+    },
+    {
+      "path": ".audit/acceptance/evaluation-2-claude-code-resume-check.json",
+      "sha256": "7575d41036f5c8b5b3da715eeeca2db7e7bd21f3ce57aed55d4f9982737ba392"
+    },
+    {
+      "path": ".audit/acceptance/evaluation-2-codex-resume-check.json",
+      "sha256": "3175b55f5e1cf4f20c379e06bea5bba399f5e659e22a4b2c11e65b9c5c78aa29"
+    },
+    {
+      "path": ".audit/acceptance/evaluation-2-claude-code-evidence-audit.json",
+      "sha256": "caa21677bdb9967fe9c1a8c73a6d63215c551631717af7477659841d56dd68ae"
+    },
+    {
+      "path": ".audit/acceptance/evaluation-2-codex-evidence-audit.json",
+      "sha256": "05a6525d5eb1fc9b931558aa1785957038cf8cec198da69a99b3f5150c2206b5"
+    }
+  ],
+  "limitations": [
+    "Native Microsoft Office UI/refresh behavior requires a declared human or compatible native evaluator; structural XML and printed views do not establish it.",
+    "Audio/video perceptual evaluation and CAD engines are outside these two fixed tasks and this environment; affected ledger rows remain explicitly unconfirmed.",
+    "Native dependency CVE remediation coverage is unconfirmed; Python dependency audit is recorded separately.",
+    "The old54 list is not fully recoverable; no IDs were guessed.",
+    "The frozen allowlist blocked the ESO redirect to elt.eso.org in task2 Claude research. A future configuration must explicitly declare required redirect hosts and be revalidated; current receipts remain unchanged.",
+    "Available image/research/function tools do not guarantee that the AI judge invokes them. Unsupported pass claims are retained and marked unconfirmed in the acceptance matrix; raw model quality scores are not accepted.",
+    "The two native Word criteria remain unconfirmed in both task2 judges. AI XML inspection is not a native Word open/click test.",
+    "The corrected Codex known-page probe received the same image hashes but recognized8 of9 fields. Transport capability is verified separately from that reading error.",
+    "The creator role was checked without inference and through regressions under this profile; no new creator model trial was run."
+  ],
+  "existing_experiment_impact": {
+    "old_records": "unchanged, including failed and completed runs; no ALPS experiment resumed",
+    "new_application_environment": "requires new runs for all compared N/S/A conditions, including equivalent creator conditions if creation environment changes",
+    "new_evaluation_environment": "new evaluation identity; saved submissions may be reused only if required originals/provenance are present and task/criteria remain applicable",
+    "missing_participant_research": "requires new task execution; controller research cannot repair the old participant record",
+    "pooling": "Do not pool old/new environment or criterion versions; retain failure/unconfirmed counts"
+  },
+  "model_sessions": [
+    {
+      "mode": "probe",
+      "kind": "codex",
+      "label": "config-fixed-codex",
+      "model": "gpt-5.6-sol",
+      "effort": "medium",
+      "status": "completed",
+      "started_at": "2026-09-15T15:30:44.933389+00:00",
+      "finished_at": "2026-09-15T15:32:13.234469+00:00",
+      "elapsed_seconds": 88.2934836249915,
+      "environment_fingerprint": "769793882993d042e678efab9d1c36b8e9e5da688ef8b77b0d91b3d0e10bfceb",
+      "timeout_seconds": 300,
+      "retries": 0,
+      "concurrency": 1,
+      "billing": "existing account subscription; no extra usage/API/auxiliary AI",
+      "error": null,
+      "receipt_path": ".audit/acceptance/probe-config-fixed-codex-session.json",
+      "receipt_sha256": "8e93d265ddd719d0573f45b68bf96195144b328a73b062816e8d07af8fad6814",
+      "initial_output_tree_sha256": "de09724fa42777533a58fe8215b45a2b7fe139f99229216cf9d1a9a84316eb3a",
+      "stage_records": [
+        {
+          "status": "completed",
+          "error": null,
+          "elapsed_seconds": 88.1722488339874,
+          "usage": {
+            "cached_input_tokens": 73728,
+            "cost_usd": null,
+            "input_tokens": 99179,
+            "output_tokens": 1765,
+            "reasoning_tokens": 862
+          },
+          "returncode": 0
+        }
+      ],
+      "acceptance_classification": "infrastructure_failure_native_mcp_approval"
+    },
+    {
+      "mode": "probe",
+      "kind": "claude-code",
+      "label": "claude-code",
+      "model": "claude-opus-5",
+      "effort": "medium",
+      "status": "completed",
+      "started_at": "2026-09-15T15:34:23.193415+00:00",
+      "finished_at": "2026-09-15T15:36:04.706264+00:00",
+      "elapsed_seconds": 101.49623183300719,
+      "environment_fingerprint": "897a166e9aaf372d1515fdfb8a162852cacaaa52298b7545a8471b02571d5d3d",
+      "timeout_seconds": 300,
+      "retries": 0,
+      "concurrency": 1,
+      "billing": "existing account subscription; no extra usage/API/auxiliary AI",
+      "error": null,
+      "receipt_path": ".audit/acceptance/probe-claude-code-session.json",
+      "receipt_sha256": "e9c4c3fd3eda2757950fa468175c533c515c8e05a741b31ef0dcb1678881a683",
+      "initial_output_tree_sha256": "4bc1ad586fc0381bf06e1c586e5adfe4f158640b9cfdbec2edb32e2db22b2c03",
+      "stage_records": [
+        {
+          "status": "completed",
+          "error": null,
+          "elapsed_seconds": 101.3800127080176,
+          "usage": {
+            "cache_creation_input_tokens": 16433,
+            "cached_input_tokens": 22416,
+            "cost_usd": null,
+            "input_tokens": 8,
+            "output_tokens": 1029,
+            "reasoning_tokens": 29,
+            "reported_cost_usd": 0.201303
+          },
+          "returncode": 0
+        }
+      ],
+      "acceptance_classification": "incremental_inspection_path_verified_with_separate_recognition_results"
+    },
+    {
+      "mode": "application",
+      "kind": "claude-code",
+      "label": "1-claude-code",
+      "model": "claude-opus-5",
+      "effort": "medium",
+      "status": "returned",
+      "started_at": "2026-09-15T15:36:41.023227+00:00",
+      "finished_at": "2026-09-15T15:47:28.035795+00:00",
+      "elapsed_seconds": 647.012787707994,
+      "environment_fingerprint": "897a166e9aaf372d1515fdfb8a162852cacaaa52298b7545a8471b02571d5d3d",
+      "timeout_seconds": 900,
+      "retries": 0,
+      "concurrency": 1,
+      "billing": "existing account subscription; no extra usage/API/auxiliary AI",
+      "error": null,
+      "receipt_path": ".audit/acceptance/application-1-claude-code-session.json",
+      "receipt_sha256": "8a15358802900e8007395a01dc01c6fece9a7e4f14f974d238472244b1f14b52",
+      "initial_output_tree_sha256": "3c7d5f4822a426dac24afb72ff30ffde748765275823c3e31df2b97c34535505",
+      "stage_records": [
+        {
+          "task_id": "9e39df84-ac57-4c9b-a2e3-12b8abf2c797",
+          "execution_status": "completed",
+          "evaluation_status": "pending",
+          "elapsed_seconds": 610.5351156660181,
+          "usage": {
+            "cache_creation_input_tokens": 130975,
+            "cached_input_tokens": 1573074,
+            "cost_usd": null,
+            "input_tokens": 46,
+            "output_tokens": 41781,
+            "reasoning_tokens": 18015,
+            "reported_cost_usd": 3.1410419999999997
+          },
+          "error": null,
+          "artifact_files": [
+            {
+              "bytes": 57870,
+              "path": "Dashboard Output.xlsx",
+              "sha256": "2d4e1b9238c5d575be97b77e6e473c43a22bee97b96cdfbf3548f95a75b44309"
+            },
+            {
+              "bytes": 2137,
+              "path": "agent_response.txt",
+              "sha256": "1eae5baddfd62921694fec5e74c7a7659a00af03244838ee0caaca965ee0962b"
+            }
+          ],
+          "artifact_sha256": "ebfe9fbb86b6c88eceb93f1d0c8756c409c935ecf5d5558b26259b3ad421e1c7"
+        }
+      ],
+      "acceptance_classification": "retained_application_or_assessment_attempt; task quality and capability acceptance are separate"
+    },
+    {
+      "mode": "probe",
+      "kind": "codex",
+      "label": "approval-fixed-codex",
+      "model": "gpt-5.6-sol",
+      "effort": "medium",
+      "status": "completed",
+      "started_at": "2026-09-15T15:48:30.079664+00:00",
+      "finished_at": "2026-09-15T15:49:49.896075+00:00",
+      "elapsed_seconds": 79.80852354201488,
+      "environment_fingerprint": "897a166e9aaf372d1515fdfb8a162852cacaaa52298b7545a8471b02571d5d3d",
+      "timeout_seconds": 300,
+      "retries": 0,
+      "concurrency": 1,
+      "billing": "existing account subscription; no extra usage/API/auxiliary AI",
+      "error": null,
+      "receipt_path": ".audit/acceptance/probe-approval-fixed-codex-session.json",
+      "receipt_sha256": "1fed895f52115ffba5a72720ab2f82707060c268ab18a0ca16bbe02f294ec965",
+      "initial_output_tree_sha256": "c3abf3693ad686ad6794f13d2ba20034070df941662911863566e85e575e4e8b",
+      "stage_records": [
+        {
+          "status": "completed",
+          "error": null,
+          "elapsed_seconds": 79.74219504199573,
+          "usage": {
+            "cached_input_tokens": 61824,
+            "cost_usd": null,
+            "input_tokens": 81909,
+            "output_tokens": 1629,
+            "reasoning_tokens": 797
+          },
+          "returncode": 0
+        }
+      ],
+      "acceptance_classification": "incremental_inspection_path_verified_with_separate_recognition_results"
+    },
+    {
+      "mode": "application",
+      "kind": "codex",
+      "label": "1-codex",
+      "model": "gpt-5.6-sol",
+      "effort": "medium",
+      "status": "returned",
+      "started_at": "2026-09-15T15:50:37.300532+00:00",
+      "finished_at": "2026-09-15T16:01:27.552311+00:00",
+      "elapsed_seconds": 650.2461564159894,
+      "environment_fingerprint": "897a166e9aaf372d1515fdfb8a162852cacaaa52298b7545a8471b02571d5d3d",
+      "timeout_seconds": 900,
+      "retries": 0,
+      "concurrency": 1,
+      "billing": "existing account subscription; no extra usage/API/auxiliary AI",
+      "error": null,
+      "receipt_path": ".audit/acceptance/application-1-codex-session.json",
+      "receipt_sha256": "fe119056a37027f33e53803f334bb874841626772759830b0eef45292770e94e",
+      "initial_output_tree_sha256": "73540b083e4f2c6974aeb6b1786568f13c2a416f6be73bec626343d10d00d6d5",
+      "stage_records": [
+        {
+          "task_id": "9e39df84-ac57-4c9b-a2e3-12b8abf2c797",
+          "execution_status": "completed",
+          "evaluation_status": "pending",
+          "elapsed_seconds": 624.2705079170119,
+          "usage": {
+            "cached_input_tokens": 893952,
+            "cost_usd": null,
+            "input_tokens": 986563,
+            "output_tokens": 27870,
+            "reasoning_tokens": 3334
+          },
+          "error": null,
+          "artifact_files": [
+            {
+              "bytes": 33826,
+              "path": "Dashboard Output.xlsx",
+              "sha256": "0d3b1ff0e0c2f733b65d7585cca01a19cdf0b10e3aec9ec06a2dd038f1705268"
+            },
+            {
+              "bytes": 520,
+              "path": "agent_response.txt",
+              "sha256": "1e19a79b7bbe18f9f7775e8181545ec9bf9895b0b7d8988f3b22948803a05887"
+            }
+          ],
+          "artifact_sha256": "16ba0d221eee3513ddb7aa5260be681e5a765357e882e203151b279371329ab8"
+        }
+      ],
+      "acceptance_classification": "retained_application_or_assessment_attempt; task quality and capability acceptance are separate"
+    },
+    {
+      "mode": "evaluation",
+      "kind": "codex",
+      "label": "1-codex",
+      "model": "gpt-5.6-sol",
+      "effort": "medium",
+      "status": "returned",
+      "started_at": "2026-09-15T16:02:28.788809+00:00",
+      "finished_at": "2026-09-15T16:05:59.432341+00:00",
+      "elapsed_seconds": 210.64354712501517,
+      "environment_fingerprint": "b96e51e2f8365cee10f93a8bb3e73756d6eb2039b70ccf472688b1d6e7fbaca2",
+      "timeout_seconds": 600,
+      "retries": 0,
+      "concurrency": 1,
+      "billing": "existing account subscription; no extra usage/API/auxiliary AI",
+      "error": null,
+      "receipt_path": ".audit/acceptance/evaluation-1-codex-session.json",
+      "receipt_sha256": "e26f4b3e6141a18a7961e0287c9a65910ad932b99e58cd93e9665244a5e7a138",
+      "initial_output_tree_sha256": "0253e69ccc22903ff4355751fbdb5495a215b182be847a8f9b99f01a212463e4",
+      "stage_records": [
+        {
+          "task_id": "9e39df84-ac57-4c9b-a2e3-12b8abf2c797",
+          "execution_status": "completed",
+          "evaluation_status": "completed",
+          "assessment_status": "assessed",
+          "judge_elapsed_seconds": 204.4933537080069,
+          "judge_usage": {
+            "cached_input_tokens": 113920,
+            "cost_usd": null,
+            "input_tokens": 151123,
+            "output_tokens": 9988,
+            "reasoning_tokens": 1380
+          },
+          "judge_error": null,
+          "score_error": null,
+          "score_valid": true,
+          "source_artifact_sha256": "16ba0d221eee3513ddb7aa5260be681e5a765357e882e203151b279371329ab8",
+          "evaluation_attempt_count": 1,
+          "judge_reported_score": 0.88,
+          "criterion_status_counts": {
+            "pass": 51,
+            "fail": 6
+          },
+          "quality_score_accepted_for_this_infrastructure_acceptance": false
+        }
+      ],
+      "acceptance_classification": "retained_application_or_assessment_attempt; task quality and capability acceptance are separate"
+    },
+    {
+      "mode": "evaluation",
+      "kind": "claude-code",
+      "label": "1-claude-code",
+      "model": "claude-opus-5",
+      "effort": "medium",
+      "status": "returned",
+      "started_at": "2026-09-15T16:06:09.568855+00:00",
+      "finished_at": "2026-09-15T16:10:06.304485+00:00",
+      "elapsed_seconds": 236.7358650000242,
+      "environment_fingerprint": "b96e51e2f8365cee10f93a8bb3e73756d6eb2039b70ccf472688b1d6e7fbaca2",
+      "timeout_seconds": 600,
+      "retries": 0,
+      "concurrency": 1,
+      "billing": "existing account subscription; no extra usage/API/auxiliary AI",
+      "error": null,
+      "receipt_path": ".audit/acceptance/evaluation-1-claude-code-session.json",
+      "receipt_sha256": "0b2938aab0b9ae5950a8034b7645e0a1eda3d5246e69c4da375512f495978b0f",
+      "initial_output_tree_sha256": "b7b6110a69e5a575e04ef59846b599f59a0a503ad0b3af7cd3ca46a0cb8eff22",
+      "stage_records": [
+        {
+          "task_id": "9e39df84-ac57-4c9b-a2e3-12b8abf2c797",
+          "execution_status": "completed",
+          "evaluation_status": "completed",
+          "assessment_status": "assessed",
+          "judge_elapsed_seconds": 228.64411920800922,
+          "judge_usage": {
+            "cache_creation_input_tokens": 82141,
+            "cached_input_tokens": 662598,
+            "cost_usd": null,
+            "input_tokens": 30,
+            "output_tokens": 14320,
+            "reasoning_tokens": 2791,
+            "reported_cost_usd": 1.510859
+          },
+          "judge_error": null,
+          "score_error": null,
+          "score_valid": true,
+          "source_artifact_sha256": "ebfe9fbb86b6c88eceb93f1d0c8756c409c935ecf5d5558b26259b3ad421e1c7",
+          "evaluation_attempt_count": 1,
+          "judge_reported_score": 0.96,
+          "criterion_status_counts": {
+            "pass": 55,
+            "fail": 2
+          },
+          "quality_score_accepted_for_this_infrastructure_acceptance": false
+        }
+      ],
+      "acceptance_classification": "retained_application_or_assessment_attempt; task quality and capability acceptance are separate"
+    },
+    {
+      "mode": "application",
+      "kind": "codex",
+      "label": "2-codex",
+      "model": "gpt-5.6-sol",
+      "effort": "medium",
+      "status": "returned",
+      "started_at": "2026-09-15T16:10:24.798517+00:00",
+      "finished_at": "2026-09-15T16:18:54.327457+00:00",
+      "elapsed_seconds": 509.454874957999,
+      "environment_fingerprint": "b96e51e2f8365cee10f93a8bb3e73756d6eb2039b70ccf472688b1d6e7fbaca2",
+      "timeout_seconds": 900,
+      "retries": 0,
+      "concurrency": 1,
+      "billing": "existing account subscription; no extra usage/API/auxiliary AI",
+      "error": null,
+      "receipt_path": ".audit/acceptance/application-2-codex-session.json",
+      "receipt_sha256": "9a2014fdce27d2f0fa64cd71b6bd5a51d922211536190e2168506ef96433dd5b",
+      "initial_output_tree_sha256": "7fd3d4070b6e561a4f2d5225968e452a323821fa14f13f482df0c426929bd924",
+      "stage_records": [
+        {
+          "task_id": "5d0feb24-e8b6-4ace-b64f-d5cd1a8b563d",
+          "execution_status": "completed",
+          "evaluation_status": "pending",
+          "elapsed_seconds": 504.7792207500024,
+          "usage": {
+            "cached_input_tokens": 1465216,
+            "cost_usd": null,
+            "input_tokens": 1574371,
+            "output_tokens": 21821,
+            "reasoning_tokens": 4815
+          },
+          "error": null,
+          "artifact_files": [
+            {
+              "bytes": 48144,
+              "path": "TRAPPIST-1 Reporter Draft_Science Edit_Redline.docx",
+              "sha256": "bda4d2b6b8fa4aa7533806ee2580982be83dff4514fc41f3fd1bdca199b875b3"
+            },
+            {
+              "bytes": 450,
+              "path": "agent_response.txt",
+              "sha256": "1701f585332ea2a42f7725c903f0ab51cbe53f78623cb3938dcfb53115e3a821"
+            }
+          ],
+          "artifact_sha256": "a23b9900f0ae4914e737514bacd25184ed8bff7ec51ba786f39e1b58ed1940a4"
+        }
+      ],
+      "acceptance_classification": "retained_application_or_assessment_attempt; task quality and capability acceptance are separate"
+    },
+    {
+      "mode": "application",
+      "kind": "claude-code",
+      "label": "2-claude-code",
+      "model": "claude-opus-5",
+      "effort": "medium",
+      "status": "returned",
+      "started_at": "2026-09-15T16:19:22.194321+00:00",
+      "finished_at": "2026-09-15T16:29:02.825914+00:00",
+      "elapsed_seconds": 580.6244905409985,
+      "environment_fingerprint": "b96e51e2f8365cee10f93a8bb3e73756d6eb2039b70ccf472688b1d6e7fbaca2",
+      "timeout_seconds": 900,
+      "retries": 0,
+      "concurrency": 1,
+      "billing": "existing account subscription; no extra usage/API/auxiliary AI",
+      "error": null,
+      "receipt_path": ".audit/acceptance/application-2-claude-code-session.json",
+      "receipt_sha256": "5b015036f169de9e513f060dd51fa19e34892fffef48daa4abe85900b4d5c350",
+      "initial_output_tree_sha256": "2b837b56484a2036bd3833f2be3a6c5bf2de4e346b2779be15114b01db7061b8",
+      "stage_records": [
+        {
+          "task_id": "5d0feb24-e8b6-4ace-b64f-d5cd1a8b563d",
+          "execution_status": "completed",
+          "evaluation_status": "pending",
+          "elapsed_seconds": 571.9676007909875,
+          "usage": {
+            "cache_creation_input_tokens": 134099,
+            "cached_input_tokens": 1703430,
+            "cost_usd": null,
+            "input_tokens": 58,
+            "output_tokens": 42669,
+            "reasoning_tokens": 12502,
+            "reported_cost_usd": 3.2597199999999997
+          },
+          "error": null,
+          "artifact_files": [
+            {
+              "bytes": 17453,
+              "path": "TRAPPIST-1 Reporter Draft - Editor Review (tracked changes).docx",
+              "sha256": "9b7b5a9252a1870c20bb32d0668a78368097addd19f3b40537d2e7898f313e10"
+            },
+            {
+              "bytes": 2791,
+              "path": "agent_response.txt",
+              "sha256": "4c0157dd16f340c8dc3bbdacea441d5185eaca6ca3073729c6940861c3d670ec"
+            },
+            {
+              "bytes": 35746,
+              "path": "content.jsonl",
+              "sha256": "96092536a2ef1068d99d1b13b537f9f61944995f868e3090ba5af31749cdd844"
+            }
+          ],
+          "artifact_sha256": "3ac6eb35132fbb46728d01f3fd49e100e84aae3f57ecd0255f2acd63b7c73f55"
+        }
+      ],
+      "acceptance_classification": "retained_application_or_assessment_attempt; task quality and capability acceptance are separate"
+    },
+    {
+      "mode": "evaluation",
+      "kind": "codex",
+      "label": "2-codex",
+      "model": "gpt-5.6-sol",
+      "effort": "medium",
+      "status": "returned",
+      "started_at": "2026-09-15T16:30:12.037522+00:00",
+      "finished_at": "2026-09-15T16:33:15.982821+00:00",
+      "elapsed_seconds": 183.9418764160073,
+      "environment_fingerprint": "b96e51e2f8365cee10f93a8bb3e73756d6eb2039b70ccf472688b1d6e7fbaca2",
+      "timeout_seconds": 600,
+      "retries": 0,
+      "concurrency": 1,
+      "billing": "existing account subscription; no extra usage/API/auxiliary AI",
+      "error": null,
+      "receipt_path": ".audit/acceptance/evaluation-2-codex-session.json",
+      "receipt_sha256": "bb172725fdc9750a8f98ef23123e52a79a589f04a5f893e5e89505917b9e1ac6",
+      "initial_output_tree_sha256": "07dc8a2f8dc2ad9324021b5e12482601e60534f4e06ab46eb29326c78064324f",
+      "stage_records": [
+        {
+          "task_id": "5d0feb24-e8b6-4ace-b64f-d5cd1a8b563d",
+          "execution_status": "completed",
+          "evaluation_status": "completed",
+          "assessment_status": "unconfirmed",
+          "judge_elapsed_seconds": 175.3315862500167,
+          "judge_usage": {
+            "cached_input_tokens": 78080,
+            "cost_usd": null,
+            "input_tokens": 108891,
+            "output_tokens": 8497,
+            "reasoning_tokens": 1758
+          },
+          "judge_error": null,
+          "score_error": null,
+          "score_valid": true,
+          "source_artifact_sha256": "a23b9900f0ae4914e737514bacd25184ed8bff7ec51ba786f39e1b58ed1940a4",
+          "evaluation_attempt_count": 1,
+          "judge_reported_score": null,
+          "criterion_status_counts": {
+            "unconfirmed": 2,
+            "pass": 29,
+            "fail": 15
+          },
+          "quality_score_accepted_for_this_infrastructure_acceptance": false
+        }
+      ],
+      "acceptance_classification": "retained_application_or_assessment_attempt; task quality and capability acceptance are separate"
+    },
+    {
+      "mode": "evaluation",
+      "kind": "claude-code",
+      "label": "2-claude-code",
+      "model": "claude-opus-5",
+      "effort": "medium",
+      "status": "returned",
+      "started_at": "2026-09-15T16:33:38.441307+00:00",
+      "finished_at": "2026-09-15T16:38:43.617904+00:00",
+      "elapsed_seconds": 305.171938332991,
+      "environment_fingerprint": "b96e51e2f8365cee10f93a8bb3e73756d6eb2039b70ccf472688b1d6e7fbaca2",
+      "timeout_seconds": 600,
+      "retries": 0,
+      "concurrency": 1,
+      "billing": "existing account subscription; no extra usage/API/auxiliary AI",
+      "error": null,
+      "receipt_path": ".audit/acceptance/evaluation-2-claude-code-session.json",
+      "receipt_sha256": "34093cb37977e44333c315fb9495b9d028c5f5095b654f28a60d00d60f58d5f7",
+      "initial_output_tree_sha256": "c50398ced051b840b2d7a1868f1b49b09efcba1ebb44a91a9d9b1af44927269d",
+      "stage_records": [
+        {
+          "task_id": "5d0feb24-e8b6-4ace-b64f-d5cd1a8b563d",
+          "execution_status": "completed",
+          "evaluation_status": "completed",
+          "assessment_status": "unconfirmed",
+          "judge_elapsed_seconds": 295.0724770830129,
+          "judge_usage": {
+            "cache_creation_input_tokens": 52799,
+            "cached_input_tokens": 308395,
+            "cost_usd": null,
+            "input_tokens": 22,
+            "output_tokens": 21031,
+            "reasoning_tokens": 8041,
+            "reported_cost_usd": 1.2080724999999999
+          },
+          "judge_error": null,
+          "score_error": null,
+          "score_valid": true,
+          "source_artifact_sha256": "3ac6eb35132fbb46728d01f3fd49e100e84aae3f57ecd0255f2acd63b7c73f55",
+          "evaluation_attempt_count": 1,
+          "judge_reported_score": null,
+          "criterion_status_counts": {
+            "unconfirmed": 2,
+            "pass": 41,
+            "fail": 3
+          },
+          "quality_score_accepted_for_this_infrastructure_acceptance": false
+        }
+      ],
+      "acceptance_classification": "retained_application_or_assessment_attempt; task quality and capability acceptance are separate"
+    }
+  ],
+  "verification": {
+    "pytest": {
+      "passed": 209,
+      "elapsed_seconds": 15.9,
+      "line_coverage_percent": 76.14576899320568,
+      "log": ".audit/acceptance/pytest-final.log",
+      "coverage_json": ".audit/acceptance/coverage-final.json",
+      "non_failing_warnings": "SQLite ResourceWarning in existing test processes"
+    },
+    "cleanup_regression": {
+      "before": "2 failures reproduced ordinary-exit and timeout ordering",
+      "after": "24 integration/native-sandbox tests passed",
+      "log": ".audit/acceptance/cleanup-order-after.log"
+    },
+    "mypy": {
+      "status": "passed",
+      "source_files": 29,
+      "log": ".audit/acceptance/mypy-cleanup-final.log"
+    },
+    "ruff": {
+      "lint": "passed",
+      "format": "passed",
+      "logs": [
+        ".audit/acceptance/ruff-final.log",
+        ".audit/acceptance/format-final.log"
+      ]
+    },
+    "python_dependency_audit": {
+      "status": "passed",
+      "packages": 52,
+      "known_vulnerabilities": 0
+    },
+    "documentation": {
+      "links": "passed",
+      "fern_errors": 0,
+      "fern_existing_warnings": 1,
+      "logs": [
+        ".audit/acceptance/docs-links-final.log",
+        ".audit/acceptance/fern-check-final.log"
+      ]
+    },
+    "publication_secret_scan": "pending"
+  },
+  "multipage_validation": {
+    "infrastructure_status": "met",
+    "pages": [
+      1,
+      21,
+      30
+    ],
+    "source_unchanged": true,
+    "shared_pdf_sha256": "33702e6ecb8b905c23370c70448ca5567405d1eaafdbc985686429acb0f43aca",
+    "images": {
+      "codex": {
+        "1": "10161fce3685765f47e01ca95241884ba27aa0558cce845a4aec8aa25fde8ee3",
+        "21": "0f490ab72949945b607039d9304c06502fdfbc895db532df76831ca7b423621d",
+        "30": "429ead22d6a2681971caf7ac108ddee80170d33ff807f89548a008396f9a5521"
+      },
+      "claude-code": {
+        "1": "10161fce3685765f47e01ca95241884ba27aa0558cce845a4aec8aa25fde8ee3",
+        "21": "0f490ab72949945b607039d9304c06502fdfbc895db532df76831ca7b423621d",
+        "30": "429ead22d6a2681971caf7ac108ddee80170d33ff807f89548a008396f9a5521"
+      }
+    },
+    "recognition": {
+      "codex": {
+        "status": "partially_met",
+        "matched_fields": 8,
+        "expected_fields": 9,
+        "mismatch": {
+          "page": 21,
+          "field": "shape",
+          "expected": "square",
+          "observed": "horizontal rectangle"
+        }
+      },
+      "claude-code": {
+        "status": "met",
+        "matched_fields": 9,
+        "expected_fields": 9
+      }
+    },
+    "classification": "Codex shape error is evaluator recognition error; image transport and original bytes are verified, not a blanket quality pass.",
+    "identical_image_bytes_both_clis": true
+  },
+  "runtime_version_change": {
+    "change": "Stop registered workers before protected snapshot and deliverable collection; idempotent outer cleanup retained",
+    "old_fingerprint": "897a166e9aaf372d1515fdfb8a162852cacaaa52298b7545a8471b02571d5d3d",
+    "new_fingerprint": "b96e51e2f8365cee10f93a8bb3e73756d6eb2039b70ccf472688b1d6e7fbaca2",
+    "old_source_path": ".audit/acceptance/runtime-source-before-format",
+    "new_source_path": ".audit/acceptance/runtime-source-cleanup-fixed",
+    "new_source_sha256": "70aa7eb41d637ad143e01b16c98e7afae86c503fe7245a12cba128023c8f2e75",
+    "format_only_ast_equal": {
+      "capability_sandbox.py": true,
+      "capability_service.py": true
+    },
+    "runtime_logic_changed": [
+      "capability_executor.py"
+    ],
+    "applies_to": "Subsequent evaluation1 both CLIs and task2 applications/evaluations; completed task1 applications and multipage probes retain old identities",
+    "red_regression_log": ".audit/acceptance/cleanup-order-before.log",
+    "red_regression_sha256": "462a611c3423797538dcb167c8f4914bf6157c2a2e51659357fe47d8ede76242",
+    "model_settings_and_tool_specification_changed": false
+  },
+  "inspection_evidence_audits": [
+    {
+      "path": ".audit/acceptance/evaluation-1-claude-code-evidence-audit.json",
+      "sha256": "98c8c503c922bfd35b20ebb3f5d21965e7a060b3c52398c59d456e99cfc1a13c",
+      "unsupported_pass_claim_count": 5,
+      "actual_scope": "Copied workbook structure, original reference data, native PivotTable definitions/caches, copied LibreOffice recalculation and dependent cached cells, chart data/anchors, selected rendered pages. No changed source-data/selector perturbation was performed."
+    },
+    {
+      "path": ".audit/acceptance/evaluation-1-codex-evidence-audit.json",
+      "sha256": "ab5e7b3f2398035eeea91309f6ebeaac4c01f626d3fa3638bfcfd3684a0386e7",
+      "unsupported_pass_claim_count": 8,
+      "actual_scope": "File inventory, XLSX structure/formulas/cached cells/chart references and anchors. No direct image inspection or copied recalculation/input perturbation."
+    },
+    {
+      "path": ".audit/acceptance/evaluation-2-claude-code-evidence-audit.json",
+      "sha256": "caa21677bdb9967fe9c1a8c73a6d63215c551631717af7477659841d56dd68ae",
+      "unsupported_pass_claim_count": 2,
+      "actual_scope": "Original and revised DOCX XML/text, native revisions/comments and anchors; rendered pages1 and2 of9 from an isolated copy. No saved scientific-source bytes or native Word opening/link activation inspected."
+    },
+    {
+      "path": ".audit/acceptance/evaluation-2-codex-evidence-audit.json",
+      "sha256": "05a6525d5eb1fc9b931558aa1785957038cf8cec198da69a99b3f5150c2206b5",
+      "unsupported_pass_claim_count": 2,
+      "actual_scope": "File inventory; original and revised DOCX XML/text, native revisions/comments, paragraph anchors and hyperlink elements. No image pages, saved scientific-source content or native Word opening/click activation inspected."
+    }
+  ],
+  "copied_functional_inspection": {
+    "purpose": "Copied functional inspection capability on both retained task1 outputs; not replacement AI scoring",
+    "status": "passed_for_declared_checks",
+    "checks": [
+      {
+        "client_submission": "codex",
+        "receipt_path": ".audit/acceptance/native-dashboard-perturbation-forced/codex/receipt.json",
+        "receipt_sha256": "ca1582c8b4047c41a7fa256ee5f829520ec1e034433206782c510984424d5787",
+        "source_sha256": "0d3b1ff0e0c2f733b65d7585cca01a19cdf0b10e3aec9ec06a2dd038f1705268",
+        "runtime_fingerprint": "b96e51e2f8365cee10f93a8bb3e73756d6eb2039b70ccf472688b1d6e7fbaca2",
+        "elapsed_seconds": 10.062699583009817,
+        "model_calls": 0,
+        "metric_checks_passed": 12,
+        "variants": [
+          "baseline",
+          "changed input +1000",
+          "week2",
+          "week range1-2"
+        ],
+        "metrics": [
+          "B8",
+          "F8",
+          "I8"
+        ],
+        "chart_value_cache_changes": {
+          "changed": [
+            "xl/charts/chart1.xml",
+            "xl/charts/chart2.xml",
+            "xl/charts/chart3.xml",
+            "xl/charts/chart4.xml"
+          ],
+          "week2": [
+            "xl/charts/chart1.xml",
+            "xl/charts/chart2.xml",
+            "xl/charts/chart3.xml"
+          ],
+          "range12": []
+        },
+        "native_pivot_area_changed": {
+          "changed": false,
+          "week2": false,
+          "range12": false
+        },
+        "original_unchanged": true
+      },
+      {
+        "client_submission": "claude-code",
+        "receipt_path": ".audit/acceptance/native-dashboard-perturbation-forced/claude-code/receipt.json",
+        "receipt_sha256": "e886308724d38e8a501bcd13f2ce5cd986231bf45621ca6c87b359b70a0faea6",
+        "source_sha256": "2d4e1b9238c5d575be97b77e6e473c43a22bee97b96cdfbf3548f95a75b44309",
+        "runtime_fingerprint": "b96e51e2f8365cee10f93a8bb3e73756d6eb2039b70ccf472688b1d6e7fbaca2",
+        "elapsed_seconds": 9.635196582996286,
+        "model_calls": 0,
+        "metric_checks_passed": 12,
+        "variants": [
+          "baseline",
+          "changed input +1000",
+          "week2",
+          "week range1-2"
+        ],
+        "metrics": [
+          "D8",
+          "H8",
+          "L8"
+        ],
+        "chart_value_cache_changes": {
+          "changed": [
+            "xl/charts/chart1.xml",
+            "xl/charts/chart2.xml",
+            "xl/charts/chart3.xml",
+            "xl/charts/chart4.xml"
+          ],
+          "week2": [
+            "xl/charts/chart1.xml",
+            "xl/charts/chart2.xml",
+            "xl/charts/chart3.xml"
+          ],
+          "range12": [
+            "xl/charts/chart1.xml",
+            "xl/charts/chart2.xml",
+            "xl/charts/chart3.xml"
+          ]
+        },
+        "native_pivot_area_changed": {
+          "changed": true,
+          "week2": false,
+          "range12": false
+        },
+        "original_unchanged": true
+      }
+    ],
+    "limits": [
+      "No native Excel UI interaction or explicit native PivotTable filter/refresh action",
+      "No full57-criterion quality pass",
+      "Codex output has no native pivots; formula-driven charts do not satisfy those native-pivot requirements"
+    ],
+    "method_history": {
+      "first_probe": ".audit/acceptance/native-dashboard-perturbation",
+      "finding": "Conversion alone reused Codex cached formula values. Initial expected-average calculation also counted empty weeks as zero; corrected method excludes absent data. All prior observations remain saved.",
+      "corrected_probe": ".audit/acceptance/native-dashboard-perturbation-forced",
+      "method": "Remove formula value caches and request full recalculation only in isolated copies; preserve formulas and original source bytes, then read recalculated cells and serialized chart caches."
+    },
+    "ai_judgments": "Original scores and reports remain unchanged. Later controller functional checks provide separate scoped evidence; they do not retroactively mean the AI judges performed those checks."
+  },
+  "quality_score_interpretation": "Raw AI scores are preserved but are not accepted quality results for this infrastructure acceptance. Controller audits identify unsupported pass assertions; subsequent copied functional checks are separately recorded, never retroactively attributed to the judges.",
+  "task_verification": {
+    "9e39df84-ac57-4c9b-a2e3-12b8abf2c797": {
+      "task_id": "9e39df84-ac57-4c9b-a2e3-12b8abf2c797",
+      "order": 1,
+      "full_task_acceptance": "unconfirmed",
+      "criterion_evidence_path": ".agents/development/evidence/gdpval-acceptance-criteria.json",
+      "interpretation": "Execution occurred is distinct from participant task success and complete functional acceptance. Consult actual trace, criterion mapping and separately documented controller checks. No quality score is promoted here. Both applications and both evaluations completed. Codex omitted native PivotTables, a participant result; copied calculation checks are separate from original judge actions.",
+      "generation": {
+        "codex": {
+          "status": "completed",
+          "task_success": "unconfirmed",
+          "receipt_path": ".audit/acceptance/application-1-codex-session.json",
+          "receipt_sha256": "fe119056a37027f33e53803f334bb874841626772759830b0eef45292770e94e",
+          "environment_fingerprint": "897a166e9aaf372d1515fdfb8a162852cacaaa52298b7545a8471b02571d5d3d",
+          "elapsed_seconds": 650.2461564159894,
+          "model": "gpt-5.6-sol",
+          "error": null
+        },
+        "claude-code": {
+          "status": "completed",
+          "task_success": "unconfirmed",
+          "receipt_path": ".audit/acceptance/application-1-claude-code-session.json",
+          "receipt_sha256": "8a15358802900e8007395a01dc01c6fece9a7e4f14f974d238472244b1f14b52",
+          "environment_fingerprint": "897a166e9aaf372d1515fdfb8a162852cacaaa52298b7545a8471b02571d5d3d",
+          "elapsed_seconds": 647.012787707994,
+          "model": "claude-opus-5",
+          "error": null
+        }
+      },
+      "evaluation": {
+        "codex": {
+          "status": "completed",
+          "task_success": "unconfirmed",
+          "receipt_path": ".audit/acceptance/evaluation-1-codex-session.json",
+          "receipt_sha256": "e26f4b3e6141a18a7961e0287c9a65910ad932b99e58cd93e9665244a5e7a138",
+          "environment_fingerprint": "b96e51e2f8365cee10f93a8bb3e73756d6eb2039b70ccf472688b1d6e7fbaca2",
+          "elapsed_seconds": 210.64354712501517,
+          "model": "gpt-5.6-sol",
+          "error": null
+        },
+        "claude-code": {
+          "status": "completed",
+          "task_success": "unconfirmed",
+          "receipt_path": ".audit/acceptance/evaluation-1-claude-code-session.json",
+          "receipt_sha256": "0b2938aab0b9ae5950a8034b7645e0a1eda3d5246e69c4da375512f495978b0f",
+          "environment_fingerprint": "b96e51e2f8365cee10f93a8bb3e73756d6eb2039b70ccf472688b1d6e7fbaca2",
+          "elapsed_seconds": 236.7358650000242,
+          "model": "claude-opus-5",
+          "error": null
+        }
+      }
+    },
+    "5d0feb24-e8b6-4ace-b64f-d5cd1a8b563d": {
+      "task_id": "5d0feb24-e8b6-4ace-b64f-d5cd1a8b563d",
+      "order": 2,
+      "full_task_acceptance": "unconfirmed",
+      "criterion_evidence_path": ".agents/development/evidence/gdpval-acceptance-criteria.json",
+      "interpretation": "Execution occurred is distinct from participant task success and complete functional acceptance. Consult actual trace, criterion mapping and separately documented controller checks. No quality score is promoted here. Both applications and both evaluations completed; both overall scores remain null for native Word items. The frozen allowlist rejected the ESO redirect; source-content corroboration was not exercised by either judge.",
+      "generation": {
+        "codex": {
+          "status": "completed",
+          "task_success": "unconfirmed",
+          "receipt_path": ".audit/acceptance/application-2-codex-session.json",
+          "receipt_sha256": "9a2014fdce27d2f0fa64cd71b6bd5a51d922211536190e2168506ef96433dd5b",
+          "environment_fingerprint": "b96e51e2f8365cee10f93a8bb3e73756d6eb2039b70ccf472688b1d6e7fbaca2",
+          "elapsed_seconds": 509.454874957999,
+          "model": "gpt-5.6-sol",
+          "error": null
+        },
+        "claude-code": {
+          "status": "completed",
+          "task_success": "unconfirmed",
+          "receipt_path": ".audit/acceptance/application-2-claude-code-session.json",
+          "receipt_sha256": "5b015036f169de9e513f060dd51fa19e34892fffef48daa4abe85900b4d5c350",
+          "environment_fingerprint": "b96e51e2f8365cee10f93a8bb3e73756d6eb2039b70ccf472688b1d6e7fbaca2",
+          "elapsed_seconds": 580.6244905409985,
+          "model": "claude-opus-5",
+          "error": null
+        }
+      },
+      "evaluation": {
+        "codex": {
+          "status": "completed",
+          "task_success": "unconfirmed",
+          "receipt_path": ".audit/acceptance/evaluation-2-codex-session.json",
+          "receipt_sha256": "bb172725fdc9750a8f98ef23123e52a79a589f04a5f893e5e89505917b9e1ac6",
+          "environment_fingerprint": "b96e51e2f8365cee10f93a8bb3e73756d6eb2039b70ccf472688b1d6e7fbaca2",
+          "elapsed_seconds": 183.9418764160073,
+          "model": "gpt-5.6-sol",
+          "error": null
+        },
+        "claude-code": {
+          "status": "completed",
+          "task_success": "unconfirmed",
+          "receipt_path": ".audit/acceptance/evaluation-2-claude-code-session.json",
+          "receipt_sha256": "34093cb37977e44333c315fb9495b9d028c5f5095b654f28a60d00d60f58d5f7",
+          "environment_fingerprint": "b96e51e2f8365cee10f93a8bb3e73756d6eb2039b70ccf472688b1d6e7fbaca2",
+          "elapsed_seconds": 305.171938332991,
+          "model": "claude-opus-5",
+          "error": null
+        }
+      }
+    }
+  },
+  "model_sessions_finished": 11,
+  "workflow_elapsed_seconds_total": 3593.429775497032,
+  "usage_interpretation": "Per-session native token fields are retained without converting unknowns to zero. Codex and Claude report cache fields differently; do not add cached tokens to input indiscriminately. CLI USD estimates are not actual incremental subscription charges; actual cost remains null.",
+  "timing_interpretation": "Acceptance diagnostics on a development host; other non-model local checks also occurred. These timings are not a controlled ALPS/N/S/A performance comparison.",
+  "outcomes": {
+    "O1": {
+      "status": "verified_declared_paths_with_network_configuration_limit",
+      "evidence": [
+        "model_sessions",
+        "copied_functional_inspection",
+        ".audit/acceptance/capability-service-no-model.json"
+      ],
+      "scope": "Common file/code/HTTPS retrieval/search/pinned-wheel capabilities; helper authoring and invocation time/usage recorded. Task output quality is not an admission condition.",
+      "unconfirmed": "The ESO public page redirects to elt.eso.org, absent from the frozen exact-domain allowlist. The denial is retained as an environment limitation; do not relabel it as participant failure or expand the old condition retroactively."
+    },
+    "O2": {
+      "status": "verified_paths_with_explicit_unconfirmed_items",
+      "evidence": [
+        "multipage_validation",
+        "copied_functional_inspection",
+        "inspection_evidence_audits",
+        ".agents/development/evidence/gdpval-acceptance-criteria.json"
+      ],
+      "scope": "Both native image transports exceed20pages by incremental requests; immutable original/derivative hashes; copied formula/chart behavior and DOCX revision/comment inspection. Actual judge scope and unsupported pass assertions are retained.",
+      "unconfirmed": "Microsoft Word opening/hyperlink activation require declared human inspection; native Excel UI/filter-refresh actions and all unviewed portions remain unconfirmed."
+    },
+    "O3": {
+      "status": "verified_for_pinned_macos_profiles",
+      "evidence": [
+        "preflight",
+        "runtime_version_change",
+        ".audit/capability-security-review.json",
+        ".audit/acceptance/capability-service-no-model.json"
+      ],
+      "scope": "Same7 work tools and baseline dependencies; role-specific write boundaries; account auth only; explicit native approval configuration. Actual model calls cover application/evaluation; creation role receives no-model boundary checks and regression evidence."
+    },
+    "O4": {
+      "status": "participant_retrieval_recorded",
+      "evidence": [
+        "model_sessions",
+        ".audit/acceptance/session-summary.json"
+      ],
+      "scope": "Only original provided files staged by controller. Participant research requests, returned bytes, redirects, timestamps/hashes and errors are saved separately from provided inputs and submission artifacts."
+    },
+    "O5": {
+      "status": "bounded_review_recorded",
+      "evidence": [
+        ".agents/development/gdpval-task-readiness.json",
+        ".agents/development/evidence/gdpval-content-triage-2026-09-16.json",
+        ".agents/development/scripts/gdpval_readiness.py"
+      ],
+      "scope": "220unique tasks,8sections and3independent current axes; original2fixed tasks/order; historic partitions/reasons preserved separately. Unreviewed files/criteria and the incompletely recovered old54 exclusion list remain explicit, without guessed IDs."
+    },
+    "O6": {
+      "status": "verified_for_declared_regression_and_saved_record_paths",
+      "evidence": [
+        "verification",
+        ".audit/acceptance/saved-comparison-check.json",
+        ".audit/acceptance/application-1-claude-code-resume-check.json",
+        ".audit/acceptance/application-2-claude-code-resume-check.json",
+        ".audit/acceptance/application-2-codex-resume-check.json",
+        ".audit/acceptance/evaluation-1-claude-code-resume-check.json",
+        ".audit/acceptance/evaluation-1-codex-resume-check.json",
+        ".audit/acceptance/evaluation-2-claude-code-resume-check.json",
+        ".audit/acceptance/evaluation-2-codex-resume-check.json"
+      ],
+      "scope": "209 regression tests; typing of29 runtime sources plus ledger generator; Ruff/docs/security checks; completed resumes make zero model calls and preserve artifacts; saved comparison retains4 generations/4 judgments and explicit unconfirmed assessments."
+    }
+  },
+  "delivery_decision": "Draft PR with supported paths, failed attempts and unconfirmed criteria visible; no ALPS experiment, merge or release authorization.",
+  "inference_envelope_check": {
+    "status": "passed",
+    "models_unchanged": true,
+    "billing_unchanged": true,
+    "maximum_concurrent_model_sessions": 1,
+    "automatic_retries": 0,
+    "original_fixed_task_order_preserved": true,
+    "additional_sessions_beyond_authorized_11": 0
+  },
+  "saved_comparison": {
+    "status": "passed",
+    "model_calls": 0,
+    "elapsed_seconds": 0.24700299999676645,
+    "input_count": 4,
+    "generated_sample_count": 4,
+    "judgment_count": 4,
+    "unconfirmed_assessment_count": 2,
+    "source_trees_unchanged": true,
+    "before_and_after_sha256": {
+      ".audit/acceptance/evaluation-1-codex": "0253e69ccc22903ff4355751fbdb5495a215b182be847a8f9b99f01a212463e4",
+      ".audit/acceptance/evaluation-1-claude-code": "b7b6110a69e5a575e04ef59846b599f59a0a503ad0b3af7cd3ca46a0cb8eff22",
+      ".audit/acceptance/evaluation-2-codex": "07dc8a2f8dc2ad9324021b5e12482601e60534f4e06ab46eb29326c78064324f",
+      ".audit/acceptance/evaluation-2-claude-code": "c50398ced051b840b2d7a1868f1b49b09efcba1ebb44a91a9d9b1af44927269d"
+    },
+    "report_path": "/Users/naokishima/Library/Mobile Documents/com~apple~CloudDocs/Project/eval-harness/.worktrees/gdpval-capability-environment/.audit/acceptance/saved-comparison/comparison.json",
+    "report_sha256": "f7fb280f8585c24dbc021c37f9a01fec2825affe1caedf2edb1d5d9c797ad463",
+    "interpretation": "Read-only saved comparison retains every generation and judgment; unconfirmed scores remain null with explicit counts. Raw task1 judge scores remain unaccepted for quality due to separately recorded evidence gaps. This is accounting verification, not ALPS comparison."
+  },
+  "publication_security": {
+    "status": "passed",
+    "scanner": "gitleaks",
+    "initial_report_path": ".audit/acceptance/secrets-initial.json",
+    "final_staged_report_path": ".audit/acceptance/secrets-final.json",
+    "findings": 0,
+    "scope": "All submitted file bytes, including final evidence metadata; raw local audit journals are excluded from publication. Final staged scan is required before commit."
+  },
+  "final_readiness_records": [
+    {
+      "path": ".agents/development/gdpval-task-readiness.json",
+      "sha256": "96293d3acb7c08dec8bd022b550a899629d70d3ff434cc6dc9979d18dbe2d75d"
+    },
+    {
+      "path": ".agents/development/evidence/gdpval-content-triage-2026-09-16.json",
+      "sha256": "2dd45af31d7aa692308dd9f1e861cc3c22997460907ad37072f31d2c770741c4"
+    },
+    {
+      "path": ".agents/development/scripts/gdpval_readiness.py",
+      "sha256": "814f9a065e202d41782a750476a9ed235f5d49b4d63e86c2cc899992ab874067"
+    },
+    {
+      "path": ".agents/development/evidence/gdpval-acceptance-criteria.json",
+      "sha256": "7ee2be622033b9dd53a0d3b930b8434891a182521d9eb77e4ebc9fd4c3bb076a"
+    },
+    {
+      "path": ".audit/acceptance/gdpval-task-readiness-restructure.json",
+      "sha256": "b8af5a738a80587044c10141b55d1f3572d76322f57b5db9a3e3c287aafbcbf6"
+    }
+  ],
+  "readiness_trial_map_hash": "d081a1f6e2cab9304b5b3efc640edfb4c1c789e6a2cfeb8615485d1e67cdf228"
+}

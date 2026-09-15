@@ -222,6 +222,12 @@ class ClaudeExecutor:
                     or not message.startswith(expected)
                 ):
                     raise HarnessError(f"Claude {name} unavailable for {model}: {message[:400]}")
+        from .capability_environment import enabled
+
+        if enabled(settings):
+            from .capability_executor import check_capability_runtime
+
+            check_capability_runtime(self, settings, purpose)
         self._checked[key] = monotonic()
         return AuthStatus(True, True, "Claude exact model/effort and subscription-only route verified")
 
@@ -445,6 +451,12 @@ class ClaudeExecutor:
             return AuthStatus(True, False, "Claude subscription login unavailable; run claude auth login")
 
     def execute(self, request: ExecutionRequest) -> ExecutionResult:
+        from .capability_environment import enabled
+
+        if enabled(request.settings):
+            from .capability_executor import execute_with_capabilities
+
+            return execute_with_capabilities(self, request, "claude-code")
         image_inputs = validate_image_inputs(request.images, request.cwd, purpose=request.purpose)
         if not request.model:
             raise HarnessError("an explicit Claude model is required")

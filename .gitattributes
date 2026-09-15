@@ -1,0 +1,6 @@
+# SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
+
+# Keep reproducible task records available while foregrounding code and acceptance findings in PR review.
+.agents/development/gdpval-task-readiness.json linguist-generated=true
+.agents/development/evidence/gdpval-content-triage-2026-09-16.json linguist-generated=true
