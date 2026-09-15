@@ -460,8 +460,25 @@ class CodexExecutor:
             stderr,
         )
 
+    def check_runtime(
+        self, model: str | None, settings: Mapping[str, Any], purpose: str = "application"
+    ) -> AuthStatus:
+        from .capability_environment import enabled
+        from .capability_executor import check_capability_runtime
+
+        status = self.check_auth(settings)
+        if status.authenticated and enabled(settings):
+            return check_capability_runtime(self, settings, purpose)
+        return status
+
     def execute(self, request: ExecutionRequest) -> ExecutionResult:
         """Capture native output; only a terminal completed event establishes completion."""
+        from .capability_environment import enabled
+
+        if enabled(request.settings):
+            from .capability_executor import execute_with_capabilities
+
+            return execute_with_capabilities(self, request, "codex")
         image_inputs = validate_image_inputs(request.images, request.cwd, purpose=request.purpose)
         timeout = float(request.settings.get("timeout_seconds", 600))
         started = monotonic()

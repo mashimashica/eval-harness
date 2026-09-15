@@ -92,7 +92,7 @@ The existing `claude-sonnet-4-6` ID remains accepted for saved configurations. M
 follow the [Claude Code model configuration](https://code.claude.com/docs/en/model-config). A short availability check
 is not a quality measurement or proof that every model/effort combination has been benchmarked.
 
-For Claude GDPval execution or judging, select `tool_mode: sandboxed_shell`. The harness provides filesystem access only through native Bash
+For the legacy Claude GDPval environment, select `tool_mode: sandboxed_shell`. The shared capability environment described below is an independent opt-in alternative. The harness provides filesystem access only through native Bash
 and supplies an isolated `python-openpyxl` command for reading/writing XLSX using the locked openpyxl dependency.
 Original reference files, selected Skills and creator inputs are read-only. Application outputs may be written within
 the workspace; evaluator workspaces are entirely read-only. Ambient Python packages, account credentials, development
@@ -160,6 +160,118 @@ Each converter subprocess is limited to 120 seconds. Inputs are limited to 50 Mi
 each document may produce at most 20 pages. PNGs use 120 DPI with a 1600-pixel maximum dimension. A complete judge
 request may attach at most 20 PNGs, 5 MiB each and 32 MiB total. Exceeding a limit fails the dependent evaluation;
 pages are not silently truncated. Rendering time is separate from model-session usage; it consumes no model tokens.
+
+## Shared GDPval capability environment
+
+Select `settings.environment.profile: gdpval-v1` explicitly for each creation, application and AI evaluation runtime.
+This opt-in macOS environment uses the same local MCP tools and copied, locked Python dependencies for Codex 0.154.0
+and Claude Code 2.1.270. It is a new experimental environment; existing runs keep their original settings and records.
+Do not combine it with `tool_mode` or the legacy evaluation-level `office_rendering` option.
+
+```yaml
+settings:
+  reasoning_effort: medium
+  timeout_seconds: 600
+  environment:
+    profile: gdpval-v1
+    network_domains: [www.bing.com, pypi.org, files.pythonhosted.org]
+    office_rendering:
+      soffice: /absolute/path/to/soffice
+      pdftoppm: /absolute/path/to/pdftoppm
+```
+
+Declare the exact research hostnames needed by the selected tasks before execution. The example enables a search
+backend and package retrieval only; add the task's research domains to the frozen configuration. Search results outside
+that list remain discoverable but cannot be fetched. A blocked domain or inaccessible source is recorded, not silently
+replaced with controller-selected research. Wildcards, private addresses, credentials in URLs, non-HTTPS requests,
+and redirects outside the list are rejected. Shell processes cannot connect to the network. `search` uses an explicitly
+allowed public backend (DuckDuckGo HTML, or Bing RSS when configured); availability and result quality are external
+conditions recorded with each request. No API keys or auxiliary AI services are provided.
+
+| Capability | Skill creation | Task execution | Evaluation |
+| --- | --- | --- | --- |
+| `shell`: bounded code, files and local helper tools | Write own workspace; supplied creation inputs read-only | Write own workspace; supplied references and Skill read-only | Read originals; write and execute inspection copies in `scratch/` |
+| Python baseline | Same locked openpyxl, python-docx, python-pptx, Pillow, pypdf, XlsxWriter and transitive packages | Same | Same |
+| `search`, `fetch` | Explicit public HTTPS domains | Same; participant performs required research and selection | Same domains when required for evidence |
+| `install_wheel` | SHA256-pinned wheel into private task packages | Same; installation time is part of execution | Same, for inspection dependencies |
+| `inspect_document` | DOCX revisions/comments, XLSX formulas/PivotTable structure, PDF page count, Office member inventory | Same | Same; structural presence alone is not a functional pass |
+| `render_pages`, `view_image` | Selected pages or crop, native image content | Same | Same; frozen common PDFs for independent judges |
+| Personal settings, other conditions, grading material | Not staged | Not staged | Only anonymous assigned submissions and declared grading material |
+
+The shell permits one foreground process. Prefix external programs with `exec`, such as `exec python -c 'print(1)'`. Use Python for file operations and sequencing, or separate tool calls; the OS denies child processes, pipelines, subprocesses and background jobs. Invoke `exec soffice ...` separately for copied native conversion. This explicit restriction prevents code from detaching beyond its measured execution boundary. Python runs from a copied private runtime. Wheel installation does not run package setup scripts, rejects unsafe archive
+paths and `.pth` files, and never writes global packages. Dependencies requiring system installation or an unsupported
+binary platform need an explicitly revised environment. The native LibreOffice/Poppler paths are optional, but required
+for rendered inspection. They are hashed with the Python packages, interpreter and harness code. CLI-native shell,
+web, plug-ins and autonomous subagents are disabled; file/code operations pass through the shared service. A native
+positive/negative sandbox probe must succeed before execution. The supported boundary is macOS Seatbelt; another OS
+fails preflight instead of running without isolation.
+
+Both CLIs receive the seven shared work tools. Codex also retains native MCP resource-discovery helpers; the sole
+configured service exposes no resources or resource templates. Claude additionally exposes its output-only
+`StructuredOutput` formatter when a judgment schema is requested; it grants no file, code or network access. Explicit
+MCP settings, empty personal configuration sources and disabled native Skill/plugin discovery control the tool inventory.
+Codex limits `enabled_tools` to that seven-tool list and preauthorizes it with `default_tools_approval_mode: approve`.
+The service enforces each call's filesystem, public-network and process limits; the CLI keeps `approval_policy: never`.
+
+### Original files, research and inspection evidence
+
+`reference_files/` contains only task-provided materials. A URL that the task asks the participant to investigate is
+research, not a supplied file to prefetch. The participant calls `search`/`fetch` and receives retrieved files in
+`research/`. The harness preserves requested/final URLs, redirect history, query, timestamp, response status, byte hash,
+raw response and tool outcome separately from supplied materials. The exact selection rationale remains in the model
+and tool transcript. Evaluation receives only the selected submission's anonymous research evidence, without its
+runtime/condition identity.
+
+Saved outputs remain authoritative and unchanged. For inspection, judges use `scratch/` to expand, render, recalculate
+or execute copies. The `.harness_evidence/` directory records the environment receipt, effective prompt, tool calls,
+full command output, elapsed time, retrieved bytes, derived files, image hashes and requested page/crop ranges. The
+manifest is written outside the participant's permission boundary after execution and verified on re-evaluation.
+These files are evidence, not submission deliverables. Existing model usage and nullable cost fields still apply;
+helper execution and dependency installation are included in elapsed time. Tool failures remain visible in the ledger.
+
+Independent judges share the same saved PDF bytes per source hash. `render_pages` accepts one to four one-based pages
+per call with no initial 20-page attachment limit; later pages and regions can be requested as needed. The record
+distinguishes available page count from actually viewed pages. A failed conversion stays `unavailable`; the original
+remains inspectable and the affected visual criterion remains unconfirmed. A changed source or derivative is an error,
+not an invitation to regenerate cached evidence on resume.
+
+### Content, appearance and function are separate findings
+
+AI evaluation with this profile requires explicit, frozen criterion IDs. Criteria that can be checked in the environment
+must cite observed evidence. Native PivotTable parts, formulas, validations and revision/comment XML can be inspected;
+recalculation and changed-input behavior require actual checks on copies. A screenshot does not establish refresh,
+editable Track Changes, audio quality, video timing, or interactive application behavior. Microsoft Office-specific
+behavior and perceptual audio/video judgments need an explicitly assigned human or compatible native evaluation path.
+They remain unconfirmed until that path is exercised. The current profile supplies no audio/video player or CAD engine.
+
+Native format conversion can reuse saved formula values. A functional check must record changed inputs/selectors and
+the resulting dependent values; conversion success alone does not establish recalculation. If needed, invalidate formula
+caches and request full recalculation only in the inspection copy, retaining that transformation and its hashes.
+Distinguish the AI's reported judgment from the actual inspection trace. A later controller check is separate evidence
+and must not be represented as work performed by the original judge.
+
+If any AI scalar criterion is `unconfirmed`, the saved overall score is `null` and `assessment_status` is `unconfirmed`;
+the raw judgment and per-item findings are retained. Reports show unconfirmed and failed counts, preserve the planned
+sample denominator, and exclude unavailable numbers from arithmetic. They do not turn missing evidence into zero or a
+successful assessment. Pairwise `unjudgeable` retains its existing meaning and contributes no win credit.
+
+### Applying an environment change to existing experiments
+
+Freeze task IDs, provided-file hashes, criteria, model/billing route, network domains, dependency/tool versions, time,
+concurrency and retry limits before the first session. Keep N/S/A environments equal except for the intended Skill
+intervention. The saved environment fingerprint rejects resume after capability code, dependency or native tool changes.
+Create a new run for application changes; create a new evaluation identity for changed inspection/criteria when existing
+saved submissions and research evidence suffice. Missing participant research cannot be repaired retrospectively by
+controller research. Keep the old runs and report the changed protocol separately. Generic capability acceptance is not
+proof that a participant solves a task, or that all pages and functional criteria of another task have been inspected.
+
+The development readiness ledger covers all 220 frozen tasks with eight sections per task: identity, primary route,
+required capabilities, task-specific checks, Codex/Claude support, assessment methods and inspected scope, evidence,
+and inclusion in this acceptance. Current summaries keep content readiness, environment acceptance and acceptance
+inclusion independent. A planned method is not an executed check; an unreviewed file, URL or criterion stays unconfirmed.
+The earlier content partition is retained in a separate dated historical evidence file and does not constrain current
+classifications. Only the two owner-selected tasks enter this acceptance, in their original order; other tasks are not
+permanently excluded. Creating an artifact does not establish that its required functional behavior can be assessed.
 
 ## The six commands
 

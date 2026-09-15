@@ -185,6 +185,7 @@ def _valid(row: Mapping[str, Any]) -> bool:
         row.get("evaluation_status") == "completed"
         and row.get("score_valid") is True
         and row.get("winner") != "unjudgeable"
+        and row.get("assessment_status") != "unconfirmed"
     )
 
 
@@ -236,6 +237,10 @@ def _stats(
         "evaluated_sample_count": len({gid for row in valid_rows for gid in _generation_ids(row, run_id)}),
         "evaluation_status_counts": dict(Counter(str(row.get("evaluation_status", "unknown")) for row in rows)),
         "failed_or_missing_count": len(rows) - len(valid_rows),
+        "assessment_status_counts": dict(
+            Counter(str(row.get("assessment_status", "legacy_unspecified")) for row in rows)
+        ),
+        "unconfirmed_assessment_count": sum(row.get("assessment_status") == "unconfirmed" for row in rows),
         "task_ids": sorted({str(row["task_id"]) for row in rows}),
         "scores": scores,
         "mean_score": quality["mean"],

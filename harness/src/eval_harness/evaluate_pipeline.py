@@ -34,6 +34,7 @@ from .benchmark import (
     render_scalar_prompt,
     task_from_snapshot,
 )
+from .capability_environment import enabled as capability_enabled
 from .config import (
     EvaluationConfig,
     JudgeConfig,
@@ -58,6 +59,28 @@ def _prepare_office_previews(
     output: Path,
 ) -> None:
     """Render the frozen source once, before either judge can see it."""
+    capability_judges = [j for j in _evaluation_judges(config) if capability_enabled(j.runtime.settings)]
+    if capability_judges:
+        from .capability_previews import prepare_shared_previews
+
+        settings = capability_judges[0].runtime.settings["environment"]
+        if settings.get("office_rendering"):
+            manifest_path = output / "evaluation_manifest.json"
+            evaluation_manifest = read_json(manifest_path)
+            cache = output / "inspection_previews"
+            expected = evaluation_manifest.get("inspection_previews_sha256")
+            if expected is not None and manifest_hash(file_manifest(cache)) != expected:
+                raise ArtifactError("saved shared inspection previews changed; regeneration is forbidden")
+            capability_sources: list[Path] = []
+            for execution in state:
+                if execution.get("execution_status") != "completed":
+                    continue
+                execution_dir = _source_execution_path(source, execution)
+                _verify_saved_artifact(execution, execution_dir)
+                capability_sources.extend(p for p in (execution_dir / "deliverables").rglob("*") if p.is_file())
+            prepare_shared_previews(capability_sources, cache, settings)
+            evaluation_manifest["inspection_previews_sha256"] = manifest_hash(file_manifest(cache))
+            write_json(manifest_path, evaluation_manifest)
     if config.office_rendering is None:
         return
     manifest_path = output / "evaluation_manifest.json"
@@ -105,6 +128,41 @@ def _prepare_office_previews(
     write_json(output / "office_renders_manifest.json", entries)
     evaluation_manifest["office_renders_sha256"] = manifest_hash(entries)
     write_json(manifest_path, evaluation_manifest)
+
+
+def _inspection_prompt(prompt: str) -> str:
+    prompt = prompt.replace(
+        "Do not create, edit, delete, replace, rename, or improve any deliverable, and do not run scripts from the submission.",
+        "Do not alter or improve original deliverables. Use scratch copies for execution, recalculation and inspection.",
+    ).replace(
+        "Do not create, edit, delete, rename, replace, or improve files, and do not run scripts from either submission.",
+        "Do not alter or improve original deliverables. Use scratch copies for execution, recalculation and inspection.",
+    )
+    prompt = prompt.replace(
+        "current read-only workspace", "workspace containing read-only originals and writable scratch"
+    )
+    return (
+        prompt
+        + "\nParticipant-retrieved material, when available, is under research/ with anonymous submission labels. "
+        "Distinguish it from task-provided reference_files/. Keep untested criteria unconfirmed. "
+        "For scalar grading use score:null if any declared criterion is unconfirmed; "
+        "for pairwise grading use unjudgeable when missing evidence prevents comparison.\n"
+    )
+
+
+def _stage_research(execution_dir: Path, destination: Path, expected_sha256: str | None = None) -> None:
+    evidence = execution_dir / "workspace" / ".harness_evidence"
+    if not evidence.is_dir():
+        if expected_sha256 is not None:
+            raise ArtifactError("participant capability evidence is missing")
+        return
+    manifest = read_json(evidence / "manifest.json")
+    actual = [entry for entry in file_manifest(evidence) if entry["path"] != "manifest.json"]
+    if actual != manifest.get("files") or expected_sha256 is None or manifest_hash(actual) != expected_sha256:
+        raise ArtifactError("participant capability evidence changed; retrieved sources cannot be trusted")
+    research = evidence / "research"
+    if research.is_dir():
+        copy_files(research, destination)
 
 
 @dataclass(frozen=True)
@@ -238,6 +296,7 @@ def _preflight_panel(
             for judge in judges:
                 if (
                     judge.runtime.executor == "claude-code"
+                    and not capability_enabled(judge.runtime.settings)
                     and judge.runtime.settings.get("tool_mode") != "sandboxed_shell"
                 ):
                     raise ConfigError("GDPval AI evaluation with Claude Code requires tool_mode: sandboxed_shell")
@@ -334,12 +393,14 @@ def _criteria_prompt(task_criteria: Mapping[str, Any] | None) -> str:
     return "\n".join(lines) + "\n\n"
 
 
-def _judge_response_schema(method: str, task_criteria: Mapping[str, Any] | None = None) -> dict[str, Any]:
+def _judge_response_schema(
+    method: str, task_criteria: Mapping[str, Any] | None = None, *, allow_unconfirmed: bool = False
+) -> dict[str, Any]:
     """Build the native structured-output contract for one evaluator call."""
 
     if method == "scalar":
         properties: dict[str, Any] = {
-            "score": {"type": "number", "minimum": 0, "maximum": 1},
+            "score": {"type": ["number", "null"] if allow_unconfirmed else "number", "minimum": 0, "maximum": 1},
             "rationale": {"type": "string", "minLength": 1},
         }
         required = ["score", "rationale"]
@@ -421,7 +482,9 @@ def _timestamp() -> str:
     return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
 
 
-def parse_scalar_score(text: str, task_criteria: Mapping[str, Any] | None = None) -> ScalarScore:
+def parse_scalar_score(
+    text: str, task_criteria: Mapping[str, Any] | None = None, *, allow_unconfirmed: bool = False
+) -> ScalarScore:
     """Parse exactly one JSON object using the evaluator response schema."""
 
     try:
@@ -436,6 +499,20 @@ def parse_scalar_score(text: str, task_criteria: Mapping[str, Any] | None = None
     if any(key not in allowed for key in value):
         return ScalarScore(None, None, False, "judge response contained an unsupported top-level field")
     score = value.get("score")
+    uncertain_results = _parse_criteria_results(value.get("criteria_results"), task_criteria)
+    uncertain = uncertain_results and any(item.get("status") == "unconfirmed" for item in uncertain_results)
+    if allow_unconfirmed and uncertain:
+        rationale = value.get("rationale")
+        if not isinstance(rationale, str) or not rationale.strip():
+            return ScalarScore(None, None, False, "unconfirmed assessment requires a rationale")
+        if score is not None and (
+            isinstance(score, bool)
+            or not isinstance(score, (int, float))
+            or not math.isfinite(score)
+            or not 0 <= score <= 1
+        ):
+            return ScalarScore(None, rationale, False, "invalid reported score")
+        return ScalarScore(None, rationale, True, None, uncertain_results)
     if isinstance(score, bool) or not isinstance(score, (int, float)) or not math.isfinite(float(score)):
         return ScalarScore(None, None, False, "judge score was not finite")
     score_float = float(score)
@@ -450,7 +527,9 @@ def parse_scalar_score(text: str, task_criteria: Mapping[str, Any] | None = None
     return ScalarScore(score_float, rationale, True, None, criteria_results)
 
 
-def parse_pairwise_score(text: str, task_criteria: Mapping[str, Any] | None = None) -> PairwiseScore:
+def parse_pairwise_score(
+    text: str, task_criteria: Mapping[str, Any] | None = None, *, allow_unconfirmed: bool = False
+) -> PairwiseScore:
     """Parse exactly one anonymous pairwise judgment."""
 
     try:
@@ -473,6 +552,8 @@ def parse_pairwise_score(text: str, task_criteria: Mapping[str, Any] | None = No
     criteria_results = _parse_criteria_results(value.get("criteria_results"), task_criteria)
     if task_criteria is not None and task_criteria.get("ai") and criteria_results is None:
         return PairwiseScore(None, rationale, False, "judge criteria_results were missing, unknown, or incomplete")
+    if allow_unconfirmed and any(item.get("status") == "unconfirmed" for item in criteria_results or ()):
+        winner = "unjudgeable"
     return PairwiseScore(winner, rationale, True, None, criteria_results)
 
 
@@ -582,6 +663,9 @@ def _freeze_source_run(
             destination.mkdir(parents=True, exist_ok=True)
         else:
             copy_files(deliverables, destination / "deliverables")
+        evidence = execution_path / "workspace" / ".harness_evidence"
+        if evidence.is_dir():
+            copy_files(evidence, destination / "workspace" / ".harness_evidence")
         for filename in ("agent_response.txt", "artifact_manifest.json", "execution.json"):
             source = execution_path / filename
             if source.is_file():
@@ -647,6 +731,19 @@ def _judgment_record(
         # Keep criterion-level evidence in the row so a report never has to
         # infer pass/fail from a scalar score or discard an unconfirmed item.
         record["criteria_results"] = list(score.criteria_results or ())
+    if capability_enabled(selected_judge.runtime.settings):
+        record["assessment_status"] = (
+            "unconfirmed"
+            if score.valid and score.score is None
+            else "assessed"
+            if score.valid
+            else "infrastructure_failure"
+        )
+        if record["assessment_status"] == "unconfirmed":
+            record["quality_score_withheld_reason"] = "one or more declared criteria were unconfirmed"
+        record["capability_evidence"] = next(
+            (event for event in result.parsed.events if event.get("environment_profile")), None
+        )
     if mechanical_findings_path is not None:
         record["mechanical_findings_path"] = mechanical_findings_path
     return record
@@ -994,10 +1091,22 @@ def _evaluate_one(
         write_json(findings_path, findings)
         mechanical_findings_path = str(findings_path.relative_to(evaluation_dir))
     prompt = render_scalar_prompt(task) + _criteria_prompt(task_criteria)
+    if capability_enabled(selected_judge.runtime.settings):
+        prompt = _inspection_prompt(prompt)
+        _stage_research(
+            execution_dir,
+            workspace / "research" / "submission",
+            (execution.get("capability_evidence") or {}).get("evidence_sha256"),
+        )
     if task_criteria is not None and task_criteria.get("ai"):
         prompt += "Return criteria_results alongside score and rationale.\n"
     (judgment_dir / "evaluator_prompt.txt").write_text(prompt, encoding="utf-8")
     images: tuple[Path, ...] = ()
+    if capability_enabled(selected_judge.runtime.settings):
+        from .capability_previews import stage_shared_previews
+
+        labels = ("submission_A", "submission_B") if config.method == "pairwise" else ("submission",)
+        stage_shared_previews(workspace, evaluation_dir / "inspection_previews", labels)
     try:
         if config.office_rendering is not None:
             labels = ("submission_A", "submission_B") if config.method == "pairwise" else ("submission",)
@@ -1011,7 +1120,9 @@ def _evaluate_one(
                 model=selected_judge.runtime.model,
                 settings=selected_judge.runtime.settings,
                 purpose="evaluation",
-                response_schema=_judge_response_schema("scalar", task_criteria),
+                response_schema=_judge_response_schema(
+                    "scalar", task_criteria, allow_unconfirmed=capability_enabled(selected_judge.runtime.settings)
+                ),
                 images=images,
             )
         )
@@ -1021,7 +1132,11 @@ def _evaluate_one(
     (judgment_dir / "stderr.log").write_text(result.stderr, encoding="utf-8")
     (judgment_dir / "judge_response.txt").write_text(result.parsed.final_text, encoding="utf-8")
     score = (
-        parse_scalar_score(result.parsed.final_text, task_criteria)
+        parse_scalar_score(
+            result.parsed.final_text,
+            task_criteria,
+            allow_unconfirmed=capability_enabled(selected_judge.runtime.settings),
+        )
         if result.status == "completed"
         else ScalarScore(None, None, False, result.error or "judge execution failed")
     )
@@ -1116,6 +1231,19 @@ def _pairwise_judgment_record(
         record["criteria_results"] = list(score.criteria_results or ())
     if mechanical_findings_paths is not None:
         record["mechanical_findings_paths"] = dict(mechanical_findings_paths)
+    if capability_enabled(selected_judge.runtime.settings):
+        record["assessment_status"] = (
+            "unconfirmed"
+            if score.valid and score.winner == "unjudgeable"
+            else "assessed"
+            if score.valid
+            else "infrastructure_failure"
+        )
+        if record["assessment_status"] == "unconfirmed":
+            record["quality_score_withheld_reason"] = "declared criteria or pairwise comparison were unconfirmed"
+        record["capability_evidence"] = next(
+            (event for event in result.parsed.events if event.get("type") == "harness.runtime"), None
+        )
     return record
 
 
@@ -1207,8 +1335,25 @@ def _evaluate_pair(
             label: str(path.relative_to(evaluation_dir)) for label, path in findings_paths.items()
         }
     prompt = _pairwise_prompt(task, task_criteria)
+    if capability_enabled(selected_judge.runtime.settings):
+        prompt = _inspection_prompt(prompt)
+        _stage_research(
+            first_dir,
+            workspace / "research" / "submission_A",
+            (executions[0].get("capability_evidence") or {}).get("evidence_sha256"),
+        )
+        _stage_research(
+            second_dir,
+            workspace / "research" / "submission_B",
+            (executions[1].get("capability_evidence") or {}).get("evidence_sha256"),
+        )
     (judgment_dir / "evaluator_prompt.txt").write_text(prompt, encoding="utf-8")
     images: tuple[Path, ...] = ()
+    if capability_enabled(selected_judge.runtime.settings):
+        from .capability_previews import stage_shared_previews
+
+        labels = ("submission_A", "submission_B") if config.method == "pairwise" else ("submission",)
+        stage_shared_previews(workspace, evaluation_dir / "inspection_previews", labels)
     try:
         if config.office_rendering is not None:
             labels = ("submission_A", "submission_B") if config.method == "pairwise" else ("submission",)
@@ -1232,7 +1377,11 @@ def _evaluate_pair(
     (judgment_dir / "stderr.log").write_text(result.stderr, encoding="utf-8")
     (judgment_dir / "judge_response.txt").write_text(result.parsed.final_text, encoding="utf-8")
     score = (
-        parse_pairwise_score(result.parsed.final_text, task_criteria)
+        parse_pairwise_score(
+            result.parsed.final_text,
+            task_criteria,
+            allow_unconfirmed=capability_enabled(selected_judge.runtime.settings),
+        )
         if result.status == "completed"
         else PairwiseScore(None, None, False, result.error or "pairwise judge execution failed")
     )
