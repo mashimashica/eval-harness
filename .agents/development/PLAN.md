@@ -3,6 +3,22 @@
 
 ## Active continuation: September22 remaining allowance
 
+Latest checkpoint: the first two additional Codex sessions are complete. Dashboard timed out at900s after copied-input
+and changed-chart observations, without any final item judgment; science completed in835.39s. The new collection-aware
+source-observation validator revalidates science to33pass/11fail/2unconfirmed, separately from frozen28/11/7. This is
+record-shape/provenance validation, with accepted-passage order and comprehensive scientific correspondence still
+requiring semantic review. See [the two-session receipt](evidence/gdpval-item-observations-2026-09-22.json).
+Evaluation failure now records stage/status/reason with cause unclassified, instead of automatically assigning
+infrastructure cause.175 affected tests,95% measured observation-guard coverage and scoped types/Ruff pass.
+
+One separately declared Codex dashboard completion session is active under the owner's remaining-allowance authority:
+Sol/medium,maximum1,1200s,serial1,retries0,subscription only. Its
+[fixed plan](evidence/gdpval-sept22-dashboard-completion-plan.md) retains the preceding timeout and source artifact.
+At17:51UTC weekly usage89%/remaining11%; no reset/credits, Claude addition, production experiment or merge.
+The official complete Office bundle did not reach its Basic entry under the unchanged boundary; three trusted private
+preference reads establish home redirection but no usable preference bootstrap. Native acceptance remains unchanged.
+See [exact operation gaps](evidence/gdpval-sept22-operation-gaps.json). Do not silently widen preference/IPC grants.
+
 The owner authorizes valuable work toward ALPS readiness using today's remaining Codex allowance, relayed through
 side task `01a0c290-ff84-71e1-a873-3d614f4cc139`. Baseline324efd26 remains the accepted bounded increment;
 full220 acceptance is still incomplete. See [the finite continuation plan](evidence/gdpval-sept22-continuation-plan.md).

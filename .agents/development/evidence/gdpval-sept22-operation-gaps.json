@@ -33,7 +33,60 @@
       "sha256": "8ef05c53ff62fe7b2e9a539a8721960d2313256d371c4e982278ec72d9095c6d"
     },
     "observed": "Two trusted native calls1.69/2.54s; first-start profile replacement retained, corrected macro still produced no operation record. Returncode0 did not prove entry point execution. Existing conversion route unchanged.",
-    "remaining": "An operational in-process application entry point plus isolated native control/validation/filter/automatic-update tests. Installed Excel16.101.1 is not proof of launch/license/TCC/isolation."
+    "remaining": "An operational in-process application entry point plus isolated native control/validation/filter/automatic-update tests. Installed Excel16.101.1 is not proof of launch/license/TCC/isolation.",
+    "full_office_followup": {
+      "evidence": {
+        "path": ".audit/2026-09-22-excel-controls/replacement-research/final-report.json",
+        "sha256": "acad0eaa90100600d4f13ec25125e000753298d49223ebd8bef5b211e5360248"
+      },
+      "application": {
+        "release": "26.8.0",
+        "build": "26.8.0.3",
+        "dmg_bytes": 298773447,
+        "dmg_sha256": "8858d8058da4f862f47559486814e65efc27294da67c5e4bb56b006b1ee59f89",
+        "original_bundle_signature": "Apple anchor / The Document Foundation 7P5S3ZLCN7, strict deep verification passed"
+      },
+      "summary": {
+        "pinned_object_and_original_bundle_signature_verified": true,
+        "full_basic_uno_components_present": true,
+        "trusted_office_launches": 1,
+        "trusted_probe_returncode": 1,
+        "trusted_probe_seconds": 16.324527417018544,
+        "scoped_log_seconds": 2.65882320801029,
+        "actual_preference_read_faults": 72,
+        "exit_causality": "unconfirmed",
+        "originals_unchanged": true,
+        "owned_process_exited": true,
+        "read_only_image_detached": true,
+        "ephemeral_mount_removed": true,
+        "models": 0,
+        "product_or_readiness_changes": 0
+      },
+      "limits": [
+        "Full Basic/UNO component presence is not an operational entry point.",
+        "The trusted launch returned1 without a Basic entry marker; no native workbook behavior proved.",
+        "Observed preference-read faults are not established as the exit cause.",
+        "No blanket preference/IPC grant, product dependency adoption, or candidate execution.",
+        "The copied app failed signature due to FinderInfo; only the verified read-only mounted original was launched."
+      ],
+      "next_prerequisite": "Resolve the native bootstrap dependency on global/current-user preferences while preserving host-data isolation, with source/trace evidence sufficient to identify the actual exit path. An operational headless build with Basic/UNO or an explicitly private preference source is a candidate design, not a verified fix. No blanket user-preference-read grant or further launch is authorized here."
+    },
+    "private_preferences_followup": {
+      "evidence": {
+        "path": ".audit/2026-09-22-private-preferences/findings.json",
+        "sha256": "d08e86393a9ba100c3d54f51ebf476c0ee1bc668f6d20180b61248b94ab67d6a"
+      },
+      "status": "fixed_home_resolution_verified_private_preference_bootstrap_not_established",
+      "trusted_helper_invocations": 3,
+      "elapsed_seconds": 0.48490216600475833,
+      "model_calls": 0,
+      "application_launches": 0,
+      "policy_change": false,
+      "observed": "CFFIXED_USER_HOME redirected CoreFoundation home; direct private plist read worked. Named/global/app CFPreferences lookups remained null under unchanged boundary.",
+      "limits": "No usable private preference bootstrap, no host-fallback guarantee, no established LibreOffice exit cause.",
+      "cleanup": true,
+      "next_prerequisite": "Do not add CFFIXED_USER_HOME as a claimed preference-bootstrap fix. A usable private preference source still needs a concrete current CoreFoundation mechanism that succeeds under the existing read boundary, or an Office runtime/bootstrap that avoids this platform preference dependency. This fixture does not establish either. No blanket preference grant, extra environment knob, or Office relaunch is justified by these results alone."
+    }
   },
   "browser": {
     "status": "complete-descendant-lifetime-boundary-unconfirmed",

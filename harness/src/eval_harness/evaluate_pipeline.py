@@ -906,8 +906,15 @@ def _judgment_record(
             if score.valid and score.score is None
             else "assessed"
             if score.valid
-            else "infrastructure_failure"
+            else "evaluation_failure"
         )
+        if not score.valid:
+            record["assessment_failure"] = {
+                "stage": "evaluation",
+                "execution_status": result.status,
+                "reason": result.error or score.error,
+                "cause": "unclassified",
+            }
         if record["assessment_status"] == "unconfirmed":
             record["quality_score_withheld_reason"] = "one or more declared criteria were unconfirmed"
         record["capability_evidence"] = next(
@@ -1219,7 +1226,7 @@ def _record_protocol_result(
     record["reported_score" if isinstance(reported, ScalarScore) else "reported_winner"] = (
         reported.score if isinstance(reported, ScalarScore) else reported.winner
     )
-    if any(item.get("status") == "unconfirmed" for item in record.get("criteria_results", [])):
+    if reported.valid and any(item.get("status") == "unconfirmed" for item in record.get("criteria_results", [])):
         record.update(
             score_valid=False,
             assessment_status="unconfirmed",
@@ -1495,8 +1502,15 @@ def _pairwise_judgment_record(
             if score.valid and score.winner == "unjudgeable"
             else "assessed"
             if score.valid
-            else "infrastructure_failure"
+            else "evaluation_failure"
         )
+        if not score.valid:
+            record["assessment_failure"] = {
+                "stage": "evaluation",
+                "execution_status": result.status,
+                "reason": result.error or score.error,
+                "cause": "unclassified",
+            }
         if record["assessment_status"] == "unconfirmed":
             record["quality_score_withheld_reason"] = "declared criteria or pairwise comparison were unconfirmed"
         record["capability_evidence"] = next(

@@ -278,8 +278,10 @@ matter alone does not require human grading: source-grounded AI judgments remain
 when a specific evidence gap requires it.
 
 Native format conversion can reuse saved formula values. A functional check must record changed inputs/selectors and
-the resulting dependent values; conversion success alone does not establish recalculation. If needed, invalidate formula
-caches and request full recalculation only in the inspection copy, retaining that transformation and its hashes.
+the resulting dependent values; conversion success alone does not establish recalculation. A separately declared manual
+recalculation check may use a copy with invalidated formula caches, retaining that transformation and its hashes. It
+cannot establish the submitted workbook's automatic-update behavior. Do not change calculation settings or repair
+features and then pass a criterion requiring the original mechanism to work.
 Distinguish the AI's reported judgment from the actual inspection trace. A later controller check is separate evidence
 and must not be represented as work performed by the original judge.
 
@@ -287,6 +289,13 @@ If any AI scalar criterion is `unconfirmed`, the saved overall score is `null` a
 the raw judgment and per-item findings are retained. Reports show unconfirmed and failed counts, preserve the planned
 sample denominator, and exclude unavailable numbers from arithmetic. They do not turn missing evidence into zero or a
 successful assessment. Pairwise `unjudgeable` retains its existing meaning and contributes no win credit.
+
+An interrupted evaluator or malformed final judgment has `assessment_status: evaluation_failure`, with
+`assessment_failure` recording the evaluation stage, CLI execution status, reason and `cause: unclassified`.
+This locates the failed stage without assigning the cause to the participant, evaluator or infrastructure. Classify
+the cause separately from observed evidence. It retains a null score and contributes to failed/missing counts;
+missing item records do not convert a failed session into a completed unconfirmed assessment. Existing records with
+the older `infrastructure_failure` label remain unchanged and need their underlying evidence checked before causal use.
 
 AI scalar and pairwise evaluators can recover their current task after CLI context compaction from the read-only
 `evidence/evaluation-inputs/` directory. It contains the exact prompt and original rubric fields, the AI criteria and
@@ -426,9 +435,12 @@ A matching successful shell `checks[].observation` must name `kind` and `criteri
 item using the corresponding `research` or `functional` method. Each submission needs its own observation.
 
 - `source_comparison`: `submission` and `reference` each contain a source-bound `path`, precise `location`, and
-  `observed` text containing actual relevant passages or concrete values. `comparison` states the comparison and
-  limitations. The reference comes from supplied `reference_files/` or captured `research/` bytes. Hashes alone
+  `observed` containing actual relevant passages or concrete values. It accepts nonblank text, a finite number or
+  boolean, or a nonempty list/object containing those values; object keys must be nonblank locations or labels.
+  Empty/null/blank leaves alone are insufficient. `comparison` states the comparison and limitations. The reference comes from supplied `reference_files/` or captured `research/` bytes. Hashes alone
   do not constitute a comparison. Preserve source identity/version and the applicable original conditional branch.
+  Collection support extends the earlier string-only observation rule; keep old judgments and record any
+  revalidation separately with the new validator hash. A format correction does not certify the comparison.
 - `input_change`: `artifact_path` names the original submission in `source_artifacts`; `engine`, `operation`,
   `operation_mode` (`direct_cell_write`, `existing_control`, `existing_filter`), and `update_mode` (`automatic`,
   `manual_recalculation`, `manual_refresh`, `not_observed`) describe the actual operation. `before` and `after`

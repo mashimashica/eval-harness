@@ -1127,3 +1127,95 @@ def test_incomplete_or_unchanged_input_observation_is_not_covered(mutate: Any) -
         )
         == {}
     )
+
+
+@pytest.mark.parametrize("pairwise", [False, True])
+@pytest.mark.parametrize("execution_status", ["timeout", "failed", "completed"])
+def test_evaluation_failure_does_not_assign_participant_or_infrastructure_cause(
+    tmp_path: Path, pairwise: bool, execution_status: str
+) -> None:
+    from eval_harness.compare_pipeline import _stats
+
+    class FailedEvaluation(_InspectionExecutor):
+        def execute(self, request: ExecutionRequest) -> ExecutionResult:
+            result = super().execute(request)
+            return replace(
+                result,
+                status=execution_status,
+                returncode=-9 if execution_status == "timeout" else 0,
+                error="deadline reached" if execution_status == "timeout" else None,
+                parsed=replace(result.parsed, final_text="incomplete judgment"),
+            )
+
+    run, application = _run_source(tmp_path)
+    calls = len(application.requests)
+    evaluator = FailedEvaluation(valid=True, pairwise=pairwise)
+    summary = evaluate_run(run, _config(pairwise=pairwise), tmp_path / "evaluation", evaluator, check_auth=False)
+    rows = read_jsonl(summary.evaluation_dir / "judgments.jsonl")
+    assert rows and all(row["execution_status"] == "completed" for row in rows)
+    assert len(application.requests) == calls
+    assert all(row["assessment_status"] == "evaluation_failure" for row in rows)
+    assert all(row["assessment_failure"]["stage"] == "evaluation" for row in rows)
+    assert all(row["assessment_failure"]["cause"] == "unclassified" for row in rows)
+    assert all(row["assessment_failure"]["execution_status"] == execution_status for row in rows)
+    assert all(row["assessment_failure"]["reason"] for row in rows)
+    assert all(row["score"] is None and not row["score_valid"] for row in rows)
+    stats = _stats(rows, "fixture-run")
+    assert stats["assessment_status_counts"] == {"evaluation_failure": len(rows)}
+    assert stats["failed_or_missing_count"] == len(rows)
+
+
+@pytest.mark.parametrize(
+    "observed,expected",
+    [
+        (["First original paragraph", "Second original paragraph"], "pass"),
+        ({"page 3": "Actual source passage", "page 9": "Second passage"}, "pass"),
+        ({"cell A1": 0, "cell A2": False, "cell A3": None}, "pass"),
+        ([None, {"paragraph": "Actual words"}, ""], "pass"),
+        (0, "pass"),
+        (False, "pass"),
+        (None, "unconfirmed"),
+        ([], "unconfirmed"),
+        ({}, "unconfirmed"),
+        ([None, "", {}], "unconfirmed"),
+        ({"page 3": " ", "page 9": []}, "unconfirmed"),
+        ({" ": "Unlocated passage"}, "unconfirmed"),
+        ({"page 3": "Actual passage", "measurement": float("nan")}, "unconfirmed"),
+    ],
+)
+def test_source_comparison_preserves_structured_passages_and_rejects_empty_evidence(
+    tmp_path: Path, observed: Any, expected: str
+) -> None:
+    digest, reference = _evidence(tmp_path, tool="shell")
+    reference["method"] = "research"
+    protocol = _protocol(methods=["research"])
+    protocol["tasks"]["task-1"]["useful"]["required_observations"] = {"pass": ["source_comparison"]}
+    source = tmp_path / "reference_files/source.txt"
+    source.parent.mkdir()
+    source.write_text("Preserved source")
+    record = read_json(tmp_path / reference["path"])
+    record["source_artifacts"].append({"path": "reference_files/source.txt", "sha256": sha256_file(source)})
+    record["checks"] = [
+        {
+            "action": "Compare located passages",
+            "observation": {
+                "kind": "source_comparison",
+                "criterion_ids": ["useful"],
+                "comparison": "Recorded observed passages from both files; correctness remains a judgment.",
+                "submission": {
+                    "path": "submission/document.docx",
+                    "location": "paragraph 1",
+                    "observed": {"paragraph 1": "Submitted words"},
+                },
+                "reference": {
+                    "path": "reference_files/source.txt",
+                    "location": "source passages",
+                    "observed": observed,
+                },
+            },
+        }
+    ]
+    digest = _capture_shell_record(tmp_path, reference, record)
+    assert _apply(tmp_path, digest, reference, protocol=protocol)["status"] == expected
+    source.write_text("Altered source")
+    assert _apply(tmp_path, digest, reference, protocol=protocol)["status"] == "unconfirmed"

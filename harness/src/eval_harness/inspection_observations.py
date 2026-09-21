@@ -9,6 +9,7 @@ comparison is correct, an input change is meaningful, or an application worked.
 
 from __future__ import annotations
 
+import math
 from typing import Any, Callable, Mapping
 
 OBSERVATION_METHODS = {"source_comparison": "research", "input_change": "functional"}
@@ -105,8 +106,27 @@ def _passage(value: Any, sources: Mapping[str, str]) -> bool:
         and isinstance(value.get("path"), str)
         and value["path"] in sources
         and _text(value.get("location"))
-        and _text(value.get("observed"))
+        and _observed_value(value.get("observed"))
     )
+
+
+def _observed_value(value: Any) -> bool:
+    """Require an actual value in the caller's already finite JSON record.
+
+    Lists of passages and maps of located values need not be stringified. Empty,
+    null or blank leaves alone cannot establish an observed source passage.
+    """
+    if isinstance(value, str):
+        return _text(value)
+    if isinstance(value, int):
+        return True
+    if isinstance(value, float):
+        return math.isfinite(value)
+    if isinstance(value, list):
+        return any(_observed_value(item) for item in value)
+    if isinstance(value, Mapping):
+        return all(_text(key) for key in value) and any(_observed_value(item) for item in value.values())
+    return False
 
 
 def _state(value: Any) -> bool:

@@ -18,6 +18,21 @@ external-source availability and actual artifact observations recorded separatel
 The [last ten-task adoption](gdpval-form-cad-source-adoption-2026-09-22.json) preserves210 other tasks and10,438
 criterion records;38 helper tests and96% measured helper coverage support the generated ledger.
 
+- The [item-bound observation increment](gdpval-item-observations-2026-09-22.json) applies only to five science
+  comparison items and one dashboard update item. Two additional Codex evaluations use the same saved artifacts:
+  dashboard reaches900s with partial operation evidence and no final verdict; science returns all46 items in835.39s.
+  A separately recorded extension accepts actual passage lists/value maps, yielding33pass/11fail/2unconfirmed versus
+  frozen28/11/7. This does not certify judgment correctness: edited-passage ordering and the limited primary-source
+  comparison remain review obligations.175 related tests pass; failures retain their stage and an unclassified cause.
+  A [separate one-session dashboard completion check](gdpval-sept22-dashboard-completion-plan.md) at1200s is active.
+- The [operation follow-up](gdpval-sept22-operation-gaps.json) maps11 spreadsheet input-control tasks and two Pivot
+  cases to12 unique tasks/67 original items, including generation obligations. Full official LibreOffice26.8.0
+  contains Basic/UNO but one trusted isolated launch exits1 without reaching the operation.72 preference-read faults
+  do not establish its exit cause. Three tiny preference probes show private home redirection but no usable
+  CFPreferences source. Browser automatic descendant registration is unsupported in the tested kernel interface.
+  These are preserved failures/prerequisites, with no new native route or wider product grants adopted.
+- The [production proposal](gdpval-production-experiment-proposal.md) makes models, repeats, judges, unknowns,
+  source conflicts, human responsibility, resumption and scale explicit. It is a decision draft, not production approval.
 - The six-task [common-output adoption](gdpval-output-route-adoption-2026-09-22.json) supplies actual ZIP packaging/
   reopening/extraction and known36x24-inch PDF author/read/render proof. That increment reached **181/220** common-route tasks,
   with **39 required-route-gap tasks**. Only the poster task's final operation gap closes; other214 task records and
