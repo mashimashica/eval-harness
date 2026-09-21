@@ -26,6 +26,7 @@ from .office_rendering import (
     OfficeRenderingConfig,
     _check_office,
     _environment,
+    _font_snapshot,
     _profile,
     _tool_roots,
     sandbox_policy,
@@ -66,6 +67,7 @@ class InspectionTools:
     def _run(self, command: list[str], work: Path, environment: Mapping[str, str], logs: Path, name: str) -> None:
         from .capability_sandbox import register_active_process, terminate_process_tree, unregister_active_process
 
+        font_snapshot = _font_snapshot(environment)
         started = time.monotonic()
         process = subprocess.Popen(
             command,
@@ -98,6 +100,7 @@ class InspectionTools:
                 "returncode": process.returncode,
                 "error": error,
                 "elapsed_seconds": time.monotonic() - started,
+                "font_configuration": font_snapshot,
             },
         )
         if error or process.returncode:
@@ -313,7 +316,7 @@ class InspectionTools:
                         str(pdf),
                         str(work / "page"),
                     ]
-                    self._run(command, work, _environment(work, roots[1]), target, f"page-{page:04d}")
+                    self._run(command, work, _environment(work, roots[1], roots[0]), target, f"page-{page:04d}")
                     shutil.copyfile(work / "page.png", image)
             with Image.open(image) as opened:
                 opened.load()

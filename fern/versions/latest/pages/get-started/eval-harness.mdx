@@ -288,6 +288,19 @@ the raw judgment and per-item findings are retained. Reports show unconfirmed an
 sample denominator, and exclude unavailable numbers from arithmetic. They do not turn missing evidence into zero or a
 successful assessment. Pairwise `unjudgeable` retains its existing meaning and contributes no win credit.
 
+AI scalar and pairwise evaluators can recover their current task after CLI context compaction from the read-only
+`evidence/evaluation-inputs/` directory. It contains the exact prompt and original rubric fields, the AI criteria and
+policy already shown to that judge, the current task's inspection rules, the response schema, and the complete evaluator
+prompt. It excludes other tasks, raw source/gold metadata and controller-only mechanical expected answers. These files
+are instructions and task context, not submission evidence. They are staged only for evaluation and archived with its
+workspace. A missing criterion statement requires rereading them; it does not permit guessing from an item ID.
+
+Poppler page rendering uses the configured LibreOffice bundle's fonts and a private Fontconfig cache. The explicit
+`bundled-libreoffice-v1` policy, configuration and hash are saved in rendering receipts; ambient user font configuration
+and shared caches are not imported. Standard Helvetica/Times/Courier families use the bundled Liberation fallbacks.
+Missing bundle fonts fail explicitly. These substitutions can affect appearance: keep the recorded renderer identity
+and use a new evaluation identity when comparing revised previews. LibreOffice conversion settings remain separate.
+
 ### Freeze the inspection procedure separately from the rubric
 
 `evaluation.criteria` retains the original item IDs and descriptions. Optional
@@ -299,6 +312,11 @@ change original tolerances. These are custom harness procedures; equivalence to 
 the standard and rubric-based LLM judgments as an estimate. This harness's evidence-bound scalar checks, null handling
 and optional human handoffs have not been calibrated to that expert preference procedure; report their results under
 the frozen harness protocol, not as an official GDPval score. This correspondence was checked on 2026-09-21.
+
+[The paper's automated-grader appendix](https://arxiv.org/html/2510.04374v1#A1.SS6) reports restrictions on internet,
+non-Python execution and sound inspection, and excludes 12 tasks from its automated-grader analysis. Those limitations
+are not exclusions from this harness's all-220 assignment. Its published agreement measures compare pairwise preferences;
+they do not establish the accuracy of this harness's item scores, evidence validator or newer CLI models.
 
 ```yaml
 method: scalar

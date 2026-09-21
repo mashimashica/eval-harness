@@ -1,0 +1,49 @@
+{
+  "schema_version": 1,
+  "kind": "common-archive-and-large-pdf-operation-proof",
+  "model_calls": 0,
+  "participant_artifacts_used": false,
+  "initial_attempt": {
+    "path": ".audit/2026-09-21-common-output-operations/run/report.json",
+    "sha256": "037f8a0782ac25e9ed49c8d2f70b3aeec7332a1026383b09401fd4a6cda0ae96"
+  },
+  "initial_observation": {
+    "archive": "Three nested/Unicode, binary and empty entries authored, CRC checked, extracted and compared byte-for-byte in isolated application and evaluator scratch.",
+    "pdf": "One page, 2592 x 1728 points (36 x 24 inches), known text verified; initial render failed after 120.392 seconds with missing Fontconfig configuration."
+  },
+  "font_diagnosis": {
+    "path": ".audit/2026-09-21-common-output-operations/font-contrast/result.json",
+    "sha256": "509e10dd87dfdf1b58937d663f9e42ccf87e247dccecd17d80d57dc4371385f6"
+  },
+  "correction": {
+    "policy": "bundled-libreoffice-v1",
+    "scope": "Poppler rendering only; configured Office bundle fonts, private configuration/cache, saved hash and configuration; no personal fonts/settings, no global change.",
+    "source_modules": {
+      "harness/src/eval_harness/capability_inspection.py": "80ebe610b5436ba8c8659ea2aaf4f25be4f15490289c50f6cb2ecb898a25e177",
+      "harness/src/eval_harness/office_rendering.py": "3832deb70cf495ca699959708f5bcc0d4c8f46aec61a14685102cac78d17bfcf"
+    },
+    "tests": {
+      "targeted": "56 passed",
+      "ruff": "passed",
+      "strict_mypy": "2 source files passed"
+    },
+    "actual_service": {
+      "path": ".audit/2026-09-21-common-output-operations/font-integrated-final/report.json",
+      "sha256": "b2f9d460d18b1d96d4e5cab80c41d49193570e2370b13d3fd31d880580a0c699"
+    },
+    "controller_visual_review": {
+      "path": ".audit/2026-09-21-common-output-operations/font-integrated-final/visual-review.json",
+      "sha256": "cc87dd2b065821d5084e60589ac3cf88215f2eb9f9e0c46c0c8b5022cd49228f"
+    },
+    "render_seconds": 0.5345420420053415,
+    "source_sha256": "49643a13fde85d4949c672715060d11b738c954e05a3842166c7be176c6bb773",
+    "originals_unchanged": true
+  },
+  "adoption_limits": [
+    "This proves bounded common ZIP packaging/extraction and a known single-page large-format PDF author/read/render path.",
+    "It does not inspect an actual task deliverable, accept scientific/design correctness, or resolve audio, CAD or code requirements inside an archive.",
+    "Font fallback affects previews; use the new renderer fingerprint for new evaluations, preserving earlier records.",
+    "The initial timeout remains a distinct infrastructure failure; no model retry occurred."
+  ],
+  "all220_accepted": false
+}

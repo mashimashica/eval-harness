@@ -30,6 +30,45 @@ Owner authorized on 2026-09-21: a **new** maximum ten CLI sessions (four applica
 two known-content probes at300s), `gpt-5.6-sol/medium` and `claude-opus-5/medium`, concurrency1, automatic retries0,
 existing subscriptions only, no auxiliary AI or API billing. Old eleven sessions do not supply remaining budget. The owner is the human-review coordination owner; actual reviewers will be named before the experiment. Unassigned human checks remain unconfirmed and cannot accept a completion receipt. Model-free tests and local locked dependency setup remain separate from this model envelope.
 
+### Current correction and remaining six-session work (2026-09-22 JST)
+
+Four of the owner-approved six sessions completed before this correction: both known-content probes and both saved
+dashboard evaluations. Codex returned 49 pass / 6 fail / 2 unconfirmed; all 55 non-native item references validate,
+with a separately recorded limit on direct observation of changed chart outputs. Supplied day/night data conflict with
+two literal rubric percentages; retain those failures and the conflict separately. Claude returned 57 unconfirmed after
+native context compaction removed criterion descriptions from its available conversation. The attempted outside
+transcript read returned `No such file or directory`; it alone does not establish an OS permission-denial cause.
+See [dashboard findings and correction](evidence/gdpval-evaluator-context-correction-2026-09-22.json).
+
+The controller accepts the bounded durable-context repair from 181 affected tests, exact 57/46-item source round trips,
+and model-free evaluator read/write/outside-read protection checks. Scalar and pairwise evaluators now receive only
+current-task prompt/rubric, already-exposed AI criteria, inspection rules, complete evaluator instructions and exact output
+schema in protected `evidence/evaluation-inputs/`. No participant input, scoring rule, model, billing route or limit changes.
+
+A separate known ZIP/PDF operation probe confirmed isolated archive byte round trips and large-format PDF authoring,
+but found Poppler's relocated Fontconfig prefix missing. Private bundled-font configuration repairs the actual rendering
+path: 56 targeted tests and a native 36x24-inch PDF render (0.5345s) plus known visual correspondence pass. Conversion
+settings remain separate, original bytes unchanged. Preserve the initial 120.392s timeout as an infrastructure failure.
+See [common-operation evidence](evidence/gdpval-common-output-operations-2026-09-22.json).
+
+The two unused science evaluations are frozen under environment
+`ecd1071aac425229104a253df7de66b92e89c6fbcaf0b4c76848a4c08d9328e4`, manifest
+`b2b87501923cd60816211e6a3f7a02e29dab8b6ef2259e68538fdafd94c0b434`.
+They retain saved artifacts, v2 protocols, original task order, Sol/Opus medium, each1200s, serial1 and automatic retries0.
+The two older controllers are blocked from consuming their reassigned unused slots. Codex science was dispatched;
+Claude science follows its recorded result. These are slots5/6, not an added model envelope. Actual model recovery,
+source checking and item-level inspection remain empirical acceptance obligations.
+
+The native-browser follow-up retains three further known-fixture launches (six total, zero model/candidate calls).
+Exact power/Mach controls resolve earlier startup barriers; a one-flag outer-only contrast executes known DOM events
+but times out at30s. This is not candidate-isolation acceptance. The specialist is checking bounded inherited restrictions
+and detached-child cleanup before any product route is adopted. See
+[native follow-up](evidence/gdpval-native-feasibility-followup-2026-09-22.json).
+
+Current ownership: controller owns frozen execution, product docs, evidence acceptance and PR; one Astra worker owns
+the six-task ZIP/large-PDF applicability increment; one Astra specialist owns native lifecycle verification. Neither may
+launch a model or alter product runtime. Full all-220 acceptance remains incomplete while mapped gaps are unresolved.
+
 ### Handoff disposition (2026-09-21)
 
 Implementation and bounded acceptance evidence are ready for the existing Draft PR #53; full all-220 acceptance
