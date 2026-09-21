@@ -182,6 +182,10 @@
     "pdf_png_embedding": {
       "path": ".audit/2026-09-21-pdf-png-embedding/report.json",
       "sha256": "686cb397207104aa33d2c89abb60a6545375aac8670e08ea11960f529fc5513f"
+    },
+    "common_output_operations_2026_09_22": {
+      "path": ".agents/development/evidence/gdpval-common-output-operations-2026-09-22.json",
+      "sha256": "2183d598b7cc964befe7b2e78b9ebb362a3a2ab45898277e35d65bafa72ab455"
     }
   },
   "route_catalog": {
@@ -942,16 +946,86 @@
       ],
       "basis_ref": ".agents/development/evidence/gdpval-route-corrections-2026-09-21.json#/tasks/99ac6944-4ec6-4848-959c-a460ac705c6f",
       "candidate_environment_fingerprint": "cff019360b687a84017824c3ef60cf11316e61a0f62291c10240b4ff5367db56"
+    },
+    "zip_package_roundtrip": {
+      "status": "shared_route_applicable",
+      "roles": [
+        "application",
+        "evaluation"
+      ],
+      "scope": "Known ZIP_DEFLATED archive creation, CRC checking, reopening and scratch extraction of three nested/Unicode, binary and empty entries, with exact name and byte comparison in isolated application and evaluation roles.",
+      "limits": [
+        "Inspect the actual archive count, names, membership and successful opening/extraction in scratch as required by the original item. Archive proof establishes no audio, CAD, code correctness, native behavior or complete-codebase semantics.",
+        "Known ordinary unencrypted ZIP fixture only; no archive-size, arbitrary compression/encryption, hostile-archive or safe-untrusted-extraction generalization. Creation-role execution was not separately exercised in this proof."
+      ],
+      "proof_refs": [
+        {
+          "path": ".agents/development/evidence/gdpval-common-output-operations-2026-09-22.json",
+          "sha256": "2183d598b7cc964befe7b2e78b9ebb362a3a2ab45898277e35d65bafa72ab455"
+        },
+        {
+          "path": ".audit/2026-09-21-common-output-operations/run/report.json",
+          "sha256": "037f8a0782ac25e9ed49c8d2f70b3aeec7332a1026383b09401fd4a6cda0ae96"
+        },
+        {
+          "path": ".audit/2026-09-21-common-output-operations/run/application-preflight.json",
+          "sha256": "dda6ba28bf53a0bd68df88e30d36153d2fc663982ad70c181f8ce41c69d0388f"
+        },
+        {
+          "path": ".audit/2026-09-21-common-output-operations/run/evaluation-preflight.json",
+          "sha256": "3e902ec64bcd474f1dd8102762f4a8517c2a1991a10a41ee5ff7a2dd1cf876d5"
+        }
+      ],
+      "basis_ref": ".agents/development/evidence/gdpval-common-output-operations-2026-09-22.json#/initial_observation/archive",
+      "observed_environment_fingerprint": "00620ae4f577e98a5c2d0e7d731cf3d84f592be285130b1cecb765a77d935f7c",
+      "component_applicability": "Adopt the observed application/evaluation shell and locked Python ZIP operations. The later renderer/font change is not an archive operation; original role, sandbox and package constraints remain. No new model-session outcome is inferred."
+    },
+    "large_format_pdf_page": {
+      "status": "shared_route_applicable",
+      "roles": [
+        "application",
+        "evaluation"
+      ],
+      "scope": "Known one-page 2592 x 1728 point (36 x 24 inch) PDF authored and reopened with exact dimensions/text; the unchanged PDF was successfully rendered using the corrected private bundled-font configuration and the result received controller visual review.",
+      "limits": [
+        "Measure and inspect the actual submitted PDF; preserve the original one-page and ±2% 36 x 24 or 24 x 36 inch alternatives. Rendering enables observation only; poster content, readability, layout and clinical accuracy remain actual-artifact obligations.",
+        "Single known landscape page only; no arbitrary poster complexity, print fidelity or all-font support claim. Initial missing-Fontconfig timeout is preserved and is not a successful render. Creation-role execution was not separately exercised."
+      ],
+      "proof_refs": [
+        {
+          "path": ".agents/development/evidence/gdpval-common-output-operations-2026-09-22.json",
+          "sha256": "2183d598b7cc964befe7b2e78b9ebb362a3a2ab45898277e35d65bafa72ab455"
+        },
+        {
+          "path": ".audit/2026-09-21-common-output-operations/run/report.json",
+          "sha256": "037f8a0782ac25e9ed49c8d2f70b3aeec7332a1026383b09401fd4a6cda0ae96"
+        },
+        {
+          "path": ".audit/2026-09-21-common-output-operations/font-integrated-final/report.json",
+          "sha256": "b2f9d460d18b1d96d4e5cab80c41d49193570e2370b13d3fd31d880580a0c699"
+        },
+        {
+          "path": ".audit/2026-09-21-common-output-operations/font-integrated-final/visual-review.json",
+          "sha256": "cc87dd2b065821d5084e60589ac3cf88215f2eb9f9e0c46c0c8b5022cd49228f"
+        }
+      ],
+      "basis_ref": ".agents/development/evidence/gdpval-common-output-operations-2026-09-22.json#/correction",
+      "source_modules": {
+        "harness/src/eval_harness/capability_inspection.py": "80ebe610b5436ba8c8659ea2aaf4f25be4f15490289c50f6cb2ecb898a25e177",
+        "harness/src/eval_harness/office_rendering.py": "3832deb70cf495ca699959708f5bcc0d4c8f46aec61a14685102cac78d17bfcf"
+      },
+      "font_policy": "bundled-libreoffice-v1",
+      "component_applicability": "New render adoption requires the recorded capability_inspection.py and office_rendering.py hashes, configured bundled fonts and private font cache/policy. The old environment fingerprint is not relabeled; new evaluations use their own new renderer identity."
     }
   },
   "generation_capability_catalog": {
     "archive_package": {
-      "status": "partial_shared_route",
+      "status": "shared_route_applicable",
       "route_ids": [
-        "file_text_structure"
+        "zip_package_roundtrip"
       ],
-      "basis_ref": ".audit/2026-09-21-route-applicability/decision.json#/authoring_capability_mapping/archive_package",
-      "remaining_obligation": "Container reading and ordinary file writing are proved; an explicit general output-archive create/reopen operation was not identified in this bounded review."
+      "basis_ref": ".agents/development/evidence/gdpval-220-route-applicability.json#/route_catalog/zip_package_roundtrip",
+      "remaining_obligation": "Inspect the actual archive count, names, membership and successful opening/extraction in scratch as required by the original item. Archive proof establishes no audio, CAD, code correctness, native behavior or complete-codebase semantics."
     },
     "audio_decode_and_listen": {
       "status": "partial_shared_route",
@@ -1028,12 +1102,12 @@
       "remaining_obligation": "Apply the proved authoring operation to the original requested deliverable. Output correctness remains separately assessed; no successful participant solution is required for route adoption."
     },
     "conditional_archive_package": {
-      "status": "partial_shared_route",
+      "status": "shared_route_applicable",
       "route_ids": [
-        "file_text_structure"
+        "zip_package_roundtrip"
       ],
-      "basis_ref": ".audit/2026-09-21-route-applicability/decision.json#/authoring_capability_mapping/conditional_archive_package",
-      "remaining_obligation": "Only if the original archive branch applies: container reading and file writing are proved; general output-archive create/reopen proof was not identified."
+      "basis_ref": ".agents/development/evidence/gdpval-220-route-applicability.json#/route_catalog/zip_package_roundtrip",
+      "remaining_obligation": "Only when the original more-than-five-component-STEP branch applies. Inspect the actual archive count, names, membership and successful opening/extraction in scratch as required by the original item. Archive proof establishes no audio, CAD, code correctness, native behavior or complete-codebase semantics."
     },
     "conditional_email_draft_author": {
       "status": "shared_route_applicable",
@@ -1174,12 +1248,12 @@
       "remaining_obligation": "Apply the proved authoring operation to the original requested deliverable. Output correctness remains separately assessed; no successful participant solution is required for route adoption."
     },
     "large_format_pdf_author": {
-      "status": "partial_shared_route",
+      "status": "shared_route_applicable",
       "route_ids": [
-        "page_render_and_transport"
+        "large_format_pdf_page"
       ],
-      "basis_ref": ".audit/2026-09-21-route-applicability/decision.json#/authoring_capability_mapping/large_format_pdf_author",
-      "remaining_obligation": "PDF/render primitives are proved; the initial review did not bind an explicit large-format size/export operation. This is a format-operation gap, not a required successful task."
+      "basis_ref": ".agents/development/evidence/gdpval-220-route-applicability.json#/route_catalog/large_format_pdf_page",
+      "remaining_obligation": "Measure and inspect the actual submitted PDF; preserve the original one-page and ±2% 36 x 24 or 24 x 36 inch alternatives. Rendering enables observation only; poster content, readability, layout and clinical accuracy remain actual-artifact obligations."
     },
     "lawful_open_article_or_link_pdf_capture": {
       "status": "partial_shared_route",
@@ -1374,10 +1448,10 @@
     "poster_render": {
       "status": "shared_route_applicable",
       "route_ids": [
-        "page_render_and_transport"
+        "large_format_pdf_page"
       ],
-      "basis_ref": ".audit/2026-09-21-route-applicability/decision.json#/authoring_capability_mapping/poster_render",
-      "remaining_obligation": "Apply the proved authoring operation to the original requested deliverable. Output correctness remains separately assessed; no successful participant solution is required for route adoption."
+      "basis_ref": ".agents/development/evidence/gdpval-220-route-applicability.json#/route_catalog/large_format_pdf_page",
+      "remaining_obligation": "Measure and inspect the actual submitted PDF; preserve the original one-page and ±2% 36 x 24 or 24 x 36 inch alternatives. Rendering enables observation only; poster content, readability, layout and clinical accuracy remain actual-artifact obligations."
     },
     "presentation_author": {
       "status": "shared_route_applicable",
@@ -1681,12 +1755,12 @@
     "tasks": 220,
     "original_criteria": 10453,
     "generation_status_counts": {
-      "shared_routes_applicable": 181,
-      "partial_shared_routes": 39
+      "shared_routes_applicable": 182,
+      "partial_shared_routes": 38
     },
     "generation_capability_status_counts": {
-      "shared_route_applicable": 568,
-      "partial_shared_route": 64,
+      "shared_route_applicable": 574,
+      "partial_shared_route": 58,
       "infrastructure_pending": 1,
       "unconfirmed": 1
     },
@@ -1703,8 +1777,8 @@
     "task_successes_inferred": 0,
     "criterion_results_inferred": 0,
     "required_generation_capability_status_counts": {
-      "shared_route_applicable": 568,
-      "partial_shared_route": 63,
+      "shared_route_applicable": 574,
+      "partial_shared_route": 57,
       "infrastructure_pending": 1,
       "unconfirmed": 1
     },
@@ -10960,13 +11034,14 @@
             "capability": "wav_encode"
           },
           {
-            "status": "partial_shared_route",
+            "status": "shared_route_applicable",
             "route_ids": [
-              "file_text_structure"
+              "zip_package_roundtrip"
             ],
             "basis_ref": ".agents/development/evidence/gdpval-220-route-applicability.json#/generation_capability_catalog/archive_package",
-            "remaining_obligation": "Container reading and ordinary file writing are proved; an explicit general output-archive create/reopen operation was not identified in this bounded review.",
-            "capability": "archive_package"
+            "remaining_obligation": "Inspect the actual archive count, names, membership and successful opening/extraction in scratch as required by the original item. Archive proof establishes no audio, CAD, code correctness, native behavior or complete-codebase semantics.",
+            "capability": "archive_package",
+            "common_operation_adoption_ref": ".agents/development/evidence/gdpval-220-route-applicability.json#/common_output_operation_adoption/tasks/38889c3b-e3d4-49c8-816a-3cc8e5313aba"
           }
         ]
       },
@@ -10981,11 +11056,13 @@
           ],
           "status": "shared_route_applicable",
           "route_ids": [
-            "file_text_structure"
+            "file_text_structure",
+            "zip_package_roundtrip"
           ],
           "basis_ref": ".agents/development/evidence/gdpval-220-requirements-review.json#/tasks/12/rubric_routes/0",
           "remaining_obligation": "Inspect the actual artifact and applicable original sources with the mapped methods, preserve all original branches/tolerances, and record meaningful bound observations. Shared route proof is not a criterion result.",
-          "actual_artifact_observation_required": true
+          "actual_artifact_observation_required": true,
+          "common_operation_adoption_ref": ".agents/development/evidence/gdpval-220-route-applicability.json#/common_output_operation_adoption/tasks/38889c3b-e3d4-49c8-816a-3cc8e5313aba/criteria/cd6371ef-3939-42dc-87ea-1e7491ee5daf"
         },
         {
           "criterion_id": "9c8783e0-4d36-48d6-b839-3e34f8e5014a",
@@ -91522,13 +91599,14 @@
             "capability": "pdf_export"
           },
           {
-            "status": "partial_shared_route",
+            "status": "shared_route_applicable",
             "route_ids": [
-              "file_text_structure"
+              "zip_package_roundtrip"
             ],
             "basis_ref": ".agents/development/evidence/gdpval-220-route-applicability.json#/generation_capability_catalog/conditional_archive_package",
-            "remaining_obligation": "Only if the original archive branch applies: container reading and file writing are proved; general output-archive create/reopen proof was not identified.",
-            "capability": "conditional_archive_package"
+            "remaining_obligation": "Archive packaging is required only when more than five component STEP files are included. Archive contents and separate PDF predicates retain their own original conditions. Inspect the actual archive count, names, membership and successful opening/extraction in scratch as required by the original item. Archive proof establishes no audio, CAD, code correctness, native behavior or complete-codebase semantics.",
+            "capability": "conditional_archive_package",
+            "common_operation_adoption_ref": ".agents/development/evidence/gdpval-220-route-applicability.json#/common_output_operation_adoption/tasks/5e2b6aab-f9fb-4dd6-a1a5-874ef1743909"
           }
         ]
       },
@@ -91623,11 +91701,13 @@
           ],
           "status": "shared_route_applicable",
           "route_ids": [
-            "file_text_structure"
+            "file_text_structure",
+            "zip_package_roundtrip"
           ],
           "basis_ref": ".agents/development/evidence/gdpval-220-requirements-review.json#/tasks/110/rubric_routes/4",
           "remaining_obligation": "Inspect the actual artifact and applicable original sources with the mapped methods, preserve all original branches/tolerances, and record meaningful bound observations. Shared route proof is not a criterion result.",
-          "actual_artifact_observation_required": true
+          "actual_artifact_observation_required": true,
+          "common_operation_adoption_ref": ".agents/development/evidence/gdpval-220-route-applicability.json#/common_output_operation_adoption/tasks/5e2b6aab-f9fb-4dd6-a1a5-874ef1743909/criteria/7fed24d8-7c68-4d0c-b03e-63124a445b0e"
         },
         {
           "criterion_id": "b1e7bcf7-0071-4e1f-a90e-7ea60678f29b",
@@ -91639,11 +91719,13 @@
           ],
           "status": "shared_route_applicable",
           "route_ids": [
-            "file_text_structure"
+            "file_text_structure",
+            "zip_package_roundtrip"
           ],
           "basis_ref": ".agents/development/evidence/gdpval-220-requirements-review.json#/tasks/110/rubric_routes/5",
           "remaining_obligation": "Inspect the actual artifact and applicable original sources with the mapped methods, preserve all original branches/tolerances, and record meaningful bound observations. Shared route proof is not a criterion result.",
-          "actual_artifact_observation_required": true
+          "actual_artifact_observation_required": true,
+          "common_operation_adoption_ref": ".agents/development/evidence/gdpval-220-route-applicability.json#/common_output_operation_adoption/tasks/5e2b6aab-f9fb-4dd6-a1a5-874ef1743909/criteria/b1e7bcf7-0071-4e1f-a90e-7ea60678f29b"
         },
         {
           "criterion_id": "2eaeaa21-bb3c-42db-b6e1-c277205adddf",
@@ -92153,11 +92235,13 @@
           "status": "shared_route_applicable",
           "route_ids": [
             "file_text_structure",
-            "public_source_access"
+            "public_source_access",
+            "zip_package_roundtrip"
           ],
           "basis_ref": ".agents/development/evidence/gdpval-220-requirements-review.json#/tasks/110/rubric_routes/36",
           "remaining_obligation": "Inspect the actual artifact and applicable original sources with the mapped methods, preserve all original branches/tolerances, and record meaningful bound observations. Shared route proof is not a criterion result.",
-          "actual_artifact_observation_required": true
+          "actual_artifact_observation_required": true,
+          "common_operation_adoption_ref": ".agents/development/evidence/gdpval-220-route-applicability.json#/common_output_operation_adoption/tasks/5e2b6aab-f9fb-4dd6-a1a5-874ef1743909/criteria/aefe1228-e25b-471c-a278-1815844827cd"
         },
         {
           "criterion_id": "3ec81a4f-ddb1-4a2b-89ef-99d626536bf9",
@@ -148740,26 +148824,28 @@
       "source_constraints_ref": ".audit/2026-09-21-route-applicability/decision.json#/tasks/185/source_constraints",
       "source_input_impact_ref": null,
       "generation": {
-        "status": "partial_shared_routes",
+        "status": "shared_routes_applicable",
         "evidence_scope": "shared",
         "capabilities": [
           {
-            "status": "partial_shared_route",
+            "status": "shared_route_applicable",
             "route_ids": [
-              "page_render_and_transport"
+              "large_format_pdf_page"
             ],
             "basis_ref": ".agents/development/evidence/gdpval-220-route-applicability.json#/generation_capability_catalog/large_format_pdf_author",
-            "remaining_obligation": "PDF/render primitives are proved; the initial review did not bind an explicit large-format size/export operation. This is a format-operation gap, not a required successful task.",
-            "capability": "large_format_pdf_author"
+            "remaining_obligation": "Measure and inspect the actual submitted PDF; preserve the original one-page and ±2% 36 x 24 or 24 x 36 inch alternatives. Rendering enables observation only; poster content, readability, layout and clinical accuracy remain actual-artifact obligations.",
+            "capability": "large_format_pdf_author",
+            "common_operation_adoption_ref": ".agents/development/evidence/gdpval-220-route-applicability.json#/common_output_operation_adoption/tasks/91060ff0-3eb5-4ddf-9edb-f6758b95499e"
           },
           {
             "status": "shared_route_applicable",
             "route_ids": [
-              "page_render_and_transport"
+              "large_format_pdf_page"
             ],
             "basis_ref": ".agents/development/evidence/gdpval-220-route-applicability.json#/generation_capability_catalog/poster_render",
-            "remaining_obligation": "Apply the proved authoring operation to the original requested deliverable. Output correctness remains separately assessed; no successful participant solution is required for route adoption.",
-            "capability": "poster_render"
+            "remaining_obligation": "Measure and inspect the actual submitted PDF; preserve the original one-page and ±2% 36 x 24 or 24 x 36 inch alternatives. Rendering enables observation only; poster content, readability, layout and clinical accuracy remain actual-artifact obligations.",
+            "capability": "poster_render",
+            "common_operation_adoption_ref": ".agents/development/evidence/gdpval-220-route-applicability.json#/common_output_operation_adoption/tasks/91060ff0-3eb5-4ddf-9edb-f6758b95499e"
           }
         ]
       },
@@ -148774,11 +148860,13 @@
           ],
           "status": "shared_route_applicable",
           "route_ids": [
-            "file_text_structure"
+            "file_text_structure",
+            "large_format_pdf_page"
           ],
           "basis_ref": ".agents/development/evidence/gdpval-220-requirements-review.json#/tasks/185/rubric_routes/0",
           "remaining_obligation": "Inspect the actual artifact and applicable original sources with the mapped methods, preserve all original branches/tolerances, and record meaningful bound observations. Shared route proof is not a criterion result.",
-          "actual_artifact_observation_required": true
+          "actual_artifact_observation_required": true,
+          "common_operation_adoption_ref": ".agents/development/evidence/gdpval-220-route-applicability.json#/common_output_operation_adoption/tasks/91060ff0-3eb5-4ddf-9edb-f6758b95499e/criteria/eac33548-e9ea-450f-a0cc-44e35a219262"
         },
         {
           "criterion_id": "22175cd7-0d5a-4232-80fc-08f6d4c8409a",
@@ -148792,11 +148880,13 @@
           "status": "shared_route_applicable",
           "route_ids": [
             "file_text_structure",
-            "page_render_and_transport"
+            "page_render_and_transport",
+            "large_format_pdf_page"
           ],
           "basis_ref": ".agents/development/evidence/gdpval-220-requirements-review.json#/tasks/185/rubric_routes/1",
           "remaining_obligation": "Inspect the actual artifact and applicable original sources with the mapped methods, preserve all original branches/tolerances, and record meaningful bound observations. Shared route proof is not a criterion result.",
-          "actual_artifact_observation_required": true
+          "actual_artifact_observation_required": true,
+          "common_operation_adoption_ref": ".agents/development/evidence/gdpval-220-route-applicability.json#/common_output_operation_adoption/tasks/91060ff0-3eb5-4ddf-9edb-f6758b95499e/criteria/22175cd7-0d5a-4232-80fc-08f6d4c8409a"
         },
         {
           "criterion_id": "33a6879e-d232-46b2-8217-5b0aa608df64",
@@ -148810,11 +148900,13 @@
           "status": "shared_route_applicable",
           "route_ids": [
             "file_text_structure",
-            "page_render_and_transport"
+            "page_render_and_transport",
+            "large_format_pdf_page"
           ],
           "basis_ref": ".agents/development/evidence/gdpval-220-requirements-review.json#/tasks/185/rubric_routes/2",
           "remaining_obligation": "Inspect the actual artifact and applicable original sources with the mapped methods, preserve all original branches/tolerances, and record meaningful bound observations. Shared route proof is not a criterion result.",
-          "actual_artifact_observation_required": true
+          "actual_artifact_observation_required": true,
+          "common_operation_adoption_ref": ".agents/development/evidence/gdpval-220-route-applicability.json#/common_output_operation_adoption/tasks/91060ff0-3eb5-4ddf-9edb-f6758b95499e/criteria/33a6879e-d232-46b2-8217-5b0aa608df64"
         },
         {
           "criterion_id": "6635a195-7eed-4e96-9ec2-cfc78cf691c7",
@@ -148828,11 +148920,13 @@
           "status": "shared_route_applicable",
           "route_ids": [
             "file_text_structure",
-            "page_render_and_transport"
+            "page_render_and_transport",
+            "large_format_pdf_page"
           ],
           "basis_ref": ".agents/development/evidence/gdpval-220-requirements-review.json#/tasks/185/rubric_routes/3",
           "remaining_obligation": "Inspect the actual artifact and applicable original sources with the mapped methods, preserve all original branches/tolerances, and record meaningful bound observations. Shared route proof is not a criterion result.",
-          "actual_artifact_observation_required": true
+          "actual_artifact_observation_required": true,
+          "common_operation_adoption_ref": ".agents/development/evidence/gdpval-220-route-applicability.json#/common_output_operation_adoption/tasks/91060ff0-3eb5-4ddf-9edb-f6758b95499e/criteria/6635a195-7eed-4e96-9ec2-cfc78cf691c7"
         },
         {
           "criterion_id": "48461868-b8b1-46c1-8df8-4d880ae3a8bc",
@@ -148845,11 +148939,13 @@
           "status": "shared_route_applicable",
           "route_ids": [
             "file_text_structure",
-            "page_render_and_transport"
+            "page_render_and_transport",
+            "large_format_pdf_page"
           ],
           "basis_ref": ".agents/development/evidence/gdpval-220-requirements-review.json#/tasks/185/rubric_routes/4",
           "remaining_obligation": "Inspect the actual artifact and applicable original sources with the mapped methods, preserve all original branches/tolerances, and record meaningful bound observations. Shared route proof is not a criterion result.",
-          "actual_artifact_observation_required": true
+          "actual_artifact_observation_required": true,
+          "common_operation_adoption_ref": ".agents/development/evidence/gdpval-220-route-applicability.json#/common_output_operation_adoption/tasks/91060ff0-3eb5-4ddf-9edb-f6758b95499e/criteria/48461868-b8b1-46c1-8df8-4d880ae3a8bc"
         },
         {
           "criterion_id": "08587403-d079-4242-98ca-325b942719ee",
@@ -148862,11 +148958,13 @@
           "status": "shared_route_applicable",
           "route_ids": [
             "file_text_structure",
-            "page_render_and_transport"
+            "page_render_and_transport",
+            "large_format_pdf_page"
           ],
           "basis_ref": ".agents/development/evidence/gdpval-220-requirements-review.json#/tasks/185/rubric_routes/5",
           "remaining_obligation": "Inspect the actual artifact and applicable original sources with the mapped methods, preserve all original branches/tolerances, and record meaningful bound observations. Shared route proof is not a criterion result.",
-          "actual_artifact_observation_required": true
+          "actual_artifact_observation_required": true,
+          "common_operation_adoption_ref": ".agents/development/evidence/gdpval-220-route-applicability.json#/common_output_operation_adoption/tasks/91060ff0-3eb5-4ddf-9edb-f6758b95499e/criteria/08587403-d079-4242-98ca-325b942719ee"
         },
         {
           "criterion_id": "6f5ee044-94fc-4188-8f1a-7679fd5b8942",
@@ -149180,11 +149278,13 @@
           "status": "shared_route_applicable",
           "route_ids": [
             "file_text_structure",
-            "page_render_and_transport"
+            "page_render_and_transport",
+            "large_format_pdf_page"
           ],
           "basis_ref": ".agents/development/evidence/gdpval-220-requirements-review.json#/tasks/185/rubric_routes/26",
           "remaining_obligation": "Inspect the actual artifact and applicable original sources with the mapped methods, preserve all original branches/tolerances, and record meaningful bound observations. Shared route proof is not a criterion result.",
-          "actual_artifact_observation_required": true
+          "actual_artifact_observation_required": true,
+          "common_operation_adoption_ref": ".agents/development/evidence/gdpval-220-route-applicability.json#/common_output_operation_adoption/tasks/91060ff0-3eb5-4ddf-9edb-f6758b95499e/criteria/e7d01e31-5b09-45b8-b9a7-454314fe5b07"
         },
         {
           "criterion_id": "860dc6ee-fe0a-4f2f-9231-50b1f934f875",
@@ -149321,11 +149421,13 @@
           "status": "shared_route_applicable",
           "route_ids": [
             "file_text_structure",
-            "page_render_and_transport"
+            "page_render_and_transport",
+            "large_format_pdf_page"
           ],
           "basis_ref": ".agents/development/evidence/gdpval-220-requirements-review.json#/tasks/185/rubric_routes/35",
           "remaining_obligation": "Inspect the actual artifact and applicable original sources with the mapped methods, preserve all original branches/tolerances, and record meaningful bound observations. Shared route proof is not a criterion result.",
-          "actual_artifact_observation_required": true
+          "actual_artifact_observation_required": true,
+          "common_operation_adoption_ref": ".agents/development/evidence/gdpval-220-route-applicability.json#/common_output_operation_adoption/tasks/91060ff0-3eb5-4ddf-9edb-f6758b95499e/criteria/054fbddc-683d-45e2-9417-2ab7965f49b3"
         },
         {
           "criterion_id": "282d8e26-807a-4b7d-b7f3-66936ec88ed2",
@@ -173417,13 +173519,14 @@
             "capability": "code_author"
           },
           {
-            "status": "partial_shared_route",
+            "status": "shared_route_applicable",
             "route_ids": [
-              "file_text_structure"
+              "zip_package_roundtrip"
             ],
             "basis_ref": ".agents/development/evidence/gdpval-220-route-applicability.json#/generation_capability_catalog/archive_package",
-            "remaining_obligation": "Container reading and ordinary file writing are proved; an explicit general output-archive create/reopen operation was not identified in this bounded review.",
-            "capability": "archive_package"
+            "remaining_obligation": "Inspect the actual archive count, names, membership and successful opening/extraction in scratch as required by the original item. Archive proof establishes no audio, CAD, code correctness, native behavior or complete-codebase semantics.",
+            "capability": "archive_package",
+            "common_operation_adoption_ref": ".agents/development/evidence/gdpval-220-route-applicability.json#/common_output_operation_adoption/tasks/0e386e32-df20-4d1f-b536-7159bc409ad5"
           },
           {
             "status": "partial_shared_route",
@@ -173483,12 +173586,14 @@
           ],
           "status": "shared_route_applicable",
           "route_ids": [
-            "file_text_structure"
+            "file_text_structure",
+            "zip_package_roundtrip"
           ],
           "basis_ref": ".agents/development/evidence/gdpval-143-code-routes.json#/tasks/0/criteria/0",
           "remaining_obligation": "Source or test presence does not establish execution, security, or correctness of the wider application. Behavioral claims require their own functional observations.",
           "requirement_form": "source_or_artifact",
-          "actual_artifact_observation_required": true
+          "actual_artifact_observation_required": true,
+          "common_operation_adoption_ref": ".agents/development/evidence/gdpval-220-route-applicability.json#/common_output_operation_adoption/tasks/0e386e32-df20-4d1f-b536-7159bc409ad5/criteria/5b9ecec0-0cab-46e8-bc54-1743c2224723"
         },
         {
           "criterion_id": "b866cdf4-9279-4e38-bbed-24a185ac125a",
@@ -174512,13 +174617,14 @@
             "capability": "code_author"
           },
           {
-            "status": "partial_shared_route",
+            "status": "shared_route_applicable",
             "route_ids": [
-              "file_text_structure"
+              "zip_package_roundtrip"
             ],
             "basis_ref": ".agents/development/evidence/gdpval-220-route-applicability.json#/generation_capability_catalog/archive_package",
-            "remaining_obligation": "Container reading and ordinary file writing are proved; an explicit general output-archive create/reopen operation was not identified in this bounded review.",
-            "capability": "archive_package"
+            "remaining_obligation": "Inspect the actual archive count, names, membership and successful opening/extraction in scratch as required by the original item. Archive proof establishes no audio, CAD, code correctness, native behavior or complete-codebase semantics.",
+            "capability": "archive_package",
+            "common_operation_adoption_ref": ".agents/development/evidence/gdpval-220-route-applicability.json#/common_output_operation_adoption/tasks/7de33b48-5163-4f50-b5f3-8deea8185e57"
           },
           {
             "status": "partial_shared_route",
@@ -174569,11 +174675,13 @@
           ],
           "status": "shared_route_applicable",
           "route_ids": [
-            "file_text_structure"
+            "file_text_structure",
+            "zip_package_roundtrip"
           ],
           "basis_ref": ".agents/development/evidence/gdpval-220-requirements-review.json#/tasks/216/rubric_routes/0",
           "remaining_obligation": "Inspect the actual artifact and applicable original sources with the mapped methods, preserve all original branches/tolerances, and record meaningful bound observations. Shared route proof is not a criterion result.",
-          "actual_artifact_observation_required": true
+          "actual_artifact_observation_required": true,
+          "common_operation_adoption_ref": ".agents/development/evidence/gdpval-220-route-applicability.json#/common_output_operation_adoption/tasks/7de33b48-5163-4f50-b5f3-8deea8185e57/criteria/528116fe-7fcb-4a8e-9030-1b6e060adc98"
         },
         {
           "criterion_id": "02516b7b-1ed2-4939-a595-3341040fa961",
@@ -174585,11 +174693,13 @@
           ],
           "status": "shared_route_applicable",
           "route_ids": [
-            "file_text_structure"
+            "file_text_structure",
+            "zip_package_roundtrip"
           ],
           "basis_ref": ".agents/development/evidence/gdpval-220-requirements-review.json#/tasks/216/rubric_routes/1",
           "remaining_obligation": "Inspect the actual artifact and applicable original sources with the mapped methods, preserve all original branches/tolerances, and record meaningful bound observations. Shared route proof is not a criterion result.",
-          "actual_artifact_observation_required": true
+          "actual_artifact_observation_required": true,
+          "common_operation_adoption_ref": ".agents/development/evidence/gdpval-220-route-applicability.json#/common_output_operation_adoption/tasks/7de33b48-5163-4f50-b5f3-8deea8185e57/criteria/02516b7b-1ed2-4939-a595-3341040fa961"
         },
         {
           "criterion_id": "7da8166e-1668-489e-9d36-56dbe4c49a54",
@@ -174601,11 +174711,13 @@
           ],
           "status": "shared_route_applicable",
           "route_ids": [
-            "file_text_structure"
+            "file_text_structure",
+            "zip_package_roundtrip"
           ],
           "basis_ref": ".agents/development/evidence/gdpval-220-requirements-review.json#/tasks/216/rubric_routes/2",
           "remaining_obligation": "Inspect the actual artifact and applicable original sources with the mapped methods, preserve all original branches/tolerances, and record meaningful bound observations. Shared route proof is not a criterion result.",
-          "actual_artifact_observation_required": true
+          "actual_artifact_observation_required": true,
+          "common_operation_adoption_ref": ".agents/development/evidence/gdpval-220-route-applicability.json#/common_output_operation_adoption/tasks/7de33b48-5163-4f50-b5f3-8deea8185e57/criteria/7da8166e-1668-489e-9d36-56dbe4c49a54"
         },
         {
           "criterion_id": "ae5e1a4a-9808-4c97-9bc9-3397430dc816",
@@ -174617,11 +174729,13 @@
           ],
           "status": "shared_route_applicable",
           "route_ids": [
-            "file_text_structure"
+            "file_text_structure",
+            "zip_package_roundtrip"
           ],
           "basis_ref": ".agents/development/evidence/gdpval-220-requirements-review.json#/tasks/216/rubric_routes/3",
           "remaining_obligation": "Inspect the actual artifact and applicable original sources with the mapped methods, preserve all original branches/tolerances, and record meaningful bound observations. Shared route proof is not a criterion result.",
-          "actual_artifact_observation_required": true
+          "actual_artifact_observation_required": true,
+          "common_operation_adoption_ref": ".agents/development/evidence/gdpval-220-route-applicability.json#/common_output_operation_adoption/tasks/7de33b48-5163-4f50-b5f3-8deea8185e57/criteria/ae5e1a4a-9808-4c97-9bc9-3397430dc816"
         },
         {
           "criterion_id": "640233df-680c-4f9d-a1b8-966433fa7530",
@@ -174633,11 +174747,13 @@
           ],
           "status": "shared_route_applicable",
           "route_ids": [
-            "file_text_structure"
+            "file_text_structure",
+            "zip_package_roundtrip"
           ],
           "basis_ref": ".agents/development/evidence/gdpval-220-requirements-review.json#/tasks/216/rubric_routes/4",
           "remaining_obligation": "Inspect the actual artifact and applicable original sources with the mapped methods, preserve all original branches/tolerances, and record meaningful bound observations. Shared route proof is not a criterion result.",
-          "actual_artifact_observation_required": true
+          "actual_artifact_observation_required": true,
+          "common_operation_adoption_ref": ".agents/development/evidence/gdpval-220-route-applicability.json#/common_output_operation_adoption/tasks/7de33b48-5163-4f50-b5f3-8deea8185e57/criteria/640233df-680c-4f9d-a1b8-966433fa7530"
         },
         {
           "criterion_id": "d9780423-f2eb-41bc-9346-4b143a1fca17",
@@ -174649,11 +174765,13 @@
           ],
           "status": "shared_route_applicable",
           "route_ids": [
-            "file_text_structure"
+            "file_text_structure",
+            "zip_package_roundtrip"
           ],
           "basis_ref": ".agents/development/evidence/gdpval-220-requirements-review.json#/tasks/216/rubric_routes/5",
           "remaining_obligation": "Inspect the actual artifact and applicable original sources with the mapped methods, preserve all original branches/tolerances, and record meaningful bound observations. Shared route proof is not a criterion result.",
-          "actual_artifact_observation_required": true
+          "actual_artifact_observation_required": true,
+          "common_operation_adoption_ref": ".agents/development/evidence/gdpval-220-route-applicability.json#/common_output_operation_adoption/tasks/7de33b48-5163-4f50-b5f3-8deea8185e57/criteria/d9780423-f2eb-41bc-9346-4b143a1fca17"
         },
         {
           "criterion_id": "3bfaf177-ce06-47fe-b23b-b4f6585d14e8",
@@ -175707,13 +175825,14 @@
             "capability": "code_author"
           },
           {
-            "status": "partial_shared_route",
+            "status": "shared_route_applicable",
             "route_ids": [
-              "file_text_structure"
+              "zip_package_roundtrip"
             ],
             "basis_ref": ".agents/development/evidence/gdpval-220-route-applicability.json#/generation_capability_catalog/archive_package",
-            "remaining_obligation": "Container reading and ordinary file writing are proved; an explicit general output-archive create/reopen operation was not identified in this bounded review.",
-            "capability": "archive_package"
+            "remaining_obligation": "Inspect the actual archive count, names, membership and successful opening/extraction in scratch as required by the original item. Archive proof establishes no audio, CAD, code correctness, native behavior or complete-codebase semantics.",
+            "capability": "archive_package",
+            "common_operation_adoption_ref": ".agents/development/evidence/gdpval-220-route-applicability.json#/common_output_operation_adoption/tasks/4122f866-01fa-400b-904d-fa171cdab7c7"
           },
           {
             "status": "partial_shared_route",
@@ -175755,12 +175874,14 @@
           ],
           "status": "shared_route_applicable",
           "route_ids": [
-            "file_text_structure"
+            "file_text_structure",
+            "zip_package_roundtrip"
           ],
           "basis_ref": ".agents/development/evidence/gdpval-143-code-routes.json#/tasks/1/criteria/0",
           "remaining_obligation": "Native Terraform syntax/provider-schema validation remains a useful separate check but cannot be claimed from source presence. Real AWS provisioning and production readiness remain unproved.",
           "requirement_form": "source_or_archive",
-          "actual_artifact_observation_required": true
+          "actual_artifact_observation_required": true,
+          "common_operation_adoption_ref": ".agents/development/evidence/gdpval-220-route-applicability.json#/common_output_operation_adoption/tasks/4122f866-01fa-400b-904d-fa171cdab7c7/criteria/73e62a46-5476-45f8-8967-f50751f81956"
         },
         {
           "criterion_id": "439abd13-8e93-4d24-857d-f099062d71fa",
@@ -177685,5 +177806,248 @@
   "requirement_corrections": {
     "path": ".agents/development/evidence/gdpval-route-corrections-2026-09-21.json",
     "sha256": "40602ae7657e27ef73aa1bfe5643930dc14ceaf669e44e83055126c3c80c468e"
+  },
+  "common_output_operation_adoption": {
+    "schema_version": 1,
+    "kind": "bounded_common_output_operation_adoption",
+    "source_dataset_sha256": "4d58ee30485093010bf8b0a11708f80924831eef2a643db4c2d23b72fd426470",
+    "previous_mapping_sha256": "fae3089c2729032bc81cd016eb67b12b83d35edb3b4f0e316223fd66fc1f30d2",
+    "proof_ref": {
+      "path": ".agents/development/evidence/gdpval-common-output-operations-2026-09-22.json",
+      "sha256": "2183d598b7cc964befe7b2e78b9ebb362a3a2ab45898277e35d65bafa72ab455"
+    },
+    "limits": [
+      "Inspect the actual archive count, names, membership and successful opening/extraction in scratch as required by the original item. Archive proof establishes no audio, CAD, code correctness, native behavior or complete-codebase semantics.",
+      "Measure and inspect the actual submitted PDF; preserve the original one-page and ±2% 36 x 24 or 24 x 36 inch alternatives. Rendering enables observation only; poster content, readability, layout and clinical accuracy remain actual-artifact obligations.",
+      "Original methods, signed weights, item units, conditional branches, content-feasibility records and other unresolved routes are unchanged. No actual task or criterion result is inferred."
+    ],
+    "tasks": {
+      "38889c3b-e3d4-49c8-816a-3cc8e5313aba": {
+        "row_sha256": "01130962efdd338a07c2b536fc749444889d09ff0a1c36122ba6df8c18cf398e",
+        "prompt_sha256": "cf0ddcc9be0c8e5e9e9e80f80434f01c54b1097faa11996be89abe1cff51fdd5",
+        "prompt_clause": {
+          "text": "Provide the final deliverable in a zip folder that includes an approximately 2:17 long Master Track (containing all of the instrumentation you created) and the stem tracks (Guitars, Synths, Bridge, Bass) for the recording engineer to use during the recording session.",
+          "start": 1578
+        },
+        "route_id": "zip_package_roundtrip",
+        "criteria": {
+          "cd6371ef-3939-42dc-87ea-1e7491ee5daf": {
+            "original_item_sha256": "4bfb73e63a53d6a706ba60f29950ed4fb66738ea5543583b962ea4de674122a4",
+            "original_signed_score": 2,
+            "clause": "Exactly one top-level ZIP archive is submitted as the final deliverable (one and only one .zip file).",
+            "scope": "Inspect the actual archive count, names, membership and successful opening/extraction in scratch as required by the original item. Archive proof establishes no audio, CAD, code correctness, native behavior or complete-codebase semantics.",
+            "methods_and_status_unchanged": true
+          }
+        },
+        "generation_capabilities": [
+          "archive_package"
+        ]
+      },
+      "0e386e32-df20-4d1f-b536-7159bc409ad5": {
+        "row_sha256": "e2f13dda94d15f3d263e25a3f740ad557c8808438bdd88a9a8dc042e7770dfa2",
+        "prompt_sha256": "46ed5372bbd43151663c4fc2db09329b2d6b65526d71b8088cc430c48ddaaa9c",
+        "prompt_clause": {
+          "text": "Your task is to implement all software required for the system and submit a ZIP file containing the complete codebase.",
+          "start": 3730
+        },
+        "route_id": "zip_package_roundtrip",
+        "criteria": {
+          "5b9ecec0-0cab-46e8-bc54-1743c2224723": {
+            "original_item_sha256": "0d6a60fe6a05388690ac40feb573c817a694cc3e75ca3b04686e6a9ad175fe46",
+            "original_signed_score": 2,
+            "clause": "Submission is a single ZIP archive that contains the complete codebase.",
+            "scope": "Inspect the actual archive count, names, membership and successful opening/extraction in scratch as required by the original item. Archive proof establishes no audio, CAD, code correctness, native behavior or complete-codebase semantics.",
+            "methods_and_status_unchanged": true
+          }
+        },
+        "generation_capabilities": [
+          "archive_package"
+        ]
+      },
+      "7de33b48-5163-4f50-b5f3-8deea8185e57": {
+        "row_sha256": "52148bf5f95110645a8230c10ece5fb4e9eef4aa0c35df6a59badb3ed3aa5f89",
+        "prompt_sha256": "cef772e71afe0f208ba383f428b223265d9d7bc7a9a3e61b461667338687a10b",
+        "prompt_clause": {
+          "text": "Your task is to create a zip file, containing the ScreenReaderStatusMessage utility in TypeScript JSX.",
+          "start": 984
+        },
+        "route_id": "zip_package_roundtrip",
+        "criteria": {
+          "528116fe-7fcb-4a8e-9030-1b6e060adc98": {
+            "original_item_sha256": "cb9992da1705c8405e814054ed0821dd2b9d5fae2c73754b230dfad59f53d24b",
+            "original_signed_score": 2,
+            "clause": "The submission is a .zip archive that opens successfully.",
+            "scope": "Inspect the actual archive count, names, membership and successful opening/extraction in scratch as required by the original item. Archive proof establishes no audio, CAD, code correctness, native behavior or complete-codebase semantics.",
+            "methods_and_status_unchanged": true
+          },
+          "02516b7b-1ed2-4939-a595-3341040fa961": {
+            "original_item_sha256": "7ccca14fc2256753194d2542b3301f8df4489fea5cd7873a8aac33886055a159",
+            "original_signed_score": 2,
+            "clause": "The zip archive contains a top-level file named ScreenReaderStatusMessage.tsx.",
+            "scope": "Inspect the actual archive count, names, membership and successful opening/extraction in scratch as required by the original item. Archive proof establishes no audio, CAD, code correctness, native behavior or complete-codebase semantics.",
+            "methods_and_status_unchanged": true
+          },
+          "7da8166e-1668-489e-9d36-56dbe4c49a54": {
+            "original_item_sha256": "bc20f6d1522388bcd367b622358d6d2380ba21d7cad4573b849e58fb2535bfec",
+            "original_signed_score": 2,
+            "clause": "The zip archive contains a top-level file named ScreenReaderStatusMessage.test.tsx.",
+            "scope": "Inspect the actual archive count, names, membership and successful opening/extraction in scratch as required by the original item. Archive proof establishes no audio, CAD, code correctness, native behavior or complete-codebase semantics.",
+            "methods_and_status_unchanged": true
+          },
+          "ae5e1a4a-9808-4c97-9bc9-3397430dc816": {
+            "original_item_sha256": "4d1aeb28a28485263ec26fb7dff15d9e5537db529e967155bcb1045724c1e3d0",
+            "original_signed_score": 1,
+            "clause": "The zip archive contains a top-level file named ScreenReaderStatusMessage.css.",
+            "scope": "Inspect the actual archive count, names, membership and successful opening/extraction in scratch as required by the original item. Archive proof establishes no audio, CAD, code correctness, native behavior or complete-codebase semantics.",
+            "methods_and_status_unchanged": true
+          },
+          "640233df-680c-4f9d-a1b8-966433fa7530": {
+            "original_item_sha256": "c4e153102d47596c852f8a1955999da8d842425f31ed9898b145ee3c573e6698",
+            "original_signed_score": 1,
+            "clause": "The zip archive contains a top-level file named package.json.",
+            "scope": "Inspect the actual archive count, names, membership and successful opening/extraction in scratch as required by the original item. Archive proof establishes no audio, CAD, code correctness, native behavior or complete-codebase semantics.",
+            "methods_and_status_unchanged": true
+          },
+          "d9780423-f2eb-41bc-9346-4b143a1fca17": {
+            "original_item_sha256": "7b2a6b2cc610c3b5f05fd9f76296f91c2d8fb46f9881bfc2b59680a98f714874",
+            "original_signed_score": 1,
+            "clause": "The zip archive contains a top-level file named README.md.",
+            "scope": "Inspect the actual archive count, names, membership and successful opening/extraction in scratch as required by the original item. Archive proof establishes no audio, CAD, code correctness, native behavior or complete-codebase semantics.",
+            "methods_and_status_unchanged": true
+          }
+        },
+        "generation_capabilities": [
+          "archive_package"
+        ]
+      },
+      "4122f866-01fa-400b-904d-fa171cdab7c7": {
+        "row_sha256": "e8ac76fcd8eada1011a93925c811438f0cd2433af8d8b4709f092843c32e5d77",
+        "prompt_sha256": "8253120efea70c367ab51690f51d6aad459cb559b137c6465c9165bca597fb4e",
+        "prompt_clause": {
+          "text": "Deliver everything as a single zip file containing the Terraform files (main.tf, variables.tf, outputs.tf), the Lambda function (exports.js), and the README.",
+          "start": 3078
+        },
+        "route_id": "zip_package_roundtrip",
+        "criteria": {
+          "73e62a46-5476-45f8-8967-f50751f81956": {
+            "original_item_sha256": "8130e600717cc81db339e5c024a59ab53db5119efb85682b86d1961a6c50665c",
+            "original_signed_score": 12,
+            "clause": "All content in the deliverable is inside a single .zip archive.",
+            "scope": "Inspect the actual archive count, names, membership and successful opening/extraction in scratch as required by the original item. Archive proof establishes no audio, CAD, code correctness, native behavior or complete-codebase semantics.",
+            "methods_and_status_unchanged": true
+          }
+        },
+        "generation_capabilities": [
+          "archive_package"
+        ]
+      },
+      "5e2b6aab-f9fb-4dd6-a1a5-874ef1743909": {
+        "row_sha256": "f298505cf86c06687c21569d6edce3bb85d24861b881f95b63f423be51109b0d",
+        "prompt_sha256": "133836e4ac17714fe7ad4ffc63e6c89c4f51dfb30093d9dfec52ffdb14354c6d",
+        "prompt_clause": {
+          "text": "If there are more than 5 component STEP files, package all STEP files into a ZIP file, but you do not need to put the PDF drawings in the ZIP file.",
+          "start": 1770
+        },
+        "route_id": "zip_package_roundtrip",
+        "criteria": {
+          "7fed24d8-7c68-4d0c-b03e-63124a445b0e": {
+            "original_item_sha256": "d5c42d4d56208c37aa6b185399bf97ce3d747e45ae2010160643954681e00ee6",
+            "original_signed_score": 2,
+            "clause": "If more than five component STEP files are included, they are packaged into a single ZIP archive containing the STEP files.",
+            "scope": "Inspect the actual archive count, names, membership and successful opening/extraction in scratch as required by the original item. Archive proof establishes no audio, CAD, code correctness, native behavior or complete-codebase semantics.",
+            "methods_and_status_unchanged": true
+          },
+          "b1e7bcf7-0071-4e1f-a90e-7ea60678f29b": {
+            "original_item_sha256": "ed1e7daf4d0f7fb1162cdcb271fccad3dc6947ead8a1eb440755cf0774fb3e59",
+            "original_signed_score": 1,
+            "clause": "Any ZIP archive that contains STEP files includes only .step/.stp files (no PDFs or other file types).",
+            "scope": "Inspect the actual archive count, names, membership and successful opening/extraction in scratch as required by the original item. Archive proof establishes no audio, CAD, code correctness, native behavior or complete-codebase semantics.",
+            "methods_and_status_unchanged": true
+          },
+          "aefe1228-e25b-471c-a278-1815844827cd": {
+            "original_item_sha256": "0423e5d09874c21c14788f28a53c59087f273eea532c83e5046bcc6d87ab7a0f",
+            "original_signed_score": 1,
+            "clause": "If STEP files are zipped, the PDF drawings are provided as separate files outside the ZIP archive.",
+            "scope": "Inspect the actual archive count, names, membership and successful opening/extraction in scratch as required by the original item. Archive proof establishes no audio, CAD, code correctness, native behavior or complete-codebase semantics.",
+            "methods_and_status_unchanged": true
+          }
+        },
+        "generation_capabilities": [
+          "conditional_archive_package"
+        ],
+        "condition": "Archive packaging is required only when more than five component STEP files are included. Archive contents and separate PDF predicates retain their own original conditions."
+      },
+      "91060ff0-3eb5-4ddf-9edb-f6758b95499e": {
+        "row_sha256": "db8861644f578844bd1600c8e21ff51120680742a38331f987c26bf0de1e3454",
+        "prompt_sha256": "bdf053ca12d4380cc45c36771e73e33a994d2415573da77f223a2ec9de4bfdc5",
+        "prompt_clause": {
+          "text": "To support your presentation, create a 36 x 24 inch educational PDF poster.",
+          "start": 579
+        },
+        "route_id": "large_format_pdf_page",
+        "criteria": {
+          "eac33548-e9ea-450f-a0cc-44e35a219262": {
+            "original_item_sha256": "9276ed127687ab62db9191b5d3dd1f3af2a95847a92ec2017357a4b7486a2d1d",
+            "original_signed_score": 2,
+            "clause": "Submission is a single PDF file (.pdf).",
+            "scope": "Measure and inspect the actual submitted PDF; preserve the original one-page and ±2% 36 x 24 or 24 x 36 inch alternatives. Rendering enables observation only; poster content, readability, layout and clinical accuracy remain actual-artifact obligations.",
+            "methods_and_status_unchanged": true
+          },
+          "22175cd7-0d5a-4232-80fc-08f6d4c8409a": {
+            "original_item_sha256": "64a957e19fafc2ba5b7119fce71fa69c3662cddbe028ebca504049795d577a87",
+            "original_signed_score": 2,
+            "clause": "The PDF contains exactly 1 page.",
+            "scope": "Measure and inspect the actual submitted PDF; preserve the original one-page and ±2% 36 x 24 or 24 x 36 inch alternatives. Rendering enables observation only; poster content, readability, layout and clinical accuracy remain actual-artifact obligations.",
+            "methods_and_status_unchanged": true
+          },
+          "33a6879e-d232-46b2-8217-5b0aa608df64": {
+            "original_item_sha256": "0122f4e8940dfca4cf6b044bc1f6a911ebc90d59312a429ddbfd8733877fb6e4",
+            "original_signed_score": 2,
+            "clause": "PDF page size is within ±2% of 36 x 24 inches or 24 x 36 inches.",
+            "scope": "Measure and inspect the actual submitted PDF; preserve the original one-page and ±2% 36 x 24 or 24 x 36 inch alternatives. Rendering enables observation only; poster content, readability, layout and clinical accuracy remain actual-artifact obligations.",
+            "methods_and_status_unchanged": true
+          },
+          "6635a195-7eed-4e96-9ec2-cfc78cf691c7": {
+            "original_item_sha256": "d6b6d2a53e18b2f5ff1ece54bdafd9d171e6eaf16c020411a98494161699dd15",
+            "original_signed_score": 2,
+            "clause": "Layout is clear and section-based, with headings or visually distinct sections separating topics.",
+            "scope": "Measure and inspect the actual submitted PDF; preserve the original one-page and ±2% 36 x 24 or 24 x 36 inch alternatives. Rendering enables observation only; poster content, readability, layout and clinical accuracy remain actual-artifact obligations.",
+            "methods_and_status_unchanged": true
+          },
+          "48461868-b8b1-46c1-8df8-4d880ae3a8bc": {
+            "original_item_sha256": "7b0ae46f129b54f3e823438a68b6f90c887a30e465792ffcfa838f80e221f415",
+            "original_signed_score": 2,
+            "clause": "Includes at least one key visual that conveys information (e.g., a table, icon set, product comparison, labeled image, or chart).",
+            "scope": "Measure and inspect the actual submitted PDF; preserve the original one-page and ±2% 36 x 24 or 24 x 36 inch alternatives. Rendering enables observation only; poster content, readability, layout and clinical accuracy remain actual-artifact obligations.",
+            "methods_and_status_unchanged": true
+          },
+          "08587403-d079-4242-98ca-325b942719ee": {
+            "original_item_sha256": "01b3c58379c4b14564da2660d265b9315335e7d9a49b094eca9bccc327f82178",
+            "original_signed_score": 1,
+            "clause": "The poster uses at least two design elements (e.g., color, icons, or typography) to aid comprehension.",
+            "scope": "Measure and inspect the actual submitted PDF; preserve the original one-page and ±2% 36 x 24 or 24 x 36 inch alternatives. Rendering enables observation only; poster content, readability, layout and clinical accuracy remain actual-artifact obligations.",
+            "methods_and_status_unchanged": true
+          },
+          "e7d01e31-5b09-45b8-b9a7-454314fe5b07": {
+            "original_item_sha256": "f6d0eb8cc917617c452dd29c3b6cddacafefc9a50e2cc21ebb97d62654d646e7",
+            "original_signed_score": 1,
+            "clause": "At least one clinical content section (e.g., signs, causes, treatments) includes a supportive image or diagram to aid recognition.",
+            "scope": "Measure and inspect the actual submitted PDF; preserve the original one-page and ±2% 36 x 24 or 24 x 36 inch alternatives. Rendering enables observation only; poster content, readability, layout and clinical accuracy remain actual-artifact obligations.",
+            "methods_and_status_unchanged": true
+          },
+          "054fbddc-683d-45e2-9417-2ab7965f49b3": {
+            "original_item_sha256": "91a5ad8a0a8dd7a67d97a8c03154ffce48ca14d5bbe5a3979ac85edf6ad49427",
+            "original_signed_score": 5,
+            "clause": "Overall formatting and style of the deliverable",
+            "scope": "Measure and inspect the actual submitted PDF; preserve the original one-page and ±2% 36 x 24 or 24 x 36 inch alternatives. Rendering enables observation only; poster content, readability, layout and clinical accuracy remain actual-artifact obligations.",
+            "methods_and_status_unchanged": true
+          }
+        },
+        "generation_capabilities": [
+          "large_format_pdf_author",
+          "poster_render"
+        ]
+      }
+    }
   }
 }

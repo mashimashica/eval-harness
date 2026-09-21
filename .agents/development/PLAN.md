@@ -65,9 +65,20 @@ but times out at30s. This is not candidate-isolation acceptance. The specialist 
 and detached-child cleanup before any product route is adopted. See
 [native follow-up](evidence/gdpval-native-feasibility-followup-2026-09-22.json).
 
-Current ownership: controller owns frozen execution, product docs, evidence acceptance and PR; one Astra worker owns
-the six-task ZIP/large-PDF applicability increment; one Astra specialist owns native lifecycle verification. Neither may
-launch a model or alter product runtime. Full all-220 acceptance remains incomplete while mapped gaps are unresolved.
+The six-task ZIP/large-PDF mapping is accepted:181 common-route tasks and39 with required-route gaps. The other214
+records and all original IDs/methods/weights are preserved. The source-bound mapping and current-summary update are
+recorded in [the adoption receipt](evidence/gdpval-output-route-adoption-2026-09-22.json).
+
+The owner separately approved one additional Claude dashboard recovery (Opus5/medium,1200s,max_turns40,serial1,
+retries0,existing subscription only) after both science slots finish. This is a new one-session envelope; the six-session
+batch remains bounded and retains its spent attempts. Codex science completed in403.46 model/tool seconds with
+32pass/11fail/3unconfirmed and unchanged originals. Claude science is running. Controller source/operation review
+retains limited source-comparison observations separately from model results; no raw verdict is overwritten.
+
+Current ownership: controller owns frozen execution, product docs, evidence acceptance and PR; one Astra worker is
+checking only the existing Word diagram/PDF form operation gaps using at most two known-fixture workflows; one Astra
+specialist owns two bounded native lifecycle helpers, with no new Chrome launch. Neither may launch a model or alter
+product runtime. Full all-220 acceptance remains incomplete while mapped gaps are unresolved.
 
 ### Handoff disposition (2026-09-21)
 

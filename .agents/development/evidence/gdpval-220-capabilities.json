@@ -22841,18 +22841,18 @@
   },
   "route_applicability_record": {
     "path": ".agents/development/evidence/gdpval-220-route-applicability.json",
-    "sha256": "fae3089c2729032bc81cd016eb67b12b83d35edb3b4f0e316223fd66fc1f30d2"
+    "sha256": "81a52af8a313c76c9c9d839fb086c131fb8b97168b2fe6cce5afc2e52d1b8bbe"
   },
   "route_applicability_summary": {
     "tasks": 220,
     "original_criteria": 10453,
     "generation_status_counts": {
-      "shared_routes_applicable": 181,
-      "partial_shared_routes": 39
+      "shared_routes_applicable": 182,
+      "partial_shared_routes": 38
     },
     "generation_capability_status_counts": {
-      "shared_route_applicable": 568,
-      "partial_shared_route": 64,
+      "shared_route_applicable": 574,
+      "partial_shared_route": 58,
       "infrastructure_pending": 1,
       "unconfirmed": 1
     },
@@ -22869,8 +22869,8 @@
     "task_successes_inferred": 0,
     "criterion_results_inferred": 0,
     "required_generation_capability_status_counts": {
-      "shared_route_applicable": 568,
-      "partial_shared_route": 63,
+      "shared_route_applicable": 574,
+      "partial_shared_route": 57,
       "infrastructure_pending": 1,
       "unconfirmed": 1
     },

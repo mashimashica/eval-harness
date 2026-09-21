@@ -214,8 +214,8 @@
     "target_environment_acceptance": {
       "dimension": "target-environment support and task acceptance",
       "task_level_status_counts": {
-        "common_routes_applicable_with_limits": 180,
-        "route_gaps_remain": 40
+        "common_routes_applicable_with_limits": 181,
+        "route_gaps_remain": 39
       },
       "common_profile": {
         "ref": "gdpval-v2",
@@ -224,8 +224,8 @@
         "not_task_acceptance_count": true
       },
       "generation_status_counts": {
-        "partial_shared_routes": 39,
-        "shared_routes_applicable": 181
+        "partial_shared_routes": 38,
+        "shared_routes_applicable": 182
       },
       "evaluation_status_counts": {
         "partial_shared_routes": 24,
@@ -11086,13 +11086,14 @@
                 "capability": "wav_encode"
               },
               {
-                "status": "partial_shared_route",
+                "status": "shared_route_applicable",
                 "route_ids": [
-                  "file_text_structure"
+                  "zip_package_roundtrip"
                 ],
                 "basis_ref": ".agents/development/evidence/gdpval-220-route-applicability.json#/generation_capability_catalog/archive_package",
-                "remaining_obligation": "Container reading and ordinary file writing are proved; an explicit general output-archive create/reopen operation was not identified in this bounded review.",
-                "capability": "archive_package"
+                "remaining_obligation": "Inspect the actual archive count, names, membership and successful opening/extraction in scratch as required by the original item. Archive proof establishes no audio, CAD, code correctness, native behavior or complete-codebase semantics.",
+                "capability": "archive_package",
+                "common_operation_adoption_ref": ".agents/development/evidence/gdpval-220-route-applicability.json#/common_output_operation_adoption/tasks/38889c3b-e3d4-49c8-816a-3cc8e5313aba"
               }
             ],
             "task_success_inferred": false
@@ -95576,13 +95577,14 @@
                 "capability": "pdf_export"
               },
               {
-                "status": "partial_shared_route",
+                "status": "shared_route_applicable",
                 "route_ids": [
-                  "file_text_structure"
+                  "zip_package_roundtrip"
                 ],
                 "basis_ref": ".agents/development/evidence/gdpval-220-route-applicability.json#/generation_capability_catalog/conditional_archive_package",
-                "remaining_obligation": "Only if the original archive branch applies: container reading and file writing are proved; general output-archive create/reopen proof was not identified.",
-                "capability": "conditional_archive_package"
+                "remaining_obligation": "Archive packaging is required only when more than five component STEP files are included. Archive contents and separate PDF predicates retain their own original conditions. Inspect the actual archive count, names, membership and successful opening/extraction in scratch as required by the original item. Archive proof establishes no audio, CAD, code correctness, native behavior or complete-codebase semantics.",
+                "capability": "conditional_archive_package",
+                "common_operation_adoption_ref": ".agents/development/evidence/gdpval-220-route-applicability.json#/common_output_operation_adoption/tasks/5e2b6aab-f9fb-4dd6-a1a5-874ef1743909"
               }
             ],
             "task_success_inferred": false
@@ -156969,26 +156971,28 @@
         "known_unsupported": [],
         "generation_vs_evaluation": {
           "generation": {
-            "status": "partial_shared_routes",
+            "status": "shared_routes_applicable",
             "evidence_scope": "shared",
             "capabilities": [
               {
-                "status": "partial_shared_route",
+                "status": "shared_route_applicable",
                 "route_ids": [
-                  "page_render_and_transport"
+                  "large_format_pdf_page"
                 ],
                 "basis_ref": ".agents/development/evidence/gdpval-220-route-applicability.json#/generation_capability_catalog/large_format_pdf_author",
-                "remaining_obligation": "PDF/render primitives are proved; the initial review did not bind an explicit large-format size/export operation. This is a format-operation gap, not a required successful task.",
-                "capability": "large_format_pdf_author"
+                "remaining_obligation": "Measure and inspect the actual submitted PDF; preserve the original one-page and ±2% 36 x 24 or 24 x 36 inch alternatives. Rendering enables observation only; poster content, readability, layout and clinical accuracy remain actual-artifact obligations.",
+                "capability": "large_format_pdf_author",
+                "common_operation_adoption_ref": ".agents/development/evidence/gdpval-220-route-applicability.json#/common_output_operation_adoption/tasks/91060ff0-3eb5-4ddf-9edb-f6758b95499e"
               },
               {
                 "status": "shared_route_applicable",
                 "route_ids": [
-                  "page_render_and_transport"
+                  "large_format_pdf_page"
                 ],
                 "basis_ref": ".agents/development/evidence/gdpval-220-route-applicability.json#/generation_capability_catalog/poster_render",
-                "remaining_obligation": "Apply the proved authoring operation to the original requested deliverable. Output correctness remains separately assessed; no successful participant solution is required for route adoption.",
-                "capability": "poster_render"
+                "remaining_obligation": "Measure and inspect the actual submitted PDF; preserve the original one-page and ±2% 36 x 24 or 24 x 36 inch alternatives. Rendering enables observation only; poster content, readability, layout and clinical accuracy remain actual-artifact obligations.",
+                "capability": "poster_render",
+                "common_operation_adoption_ref": ".agents/development/evidence/gdpval-220-route-applicability.json#/common_output_operation_adoption/tasks/91060ff0-3eb5-4ddf-9edb-f6758b95499e"
               }
             ],
             "task_success_inferred": false
@@ -157001,7 +157005,7 @@
           },
           "proofs_are_separate": true
         },
-        "task_level_acceptance": "route_gaps_remain",
+        "task_level_acceptance": "common_routes_applicable_with_limits",
         "interpretation": "Common route applicability is bounded infrastructure evidence, not a successful participant solution or completed artifact inspection. Source conflicts, input defects, conditional branches and actual observations remain separate. Pending operations are not inherently human-only.",
         "criterion_routes": {
           "record_ref": ".agents/development/evidence/gdpval-220-route-applicability.json#/tasks/91060ff0-3eb5-4ddf-9edb-f6758b95499e/criteria",
@@ -181924,13 +181928,14 @@
                 "capability": "code_author"
               },
               {
-                "status": "partial_shared_route",
+                "status": "shared_route_applicable",
                 "route_ids": [
-                  "file_text_structure"
+                  "zip_package_roundtrip"
                 ],
                 "basis_ref": ".agents/development/evidence/gdpval-220-route-applicability.json#/generation_capability_catalog/archive_package",
-                "remaining_obligation": "Container reading and ordinary file writing are proved; an explicit general output-archive create/reopen operation was not identified in this bounded review.",
-                "capability": "archive_package"
+                "remaining_obligation": "Inspect the actual archive count, names, membership and successful opening/extraction in scratch as required by the original item. Archive proof establishes no audio, CAD, code correctness, native behavior or complete-codebase semantics.",
+                "capability": "archive_package",
+                "common_operation_adoption_ref": ".agents/development/evidence/gdpval-220-route-applicability.json#/common_output_operation_adoption/tasks/0e386e32-df20-4d1f-b536-7159bc409ad5"
               },
               {
                 "status": "partial_shared_route",
@@ -182915,13 +182920,14 @@
                 "capability": "code_author"
               },
               {
-                "status": "partial_shared_route",
+                "status": "shared_route_applicable",
                 "route_ids": [
-                  "file_text_structure"
+                  "zip_package_roundtrip"
                 ],
                 "basis_ref": ".agents/development/evidence/gdpval-220-route-applicability.json#/generation_capability_catalog/archive_package",
-                "remaining_obligation": "Container reading and ordinary file writing are proved; an explicit general output-archive create/reopen operation was not identified in this bounded review.",
-                "capability": "archive_package"
+                "remaining_obligation": "Inspect the actual archive count, names, membership and successful opening/extraction in scratch as required by the original item. Archive proof establishes no audio, CAD, code correctness, native behavior or complete-codebase semantics.",
+                "capability": "archive_package",
+                "common_operation_adoption_ref": ".agents/development/evidence/gdpval-220-route-applicability.json#/common_output_operation_adoption/tasks/7de33b48-5163-4f50-b5f3-8deea8185e57"
               },
               {
                 "status": "partial_shared_route",
@@ -184867,13 +184873,14 @@
                 "capability": "code_author"
               },
               {
-                "status": "partial_shared_route",
+                "status": "shared_route_applicable",
                 "route_ids": [
-                  "file_text_structure"
+                  "zip_package_roundtrip"
                 ],
                 "basis_ref": ".agents/development/evidence/gdpval-220-route-applicability.json#/generation_capability_catalog/archive_package",
-                "remaining_obligation": "Container reading and ordinary file writing are proved; an explicit general output-archive create/reopen operation was not identified in this bounded review.",
-                "capability": "archive_package"
+                "remaining_obligation": "Inspect the actual archive count, names, membership and successful opening/extraction in scratch as required by the original item. Archive proof establishes no audio, CAD, code correctness, native behavior or complete-codebase semantics.",
+                "capability": "archive_package",
+                "common_operation_adoption_ref": ".agents/development/evidence/gdpval-220-route-applicability.json#/common_output_operation_adoption/tasks/4122f866-01fa-400b-904d-fa171cdab7c7"
               },
               {
                 "status": "partial_shared_route",
@@ -186258,7 +186265,7 @@
     }
   ],
   "verification": {
-    "receipt_path": ".audit/2026-09-21-review-correction-controller/readiness-generator.json",
+    "receipt_path": ".audit/2026-09-22-output-route-mapping/readiness-generator.json",
     "model_runs": 0,
     "model_runs_meaning": "Generator runs no models; task trials are referenced under axes.target_environment_acceptance.task_trial_coverage.",
     "remote_writes": 0

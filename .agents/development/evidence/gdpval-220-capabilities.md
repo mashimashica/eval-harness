@@ -9,6 +9,44 @@ All 220 tasks remain included. Original prompts and all 261 supplied files can b
 
 The [evidence record](gdpval-220-capabilities.json) binds candidate versions, source hashes, sessions, failures and verification. The [220-task ledger](../gdpval-task-readiness.json) maps requirements and original criterion IDs to applicable proof and remaining work. The [common route mapping](gdpval-220-route-applicability.json), [239-item observation review](gdpval-239-observation-routes.json) and [143-item code review](gdpval-143-code-routes.json) preserve the original meanings, units, signed weights and conditional alternatives.
 
+## Follow-up acceptance — 2026-09-22 JST
+
+The later records below supplement the frozen ten-session history. Full220 acceptance remains incomplete.
+
+- The six-task [common-output adoption](gdpval-output-route-adoption-2026-09-22.json) supplies actual ZIP packaging/
+  reopening/extraction and known36x24-inch PDF author/read/render proof. Current common-route counts are **181/220**,
+  with **39 required-route-gap tasks**. Only the poster task's final operation gap closes; other214 task records and
+  all original item IDs/methods/signed scores remain unchanged. No submitted artifact result is inferred.
+- [Private font rendering](gdpval-common-output-operations-2026-09-22.json) retains the initial120.392s Fontconfig
+  timeout and the corrected0.5345s actual renderer result. The changed policy uses bundled fonts and a private cache,
+  with its configuration/hash in each receipt. Prior render/model identities remain unchanged.
+- [Durable evaluator inputs](gdpval-evaluator-context-correction-2026-09-22.json) fix prompt-only criterion loss after
+  Claude context compaction. Read-only current-task context excludes other tasks/gold metadata and controller-only
+  mechanical answers.181 affected tests, exact57/46-item round trips and actual protection checks pass; correct model
+  recovery or semantic judging is not inferred from file availability.
+- The owner-approved six-session batch completed both known probes and both dashboards. Codex dashboard returned
+  49pass/6fail/2unconfirmed; Claude dashboard returned57unconfirmed after compaction. The remaining science slots
+  use new frozen environment `ecd1071a…`, preserving saved artifacts, v2 procedures and original limits. Codex science
+  completed in403.46 model/tool seconds:32pass/11fail/3unconfirmed. Two unknowns are native gates and one is a reported
+  inference forbidden by its rule. Claude science is in progress. A separately approved maximum1 Claude dashboard
+  recovery at1200s follows; see the [fixed plan](gdpval-dashboard-recovery-plan.md).
+- [Native browser follow-up](gdpval-native-feasibility-followup-2026-09-22.json) executed known DOM events under the
+  outer policy but timed out on shutdown. This trusted diagnostic disabled Chrome's inner process sandboxes, and does
+  not establish a route for participant content. No native Office or hearing/motion perception is newly accepted.
+
+The Codex science evaluator read participant-acquired study/NASA bytes and rendered four pages. A controller review
+also identified limits: selected source snippets are not a complete scientific claim audit, and one claimed comparison
+with the supplied draft only hashed that input. A later independent readback found all18 original paragraphs in the
+tracked-deletion view; it cannot be credited as the judge's own inspection. These observations do not themselves prove
+an incorrect judgment or hallucination. Preserve raw judgments, effective validation and controller observations as
+separate evidence.
+
+Implementation `764f5b66` [CI passed](https://github.com/mashimashica/eval-harness/actions/runs/35618558921):559 tests,
+4 platform-dependent skips,77% measured coverage; typing, lint, dependency audit, documents and secrets checks passed.
+The macOS context protection test was run locally. Procedure/context/font changes require new evaluation identities;
+participant generation is not repeated solely for these corrections. Generation/network changes still require matching
+N/S/A environments and a decision on rerunning the affected comparison unit.
+
 ## Bounded correction of required routes
 
 The [source-bound correction](gdpval-route-corrections-2026-09-21.json) revises five overbroad classifications from
