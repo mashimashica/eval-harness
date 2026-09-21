@@ -86,6 +86,19 @@
       "limits": "No usable private preference bootstrap, no host-fallback guarantee, no established LibreOffice exit cause.",
       "cleanup": true,
       "next_prerequisite": "Do not add CFFIXED_USER_HOME as a claimed preference-bootstrap fix. A usable private preference source still needs a concrete current CoreFoundation mechanism that succeeds under the existing read boundary, or an Office runtime/bootstrap that avoids this platform preference dependency. This fixture does not establish either. No blanket preference grant, extra environment knob, or Office relaunch is justified by these results alone."
+    },
+    "inprocess_UNO_design_check": {
+      "evidence": {
+        "path": ".audit/2026-09-22-excel-controls/inprocess-uno-research/report.json",
+        "sha256": "7a3a347c33675df83a88b45400c8c36db7ac937981c906741fad495c993e3498"
+      },
+      "basis": "Nine pinned26.8.0.3 official source files and existing bundle inventory",
+      "decision": "Bundled pyuno is not an operational alternative: private TEST_LIB/test_init supplies process factory, VCL and UCB, while the stock bundle lacks that test library. Public officehelper launches soffice and a pipe.",
+      "limit": "In-process placement does not remove native bootstrap. Prior exit cause, a usable private preference mechanism, and a compiled SVP route remain unconfirmed.",
+      "application_helper_python_model_launches": 0,
+      "originals_unchanged": true,
+      "permission_changes": false,
+      "route_adoption": false
     }
   },
   "browser": {

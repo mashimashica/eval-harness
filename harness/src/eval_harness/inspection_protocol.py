@@ -21,7 +21,7 @@ from .artifacts import file_manifest, manifest_hash, read_json, read_jsonl, sha2
 from .errors import ArtifactError, ConfigError
 from .grading_criteria import criteria_hash
 from .inspection_lineage import find_derived_scopes, validate_derivations
-from .inspection_observations import OBSERVATION_METHODS, recorded_observations, valid_requirements
+from .inspection_observations import OBSERVATION_METHODS, recorded_observations, valid_requirements, xlsx_pivot_absence
 
 METHOD_TOOLS = {
     "content": {"shell"},
@@ -103,7 +103,9 @@ def load_inspection_protocol(value: Any, base: Path, criteria: Mapping[str, Any]
                 not _text(criterion_id)
                 or not isinstance(rule, Mapping)
                 or not _RULE_KEYS.issubset(rule)
-                or set(rule) - _RULE_KEYS - {"pending_reason", "machine_alternative", "required_observations"}
+                or set(rule)
+                - _RULE_KEYS
+                - {"pending_reason", "machine_alternative", "required_observations", "decisive_absence"}
             ):
                 raise ConfigError(
                     "inspection protocol items accept procedure fields only; original descriptions cannot change"
@@ -114,6 +116,21 @@ def load_inspection_protocol(value: Any, base: Path, criteria: Mapping[str, Any]
                 )
             if not _methods(rule["required_methods"]):
                 raise ConfigError("inspection protocol required_methods contains an unsupported or repeated method")
+            if "decisive_absence" in rule:
+                absence = rule["decisive_absence"]
+                if (
+                    not isinstance(absence, Mapping)
+                    or set(absence) != {"kind", "procedure"}
+                    or absence["kind"] != "xlsx_pivot_tables"
+                    or not _text(absence["procedure"])
+                    or "structure" not in rule["required_methods"]
+                    or "human" in rule["required_methods"]
+                    or "machine_alternative" in rule
+                    or "pending_reason" in rule
+                ):
+                    raise ConfigError(
+                        "decisive_absence requires an explicit mandatory-Pivot procedure without human/OR/pending gates"
+                    )
             if "required_observations" in rule:
                 requirements = rule["required_observations"]
                 if not valid_requirements(requirements) or any(
@@ -252,9 +269,16 @@ def protocol_prompt(protocol: Mapping[str, Any], rules: Mapping[str, Any]) -> st
         "after with the same shape, and expected:{location:independently_expected_value}. Inputs must actually "
         "differ; unchanged outputs may be a real observation. Perform operations on an isolated copy; never repair "
         "missing formulas, Pivots, controls or connections. Direct cell edits and manual recalculation do not "
+        "establish submitted update behavior if you change the original calculation or refresh settings: preserve "
+        "those settings, including absent/default settings, and report any inspection-engine overrides. They do not "
         "establish UI operation or automatic updates. Check those distinctions against the original predicate; "
         "these record-shape checks cannot decide them. No observation requirement applies to statuses absent "
         "from that rule; a decisive structural absence may suffice for a failure under its original criterion. Follow the specified "
+        "decisive_absence procedure only where explicitly declared: for a direct failure of a mandatory PivotTable "
+        "predicate, cite a successful inspect_document XLSX receipt showing empty PivotTable/cache inventories. "
+        "The controller additionally checks the complete original package for relocated Pivot declarations. "
+        "Prose, an empty shell query, or missing objects in only part of a workbook do not activate this route. "
+        "It never establishes a pass or resolves a human, pending or alternative-branch predicate. Follow the specified "
         "procedure and unconfirmed conditions. Inference is allowed only under its declared procedure. "
         "Before finalizing, match each original criterion ID to its own description and observations; do not "
         "assign evidence by list position. For each item, include evidence_refs covering every required method "
@@ -436,6 +460,28 @@ def _source_scope(workspace: Path, path: Any, digest: Any) -> str | None:
         if sha256_file(source) == digest:
             return label
     return None
+
+
+def _absence_artifact_paths(workspace: Path, scopes: set[str]) -> set[str]:
+    """Require every submitted artifact; ignore only the harness's plain-text response."""
+    paths: set[str] = set()
+    for scope in scopes:
+        for path in (workspace / scope).rglob("*"):
+            if not (path.is_file() or path.is_symlink()):
+                continue
+            if (
+                path == workspace / scope / "agent_response.txt"
+                and not path.is_symlink()
+                and path.stat().st_size <= 1024 * 1024
+            ):
+                try:
+                    path.read_bytes().decode("utf-8")
+                except UnicodeDecodeError:
+                    pass
+                else:
+                    continue
+            paths.add(path.relative_to(workspace).as_posix())
+    return paths
 
 
 def _shell_record_scopes(path: Path, workspace: Path, *, method: str) -> set[str]:
@@ -706,6 +752,7 @@ def apply_inspection_protocol(
             observed: set[str] = set()
             covered: dict[str, set[str]] = {}
             observations: dict[str, set[str]] = {}
+            absent_paths: set[str] = set()
             if not isinstance(references, list) or not references:
                 issues.append("evidence references are missing")
             else:
@@ -715,6 +762,21 @@ def apply_inspection_protocol(
                         observed.add(method)
                         for scope in scopes:
                             covered.setdefault(scope, set()).add(method)
+                        if (
+                            rule.get("decisive_absence", {}).get("kind") == "xlsx_pivot_tables"
+                            and status == "fail"
+                            and kind == "direct"
+                            and method == "structure"
+                            and not rule.get("pending_reason")
+                            and "machine_alternative" not in rule
+                            and xlsx_pivot_absence(
+                                calls[reference["call_id"]],
+                                _workspace_file(workspace, reference["path"]),
+                                reference["path"],
+                                reference["sha256"],
+                            )
+                        ):
+                            absent_paths.add(reference["path"])
                         if calls[reference["call_id"]].get("tool") == "shell" and rule.get("required_observations"):
                             record = read_json(_workspace_file(workspace, reference["path"]))
                             for scope, kinds in recorded_observations(
@@ -726,6 +788,15 @@ def apply_inspection_protocol(
                                 observations.setdefault(scope, set()).update(kinds)
                     except (ArtifactError, OSError, TypeError, ValueError) as exc:
                         issues.append(str(exc))
+            expected_scopes = {
+                scope for scope in ("submission", "submission_A", "submission_B") if (workspace / scope).is_dir()
+            }
+            # One empty workbook cannot establish absence in another artifact.
+            # Mixed formats remain on the full route; no format inference here.
+            artifact_paths = _absence_artifact_paths(workspace, expected_scopes) if absent_paths else set()
+            if artifact_paths and artifact_paths.issubset(absent_paths):
+                methods = ["structure"]
+                item["inspection_branch"] = "decisive_absence"
             if not set(methods).issubset(observed):
                 issues.append("recorded evidence does not cover the required inspection methods")
             for scope in ("submission", "submission_A", "submission_B"):

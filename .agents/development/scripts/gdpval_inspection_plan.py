@@ -25,11 +25,12 @@ from collections import Counter
 from pathlib import Path
 from typing import Any, Sequence
 
+
 TASK_COUNT = 220
 CRITERION_COUNT = 10453
-VERSION = "gdpval-inspection-draft-v3"
-REVIEWED_VERSION = "gdpval-inspection-reviewed-routes-v3"
-CODE_REVIEWED_VERSION = "gdpval-inspection-reviewed-code-routes-v3"
+VERSION = "gdpval-inspection-draft-v4"
+REVIEWED_VERSION = "gdpval-inspection-reviewed-routes-v4"
+CODE_REVIEWED_VERSION = "gdpval-inspection-reviewed-code-routes-v4"
 CODE_TASK_CRITERION_COUNTS = {
     "0e386e32-df20-4d1f-b536-7159bc409ad5": 55,
     "4122f866-01fa-400b-904d-fa171cdab7c7": 65,
@@ -67,6 +68,29 @@ SCIENCE_BASELINE_COMPARISON_IDS = {
 }
 PIVOT_PRESENCE_ID = "9890a9ff-5bb3-4998-9e3d-b561d630a95f"
 DASHBOARD_TASK_ID = "9e39df84-ac57-4c9b-a2e3-12b8abf2c797"
+DASHBOARD_MANDATORY_PIVOTS = {
+    "3293cf5b-3041-455c-98ca-300a6c5e2e68": (
+        '"Dashboard" contains a PivotTable showing per‑operator performance/output for the selected week(s) '
+        "using a total output measure."
+    ),
+    "67856dee-3cf4-4e2e-a023-683ec7a0edc4": (
+        '"Dashboard" contains a PivotTable showing total machine output by Machine Line for the selected week(s).'
+    ),
+    "feed5a55-59e7-43dc-9cfc-d5be53a04780": (
+        '"Dashboard" contains a PivotTable showing average output by Shift (Day vs Night) for the selected week(s)'
+    ),
+    "7a04bbe7-cc07-49ee-bc67-c972635649c0": (
+        '"Dashboard" contains a PivotTable "leaderboard" aggregating total output by Operator across Weeks 1–48 (YTD).'
+    ),
+}
+PIVOT_ABSENCE_PROCEDURE = (
+    "Only for a direct reported failure: the original predicate requires a native PivotTable. Cite a successful "
+    "inspect_document structure reference bound to the original XLSX, with complete package members and empty "
+    "PivotTable/cache inventories. The controller must also exclude relocated Pivot parts, content types, "
+    "relationships and XML declarations across the complete package. Complete absence establishes this necessary "
+    "object is missing; it does not establish a pass. Otherwise retain every required behavior method. An empty "
+    "shell query, partial inventory or evaluator assertion is insufficient."
+)
 DASHBOARD_FUNCTIONAL_IDS = {
     "3293cf5b-3041-455c-98ca-300a6c5e2e68",
     "67856dee-3cf4-4e2e-a023-683ec7a0edc4",
@@ -308,6 +332,12 @@ def _procedures(
             "its contents cannot establish tracked preservation or whether paragraphs moved. Do not infer "
             "native Word operation from XML extraction."
         )
+        if identifier == "d6d7b699-7f02-4a34-9b70-05f3dd2be953":
+            procedures.append(
+                "For paragraph-order preservation, compare the supplied ORIGINAL passages against the "
+                "ACCEPTED/REVISED submission passages in their actual order. Unchanged ordering only inside "
+                "tracked deletions cannot establish the order of the revised paragraphs."
+            )
     if identifier in SCIENCE_IDS:
         procedures.append(
             "For this scientific-accuracy criterion, actually compare the relevant scientific claims and simplified "
@@ -323,9 +353,20 @@ def _procedures(
             "For Dashboard selected-week, selected-range, update or formula-effect claims, use an inspection copy "
             "and exercise different relevant weeks/inputs. Record selected values and changed source cells, actual "
             "before/after PivotTable, chart or KPI outputs, and independent expected values. Native PivotTable "
+            "checks must preserve original calculation/refresh settings, including absent/default settings. "
+            "Do not enable forceFullCalc, automatic recalculation or refresh and then claim the submitted "
+            "workbook had that update behavior. Record any inspection-engine override as a limitation. PivotTable "
             "presence alone is insufficient. If native controls cannot be exercised, keep that branch unconfirmed "
             "until the named human reviewer supplies the required observations."
         )
+        if identifier == "a7c98919-f78d-497b-a82e-0b619385ba87":
+            procedures.append(
+                "Observe before/after chart outputs for all four original charts: Week 1 operator totals, "
+                "Week 1 machine totals, Week 1 shift averages and YTD operator totals. Include the Day source "
+                "as well as Night for the shift chart; a perturbation confined to Night cannot establish the "
+                "unobserved Day branch. Bind actual chart outputs to their source ranges/Pivot outputs, not "
+                "only formula changes or declared chart references."
+            )
     return categories, procedures, overrides
 
 
@@ -409,6 +450,11 @@ def criterion_plan(
         rule["required_observations"] = {"pass": ["source_comparison"]}
     if task["task_id"] == DASHBOARD_TASK_ID and item["rubric_item_id"] == "a7c98919-f78d-497b-a82e-0b619385ba87":
         rule["required_observations"] = {"pass": ["input_change"]}
+    if task["task_id"] == DASHBOARD_TASK_ID and item["rubric_item_id"] in DASHBOARD_MANDATORY_PIVOTS:
+        if item["criterion"] != DASHBOARD_MANDATORY_PIVOTS[item["rubric_item_id"]]:
+            raise ValueError("mandatory-Pivot absence procedure does not match the unchanged original description")
+        rule["decisive_absence"] = {"kind": "xlsx_pivot_tables", "procedure": PIVOT_ABSENCE_PROCEDURE}
+        overrides.append("controller_complete_mandatory_pivot_absence_failure_only_v1")
     return {
         "criterion_id": item["rubric_item_id"],
         "original_description": item["criterion"],

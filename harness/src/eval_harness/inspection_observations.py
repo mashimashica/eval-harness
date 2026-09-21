@@ -10,9 +10,130 @@ comparison is correct, an input change is meaningful, or an application worked.
 from __future__ import annotations
 
 import math
+import zipfile
+from pathlib import Path
 from typing import Any, Callable, Mapping
+from xml.etree import ElementTree
 
 OBSERVATION_METHODS = {"source_comparison": "research", "input_change": "functional"}
+
+
+def xlsx_pivot_absence(receipt: Mapping[str, Any], path: Path, relative: str, digest: str) -> bool:
+    """Check a complete, captured XLSX inventory after the caller verifies its journal/hash.
+
+    The inspector's prefix-filtered Pivot lists alone are insufficient: OPC parts
+    can live elsewhere. Recheck every member's content type and XML declarations.
+    Unsupported/oversized packages simply cannot use this optional failure route.
+    This establishes object absence, never the truth of a behavioral pass.
+    """
+    result = receipt.get("result")
+    if (
+        receipt.get("tool") != "inspect_document"
+        or receipt.get("failure") is not None
+        or receipt.get("arguments") != {"path": relative}
+        or not isinstance(result, Mapping)
+        or result.get("path") != relative
+        or result.get("sha256") != digest
+        or result.get("format") != ".xlsx"
+        or result.get("pivot_tables") != []
+        or result.get("pivot_caches") != []
+        or type(result.get("bytes")) is not int
+        or result["bytes"] != path.stat().st_size
+        or path.suffix.lower() != ".xlsx"
+        or path.stat().st_size > 50 * 1024 * 1024
+        or Path(relative).parts[0] not in {"submission", "submission_A", "submission_B"}
+    ):
+        return False
+    try:
+        with zipfile.ZipFile(path) as package:
+            entries = package.infolist()
+            names = package.namelist()
+            if (
+                result.get("members") != names
+                or not {"[Content_Types].xml", "_rels/.rels", "xl/workbook.xml"}.issubset(names)
+                or len(entries) > 10000
+                or sum(entry.file_size for entry in entries) > 32 * 1024 * 1024
+                or len({name.casefold() for name in names}) != len(names)
+                or any(
+                    entry.flag_bits & 1
+                    or "pivot" in entry.filename.lower()
+                    or "\\" in entry.filename
+                    or any(part in {"", ".", ".."} for part in entry.filename.rstrip("/").split("/"))
+                    for entry in entries
+                )
+            ):
+                return False
+
+            def xml(data: bytes) -> ElementTree.Element:
+                if b"\x00" in data or b"<!DOCTYPE" in data.upper() or b"<!ENTITY" in data.upper():
+                    raise ValueError("XML entities and non-UTF8-compatible encodings are unsupported")
+                return ElementTree.fromstring(data)
+
+            types = xml(package.read("[Content_Types].xml"))
+            namespace = "{http://schemas.openxmlformats.org/package/2006/content-types}"
+            if types.tag != namespace + "Types":
+                return False
+            defaults: dict[str, str] = {}
+            overrides: dict[str, str] = {}
+            for element in types:
+                content_type = element.get("ContentType", "")
+                if not content_type or "pivot" in content_type.lower():
+                    return False
+                if element.tag == namespace + "Default":
+                    key, target = element.get("Extension", "").lower(), defaults
+                elif element.tag == namespace + "Override":
+                    name = element.get("PartName", "")
+                    if not name.startswith("/") or name[1:] not in names:
+                        return False
+                    key, target = name[1:], overrides
+                else:
+                    return False
+                if not key or key in target:
+                    return False
+                target[key] = content_type
+            for entry in entries:
+                if entry.is_dir():
+                    if entry.file_size:
+                        return False
+                    continue
+                # Reading all members also checks their CRC; no extraction occurs.
+                data = package.read(entry)
+                if entry.filename == "[Content_Types].xml":
+                    continue
+                extension = entry.filename.rsplit(".", 1)[-1].lower()
+                content_type = overrides.get(entry.filename, defaults.get(extension, ""))
+                if not content_type:
+                    return False
+                if content_type.startswith("image/"):
+                    continue
+                if not (content_type.endswith("+xml") or content_type in {"application/xml", "text/xml"}):
+                    return False
+                tree = xml(data)
+                if entry.filename == "xl/workbook.xml" and tree.tag != (
+                    "{http://schemas.openxmlformats.org/spreadsheetml/2006/main}workbook"
+                ):
+                    return False
+                for element in tree.iter():
+                    if "pivot" in element.tag.lower() or any(
+                        # Default cell/table style preferences are not objects.
+                        marker in key.lower()
+                        for key in element.attrib
+                        for marker in ("pivottable", "pivotcache", "pivotsource")
+                    ):
+                        return False
+                    if element.tag.endswith("}Relationship") and "pivot" in element.get("Type", "").lower():
+                        return False
+            return True
+    except (
+        OSError,
+        ValueError,
+        KeyError,
+        RuntimeError,
+        NotImplementedError,
+        zipfile.BadZipFile,
+        ElementTree.ParseError,
+    ):
+        return False
 
 
 def _text(value: Any) -> bool:

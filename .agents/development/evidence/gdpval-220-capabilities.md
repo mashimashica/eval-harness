@@ -24,7 +24,11 @@ criterion records;38 helper tests and96% measured helper coverage support the ge
   A separately recorded extension accepts actual passage lists/value maps, yielding33pass/11fail/2unconfirmed versus
   frozen28/11/7. This does not certify judgment correctness: edited-passage ordering and the limited primary-source
   comparison remain review obligations.175 related tests pass; failures retain their stage and an unclassified cause.
-  A [separate one-session dashboard completion check](gdpval-sept22-dashboard-completion-plan.md) at1200s is active.
+  The [separate dashboard completion check](gdpval-dashboard-completion-2026-09-22.json) returned all57 items in
+  1188.80s with unchanged originals. Its chart pass is withheld by controller review: the evaluator changed a calculation
+  setting before testing and omitted the Day chart from its numeric observation. Four mandatory-Pivot absence failures
+  now use a verified, opt-in complete-package absence route. Separate v4 replay yields49pass/6fail/2unconfirmed;
+  it does not accept the chart pass. All220 scoring files and1,231 historical session/protocol files remain unchanged.
 - The [operation follow-up](gdpval-sept22-operation-gaps.json) maps11 spreadsheet input-control tasks and two Pivot
   cases to12 unique tasks/67 original items, including generation obligations. Full official LibreOffice26.8.0
   contains Basic/UNO but one trusted isolated launch exits1 without reaching the operation.72 preference-read faults

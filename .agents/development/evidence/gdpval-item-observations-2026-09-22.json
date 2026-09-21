@@ -29,15 +29,18 @@
   "latest_sources": [
     {
       "path": "harness/src/eval_harness/inspection_observations.py",
-      "sha256": "98ab270e43d42f2d39a2e97dd8499c0d2102f55ba6522f29407464a9969e842c"
+      "sha256": "98ab270e43d42f2d39a2e97dd8499c0d2102f55ba6522f29407464a9969e842c",
+      "commit": "6d216bb3e652741ce8d727f99cef4321a6235b1b"
     },
     {
       "path": "harness/src/eval_harness/inspection_protocol.py",
-      "sha256": "bef514b4dc663158c520e89ff0ae90dc8ac6c2f457234845e9839657effb0195"
+      "sha256": "bef514b4dc663158c520e89ff0ae90dc8ac6c2f457234845e9839657effb0195",
+      "commit": "6d216bb3e652741ce8d727f99cef4321a6235b1b"
     },
     {
       "path": "harness/src/eval_harness/evaluate_pipeline.py",
-      "sha256": "5232ac33978085f31ac13210c21d08d59eb40f4811c87ed088f70ed0c7605c53"
+      "sha256": "5232ac33978085f31ac13210c21d08d59eb40f4811c87ed088f70ed0c7605c53",
+      "commit": "6d216bb3e652741ce8d727f99cef4321a6235b1b"
     }
   ],
   "entries": [
@@ -195,6 +198,21 @@
       "skipped": 4,
       "coverage_percent": 77,
       "applicability": "Before the failure-stage and collection-support corrections; current commit requires its own CI."
+    },
+    "current_CI": {
+      "commit": "6d216bb3e652741ce8d727f99cef4321a6235b1b",
+      "url": "https://github.com/mashimashica/eval-harness/actions/runs/35635621086",
+      "passed": 609,
+      "skipped": 4,
+      "coverage_percent": 78,
+      "typing_source_files": 32,
+      "dependency_audit": "No known vulnerabilities found",
+      "secret_scan": "passed",
+      "log": {
+        "path": ".audit/2026-09-22-item-observations/ci-6d216bb3.log",
+        "sha256": "8f43747e1097856e2c03862376e6d5626dc211c1dfcc5fe19c2dd3f14cdf6d88"
+      },
+      "applicability": "Includes failure-stage and collection-support runtime corrections. Later documentation/evidence-only checkpoint uses unchanged product source."
     }
   },
   "acceptance": {

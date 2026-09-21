@@ -285,10 +285,10 @@ features and then pass a criterion requiring the original mechanism to work.
 Distinguish the AI's reported judgment from the actual inspection trace. A later controller check is separate evidence
 and must not be represented as work performed by the original judge.
 
-If any AI scalar criterion is `unconfirmed`, the saved overall score is `null` and `assessment_status` is `unconfirmed`;
-the raw judgment and per-item findings are retained. Reports show unconfirmed and failed counts, preserve the planned
-sample denominator, and exclude unavailable numbers from arithmetic. They do not turn missing evidence into zero or a
-successful assessment. Pairwise `unjudgeable` retains its existing meaning and contributes no win credit.
+For a successfully parsed AI scalar judgment, any `unconfirmed` criterion makes the saved overall score `null` and
+`assessment_status` `unconfirmed`; the raw judgment and per-item findings are retained. Reports show unconfirmed and
+failed counts, preserve the planned sample denominator, and exclude unavailable numbers from arithmetic. They do not
+turn missing evidence into zero or a successful assessment. Pairwise `unjudgeable` retains its existing meaning and contributes no win credit.
 
 An interrupted evaluator or malformed final judgment has `assessment_status: evaluation_failure`, with
 `assessment_failure` recording the evaluation stage, CLI execution status, reason and `cause: unclassified`.
@@ -423,6 +423,21 @@ activity, not the truth of a judgment, the adequacy of every locator, or whether
 The procedure still needs criterion-level review. Resume verifies the frozen protocol; changed procedures use a new
 evaluation directory rather than altering a completed judgment.
 
+
+### Decisive absence of a mandatory object
+
+A procedure may opt into `decisive_absence: {kind: xlsx_pivot_tables, procedure: ...}` only when the original
+criterion requires a PivotTable as a necessary component. This is a narrow failure route: a direct reported failure
+can use a successful, journal-bound `inspect_document` observation plus complete validation of the unchanged XLSX
+package to establish that the required object is absent. A missing mandatory object cannot be exercised to prove its
+behavior. Passes and failures not established by this absence retain the full original inspection methods.
+
+An empty conventional `xl/pivotTables/` inventory alone is insufficient. Verify the actual complete package, including
+content types, relationships and worksheet declarations that could identify a Pivot at another part location.
+Malformed, encrypted, duplicate or unsupported package contents cannot certify absence. Model prose and an arbitrary
+empty shell query cannot activate this route. It does not waive native/human prerequisites or an original OR alternative.
+The GDPval procedure enables it only for the four dashboard criteria requiring actual PivotTables; original item IDs,
+descriptions and weights remain unchanged. Record changed-procedure revalidation separately from the frozen judgment.
 
 ### Item-bound observations
 

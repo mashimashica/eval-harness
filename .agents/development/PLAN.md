@@ -11,10 +11,15 @@ requiring semantic review. See [the two-session receipt](evidence/gdpval-item-ob
 Evaluation failure now records stage/status/reason with cause unclassified, instead of automatically assigning
 infrastructure cause.175 affected tests,95% measured observation-guard coverage and scoped types/Ruff pass.
 
-One separately declared Codex dashboard completion session is active under the owner's remaining-allowance authority:
-Sol/medium,maximum1,1200s,serial1,retries0,subscription only. Its
-[fixed plan](evidence/gdpval-sept22-dashboard-completion-plan.md) retains the preceding timeout and source artifact.
-At17:51UTC weekly usage89%/remaining11%; no reset/credits, Claude addition, production experiment or merge.
+The separately declared Codex dashboard completion session finished in1188.80s (1223.55s lifecycle), returning
+all57 items with preserved originals. Its [completion receipt](evidence/gdpval-dashboard-completion-2026-09-22.json)
+retains raw49pass/6fail/2unconfirmed and frozen49pass/2fail/6unconfirmed. Controller review withholds the chart-update
+pass: the evaluator changed forceFullCalc before recalculation and omitted one chart source from its numeric record.
+The verified narrow complete-package absence route retains the four reported mandatory-Pivot failures in a separate
+v4 replay (49pass/6fail/2unconfirmed); all other behavioral requirements remain. This does not accept the chart pass.
+All220 original scoring files and1,231 historical session/protocol files are unchanged.263 regression tests and34 final
+affected tests pass; strict typing/Ruff and documentation checks pass (Fern retains its authenticated redirect warning). No more model sessions are planned. Weekly usage90%/remaining10% at18:16UTC; no reset/credits,
+Claude addition, production experiment or merge.
 The official complete Office bundle did not reach its Basic entry under the unchanged boundary; three trusted private
 preference reads establish home redirection but no usable preference bootstrap. Native acceptance remains unchanged.
 See [exact operation gaps](evidence/gdpval-sept22-operation-gaps.json). Do not silently widen preference/IPC grants.

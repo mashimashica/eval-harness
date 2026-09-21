@@ -358,12 +358,20 @@ def test_reviewed_dashboard_output_routes_are_functional_and_user_controls_stay_
             ["structure", "text/content", "spreadsheet_recalc", "native_app"],
             task_id=plan.DASHBOARD_TASK_ID,
             identifier=identifier,
+            description=plan.DASHBOARD_MANDATORY_PIVOTS.get(identifier, "The original criterion."),
         )
         _, _, _, protocol = plan.task_plan(row, task, "a" * 64, "b" * 64, None)
         rule = protocol["tasks"][plan.DASHBOARD_TASK_ID][identifier]
         assert "functional" in rule["required_methods"] and "human" not in rule["required_methods"]
         if identifier == "a7c98919-f78d-497b-a82e-0b619385ba87":
             assert "visual" in rule["required_methods"]
+            assert "all four original charts" in json.dumps(rule)
+            assert "Day source" in json.dumps(rule)
+            assert "absent/default settings" in json.dumps(rule)
+            assert "decisive_absence" not in rule
+        else:
+            assert rule["decisive_absence"]["kind"] == "xlsx_pivot_tables"
+        assert "forceFullCalc" in json.dumps(rule)
     for identifier in ["95e4be82-2487-474e-b51a-a5ed3bbdebf7", "2a682572-ceef-4b12-bd20-603cbeb1aec1"]:
         row, task = inputs(
             ["structure", "interactive_execution", "native_app"],
@@ -374,6 +382,38 @@ def test_reviewed_dashboard_output_routes_are_functional_and_user_controls_stay_
         rule = protocol["tasks"][plan.DASHBOARD_TASK_ID][identifier]
         assert rule["required_methods"] == ["human"]
         assert candidate["unassigned_human_criterion_ids"] == [identifier]
+
+
+@pytest.mark.parametrize("identifier", sorted(plan.DASHBOARD_MANDATORY_PIVOTS))
+def test_absence_override_is_bound_to_exact_original_mandatory_description(identifier: str) -> None:
+    description = plan.DASHBOARD_MANDATORY_PIVOTS[identifier]
+    row, task = inputs(
+        ["structure", "text/content"], identifier=identifier, task_id=plan.DASHBOARD_TASK_ID, description=description
+    )
+    criteria, scores, candidate, protocol = plan.task_plan(row, task, "a" * 64, "b" * 64, None)
+    assert criteria["tasks"][plan.DASHBOARD_TASK_ID]["ai"] == [{"id": identifier, "description": description}]
+    assert scores["items"][0]["original_signed_score"] == -2
+    assert "functional" in protocol["tasks"][plan.DASHBOARD_TASK_ID][identifier]["required_methods"]
+    assert protocol["version"].startswith("gdpval-inspection-draft-v4/")
+    assert "failure_only" in candidate["items"][0]["controller_overrides"][-1]
+    original = json.loads(row["rubric_json"])
+    original[0]["criterion"] += " Or a formula table suffices."
+    row["rubric_json"] = json.dumps(original)
+    with pytest.raises(ValueError, match="unchanged original description"):
+        plan.task_plan(row, task, "a" * 64, "b" * 64, None)
+    row["task_id"] = task["task_id"] = "other-task"
+    _, _, _, other = plan.task_plan(row, task, "a" * 64, "b" * 64, None)
+    assert "decisive_absence" not in other["tasks"]["other-task"][identifier]
+
+
+def test_paragraph_order_procedure_requires_revised_order_not_deletion_order() -> None:
+    identifier = "d6d7b699-7f02-4a34-9b70-05f3dd2be953"
+    row, task = inputs(["text/content", "native_app"], identifier=identifier, task_id=plan.SCIENCE_TASK_ID)
+    _, _, _, protocol = plan.task_plan(row, task, "a" * 64, "b" * 64, None)
+    rule = protocol["tasks"][plan.SCIENCE_TASK_ID][identifier]
+    assert "ACCEPTED/REVISED" in json.dumps(rule)
+    assert "tracked deletions cannot establish" in json.dumps(rule)
+    assert rule["required_methods"] == ["content", "research"]
 
 
 def test_original_conflict_and_alternative_remain_unconfirmed_conditions() -> None:

@@ -1,0 +1,232 @@
+{
+  "schema_version": 1,
+  "kind": "bounded-dashboard-completion-with-separate-controller-acceptance",
+  "task_id": "9e39df84-ac57-4c9b-a2e3-12b8abf2c797",
+  "evaluation_id": "e35c3e09daa240a7a47b87f06a5296d0",
+  "authority": "Owner remaining-Codex-allowance continuation; one additional declared session; no automatic retry",
+  "plan": {
+    "path": ".agents/development/evidence/gdpval-sept22-dashboard-completion-plan.md",
+    "sha256": "899ac0933282a6bcfbb6a20c1e493c01dc360e896934e26c8762f36d29071fbb"
+  },
+  "manifest": {
+    "path": ".audit/2026-09-22-dashboard-completion/manifest.json",
+    "sha256": "1eaef6aad799b4f79fb8a6746695699372d27e2eb0f7bdad98b7c3b8d8904460"
+  },
+  "runtime_commit": "6d216bb3e652741ce8d727f99cef4321a6235b1b",
+  "runtime_equivalence": {
+    "path": ".audit/2026-09-22-dashboard-completion/runtime-commit-equivalence.json",
+    "sha256": "2faea01d5ffed577adfd8e1758fa24ac72a076a6fcbb7d7cd5439dfad7219ac6"
+  },
+  "frozen_environment_fingerprint": "3d809937ec0ee72e6220fec24e05e1032efded04ec3a172c4a2c48794f7b3bc4",
+  "model": "gpt-5.6-sol",
+  "effort": "medium",
+  "maximum_sessions": 1,
+  "model_calls": 1,
+  "model_timeout_seconds": 1200,
+  "parallelism": 1,
+  "automatic_retries": 0,
+  "billing": "existing subscription only",
+  "originals_unchanged": true,
+  "session_files_unchanged_by_review": true,
+  "participant_regeneration": false,
+  "model_execution_elapsed_seconds": 1188.7951508329716,
+  "lifecycle_elapsed_seconds": 1223.5451394579723,
+  "usage": {
+    "cached_input_tokens": 1084928,
+    "cost_usd": null,
+    "input_tokens": 1185845,
+    "output_tokens": 30597,
+    "reasoning_tokens": 3453
+  },
+  "usage_limit": "Input includes cached tokens; categories must not be added together. Subscription cost is unavailable, not zero. Prior timeout usage remains unknown.",
+  "evaluation_status": "completed",
+  "original_criteria_count": 57,
+  "reported_criteria_count": 57,
+  "reported_counts": {
+    "pass": 49,
+    "unconfirmed": 2,
+    "fail": 6
+  },
+  "frozen_effective_counts": {
+    "pass": 49,
+    "unconfirmed": 6,
+    "fail": 2
+  },
+  "frozen_assessment_status": "unconfirmed",
+  "tool_counts": {
+    "shell": 8,
+    "inspect_document": 1,
+    "render_pages": 5
+  },
+  "receipt": {
+    "path": ".audit/2026-09-22-dashboard-completion/sessions/dashboard/slot-result.json",
+    "sha256": "2b5312fc4c5a681b213e79778e942a1c225dd487d468e151a0da620cd344a7e2"
+  },
+  "review": {
+    "path": ".audit/2026-09-22-dashboard-completion/reviews/dashboard-v2/report.json",
+    "sha256": "004694a535ea76083a1eb36f4e4c0f6b1791c2da77fce1ed6a96a9b13b126283"
+  },
+  "operations_review": {
+    "path": ".audit/2026-09-22-dashboard-completion/reviews/dashboard-v2/operations-review.json",
+    "sha256": "44d144c5b3b61b1f3041f7431d48caefb81f3bbf29d524f783b71615370cdbd0"
+  },
+  "actual_observations": {
+    "input_change": {
+      "Operator Output Data!E5": [
+        950,
+        1050
+      ]
+    },
+    "calculation_settings_change": {
+      "forceFullCalc": [
+        null,
+        "1"
+      ]
+    },
+    "evaluator_observed_dependent_outputs": [
+      "Operator Output Data!J5",
+      "Operator Output Data!K5",
+      "Dashboard!C14",
+      "Dashboard!H14",
+      "Dashboard!M14"
+    ],
+    "controller_only_Day_output": [
+      908.6,
+      912.6
+    ],
+    "changed_pages_delivered": [
+      1,
+      12,
+      13
+    ],
+    "native_controls_exercised": false
+  },
+  "controller_acceptance": {
+    "completed_item_reporting": "met",
+    "source_preservation": "met",
+    "chart_update": {
+      "criterion_id": "a7c98919-f78d-497b-a82e-0b619385ba87",
+      "model_and_format_status": "pass",
+      "controller_status": "unconfirmed",
+      "reason": "The evaluator altered forceFullCalc before inspecting changed output. This is a manual recalculation diagnostic, not sufficient proof of the submitted mechanism unchanged. Its numeric observation also omitted the Day chart source. Do not accept the shape-valid pass as proof of the complete original update predicate.",
+      "required_next_evidence": "A copy preserving submitted calculation settings; actual before/after observations for all four chart outputs and relevant changed pages. Distinguish manual calculation from any claimed automatic/native operation."
+    },
+    "pivot_absence": [
+      "3293cf5b-3041-455c-98ca-300a6c5e2e68",
+      "67856dee-3cf4-4e2e-a023-683ec7a0edc4",
+      "feed5a55-59e7-43dc-9cfc-d5be53a04780",
+      "7a04bbe7-cc07-49ee-bc67-c972635649c0"
+    ],
+    "pivot_issue": "Resolved narrowly: full unchanged package plus successful captured inspector receipt establishes complete Pivot absence for the four exact mandatory-object predicates. Separate v4 replay retains those four reported failures. Passes and native/human/pending/OR gates retain full methods.",
+    "source_rubric_conflict": [
+      "c4e429bf-0e4f-4d6c-a1d2-0da302fb4c96",
+      "f3080a31-d823-4dfa-ac32-c62f3eac29d7"
+    ],
+    "conflict_note": "Retain literal51/49 percentage failures separately from the supplied-data58.4/41.6 result; no silent source or rubric replacement.",
+    "all_required_behavior_accepted": false
+  },
+  "failure_record": {
+    "stage": "evaluator inspection code",
+    "observed": "Initial Week1 recomputation divided by zero; the evaluator corrected its own script in the same session.",
+    "source": "actual shell000006 traceback",
+    "participant_failure": false,
+    "infrastructure_cause_established": false
+  },
+  "impact": "Saved-artifact evaluation only. Old failed and completed sessions remain immutable; no new participant environment, native route, N/S/A production run or merge. Any procedure revalidation is stored separately and is not a new model judgment.",
+  "next": "Retain chart update and source-comparison semantic gaps as explicitly unconfirmed; full220 acceptance is incomplete. Any further real-model trial needs its own declared authorized scope. No merge or production experiment.",
+  "procedure_revalidation": {
+    "kind": "separately versioned v4 protocol replay; zero new model or native-app calls",
+    "report": {
+      "path": ".audit/2026-09-22-pivot-absence/replay-report.json",
+      "sha256": "b88b165b0c85b4a63281c811e95c1ce25e57b0fb15b74cc23ac3993d709e9df1"
+    },
+    "counts": {
+      "raw_reported": {
+        "pass": 49,
+        "unconfirmed": 2,
+        "fail": 6
+      },
+      "old_protocol_replay": {
+        "pass": 49,
+        "unconfirmed": 6,
+        "fail": 2
+      },
+      "new_protocol_replay": {
+        "pass": 49,
+        "unconfirmed": 2,
+        "fail": 6
+      }
+    },
+    "changed_criteria": [
+      {
+        "criterion_id": "3293cf5b-3041-455c-98ca-300a6c5e2e68",
+        "before": "unconfirmed",
+        "after": "fail",
+        "branch": "decisive_absence"
+      },
+      {
+        "criterion_id": "67856dee-3cf4-4e2e-a023-683ec7a0edc4",
+        "before": "unconfirmed",
+        "after": "fail",
+        "branch": "decisive_absence"
+      },
+      {
+        "criterion_id": "feed5a55-59e7-43dc-9cfc-d5be53a04780",
+        "before": "unconfirmed",
+        "after": "fail",
+        "branch": "decisive_absence"
+      },
+      {
+        "criterion_id": "7a04bbe7-cc07-49ee-bc67-c972635649c0",
+        "before": "unconfirmed",
+        "after": "fail",
+        "branch": "decisive_absence"
+      }
+    ],
+    "prior_files_unchanged": 1231,
+    "source_scores_and_criteria_byte_unchanged_tasks": 220,
+    "controller_sources": {
+      "harness/src/eval_harness/inspection_observations.py": "63dd9f800a08928c7f62e27b7be6e035dc105feee7df48090c29a47834f64fde",
+      "harness/src/eval_harness/inspection_protocol.py": "e79af1af07836a3465dcb353670a488e77fcf56fd042673e9acb3d3f40ffb728",
+      ".agents/development/scripts/gdpval_inspection_plan.py": "c87329d4ea206f2541ba3f07032037a7766804cc9af4d23b855ab703dea998ed",
+      "harness/tests/test_inspection_absence.py": "a2af5f3c2d7487f333ebc9376749e69b8a532e0f6a27f2a0f18672fd4de80854",
+      "harness/tests/test_gdpval_inspection_plan.py": "5d43447a8efbc75cfe2a62f9a9bad49a2ae354612905c07f4bd2c69c6abc7698"
+    },
+    "scalar_score": null,
+    "semantic_acceptance_limit": "The chart-update pass remains withheld. Shape-valid model judgments are not automatically accepted semantic conclusions. New paragraph-order/settings/all-four-chart instructions have not had another real-model trial."
+  },
+  "verification": {
+    "targeted": {
+      "path": ".audit/2026-09-22-pivot-absence/verification.json",
+      "sha256": "630ef09c54fa4c152382bdff43f1c8c51cbac5d62b086379c189a5df71abf57c"
+    },
+    "sealed_revalidation_files": {
+      "path": ".audit/2026-09-22-pivot-absence/seal.json",
+      "sha256": "46fe4642c8a078960227e09d497a51d675c59222dad156f9630cfc0f9db206be"
+    },
+    "regression_passed": 263,
+    "final_affected_absence_tests_passed": 34,
+    "coverage_percent": {
+      "inspection_observations": 92,
+      "inspection_protocol": 88
+    },
+    "strict_typing": "6files passed",
+    "Ruff": "changed source/tests and replay passed",
+    "docs": {
+      "path": ".audit/2026-09-22-dashboard-completion/final-doc-links.log",
+      "sha256": "e6d5bfa140b5e7a27283f51495b732bd1e433c4891461c8bd6b292b0739f9264"
+    },
+    "fern": {
+      "path": ".audit/2026-09-22-dashboard-completion/final-fern.log",
+      "sha256": "da1fc3d25ded6163474677f5eb6cfc3c3fe5f799f0b7fda56c93f1725b499eef"
+    },
+    "fern_limit": "0errors; authenticated redirect check skipped, retained warning",
+    "prior_CI": {
+      "commit": "6d216bb3e652741ce8d727f99cef4321a6235b1b",
+      "url": "https://github.com/mashimashica/eval-harness/actions/runs/35635621086",
+      "passed": 609,
+      "skipped": 4
+    },
+    "final_candidate_CI": "Recorded on the PR after publication; prior CI alone does not verify this new absence route."
+  }
+}
