@@ -12,7 +12,7 @@ from copy import deepcopy
 from pathlib import Path
 from typing import Any, NoReturn, cast
 
-from gdpval_current import EVIDENCE_PATH, REVIEW_PATH, apply_review
+from gdpval_current import CORRECTIONS_PATH, EVIDENCE_PATH, REVIEW_PATH, apply_review, validate_route_corrections
 
 ROOT = Path(__file__).resolve().parents[3]
 OUTPUT_PATH = ROOT / ".agents/development/gdpval-task-readiness.json"
@@ -412,6 +412,9 @@ SOURCE_ARGUMENT_PATH = arguments.source.expanduser().resolve()
 OUTPUT_PATH = arguments.output.expanduser().resolve()
 HISTORY_PATH = arguments.history.expanduser().resolve()
 RECEIPT_PATH = arguments.receipt.expanduser().resolve()
+RECEIPT_REFERENCE = (
+    RECEIPT_PATH.relative_to(ROOT).as_posix() if RECEIPT_PATH.is_relative_to(ROOT) else str(RECEIPT_PATH)
+)
 
 history_seed = load_json(HISTORY_PATH, "tracked content-triage history")
 source_info_value = history_seed.get("source")
@@ -1662,6 +1665,22 @@ if route_reference is not None:
         fail("current route mapping differs from its evidence hash")
     current_routes = load_json(route_path, "source-bound common routes")
     current_evidence["route_applicability"] = current_routes["tasks"]
+    correction_reference = current_routes.get("requirement_corrections")
+    if correction_reference is not None:
+        correction_path = ROOT / CORRECTIONS_PATH
+        if correction_reference.get("path") != CORRECTIONS_PATH:
+            fail("unexpected route correction record path")
+        if hashlib.sha256(correction_path.read_bytes()).hexdigest() != correction_reference.get("sha256"):
+            fail("route correction record differs from its evidence hash")
+        try:
+            current_evidence["route_corrections"] = validate_route_corrections(
+                load_json(correction_path, "source-bound route corrections"),
+                current_review,
+                source_hash,
+                hashlib.sha256((ROOT / REVIEW_PATH).read_bytes()).hexdigest(),
+            )
+        except ValueError as exc:
+            fail(str(exc))
 historical_environment = deepcopy(COMMON_ENVIRONMENT)
 COMMON_ENVIRONMENT.update(
     profile="gdpval-v2",
@@ -1837,7 +1856,7 @@ output = {
     ),
     "tasks": items,
     "verification": {
-        "receipt_path": ".audit/2026-09-21-all-tasks/readiness-generator.json",
+        "receipt_path": RECEIPT_REFERENCE,
         "model_runs": 0,
         "model_runs_meaning": "Generator runs no models; task trials are referenced under axes.target_environment_acceptance.task_trial_coverage.",
         "remote_writes": 0,
@@ -1933,7 +1952,7 @@ print(
             "output_sha256": output_sha256,
             "history": HISTORY_RELATIVE_PATH,
             "history_sha256": history_sha256,
-            "receipt": ".audit/2026-09-21-all-tasks/readiness-generator.json",
+            "receipt": RECEIPT_REFERENCE,
             "receipt_sha256": receipt_sha256,
             "task_count": len(items),
             "axes": axes,

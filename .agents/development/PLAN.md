@@ -64,6 +64,28 @@ affected scopes. Re-evaluate unchanged outputs under a new evaluation identity f
 whole-comparison-unit generation reruns when network/tool changes affected outputs. Do not retrospectively alter
 old N/S/A conditions or choose replacement tasks by outcome. No merge is authorized.
 
+### Bounded post-handoff route correction (2026-09-21)
+
+The owner identified five overbroad capability prerequisites in commit `01d2058a`: electronic interaction for paper
+PDF forms, notebook UI requirements leaking into calculation criteria, external acquisition of a supplied GMP form,
+editable-document embedding for a PDF-only IEM deliverable, and optional Overpass execution counted as mandatory.
+The authorized correction covers these and direct members of the same categories, their generator/aggregation and
+regression checks. It does not authorize another all-task audit, infrastructure expansion, model session or merge.
+
+The controller owns evidence integration, the regenerated ledger, documentation and PR update. One Astra worker owns
+the mapping/generator correction; one Astra specialist independently checks only the source clauses in scope. The
+initial requirements review, 239/143-item reviews, frozen inspection plans, runtime and all prior trials are retained.
+Classification corrections, actual new proof and optional strengthening are reported separately. A model-free
+isolated two-page PNG-to-PDF fixture proves authoring, exact pixel/source-byte reopening, native rendering and known
+visual correspondence in 38.99 seconds; it makes no participant-success or editable-document claim.
+
+The corrected ledger has 180 tasks with applicable common routes and 40 with required-route gaps (previously 168/52).
+Eleven removals correct classifications/optional checks; the IEM removal also uses the new operation proof. Exactly
+13 task maps and 29 notebook criterion maps changed. Original IDs, item hashes and signed weights are preserved;
+207 task maps, runtime and protocols are unchanged. Final helper tests pass 35 cases at 96% changed-helper coverage;
+strict typing, Ruff, scoped source preservation and regeneration checks pass. The five corrections are accepted
+within this bounded scope; all-220 acceptance remains incomplete for the explicitly retained gaps.
+
 ## Historical increment: GDPval work and assessment environment (2026-09-15)
 
 Owner change request `draft-1`, including the fixed acceptance task order, governs O1–O6 alongside R01–R10.

@@ -12,6 +12,106 @@ from typing import Any, Mapping
 
 REVIEW_PATH = ".agents/development/evidence/gdpval-220-requirements-review.json"
 EVIDENCE_PATH = ".agents/development/evidence/gdpval-220-capabilities.json"
+CORRECTIONS_PATH = ".agents/development/evidence/gdpval-route-corrections-2026-09-21.json"
+
+
+def generation_status(capabilities: list[dict[str, Any]]) -> str:
+    """Only original required operations can contribute a generation route gap."""
+    statuses = {
+        "shared_route_applicable",
+        "partial_shared_route",
+        "infrastructure_pending",
+        "provisional_human_observation_pending",
+        "unconfirmed",
+    }
+    names: set[str] = set()
+    required: list[str] = []
+    for capability in capabilities:
+        name = capability.get("capability")
+        status = capability.get("status")
+        if not isinstance(name, str) or not name.strip() or name in names or status not in statuses:
+            raise ValueError("generation capability needs a unique name and explicit route status")
+        if type(capability.get("required", True)) is not bool:
+            raise ValueError("generation requirement level must be an explicit boolean")
+        names.add(name)
+        if capability.get("required", True):
+            required.append(status)
+    if not required:
+        raise ValueError("generation route must retain its required output operations")
+    if all(status == "shared_route_applicable" for status in required):
+        return "shared_routes_applicable"
+    if any(status in {"shared_route_applicable", "partial_shared_route"} for status in required):
+        return "partial_shared_routes"
+    return "unconfirmed"
+
+
+def apply_requirement_correction(
+    required: dict[str, Any], review: dict[str, Any], correction: dict[str, Any] | None
+) -> dict[str, Any]:
+    """Apply an explicit source-bound correction without changing the initial review."""
+    corrected = deepcopy(required)
+    if correction is None:
+        return corrected
+    original = required["participant_output"]["capabilities"]
+    if (
+        correction.get("row_sha256") != review["row_sha256"]
+        or correction.get("original_output_capabilities") != original
+        or not correction.get("evidence_ref")
+    ):
+        raise ValueError("requirement correction does not bind the original row and capability list")
+    current = correction.get("required_output_capabilities")
+    optional = correction.get("optional_output_capabilities", [])
+    removed = correction.get("removed_output_capabilities", [])
+    for values in (current, optional, removed):
+        if not isinstance(values, list) or not all(isinstance(value, str) and value for value in values):
+            raise ValueError("requirement correction needs explicit capability lists")
+        if len(values) != len(set(values)):
+            raise ValueError("requirement correction repeats a capability")
+    if not current or set(current) & set(optional) or set(current) & set(removed) or set(optional) & set(removed):
+        raise ValueError("corrected required, optional and removed capabilities must be disjoint")
+    if set(current) | set(optional) | set(removed) != set(original):
+        raise ValueError(
+            "requirement correction must account for the original capabilities without inventing new ones"
+        )
+    corrected["participant_output"]["capabilities"] = list(current)
+    corrected["optional_output_capabilities"] = list(optional)
+    corrected["removed_output_capabilities"] = list(removed)
+    corrected["correction_basis_ref"] = correction["evidence_ref"]
+    return corrected
+
+
+def validate_route_corrections(
+    value: dict[str, Any], reviews: dict[str, dict[str, Any]], source_sha256: str, review_sha256: str
+) -> dict[str, dict[str, Any]]:
+    """Validate the versioned correction record before using its current requirements."""
+    if (
+        value.get("schema_version") != 1
+        or value.get("kind") != "bounded_requirement_route_corrections"
+        or value.get("source_dataset_sha256") != source_sha256
+        or value.get("source_review_sha256") != review_sha256
+        or not isinstance(value.get("tasks"), dict)
+        or not value["tasks"]
+    ):
+        raise ValueError("route corrections must bind the frozen source and requirements review")
+    result: dict[str, dict[str, Any]] = {}
+    for task_id, correction in value["tasks"].items():
+        if task_id not in reviews or not isinstance(correction, dict):
+            raise ValueError("route correction names an unknown task")
+        if correction.get("evidence_ref") != f"{CORRECTIONS_PATH}#/tasks/{task_id}":
+            raise ValueError("route correction needs its exact evidence reference")
+        review = reviews[task_id]
+        apply_requirement_correction(review["required_capabilities"], review, correction)
+        identifiers = {route[0] for route in review["rubric_routes"]}
+        affected = correction.get("affected_criterion_ids")
+        if (
+            not isinstance(affected, list)
+            or not affected
+            or not all(isinstance(identifier, str) and identifier in identifiers for identifier in affected)
+            or len(set(affected)) != len(affected)
+        ):
+            raise ValueError("route correction must identify original affected criteria without duplicates")
+        result[task_id] = correction
+    return result
 
 
 def row_hash(row: Mapping[str, Any]) -> str:
@@ -50,6 +150,21 @@ def apply_route_evidence(record: dict[str, Any], review: dict[str, Any], evidenc
         or not generation.get("capabilities")
     ):
         raise ValueError("generation route must declare its capabilities and bounded status")
+    capabilities = generation["capabilities"]
+    if not isinstance(capabilities, list) or not all(isinstance(capability, dict) for capability in capabilities):
+        raise ValueError("generation capabilities must be records")
+    if generation["status"] != generation_status(capabilities):
+        raise ValueError("generation status must follow required operations; optional checks cannot create gaps")
+    required_capabilities = [
+        capability["capability"] for capability in capabilities if capability.get("required", True)
+    ]
+    optional_capabilities = [
+        capability["capability"] for capability in capabilities if not capability.get("required", True)
+    ]
+    if required_capabilities != record["required_capabilities"]["participant_output"][
+        "capabilities"
+    ] or optional_capabilities != record["required_capabilities"].get("optional_output_capabilities", []):
+        raise ValueError("generation operations must match source-bound required and optional capabilities")
     evaluation_status = (
         "shared_routes_applicable"
         if all(item["status"] == "shared_route_applicable" for item in criteria)
@@ -117,7 +232,8 @@ def apply_review(
         feasibility_reference = addendum["evidence_ref"]
     if feasibility["status"] not in {"candidate", "needs_clarification", "undetermined"}:
         raise ValueError("unknown current content feasibility")
-    required = deepcopy(review["required_capabilities"])
+    correction = evidence.get("route_corrections", {}).get(task_id)
+    required = apply_requirement_correction(review["required_capabilities"], review, correction)
     routes = review["rubric_routes"]
     identifiers = [route[0] for route in routes]
     if len(set(identifiers)) != len(identifiers):
@@ -149,7 +265,10 @@ def apply_review(
         ),
         "source_input_uncertainty": deepcopy(evidence.get("source_input_impact", {}).get(task_id)),
         "current_content_addendum": deepcopy(addendum),
+        "current_route_correction": deepcopy(correction),
     }
+    if correction is not None and correction.get("external_data") is not None:
+        record["task_specific_checks"]["external_data"] = deepcopy(correction["external_data"])
     if addendum is not None:
         record["task_specific_checks"]["initial_review_questions"] = deepcopy(
             review["conflicts_or_data_access_questions"]

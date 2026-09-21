@@ -174,6 +174,14 @@
     "derived_frame_lineage": {
       "path": ".audit/2026-09-21-reviewed-media-routes/lineage-validation.json",
       "sha256": "f75475c5870de26fde38176b2bd7a35308a0b9bcc6913e3d40d2e68137a68c02"
+    },
+    "bounded_route_corrections": {
+      "path": ".agents/development/evidence/gdpval-route-corrections-2026-09-21.json",
+      "sha256": "40602ae7657e27ef73aa1bfe5643930dc14ceaf669e44e83055126c3c80c468e"
+    },
+    "pdf_png_embedding": {
+      "path": ".audit/2026-09-21-pdf-png-embedding/report.json",
+      "sha256": "686cb397207104aa33d2c89abb60a6545375aac8670e08ea11960f529fc5513f"
     }
   },
   "route_catalog": {
@@ -913,6 +921,27 @@
           "sha256": "60d9b1b64dd9523107e8b8eb3fb6c1f54eb4b4cce00a3d0cea2267783a596c39"
         }
       ]
+    },
+    "pdf_png_embedding": {
+      "status": "shared_route_applicable",
+      "roles": [
+        "creation",
+        "application",
+        "evaluation"
+      ],
+      "scope": "Isolated authoring of a PDF containing two supplied PNGs as image objects, exact RGB-byte and page-order reopening checks, native page rendering and recorded controller visual inspection.",
+      "limits": [
+        "Known ordinary PDF/PNG fixture only; submitted diagrams, tables, page placement, source provenance and legibility still require actual observations.",
+        "No editable DOCX image round-trip, every possible PDF feature or task quality is inferred."
+      ],
+      "proof_refs": [
+        {
+          "path": ".audit/2026-09-21-pdf-png-embedding/report.json",
+          "sha256": "686cb397207104aa33d2c89abb60a6545375aac8670e08ea11960f529fc5513f"
+        }
+      ],
+      "basis_ref": ".agents/development/evidence/gdpval-route-corrections-2026-09-21.json#/tasks/99ac6944-4ec6-4848-959c-a460ac705c6f",
+      "candidate_environment_fingerprint": "cff019360b687a84017824c3ef60cf11316e61a0f62291c10240b4ff5367db56"
     }
   },
   "generation_capability_catalog": {
@@ -962,8 +991,9 @@
       "route_ids": [
         "file_text_structure"
       ],
-      "basis_ref": ".audit/2026-09-21-route-applicability/decision.json#/authoring_capability_mapping/bounded_query_validation",
-      "remaining_obligation": "Source/query inspection is proved. No Overpass endpoint query execution was observed; the reviewed original items require source/instructions, so this optional validation gap is not a deployment requirement."
+      "basis_ref": ".agents/development/evidence/gdpval-route-corrections-2026-09-21.json#/tasks/854f3814-681c-4950-91ac-55b0db0e3781",
+      "remaining_obligation": "Optional live endpoint execution was not observed. Required query correctness and concrete execution/export instructions retain source/content checks; optional endpoint absence does not create a required gap.",
+      "required": false
     },
     "browser_accessibility_tree_checks": {
       "status": "unconfirmed",
@@ -1038,12 +1068,13 @@
       "remaining_obligation": "Apply the proved authoring operation to the original requested deliverable. Output correctness remains separately assessed; no successful participant solution is required for route adoption."
     },
     "document_image_embedding": {
-      "status": "partial_shared_route",
+      "status": "shared_route_applicable",
       "route_ids": [
+        "pdf_png_embedding",
         "page_render_and_transport"
       ],
-      "basis_ref": ".audit/2026-09-21-route-applicability/decision.json#/authoring_capability_mapping/document_image_embedding",
-      "remaining_obligation": "Rendering and source/file operations are proved; no separate editable-document embedded-image authoring round-trip was identified in the reviewed receipts."
+      "basis_ref": ".agents/development/evidence/gdpval-route-corrections-2026-09-21.json#/tasks/99ac6944-4ec6-4848-959c-a460ac705c6f",
+      "remaining_obligation": "Inspect actual PNG-derived images in the required PDF, last-page cost table, readability and source/content correctness. The bound fixture proves only the common PDF embedding operation."
     },
     "document_or_pdf_author": {
       "status": "shared_route_applicable",
@@ -1314,12 +1345,12 @@
       "remaining_obligation": "PDF reading/rendering and file writes are proved; interactive form-field filling/appearance round-trip was not identified in the existing bounded proof."
     },
     "pdf_form_layout": {
-      "status": "partial_shared_route",
+      "status": "shared_route_applicable",
       "route_ids": [
         "page_render_and_transport"
       ],
-      "basis_ref": ".audit/2026-09-21-route-applicability/decision.json#/authoring_capability_mapping/pdf_form_layout",
-      "remaining_obligation": "PDF writing/rendering is proved; native form-field interactivity and applicable appearance round-trip remain outside the known fixtures."
+      "basis_ref": ".agents/development/evidence/gdpval-route-corrections-2026-09-21.json#/tasks",
+      "remaining_obligation": "Author and inspect the original static form content, page layout, markable choices, handwriting/answer spaces and source comparisons. Preserve line-or-field and signature alternatives; do not require electronic interaction on a sufficient static branch."
     },
     "pdf_or_presentation_author": {
       "status": "shared_route_applicable",
@@ -1629,33 +1660,58 @@
     "correction": "Expanded four inherited source_input_impact symbolic reference aliases to the exact tracked file path. No capability/criterion status, original source, method or score changed.",
     "models": 0,
     "new_probes": 0,
-    "product_writes": 0
+    "product_writes": 0,
+    "bounded_correction": {
+      "record_ref": {
+        "path": ".agents/development/evidence/gdpval-route-corrections-2026-09-21.json",
+        "sha256": "40602ae7657e27ef73aa1bfe5643930dc14ceaf669e44e83055126c3c80c468e"
+      },
+      "serializer": {
+        "path": ".audit/2026-09-21-route-corrections/serialize.py",
+        "sha256": "dd5263708f29aeea574e13e35fff1088540b4575beebb6b8ee2c31e9bfb8fa21"
+      },
+      "classification_tasks": 13,
+      "new_operation_proof_tasks": [
+        "99ac6944-4ec6-4848-959c-a460ac705c6f"
+      ],
+      "no_runtime_or_protocol_changes": true
+    }
   },
   "summary": {
     "tasks": 220,
     "original_criteria": 10453,
     "generation_status_counts": {
-      "shared_routes_applicable": 169,
-      "partial_shared_routes": 51
+      "shared_routes_applicable": 181,
+      "partial_shared_routes": 39
     },
     "generation_capability_status_counts": {
-      "shared_route_applicable": 557,
-      "partial_shared_route": 76,
+      "shared_route_applicable": 568,
+      "partial_shared_route": 64,
       "infrastructure_pending": 1,
       "unconfirmed": 1
     },
     "criterion_route_status_counts": {
-      "shared_route_applicable": 10278,
+      "shared_route_applicable": 10306,
       "unconfirmed": 5,
       "provisional_human_observation_pending": 75,
-      "partial_shared_route": 63,
+      "partial_shared_route": 35,
       "infrastructure_pending": 32
     },
     "source_bound_239_overrides": 239,
     "source_bound_143_overrides": 143,
     "sufficient_machine_alternatives": 5,
     "task_successes_inferred": 0,
-    "criterion_results_inferred": 0
+    "criterion_results_inferred": 0,
+    "required_generation_capability_status_counts": {
+      "shared_route_applicable": 568,
+      "partial_shared_route": 63,
+      "infrastructure_pending": 1,
+      "unconfirmed": 1
+    },
+    "optional_generation_capability_status_counts": {
+      "partial_shared_route": 1
+    },
+    "source_bound_requirement_correction_tasks": 13
   },
   "tasks": {
     "83d10b06-26d1-4636-a32c-23f92c57f30b": {
@@ -9177,7 +9233,7 @@
       "source_constraints_ref": ".audit/2026-09-21-route-applicability/decision.json#/tasks/10/source_constraints",
       "source_input_impact_ref": null,
       "generation": {
-        "status": "partial_shared_routes",
+        "status": "shared_routes_applicable",
         "evidence_scope": "shared",
         "capabilities": [
           {
@@ -9208,12 +9264,13 @@
             "capability": "diagram_or_image_author"
           },
           {
-            "status": "partial_shared_route",
+            "status": "shared_route_applicable",
             "route_ids": [
+              "pdf_png_embedding",
               "page_render_and_transport"
             ],
-            "basis_ref": ".agents/development/evidence/gdpval-220-route-applicability.json#/generation_capability_catalog/document_image_embedding",
-            "remaining_obligation": "Rendering and source/file operations are proved; no separate editable-document embedded-image authoring round-trip was identified in the reviewed receipts.",
+            "basis_ref": ".agents/development/evidence/gdpval-route-corrections-2026-09-21.json#/tasks/99ac6944-4ec6-4848-959c-a460ac705c6f",
+            "remaining_obligation": "Inspect actual PNG-derived images in the required PDF, last-page cost table, readability and source/content correctness. The bound fixture proves only the common PDF embedding operation.",
             "capability": "document_image_embedding"
           }
         ]
@@ -10032,7 +10089,8 @@
           "actual_artifact_observation_required": true
         }
       ],
-      "task_success": "not_assessed_by_route_mapping"
+      "task_success": "not_assessed_by_route_mapping",
+      "requirement_correction_ref": ".agents/development/evidence/gdpval-route-corrections-2026-09-21.json#/tasks/99ac6944-4ec6-4848-959c-a460ac705c6f"
     },
     "f9a1c16c-53fd-4c8f-88cc-5c325ec2f0bb": {
       "row_sha256": "ea2f9030687bbc1a939bac5130ec1f35e6519993d34dcc92b304167803967db9",
@@ -50613,13 +50671,12 @@
           ],
           "status": "shared_route_applicable",
           "route_ids": [
-            "browser_widget_ui",
             "file_text_structure",
             "fresh_inprocess_kernel",
             "science_plot"
           ],
-          "basis_ref": ".audit/2026-09-21-route-applicability/decision.json#/exact_special_classes/0",
-          "remaining_obligation": "A fresh actual in-process kernel matches the unstipulated fresh-kernel requirement; the original does not require a separate process or server. Actual output notebook still must run. Inspect the actual artifact and applicable original sources with the mapped methods, preserve all original branches/tolerances, and record meaningful bound observations. Shared route proof is not a criterion result.",
+          "basis_ref": ".agents/development/evidence/gdpval-route-corrections-2026-09-21.json#/tasks/c7d83f01-2874-4876-b7fd-52582ec99e1a/criterion_route_corrections/0",
+          "remaining_obligation": "Inspect the actual notebook with the unchanged mapped methods: execute relevant cells in a fresh kernel where required, examine numerical/code/seed/CSV/table/plot evidence and preserve the original tolerance or branch. This item does not require browser-widget operation. Shared route proof is not a criterion result.",
           "actual_artifact_observation_required": true
         },
         {
@@ -50630,15 +50687,14 @@
             "content",
             "functional"
           ],
-          "status": "partial_shared_route",
+          "status": "shared_route_applicable",
           "route_ids": [
-            "browser_widget_ui",
             "file_text_structure",
             "fresh_inprocess_kernel",
             "science_plot"
           ],
-          "basis_ref": ".agents/development/evidence/gdpval-220-requirements-review.json#/tasks/63/rubric_routes/2",
-          "remaining_obligation": "The existing map proves local execution primitives but does not close this exact operation's applicability. Resolve the stated native/front-end or compound-operation limit; an entire successful participant solution is not required to establish the route. Inspect the actual artifact and applicable original sources with the mapped methods, preserve all original branches/tolerances, and record meaningful bound observations. Shared route proof is not a criterion result.",
+          "basis_ref": ".agents/development/evidence/gdpval-route-corrections-2026-09-21.json#/tasks/c7d83f01-2874-4876-b7fd-52582ec99e1a/criterion_route_corrections/1",
+          "remaining_obligation": "Inspect the actual notebook with the unchanged mapped methods: execute relevant cells in a fresh kernel where required, examine numerical/code/seed/CSV/table/plot evidence and preserve the original tolerance or branch. This item does not require browser-widget operation. Shared route proof is not a criterion result.",
           "actual_artifact_observation_required": true
         },
         {
@@ -50649,15 +50705,14 @@
             "content",
             "functional"
           ],
-          "status": "partial_shared_route",
+          "status": "shared_route_applicable",
           "route_ids": [
-            "browser_widget_ui",
             "file_text_structure",
             "fresh_inprocess_kernel",
             "science_plot"
           ],
-          "basis_ref": ".agents/development/evidence/gdpval-220-requirements-review.json#/tasks/63/rubric_routes/3",
-          "remaining_obligation": "The existing map proves local execution primitives but does not close this exact operation's applicability. Resolve the stated native/front-end or compound-operation limit; an entire successful participant solution is not required to establish the route. Inspect the actual artifact and applicable original sources with the mapped methods, preserve all original branches/tolerances, and record meaningful bound observations. Shared route proof is not a criterion result.",
+          "basis_ref": ".agents/development/evidence/gdpval-route-corrections-2026-09-21.json#/tasks/c7d83f01-2874-4876-b7fd-52582ec99e1a/criterion_route_corrections/2",
+          "remaining_obligation": "Inspect the actual notebook with the unchanged mapped methods: execute relevant cells in a fresh kernel where required, examine numerical/code/seed/CSV/table/plot evidence and preserve the original tolerance or branch. This item does not require browser-widget operation. Shared route proof is not a criterion result.",
           "actual_artifact_observation_required": true
         },
         {
@@ -50669,16 +50724,15 @@
             "functional",
             "visual"
           ],
-          "status": "partial_shared_route",
+          "status": "shared_route_applicable",
           "route_ids": [
-            "browser_widget_ui",
             "file_text_structure",
             "fresh_inprocess_kernel",
             "page_render_and_transport",
             "science_plot"
           ],
-          "basis_ref": ".agents/development/evidence/gdpval-220-requirements-review.json#/tasks/63/rubric_routes/4",
-          "remaining_obligation": "The existing map proves local execution primitives but does not close this exact operation's applicability. Resolve the stated native/front-end or compound-operation limit; an entire successful participant solution is not required to establish the route. Inspect the actual artifact and applicable original sources with the mapped methods, preserve all original branches/tolerances, and record meaningful bound observations. Shared route proof is not a criterion result.",
+          "basis_ref": ".agents/development/evidence/gdpval-route-corrections-2026-09-21.json#/tasks/c7d83f01-2874-4876-b7fd-52582ec99e1a/criterion_route_corrections/3",
+          "remaining_obligation": "Inspect the actual notebook with the unchanged mapped methods: execute relevant cells in a fresh kernel where required, examine numerical/code/seed/CSV/table/plot evidence and preserve the original tolerance or branch. This item does not require browser-widget operation. Shared route proof is not a criterion result.",
           "actual_artifact_observation_required": true
         },
         {
@@ -50704,15 +50758,14 @@
             "content",
             "functional"
           ],
-          "status": "partial_shared_route",
+          "status": "shared_route_applicable",
           "route_ids": [
-            "browser_widget_ui",
             "file_text_structure",
             "fresh_inprocess_kernel",
             "science_plot"
           ],
-          "basis_ref": ".agents/development/evidence/gdpval-220-requirements-review.json#/tasks/63/rubric_routes/6",
-          "remaining_obligation": "The existing map proves local execution primitives but does not close this exact operation's applicability. Resolve the stated native/front-end or compound-operation limit; an entire successful participant solution is not required to establish the route. Inspect the actual artifact and applicable original sources with the mapped methods, preserve all original branches/tolerances, and record meaningful bound observations. Shared route proof is not a criterion result.",
+          "basis_ref": ".agents/development/evidence/gdpval-route-corrections-2026-09-21.json#/tasks/c7d83f01-2874-4876-b7fd-52582ec99e1a/criterion_route_corrections/4",
+          "remaining_obligation": "Inspect the actual notebook with the unchanged mapped methods: execute relevant cells in a fresh kernel where required, examine numerical/code/seed/CSV/table/plot evidence and preserve the original tolerance or branch. This item does not require browser-widget operation. Shared route proof is not a criterion result.",
           "actual_artifact_observation_required": true
         },
         {
@@ -50723,15 +50776,14 @@
             "content",
             "functional"
           ],
-          "status": "partial_shared_route",
+          "status": "shared_route_applicable",
           "route_ids": [
-            "browser_widget_ui",
             "file_text_structure",
             "fresh_inprocess_kernel",
             "science_plot"
           ],
-          "basis_ref": ".agents/development/evidence/gdpval-220-requirements-review.json#/tasks/63/rubric_routes/7",
-          "remaining_obligation": "The existing map proves local execution primitives but does not close this exact operation's applicability. Resolve the stated native/front-end or compound-operation limit; an entire successful participant solution is not required to establish the route. Inspect the actual artifact and applicable original sources with the mapped methods, preserve all original branches/tolerances, and record meaningful bound observations. Shared route proof is not a criterion result.",
+          "basis_ref": ".agents/development/evidence/gdpval-route-corrections-2026-09-21.json#/tasks/c7d83f01-2874-4876-b7fd-52582ec99e1a/criterion_route_corrections/5",
+          "remaining_obligation": "Inspect the actual notebook with the unchanged mapped methods: execute relevant cells in a fresh kernel where required, examine numerical/code/seed/CSV/table/plot evidence and preserve the original tolerance or branch. This item does not require browser-widget operation. Shared route proof is not a criterion result.",
           "actual_artifact_observation_required": true
         },
         {
@@ -50742,15 +50794,14 @@
             "content",
             "functional"
           ],
-          "status": "partial_shared_route",
+          "status": "shared_route_applicable",
           "route_ids": [
-            "browser_widget_ui",
             "file_text_structure",
             "fresh_inprocess_kernel",
             "science_plot"
           ],
-          "basis_ref": ".agents/development/evidence/gdpval-220-requirements-review.json#/tasks/63/rubric_routes/8",
-          "remaining_obligation": "The existing map proves local execution primitives but does not close this exact operation's applicability. Resolve the stated native/front-end or compound-operation limit; an entire successful participant solution is not required to establish the route. Inspect the actual artifact and applicable original sources with the mapped methods, preserve all original branches/tolerances, and record meaningful bound observations. Shared route proof is not a criterion result.",
+          "basis_ref": ".agents/development/evidence/gdpval-route-corrections-2026-09-21.json#/tasks/c7d83f01-2874-4876-b7fd-52582ec99e1a/criterion_route_corrections/6",
+          "remaining_obligation": "Inspect the actual notebook with the unchanged mapped methods: execute relevant cells in a fresh kernel where required, examine numerical/code/seed/CSV/table/plot evidence and preserve the original tolerance or branch. This item does not require browser-widget operation. Shared route proof is not a criterion result.",
           "actual_artifact_observation_required": true
         },
         {
@@ -50778,15 +50829,14 @@
             "functional",
             "structure"
           ],
-          "status": "partial_shared_route",
+          "status": "shared_route_applicable",
           "route_ids": [
-            "browser_widget_ui",
             "file_text_structure",
             "fresh_inprocess_kernel",
             "science_plot"
           ],
-          "basis_ref": ".agents/development/evidence/gdpval-220-requirements-review.json#/tasks/63/rubric_routes/10",
-          "remaining_obligation": "The existing map proves local execution primitives but does not close this exact operation's applicability. Resolve the stated native/front-end or compound-operation limit; an entire successful participant solution is not required to establish the route. Inspect the actual artifact and applicable original sources with the mapped methods, preserve all original branches/tolerances, and record meaningful bound observations. Shared route proof is not a criterion result.",
+          "basis_ref": ".agents/development/evidence/gdpval-route-corrections-2026-09-21.json#/tasks/c7d83f01-2874-4876-b7fd-52582ec99e1a/criterion_route_corrections/7",
+          "remaining_obligation": "Inspect the actual notebook with the unchanged mapped methods: execute relevant cells in a fresh kernel where required, examine numerical/code/seed/CSV/table/plot evidence and preserve the original tolerance or branch. This item does not require browser-widget operation. Shared route proof is not a criterion result.",
           "actual_artifact_observation_required": true
         },
         {
@@ -50842,15 +50892,14 @@
             "content",
             "functional"
           ],
-          "status": "partial_shared_route",
+          "status": "shared_route_applicable",
           "route_ids": [
-            "browser_widget_ui",
             "file_text_structure",
             "fresh_inprocess_kernel",
             "science_plot"
           ],
-          "basis_ref": ".agents/development/evidence/gdpval-220-requirements-review.json#/tasks/63/rubric_routes/14",
-          "remaining_obligation": "The existing map proves local execution primitives but does not close this exact operation's applicability. Resolve the stated native/front-end or compound-operation limit; an entire successful participant solution is not required to establish the route. Inspect the actual artifact and applicable original sources with the mapped methods, preserve all original branches/tolerances, and record meaningful bound observations. Shared route proof is not a criterion result.",
+          "basis_ref": ".agents/development/evidence/gdpval-route-corrections-2026-09-21.json#/tasks/c7d83f01-2874-4876-b7fd-52582ec99e1a/criterion_route_corrections/8",
+          "remaining_obligation": "Inspect the actual notebook with the unchanged mapped methods: execute relevant cells in a fresh kernel where required, examine numerical/code/seed/CSV/table/plot evidence and preserve the original tolerance or branch. This item does not require browser-widget operation. Shared route proof is not a criterion result.",
           "actual_artifact_observation_required": true
         },
         {
@@ -50861,15 +50910,14 @@
             "content",
             "functional"
           ],
-          "status": "partial_shared_route",
+          "status": "shared_route_applicable",
           "route_ids": [
-            "browser_widget_ui",
             "file_text_structure",
             "fresh_inprocess_kernel",
             "science_plot"
           ],
-          "basis_ref": ".agents/development/evidence/gdpval-220-requirements-review.json#/tasks/63/rubric_routes/15",
-          "remaining_obligation": "The existing map proves local execution primitives but does not close this exact operation's applicability. Resolve the stated native/front-end or compound-operation limit; an entire successful participant solution is not required to establish the route. Inspect the actual artifact and applicable original sources with the mapped methods, preserve all original branches/tolerances, and record meaningful bound observations. Shared route proof is not a criterion result.",
+          "basis_ref": ".agents/development/evidence/gdpval-route-corrections-2026-09-21.json#/tasks/c7d83f01-2874-4876-b7fd-52582ec99e1a/criterion_route_corrections/9",
+          "remaining_obligation": "Inspect the actual notebook with the unchanged mapped methods: execute relevant cells in a fresh kernel where required, examine numerical/code/seed/CSV/table/plot evidence and preserve the original tolerance or branch. This item does not require browser-widget operation. Shared route proof is not a criterion result.",
           "actual_artifact_observation_required": true
         },
         {
@@ -50880,15 +50928,14 @@
             "content",
             "functional"
           ],
-          "status": "partial_shared_route",
+          "status": "shared_route_applicable",
           "route_ids": [
-            "browser_widget_ui",
             "file_text_structure",
             "fresh_inprocess_kernel",
             "science_plot"
           ],
-          "basis_ref": ".agents/development/evidence/gdpval-220-requirements-review.json#/tasks/63/rubric_routes/16",
-          "remaining_obligation": "The existing map proves local execution primitives but does not close this exact operation's applicability. Resolve the stated native/front-end or compound-operation limit; an entire successful participant solution is not required to establish the route. Inspect the actual artifact and applicable original sources with the mapped methods, preserve all original branches/tolerances, and record meaningful bound observations. Shared route proof is not a criterion result.",
+          "basis_ref": ".agents/development/evidence/gdpval-route-corrections-2026-09-21.json#/tasks/c7d83f01-2874-4876-b7fd-52582ec99e1a/criterion_route_corrections/10",
+          "remaining_obligation": "Inspect the actual notebook with the unchanged mapped methods: execute relevant cells in a fresh kernel where required, examine numerical/code/seed/CSV/table/plot evidence and preserve the original tolerance or branch. This item does not require browser-widget operation. Shared route proof is not a criterion result.",
           "actual_artifact_observation_required": true
         },
         {
@@ -50899,15 +50946,14 @@
             "content",
             "functional"
           ],
-          "status": "partial_shared_route",
+          "status": "shared_route_applicable",
           "route_ids": [
-            "browser_widget_ui",
             "file_text_structure",
             "fresh_inprocess_kernel",
             "science_plot"
           ],
-          "basis_ref": ".agents/development/evidence/gdpval-220-requirements-review.json#/tasks/63/rubric_routes/17",
-          "remaining_obligation": "The existing map proves local execution primitives but does not close this exact operation's applicability. Resolve the stated native/front-end or compound-operation limit; an entire successful participant solution is not required to establish the route. Inspect the actual artifact and applicable original sources with the mapped methods, preserve all original branches/tolerances, and record meaningful bound observations. Shared route proof is not a criterion result.",
+          "basis_ref": ".agents/development/evidence/gdpval-route-corrections-2026-09-21.json#/tasks/c7d83f01-2874-4876-b7fd-52582ec99e1a/criterion_route_corrections/11",
+          "remaining_obligation": "Inspect the actual notebook with the unchanged mapped methods: execute relevant cells in a fresh kernel where required, examine numerical/code/seed/CSV/table/plot evidence and preserve the original tolerance or branch. This item does not require browser-widget operation. Shared route proof is not a criterion result.",
           "actual_artifact_observation_required": true
         },
         {
@@ -50918,15 +50964,14 @@
             "content",
             "functional"
           ],
-          "status": "partial_shared_route",
+          "status": "shared_route_applicable",
           "route_ids": [
-            "browser_widget_ui",
             "file_text_structure",
             "fresh_inprocess_kernel",
             "science_plot"
           ],
-          "basis_ref": ".agents/development/evidence/gdpval-220-requirements-review.json#/tasks/63/rubric_routes/18",
-          "remaining_obligation": "The existing map proves local execution primitives but does not close this exact operation's applicability. Resolve the stated native/front-end or compound-operation limit; an entire successful participant solution is not required to establish the route. Inspect the actual artifact and applicable original sources with the mapped methods, preserve all original branches/tolerances, and record meaningful bound observations. Shared route proof is not a criterion result.",
+          "basis_ref": ".agents/development/evidence/gdpval-route-corrections-2026-09-21.json#/tasks/c7d83f01-2874-4876-b7fd-52582ec99e1a/criterion_route_corrections/12",
+          "remaining_obligation": "Inspect the actual notebook with the unchanged mapped methods: execute relevant cells in a fresh kernel where required, examine numerical/code/seed/CSV/table/plot evidence and preserve the original tolerance or branch. This item does not require browser-widget operation. Shared route proof is not a criterion result.",
           "actual_artifact_observation_required": true
         },
         {
@@ -50937,15 +50982,14 @@
             "content",
             "functional"
           ],
-          "status": "partial_shared_route",
+          "status": "shared_route_applicable",
           "route_ids": [
-            "browser_widget_ui",
             "file_text_structure",
             "fresh_inprocess_kernel",
             "science_plot"
           ],
-          "basis_ref": ".agents/development/evidence/gdpval-220-requirements-review.json#/tasks/63/rubric_routes/19",
-          "remaining_obligation": "The existing map proves local execution primitives but does not close this exact operation's applicability. Resolve the stated native/front-end or compound-operation limit; an entire successful participant solution is not required to establish the route. Inspect the actual artifact and applicable original sources with the mapped methods, preserve all original branches/tolerances, and record meaningful bound observations. Shared route proof is not a criterion result.",
+          "basis_ref": ".agents/development/evidence/gdpval-route-corrections-2026-09-21.json#/tasks/c7d83f01-2874-4876-b7fd-52582ec99e1a/criterion_route_corrections/13",
+          "remaining_obligation": "Inspect the actual notebook with the unchanged mapped methods: execute relevant cells in a fresh kernel where required, examine numerical/code/seed/CSV/table/plot evidence and preserve the original tolerance or branch. This item does not require browser-widget operation. Shared route proof is not a criterion result.",
           "actual_artifact_observation_required": true
         },
         {
@@ -50956,15 +51000,14 @@
             "content",
             "functional"
           ],
-          "status": "partial_shared_route",
+          "status": "shared_route_applicable",
           "route_ids": [
-            "browser_widget_ui",
             "file_text_structure",
             "fresh_inprocess_kernel",
             "science_plot"
           ],
-          "basis_ref": ".agents/development/evidence/gdpval-220-requirements-review.json#/tasks/63/rubric_routes/20",
-          "remaining_obligation": "The existing map proves local execution primitives but does not close this exact operation's applicability. Resolve the stated native/front-end or compound-operation limit; an entire successful participant solution is not required to establish the route. Inspect the actual artifact and applicable original sources with the mapped methods, preserve all original branches/tolerances, and record meaningful bound observations. Shared route proof is not a criterion result.",
+          "basis_ref": ".agents/development/evidence/gdpval-route-corrections-2026-09-21.json#/tasks/c7d83f01-2874-4876-b7fd-52582ec99e1a/criterion_route_corrections/14",
+          "remaining_obligation": "Inspect the actual notebook with the unchanged mapped methods: execute relevant cells in a fresh kernel where required, examine numerical/code/seed/CSV/table/plot evidence and preserve the original tolerance or branch. This item does not require browser-widget operation. Shared route proof is not a criterion result.",
           "actual_artifact_observation_required": true
         },
         {
@@ -50976,16 +51019,15 @@
             "functional",
             "visual"
           ],
-          "status": "partial_shared_route",
+          "status": "shared_route_applicable",
           "route_ids": [
-            "browser_widget_ui",
             "file_text_structure",
             "fresh_inprocess_kernel",
             "page_render_and_transport",
             "science_plot"
           ],
-          "basis_ref": ".agents/development/evidence/gdpval-220-requirements-review.json#/tasks/63/rubric_routes/21",
-          "remaining_obligation": "The existing map proves local execution primitives but does not close this exact operation's applicability. Resolve the stated native/front-end or compound-operation limit; an entire successful participant solution is not required to establish the route. Inspect the actual artifact and applicable original sources with the mapped methods, preserve all original branches/tolerances, and record meaningful bound observations. Shared route proof is not a criterion result.",
+          "basis_ref": ".agents/development/evidence/gdpval-route-corrections-2026-09-21.json#/tasks/c7d83f01-2874-4876-b7fd-52582ec99e1a/criterion_route_corrections/15",
+          "remaining_obligation": "Inspect the actual notebook with the unchanged mapped methods: execute relevant cells in a fresh kernel where required, examine numerical/code/seed/CSV/table/plot evidence and preserve the original tolerance or branch. This item does not require browser-widget operation. Shared route proof is not a criterion result.",
           "actual_artifact_observation_required": true
         },
         {
@@ -50997,15 +51039,14 @@
             "functional",
             "structure"
           ],
-          "status": "partial_shared_route",
+          "status": "shared_route_applicable",
           "route_ids": [
-            "browser_widget_ui",
             "file_text_structure",
             "fresh_inprocess_kernel",
             "science_plot"
           ],
-          "basis_ref": ".agents/development/evidence/gdpval-220-requirements-review.json#/tasks/63/rubric_routes/22",
-          "remaining_obligation": "The existing map proves local execution primitives but does not close this exact operation's applicability. Resolve the stated native/front-end or compound-operation limit; an entire successful participant solution is not required to establish the route. Inspect the actual artifact and applicable original sources with the mapped methods, preserve all original branches/tolerances, and record meaningful bound observations. Shared route proof is not a criterion result.",
+          "basis_ref": ".agents/development/evidence/gdpval-route-corrections-2026-09-21.json#/tasks/c7d83f01-2874-4876-b7fd-52582ec99e1a/criterion_route_corrections/16",
+          "remaining_obligation": "Inspect the actual notebook with the unchanged mapped methods: execute relevant cells in a fresh kernel where required, examine numerical/code/seed/CSV/table/plot evidence and preserve the original tolerance or branch. This item does not require browser-widget operation. Shared route proof is not a criterion result.",
           "actual_artifact_observation_required": true
         },
         {
@@ -51016,15 +51057,14 @@
             "content",
             "functional"
           ],
-          "status": "partial_shared_route",
+          "status": "shared_route_applicable",
           "route_ids": [
-            "browser_widget_ui",
             "file_text_structure",
             "fresh_inprocess_kernel",
             "science_plot"
           ],
-          "basis_ref": ".agents/development/evidence/gdpval-220-requirements-review.json#/tasks/63/rubric_routes/23",
-          "remaining_obligation": "The existing map proves local execution primitives but does not close this exact operation's applicability. Resolve the stated native/front-end or compound-operation limit; an entire successful participant solution is not required to establish the route. Inspect the actual artifact and applicable original sources with the mapped methods, preserve all original branches/tolerances, and record meaningful bound observations. Shared route proof is not a criterion result.",
+          "basis_ref": ".agents/development/evidence/gdpval-route-corrections-2026-09-21.json#/tasks/c7d83f01-2874-4876-b7fd-52582ec99e1a/criterion_route_corrections/17",
+          "remaining_obligation": "Inspect the actual notebook with the unchanged mapped methods: execute relevant cells in a fresh kernel where required, examine numerical/code/seed/CSV/table/plot evidence and preserve the original tolerance or branch. This item does not require browser-widget operation. Shared route proof is not a criterion result.",
           "actual_artifact_observation_required": true
         },
         {
@@ -51035,15 +51075,14 @@
             "content",
             "functional"
           ],
-          "status": "partial_shared_route",
+          "status": "shared_route_applicable",
           "route_ids": [
-            "browser_widget_ui",
             "file_text_structure",
             "fresh_inprocess_kernel",
             "science_plot"
           ],
-          "basis_ref": ".agents/development/evidence/gdpval-220-requirements-review.json#/tasks/63/rubric_routes/24",
-          "remaining_obligation": "The existing map proves local execution primitives but does not close this exact operation's applicability. Resolve the stated native/front-end or compound-operation limit; an entire successful participant solution is not required to establish the route. Inspect the actual artifact and applicable original sources with the mapped methods, preserve all original branches/tolerances, and record meaningful bound observations. Shared route proof is not a criterion result.",
+          "basis_ref": ".agents/development/evidence/gdpval-route-corrections-2026-09-21.json#/tasks/c7d83f01-2874-4876-b7fd-52582ec99e1a/criterion_route_corrections/18",
+          "remaining_obligation": "Inspect the actual notebook with the unchanged mapped methods: execute relevant cells in a fresh kernel where required, examine numerical/code/seed/CSV/table/plot evidence and preserve the original tolerance or branch. This item does not require browser-widget operation. Shared route proof is not a criterion result.",
           "actual_artifact_observation_required": true
         },
         {
@@ -51054,15 +51093,14 @@
             "content",
             "functional"
           ],
-          "status": "partial_shared_route",
+          "status": "shared_route_applicable",
           "route_ids": [
-            "browser_widget_ui",
             "file_text_structure",
             "fresh_inprocess_kernel",
             "science_plot"
           ],
-          "basis_ref": ".agents/development/evidence/gdpval-220-requirements-review.json#/tasks/63/rubric_routes/25",
-          "remaining_obligation": "The existing map proves local execution primitives but does not close this exact operation's applicability. Resolve the stated native/front-end or compound-operation limit; an entire successful participant solution is not required to establish the route. Inspect the actual artifact and applicable original sources with the mapped methods, preserve all original branches/tolerances, and record meaningful bound observations. Shared route proof is not a criterion result.",
+          "basis_ref": ".agents/development/evidence/gdpval-route-corrections-2026-09-21.json#/tasks/c7d83f01-2874-4876-b7fd-52582ec99e1a/criterion_route_corrections/19",
+          "remaining_obligation": "Inspect the actual notebook with the unchanged mapped methods: execute relevant cells in a fresh kernel where required, examine numerical/code/seed/CSV/table/plot evidence and preserve the original tolerance or branch. This item does not require browser-widget operation. Shared route proof is not a criterion result.",
           "actual_artifact_observation_required": true
         },
         {
@@ -51073,15 +51111,14 @@
             "content",
             "functional"
           ],
-          "status": "partial_shared_route",
+          "status": "shared_route_applicable",
           "route_ids": [
-            "browser_widget_ui",
             "file_text_structure",
             "fresh_inprocess_kernel",
             "science_plot"
           ],
-          "basis_ref": ".agents/development/evidence/gdpval-220-requirements-review.json#/tasks/63/rubric_routes/26",
-          "remaining_obligation": "The existing map proves local execution primitives but does not close this exact operation's applicability. Resolve the stated native/front-end or compound-operation limit; an entire successful participant solution is not required to establish the route. Inspect the actual artifact and applicable original sources with the mapped methods, preserve all original branches/tolerances, and record meaningful bound observations. Shared route proof is not a criterion result.",
+          "basis_ref": ".agents/development/evidence/gdpval-route-corrections-2026-09-21.json#/tasks/c7d83f01-2874-4876-b7fd-52582ec99e1a/criterion_route_corrections/20",
+          "remaining_obligation": "Inspect the actual notebook with the unchanged mapped methods: execute relevant cells in a fresh kernel where required, examine numerical/code/seed/CSV/table/plot evidence and preserve the original tolerance or branch. This item does not require browser-widget operation. Shared route proof is not a criterion result.",
           "actual_artifact_observation_required": true
         },
         {
@@ -51107,15 +51144,14 @@
             "content",
             "functional"
           ],
-          "status": "partial_shared_route",
+          "status": "shared_route_applicable",
           "route_ids": [
-            "browser_widget_ui",
             "file_text_structure",
             "fresh_inprocess_kernel",
             "science_plot"
           ],
-          "basis_ref": ".agents/development/evidence/gdpval-220-requirements-review.json#/tasks/63/rubric_routes/28",
-          "remaining_obligation": "The existing map proves local execution primitives but does not close this exact operation's applicability. Resolve the stated native/front-end or compound-operation limit; an entire successful participant solution is not required to establish the route. Inspect the actual artifact and applicable original sources with the mapped methods, preserve all original branches/tolerances, and record meaningful bound observations. Shared route proof is not a criterion result.",
+          "basis_ref": ".agents/development/evidence/gdpval-route-corrections-2026-09-21.json#/tasks/c7d83f01-2874-4876-b7fd-52582ec99e1a/criterion_route_corrections/21",
+          "remaining_obligation": "Inspect the actual notebook with the unchanged mapped methods: execute relevant cells in a fresh kernel where required, examine numerical/code/seed/CSV/table/plot evidence and preserve the original tolerance or branch. This item does not require browser-widget operation. Shared route proof is not a criterion result.",
           "actual_artifact_observation_required": true
         },
         {
@@ -51126,15 +51162,14 @@
             "content",
             "functional"
           ],
-          "status": "partial_shared_route",
+          "status": "shared_route_applicable",
           "route_ids": [
-            "browser_widget_ui",
             "file_text_structure",
             "fresh_inprocess_kernel",
             "science_plot"
           ],
-          "basis_ref": ".agents/development/evidence/gdpval-220-requirements-review.json#/tasks/63/rubric_routes/29",
-          "remaining_obligation": "The existing map proves local execution primitives but does not close this exact operation's applicability. Resolve the stated native/front-end or compound-operation limit; an entire successful participant solution is not required to establish the route. Inspect the actual artifact and applicable original sources with the mapped methods, preserve all original branches/tolerances, and record meaningful bound observations. Shared route proof is not a criterion result.",
+          "basis_ref": ".agents/development/evidence/gdpval-route-corrections-2026-09-21.json#/tasks/c7d83f01-2874-4876-b7fd-52582ec99e1a/criterion_route_corrections/22",
+          "remaining_obligation": "Inspect the actual notebook with the unchanged mapped methods: execute relevant cells in a fresh kernel where required, examine numerical/code/seed/CSV/table/plot evidence and preserve the original tolerance or branch. This item does not require browser-widget operation. Shared route proof is not a criterion result.",
           "actual_artifact_observation_required": true
         },
         {
@@ -51146,15 +51181,14 @@
             "functional",
             "structure"
           ],
-          "status": "partial_shared_route",
+          "status": "shared_route_applicable",
           "route_ids": [
-            "browser_widget_ui",
             "file_text_structure",
             "fresh_inprocess_kernel",
             "science_plot"
           ],
-          "basis_ref": ".agents/development/evidence/gdpval-220-requirements-review.json#/tasks/63/rubric_routes/30",
-          "remaining_obligation": "The existing map proves local execution primitives but does not close this exact operation's applicability. Resolve the stated native/front-end or compound-operation limit; an entire successful participant solution is not required to establish the route. Inspect the actual artifact and applicable original sources with the mapped methods, preserve all original branches/tolerances, and record meaningful bound observations. Shared route proof is not a criterion result.",
+          "basis_ref": ".agents/development/evidence/gdpval-route-corrections-2026-09-21.json#/tasks/c7d83f01-2874-4876-b7fd-52582ec99e1a/criterion_route_corrections/23",
+          "remaining_obligation": "Inspect the actual notebook with the unchanged mapped methods: execute relevant cells in a fresh kernel where required, examine numerical/code/seed/CSV/table/plot evidence and preserve the original tolerance or branch. This item does not require browser-widget operation. Shared route proof is not a criterion result.",
           "actual_artifact_observation_required": true
         },
         {
@@ -51165,15 +51199,14 @@
             "content",
             "functional"
           ],
-          "status": "partial_shared_route",
+          "status": "shared_route_applicable",
           "route_ids": [
-            "browser_widget_ui",
             "file_text_structure",
             "fresh_inprocess_kernel",
             "science_plot"
           ],
-          "basis_ref": ".agents/development/evidence/gdpval-220-requirements-review.json#/tasks/63/rubric_routes/31",
-          "remaining_obligation": "The existing map proves local execution primitives but does not close this exact operation's applicability. Resolve the stated native/front-end or compound-operation limit; an entire successful participant solution is not required to establish the route. Inspect the actual artifact and applicable original sources with the mapped methods, preserve all original branches/tolerances, and record meaningful bound observations. Shared route proof is not a criterion result.",
+          "basis_ref": ".agents/development/evidence/gdpval-route-corrections-2026-09-21.json#/tasks/c7d83f01-2874-4876-b7fd-52582ec99e1a/criterion_route_corrections/24",
+          "remaining_obligation": "Inspect the actual notebook with the unchanged mapped methods: execute relevant cells in a fresh kernel where required, examine numerical/code/seed/CSV/table/plot evidence and preserve the original tolerance or branch. This item does not require browser-widget operation. Shared route proof is not a criterion result.",
           "actual_artifact_observation_required": true
         },
         {
@@ -51185,16 +51218,15 @@
             "functional",
             "research"
           ],
-          "status": "partial_shared_route",
+          "status": "shared_route_applicable",
           "route_ids": [
-            "browser_widget_ui",
             "file_text_structure",
             "fresh_inprocess_kernel",
             "public_source_access",
             "science_plot"
           ],
-          "basis_ref": ".agents/development/evidence/gdpval-220-requirements-review.json#/tasks/63/rubric_routes/32",
-          "remaining_obligation": "The existing map proves local execution primitives but does not close this exact operation's applicability. Resolve the stated native/front-end or compound-operation limit; an entire successful participant solution is not required to establish the route. Inspect the actual artifact and applicable original sources with the mapped methods, preserve all original branches/tolerances, and record meaningful bound observations. Shared route proof is not a criterion result.",
+          "basis_ref": ".agents/development/evidence/gdpval-route-corrections-2026-09-21.json#/tasks/c7d83f01-2874-4876-b7fd-52582ec99e1a/criterion_route_corrections/25",
+          "remaining_obligation": "Inspect the actual notebook with the unchanged mapped methods: execute relevant cells in a fresh kernel where required, examine numerical/code/seed/CSV/table/plot evidence and preserve the original tolerance or branch. This item does not require browser-widget operation. Shared route proof is not a criterion result.",
           "actual_artifact_observation_required": true
         },
         {
@@ -51205,15 +51237,14 @@
             "content",
             "functional"
           ],
-          "status": "partial_shared_route",
+          "status": "shared_route_applicable",
           "route_ids": [
-            "browser_widget_ui",
             "file_text_structure",
             "fresh_inprocess_kernel",
             "science_plot"
           ],
-          "basis_ref": ".agents/development/evidence/gdpval-220-requirements-review.json#/tasks/63/rubric_routes/33",
-          "remaining_obligation": "The existing map proves local execution primitives but does not close this exact operation's applicability. Resolve the stated native/front-end or compound-operation limit; an entire successful participant solution is not required to establish the route. Inspect the actual artifact and applicable original sources with the mapped methods, preserve all original branches/tolerances, and record meaningful bound observations. Shared route proof is not a criterion result.",
+          "basis_ref": ".agents/development/evidence/gdpval-route-corrections-2026-09-21.json#/tasks/c7d83f01-2874-4876-b7fd-52582ec99e1a/criterion_route_corrections/26",
+          "remaining_obligation": "Inspect the actual notebook with the unchanged mapped methods: execute relevant cells in a fresh kernel where required, examine numerical/code/seed/CSV/table/plot evidence and preserve the original tolerance or branch. This item does not require browser-widget operation. Shared route proof is not a criterion result.",
           "actual_artifact_observation_required": true
         },
         {
@@ -51290,15 +51321,14 @@
             "functional",
             "structure"
           ],
-          "status": "partial_shared_route",
+          "status": "shared_route_applicable",
           "route_ids": [
-            "browser_widget_ui",
             "file_text_structure",
             "fresh_inprocess_kernel",
             "science_plot"
           ],
-          "basis_ref": ".agents/development/evidence/gdpval-220-requirements-review.json#/tasks/63/rubric_routes/38",
-          "remaining_obligation": "The existing map proves local execution primitives but does not close this exact operation's applicability. Resolve the stated native/front-end or compound-operation limit; an entire successful participant solution is not required to establish the route. Inspect the actual artifact and applicable original sources with the mapped methods, preserve all original branches/tolerances, and record meaningful bound observations. Shared route proof is not a criterion result.",
+          "basis_ref": ".agents/development/evidence/gdpval-route-corrections-2026-09-21.json#/tasks/c7d83f01-2874-4876-b7fd-52582ec99e1a/criterion_route_corrections/27",
+          "remaining_obligation": "Inspect the actual notebook with the unchanged mapped methods: execute relevant cells in a fresh kernel where required, examine numerical/code/seed/CSV/table/plot evidence and preserve the original tolerance or branch. This item does not require browser-widget operation. Shared route proof is not a criterion result.",
           "actual_artifact_observation_required": true
         },
         {
@@ -51354,19 +51384,19 @@
             "content",
             "functional"
           ],
-          "status": "partial_shared_route",
+          "status": "shared_route_applicable",
           "route_ids": [
-            "browser_widget_ui",
             "file_text_structure",
             "fresh_inprocess_kernel",
             "science_plot"
           ],
-          "basis_ref": ".agents/development/evidence/gdpval-220-requirements-review.json#/tasks/63/rubric_routes/42",
-          "remaining_obligation": "The existing map proves local execution primitives but does not close this exact operation's applicability. Resolve the stated native/front-end or compound-operation limit; an entire successful participant solution is not required to establish the route. Inspect the actual artifact and applicable original sources with the mapped methods, preserve all original branches/tolerances, and record meaningful bound observations. Shared route proof is not a criterion result.",
+          "basis_ref": ".agents/development/evidence/gdpval-route-corrections-2026-09-21.json#/tasks/c7d83f01-2874-4876-b7fd-52582ec99e1a/criterion_route_corrections/28",
+          "remaining_obligation": "Inspect the actual notebook with the unchanged mapped methods: execute relevant cells in a fresh kernel where required, examine numerical/code/seed/CSV/table/plot evidence and preserve the original tolerance or branch. This item does not require browser-widget operation. Shared route proof is not a criterion result.",
           "actual_artifact_observation_required": true
         }
       ],
-      "task_success": "not_assessed_by_route_mapping"
+      "task_success": "not_assessed_by_route_mapping",
+      "requirement_correction_ref": ".agents/development/evidence/gdpval-route-corrections-2026-09-21.json#/tasks/c7d83f01-2874-4876-b7fd-52582ec99e1a"
     },
     "46b34f78-6c06-4416-87e2-77b6d8b20ce9": {
       "row_sha256": "0dbed55652c954834f67997487daaf42a6df2994a850c73c09b75fec238048b8",
@@ -70839,16 +70869,16 @@
       "source_constraints_ref": ".audit/2026-09-21-route-applicability/decision.json#/tasks/84/source_constraints",
       "source_input_impact_ref": null,
       "generation": {
-        "status": "partial_shared_routes",
+        "status": "shared_routes_applicable",
         "evidence_scope": "shared",
         "capabilities": [
           {
-            "status": "partial_shared_route",
+            "status": "shared_route_applicable",
             "route_ids": [
               "page_render_and_transport"
             ],
-            "basis_ref": ".agents/development/evidence/gdpval-220-route-applicability.json#/generation_capability_catalog/pdf_form_layout",
-            "remaining_obligation": "PDF writing/rendering is proved; native form-field interactivity and applicable appearance round-trip remain outside the known fixtures.",
+            "basis_ref": ".agents/development/evidence/gdpval-route-corrections-2026-09-21.json#/tasks/22c0809b-f8db-489e-93b3-b4da225e3e0e",
+            "remaining_obligation": "Keep the original OR alternatives, 2–4 page limit, indicator/section counts, instructions and named background references. Inspect the actually chosen space/field branch; do not require both. Inspect the actually chosen static or original alternative; no successful task solution is inferred from shared route adoption.",
             "capability": "pdf_form_layout"
           },
           {
@@ -71764,7 +71794,8 @@
           "actual_artifact_observation_required": true
         }
       ],
-      "task_success": "not_assessed_by_route_mapping"
+      "task_success": "not_assessed_by_route_mapping",
+      "requirement_correction_ref": ".agents/development/evidence/gdpval-route-corrections-2026-09-21.json#/tasks/22c0809b-f8db-489e-93b3-b4da225e3e0e"
     },
     "bf68f2ad-eac5-490a-adec-d847eb45bd6f": {
       "row_sha256": "bfd130e3b8888fda48c6cdebbb06d280f97b2525e40ac726309ff4edb55a246f",
@@ -76705,16 +76736,16 @@
       "source_constraints_ref": ".audit/2026-09-21-route-applicability/decision.json#/tasks/91/source_constraints",
       "source_input_impact_ref": null,
       "generation": {
-        "status": "partial_shared_routes",
+        "status": "shared_routes_applicable",
         "evidence_scope": "shared",
         "capabilities": [
           {
-            "status": "partial_shared_route",
+            "status": "shared_route_applicable",
             "route_ids": [
               "page_render_and_transport"
             ],
-            "basis_ref": ".agents/development/evidence/gdpval-220-route-applicability.json#/generation_capability_catalog/pdf_form_layout",
-            "remaining_obligation": "PDF writing/rendering is proved; native form-field interactivity and applicable appearance round-trip remain outside the known fixtures.",
+            "basis_ref": ".agents/development/evidence/gdpval-route-corrections-2026-09-21.json#/tasks/211d0093-2c64-4bd0-828c-0201f18924e7",
+            "remaining_obligation": "Retain actual comparison with Daily Tasks.docx, every task exactly once in its correct section, field spaces, end-position sign-off and readable PDF layout. Inspect the actually chosen static or original alternative; no successful task solution is inferred from shared route adoption.",
             "capability": "pdf_form_layout"
           },
           {
@@ -77385,7 +77416,8 @@
           "actual_artifact_observation_required": true
         }
       ],
-      "task_success": "not_assessed_by_route_mapping"
+      "task_success": "not_assessed_by_route_mapping",
+      "requirement_correction_ref": ".agents/development/evidence/gdpval-route-corrections-2026-09-21.json#/tasks/211d0093-2c64-4bd0-828c-0201f18924e7"
     },
     "d4525420-a427-4ef2-b4e9-2dcc2d31b3b6": {
       "row_sha256": "91ff1030343c4e8c84102201e6806d7937870f0e301d0ffefc407b558d9412a7",
@@ -80529,16 +80561,16 @@
       "source_constraints_ref": ".audit/2026-09-21-route-applicability/decision.json#/tasks/97/source_constraints",
       "source_input_impact_ref": null,
       "generation": {
-        "status": "partial_shared_routes",
+        "status": "shared_routes_applicable",
         "evidence_scope": "shared",
         "capabilities": [
           {
-            "status": "partial_shared_route",
+            "status": "shared_route_applicable",
             "route_ids": [
               "page_render_and_transport"
             ],
-            "basis_ref": ".agents/development/evidence/gdpval-220-route-applicability.json#/generation_capability_catalog/pdf_form_layout",
-            "remaining_obligation": "PDF writing/rendering is proved; native form-field interactivity and applicable appearance round-trip remain outside the known fixtures.",
+            "basis_ref": ".agents/development/evidence/gdpval-route-corrections-2026-09-21.json#/tasks/02314fc6-a24e-42f4-a8cd-362cae0f0ec1",
+            "remaining_obligation": "Keep every safety area, original more-than-10-misses corrective-action rule, submission/follow-up instructions and actual PDF layout. Inspect the actually chosen static or original alternative; no successful task solution is inferred from shared route adoption.",
             "capability": "pdf_form_layout"
           },
           {
@@ -80997,7 +81029,8 @@
           "actual_artifact_observation_required": true
         }
       ],
-      "task_success": "not_assessed_by_route_mapping"
+      "task_success": "not_assessed_by_route_mapping",
+      "requirement_correction_ref": ".agents/development/evidence/gdpval-route-corrections-2026-09-21.json#/tasks/02314fc6-a24e-42f4-a8cd-362cae0f0ec1"
     },
     "4d61a19a-8438-4d4c-9fc2-cf167e36dcd6": {
       "row_sha256": "4d91d8fc96b0c28060b6d18ed91a1086ba200ea45290a2bba05ee44c5c0d2274",
@@ -128461,7 +128494,7 @@
       "source_constraints_ref": ".audit/2026-09-21-route-applicability/decision.json#/tasks/156/source_constraints",
       "source_input_impact_ref": null,
       "generation": {
-        "status": "partial_shared_routes",
+        "status": "shared_routes_applicable",
         "evidence_scope": "shared",
         "capabilities": [
           {
@@ -128483,12 +128516,12 @@
             "capability": "paginated_document_render"
           },
           {
-            "status": "partial_shared_route",
+            "status": "shared_route_applicable",
             "route_ids": [
               "page_render_and_transport"
             ],
-            "basis_ref": ".agents/development/evidence/gdpval-220-route-applicability.json#/generation_capability_catalog/pdf_form_layout",
-            "remaining_obligation": "PDF writing/rendering is proved; native form-field interactivity and applicable appearance round-trip remain outside the known fixtures.",
+            "basis_ref": ".agents/development/evidence/gdpval-route-corrections-2026-09-21.json#/tasks/fd6129bd-f095-429b-873c-dcc3137be2c3",
+            "remaining_obligation": "Preserve the supplied working-session requirements, all form fields, matching SOP status/approval logic and selected signature branch. The attached working-session content remains a source constraint; this boundary review does not re-audit its full contents. Inspect the actually chosen static or original alternative; no successful task solution is inferred from shared route adoption.",
             "capability": "pdf_form_layout"
           },
           {
@@ -129485,7 +129518,8 @@
           "actual_artifact_observation_required": true
         }
       ],
-      "task_success": "not_assessed_by_route_mapping"
+      "task_success": "not_assessed_by_route_mapping",
+      "requirement_correction_ref": ".agents/development/evidence/gdpval-route-corrections-2026-09-21.json#/tasks/fd6129bd-f095-429b-873c-dcc3137be2c3"
     },
     "ce864f41-8584-49ba-b24f-9c9104b47bf0": {
       "row_sha256": "984f29259ee0c8f14cc38829a6b3bc9377e1c8b26b166852ededa3e772078ac2",
@@ -130178,26 +130212,17 @@
       "source_constraints_ref": ".audit/2026-09-21-route-applicability/decision.json#/tasks/158/source_constraints",
       "source_input_impact_ref": null,
       "generation": {
-        "status": "partial_shared_routes",
+        "status": "shared_routes_applicable",
         "evidence_scope": "shared",
         "capabilities": [
           {
-            "status": "partial_shared_route",
-            "route_ids": [
-              "public_source_access"
-            ],
-            "basis_ref": ".agents/development/evidence/gdpval-220-route-applicability.json#/generation_capability_catalog/official_form_acquisition",
-            "remaining_obligation": "Public retrieval is proved; availability/version of the exact original official form must be established without changing the requested source.",
-            "capability": "official_form_acquisition"
-          },
-          {
-            "status": "partial_shared_route",
+            "status": "shared_route_applicable",
             "route_ids": [
               "file_text_structure",
               "page_render_and_transport"
             ],
-            "basis_ref": ".agents/development/evidence/gdpval-220-route-applicability.json#/generation_capability_catalog/pdf_form_fill",
-            "remaining_obligation": "PDF reading/rendering and file writes are proved; interactive form-field filling/appearance round-trip was not identified in the existing bounded proof.",
+            "basis_ref": ".agents/development/evidence/gdpval-route-corrections-2026-09-21.json#/tasks/58ac1cc5-5754-4580-8c9c-8c67e1a9d619",
+            "remaining_obligation": "Read and complete the supplied Change Control Form.pdf on a copy; compare original fields/layout and preserve unknown values as specified. Inspect the final rendered PDF. Retained electronic input fields are not required.",
             "capability": "pdf_form_fill"
           },
           {
@@ -130868,7 +130893,8 @@
           "actual_artifact_observation_required": true
         }
       ],
-      "task_success": "not_assessed_by_route_mapping"
+      "task_success": "not_assessed_by_route_mapping",
+      "requirement_correction_ref": ".agents/development/evidence/gdpval-route-corrections-2026-09-21.json#/tasks/58ac1cc5-5754-4580-8c9c-8c67e1a9d619"
     },
     "3c19c6d1-672c-467a-8437-6fe21afb8eae": {
       "row_sha256": "ab7cc8f9269dceab09c7b9d96def150b1ea704b4e3f0db16d6b7b65f20037a84",
@@ -132471,16 +132497,16 @@
       "source_constraints_ref": ".audit/2026-09-21-route-applicability/decision.json#/tasks/161/source_constraints",
       "source_input_impact_ref": null,
       "generation": {
-        "status": "partial_shared_routes",
+        "status": "shared_routes_applicable",
         "evidence_scope": "shared",
         "capabilities": [
           {
-            "status": "partial_shared_route",
+            "status": "shared_route_applicable",
             "route_ids": [
               "page_render_and_transport"
             ],
-            "basis_ref": ".agents/development/evidence/gdpval-220-route-applicability.json#/generation_capability_catalog/pdf_form_layout",
-            "remaining_obligation": "PDF writing/rendering is proved; native form-field interactivity and applicable appearance round-trip remain outside the known fixtures.",
+            "basis_ref": ".agents/development/evidence/gdpval-route-corrections-2026-09-21.json#/tasks/55ddb773-23a4-454c-8704-d432fe1b99d9",
+            "remaining_obligation": "Keep the single PDF, every supplied violation and qualifying detail, separate lines, required choices and extra community space. Inspect the actually chosen static or original alternative; no successful task solution is inferred from shared route adoption.",
             "capability": "pdf_form_layout"
           },
           {
@@ -133128,7 +133154,8 @@
           "actual_artifact_observation_required": true
         }
       ],
-      "task_success": "not_assessed_by_route_mapping"
+      "task_success": "not_assessed_by_route_mapping",
+      "requirement_correction_ref": ".agents/development/evidence/gdpval-route-corrections-2026-09-21.json#/tasks/55ddb773-23a4-454c-8704-d432fe1b99d9"
     },
     "1e5a1d7f-12c1-48c6-afd9-82257b3f2409": {
       "row_sha256": "3fead827d770b2c6f4a57cb6329b7efc588d8b3cb484b448202f91655c41f137",
@@ -144985,16 +145012,16 @@
       "source_constraints_ref": ".audit/2026-09-21-route-applicability/decision.json#/tasks/180/source_constraints",
       "source_input_impact_ref": null,
       "generation": {
-        "status": "partial_shared_routes",
+        "status": "shared_routes_applicable",
         "evidence_scope": "shared",
         "capabilities": [
           {
-            "status": "partial_shared_route",
+            "status": "shared_route_applicable",
             "route_ids": [
               "page_render_and_transport"
             ],
-            "basis_ref": ".agents/development/evidence/gdpval-220-route-applicability.json#/generation_capability_catalog/pdf_form_layout",
-            "remaining_obligation": "PDF writing/rendering is proved; native form-field interactivity and applicable appearance round-trip remain outside the known fixtures.",
+            "basis_ref": ".agents/development/evidence/gdpval-route-corrections-2026-09-21.json#/tasks/0ec25916-1b5c-4bfe-93d3-4e103d860f3a",
+            "remaining_obligation": "Preserve the one-page, two-column/four-row table, exact headings, clinical prompts and handwriting spaces. The named credible SBAR sources and actual clinical/content/visual checks still apply. Inspect the actually chosen static or original alternative; no successful task solution is inferred from shared route adoption.",
             "capability": "pdf_form_layout"
           },
           {
@@ -145684,7 +145711,8 @@
           "actual_artifact_observation_required": true
         }
       ],
-      "task_success": "not_assessed_by_route_mapping"
+      "task_success": "not_assessed_by_route_mapping",
+      "requirement_correction_ref": ".agents/development/evidence/gdpval-route-corrections-2026-09-21.json#/tasks/0ec25916-1b5c-4bfe-93d3-4e103d860f3a"
     },
     "116e791e-890c-42b1-ba90-1db02e8bfd45": {
       "row_sha256": "b76e370f69e3cf8aa6d76d3969c7a6172e933166159366b18e0f404218116805",
@@ -150095,16 +150123,16 @@
       "source_constraints_ref": ".audit/2026-09-21-route-applicability/decision.json#/tasks/187/source_constraints",
       "source_input_impact_ref": null,
       "generation": {
-        "status": "partial_shared_routes",
+        "status": "shared_routes_applicable",
         "evidence_scope": "shared",
         "capabilities": [
           {
-            "status": "partial_shared_route",
+            "status": "shared_route_applicable",
             "route_ids": [
               "page_render_and_transport"
             ],
-            "basis_ref": ".agents/development/evidence/gdpval-220-route-applicability.json#/generation_capability_catalog/pdf_form_layout",
-            "remaining_obligation": "PDF writing/rendering is proved; native form-field interactivity and applicable appearance round-trip remain outside the known fixtures.",
+            "basis_ref": ".agents/development/evidence/gdpval-route-corrections-2026-09-21.json#/tasks/045aba2e-4093-42aa-ab7f-159cc538278c",
+            "remaining_obligation": "Keep the three one-page PDFs, exact cadence partition, period fields, markable items and original 2025 California reference requirements. Inspect the actually chosen static or original alternative; no successful task solution is inferred from shared route adoption.",
             "capability": "pdf_form_layout"
           },
           {
@@ -150659,7 +150687,8 @@
           "actual_artifact_observation_required": true
         }
       ],
-      "task_success": "not_assessed_by_route_mapping"
+      "task_success": "not_assessed_by_route_mapping",
+      "requirement_correction_ref": ".agents/development/evidence/gdpval-route-corrections-2026-09-21.json#/tasks/045aba2e-4093-42aa-ab7f-159cc538278c"
     },
     "f2986c1f-2bbf-4b83-bc93-624a9d617f45": {
       "row_sha256": "4c73ef7f86663ff16dbd44f8c4d29c1415c13520001487973d42543a76cc4550",
@@ -152682,16 +152711,16 @@
       "source_constraints_ref": ".audit/2026-09-21-route-applicability/decision.json#/tasks/190/source_constraints",
       "source_input_impact_ref": null,
       "generation": {
-        "status": "partial_shared_routes",
+        "status": "shared_routes_applicable",
         "evidence_scope": "shared",
         "capabilities": [
           {
-            "status": "partial_shared_route",
+            "status": "shared_route_applicable",
             "route_ids": [
               "page_render_and_transport"
             ],
-            "basis_ref": ".agents/development/evidence/gdpval-220-route-applicability.json#/generation_capability_catalog/pdf_form_layout",
-            "remaining_obligation": "PDF writing/rendering is proved; native form-field interactivity and applicable appearance round-trip remain outside the known fixtures.",
+            "basis_ref": ".agents/development/evidence/gdpval-route-corrections-2026-09-21.json#/tasks/b3573f20-5d3e-4954-948f-9461fda693d2",
+            "remaining_obligation": "Keep the requested three-page text PDF, title, clear prompts, logical ordering and sufficient answer space. Inspect the actually chosen static or original alternative; no successful task solution is inferred from shared route adoption.",
             "capability": "pdf_form_layout"
           },
           {
@@ -152966,7 +152995,8 @@
           "actual_artifact_observation_required": true
         }
       ],
-      "task_success": "not_assessed_by_route_mapping"
+      "task_success": "not_assessed_by_route_mapping",
+      "requirement_correction_ref": ".agents/development/evidence/gdpval-route-corrections-2026-09-21.json#/tasks/b3573f20-5d3e-4954-948f-9461fda693d2"
     },
     "a69be28f-9a84-47c9-992e-b90446cdca9d": {
       "row_sha256": "ea911efeb73f0a4f41f104103b42d0c0e5fe73bd6fab61e631cf8ec27f9428f7",
@@ -163578,7 +163608,7 @@
       "source_constraints_ref": ".audit/2026-09-21-route-applicability/decision.json#/tasks/203/source_constraints",
       "source_input_impact_ref": null,
       "generation": {
-        "status": "partial_shared_routes",
+        "status": "shared_routes_applicable",
         "evidence_scope": "shared",
         "capabilities": [
           {
@@ -163601,12 +163631,12 @@
             "capability": "slide_render"
           },
           {
-            "status": "partial_shared_route",
+            "status": "shared_route_applicable",
             "route_ids": [
               "page_render_and_transport"
             ],
-            "basis_ref": ".agents/development/evidence/gdpval-220-route-applicability.json#/generation_capability_catalog/pdf_form_layout",
-            "remaining_obligation": "PDF writing/rendering is proved; native form-field interactivity and applicable appearance round-trip remain outside the known fixtures.",
+            "basis_ref": ".agents/development/evidence/gdpval-route-corrections-2026-09-21.json#/tasks/fe0d3941-e32c-4bf1-a643-b566d2b4cb3c",
+            "remaining_obligation": "Keep separate physician/non-physician pages, exact title, question counts and yes/no-only choices. The separate PowerPoint and supplied workflow comparison remain unchanged. Inspect the actually chosen static or original alternative; no successful task solution is inferred from shared route adoption.",
             "capability": "pdf_form_layout"
           },
           {
@@ -164056,7 +164086,8 @@
           "actual_artifact_observation_required": true
         }
       ],
-      "task_success": "not_assessed_by_route_mapping"
+      "task_success": "not_assessed_by_route_mapping",
+      "requirement_correction_ref": ".agents/development/evidence/gdpval-route-corrections-2026-09-21.json#/tasks/fe0d3941-e32c-4bf1-a643-b566d2b4cb3c"
     },
     "6a900a40-8d2b-4064-a5b1-13a60bc173d8": {
       "row_sha256": "1187c5e2ff0e36f6a8cd79dfa17d9f2af8daf0b3edca18340b04af7eb6267f8e",
@@ -175243,7 +175274,7 @@
       "source_constraints_ref": ".audit/2026-09-21-route-applicability/decision.json#/tasks/217/source_constraints",
       "source_input_impact_ref": null,
       "generation": {
-        "status": "partial_shared_routes",
+        "status": "shared_routes_applicable",
         "evidence_scope": "shared",
         "capabilities": [
           {
@@ -175260,9 +175291,10 @@
             "route_ids": [
               "file_text_structure"
             ],
-            "basis_ref": ".agents/development/evidence/gdpval-220-route-applicability.json#/generation_capability_catalog/bounded_query_validation",
-            "remaining_obligation": "Source/query inspection is proved. No Overpass endpoint query execution was observed; the reviewed original items require source/instructions, so this optional validation gap is not a deployment requirement.",
-            "capability": "bounded_query_validation"
+            "basis_ref": ".agents/development/evidence/gdpval-route-corrections-2026-09-21.json#/tasks/854f3814-681c-4950-91ac-55b0db0e3781",
+            "remaining_obligation": "Optional live endpoint execution was not observed. Required query correctness and concrete execution/export instructions retain source/content checks; optional endpoint absence does not create a required gap.",
+            "capability": "bounded_query_validation",
+            "required": false
           },
           {
             "status": "shared_route_applicable",
@@ -175652,7 +175684,8 @@
           "actual_artifact_observation_required": true
         }
       ],
-      "task_success": "not_assessed_by_route_mapping"
+      "task_success": "not_assessed_by_route_mapping",
+      "requirement_correction_ref": ".agents/development/evidence/gdpval-route-corrections-2026-09-21.json#/tasks/854f3814-681c-4950-91ac-55b0db0e3781"
     },
     "4122f866-01fa-400b-904d-fa171cdab7c7": {
       "row_sha256": "e8ac76fcd8eada1011a93925c811438f0cd2433af8d8b4709f092843c32e5d77",
@@ -177648,5 +177681,9 @@
       ],
       "task_success": "not_assessed_by_route_mapping"
     }
+  },
+  "requirement_corrections": {
+    "path": ".agents/development/evidence/gdpval-route-corrections-2026-09-21.json",
+    "sha256": "40602ae7657e27ef73aa1bfe5643930dc14ceaf669e44e83055126c3c80c468e"
   }
 }

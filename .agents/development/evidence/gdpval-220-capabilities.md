@@ -9,6 +9,33 @@ All 220 tasks remain included. Original prompts and all 261 supplied files can b
 
 The [evidence record](gdpval-220-capabilities.json) binds candidate versions, source hashes, sessions, failures and verification. The [220-task ledger](../gdpval-task-readiness.json) maps requirements and original criterion IDs to applicable proof and remaining work. The [common route mapping](gdpval-220-route-applicability.json), [239-item observation review](gdpval-239-observation-routes.json) and [143-item code review](gdpval-143-code-routes.json) preserve the original meanings, units, signed weights and conditional alternatives.
 
+## Bounded correction of required routes
+
+The [source-bound correction](gdpval-route-corrections-2026-09-21.json) revises five overbroad classifications from
+commit `01d2058a`, including direct members of the same categories. Thirteen task mappings changed; the other 207
+remain unchanged. The initial requirements review, original prompts/rubrics, prior inspection plans and trial results
+are retained. This is not a new all-task content audit.
+
+| Correction | Required route and effect |
+| --- | --- |
+| Nine paper/static PDF forms | Retain authoring, content, layout and writing-space checks; remove the invented electronic-interactivity prerequisite. |
+| Notebook pricing task | Remove browser UI requirements from 29 non-UI items. Actual input-driven price/plot updating remains required for `ec4b8d47-73fe-46e9-b01e-0e0a4b569f0c`; the task still has a route gap. |
+| Supplied GMP Change Control Form | Read and complete the provided template; no external official-form acquisition or retained electronic-interactivity requirement. |
+| IEM PDF with PNG images | Require PNG-to-PDF embedding, reopening and page inspection; an editable Word document is not required. A new bounded fixture supplies actual common-operation proof. |
+| Overpass query and Markdown | Preserve source/query correctness and execution instructions. Live endpoint execution is optional strengthening and no longer creates a required-route gap. |
+
+Required-route gaps change from **52 to 40 tasks**; **180 tasks** have applicable common routes within their recorded
+limits. Eleven task-gap removals are classification/required-versus-optional corrections. One further removal (IEM)
+also uses new actual PNG-to-PDF proof. None establishes an artifact pass or full task acceptance. The remaining 40
+tasks and exact criterion/operation obligations are retained in the ledger; optional endpoint validation is recorded
+separately. The notebook's actual UI prerequisite is not waived.
+
+The new model-free fixture used the unchanged `cff01936…` environment: two protected PNG inputs were embedded in a
+two-page PDF, reopened with exact RGB/source-byte comparison, natively rendered, and visually checked against known
+labels/colors/shapes. Originals were unchanged; elapsed time was **38.99 seconds**, with zero model or network calls.
+It does not prove editable-document round trips or benchmark image semantics. The corrected mapping and the proof
+are separately versioned; no completed experiment or saved score was reassigned to them.
+
 ## Requested outcomes
 
 | Outcome | Disposition |
@@ -109,5 +136,13 @@ Both CLIs received page 1 and then pages 21/30 from the same verified 30-page PD
 Use the [specification](../SPEC.md#shared-gdpval-capability-environment) and [user guide](../../../fern/versions/latest/pages/get-started/eval-harness.mdx). Generate new inspection plans with both reviewed route inputs; never overwrite a frozen plan. Protocol/source hashes, original score sidecars and exact evidence pointers are retained. Raw local research, binaries and private authentication are not committed. Tracked records describe bounded observations and reference preserved local `.audit/` evidence.
 
 Local harness tests: **517 passed**, measured coverage **79%**. Strict runtime/development-script typing, Ruff, documentation checks, dependency audit and publication scanning are recorded in the machine-readable verification section. Fern's authenticated missing-redirect check remains unavailable without login; it is not reported as passed. Python audit excludes native/npm dependencies.
+
+For the subsequent bounded route correction, **35 final helper tests passed**, with **96%** coverage of the changed
+current-requirements helper (153/160 statements). Strict typing and Ruff passed for the changed scripts/tests. The
+controller separately checked the 13-task change boundary, all original item hashes/signed weights, history/runtime
+preservation, regeneration and the 180/40 count. Documentation links passed 14 checks; Fern again reported zero errors
+and one authentication-related warning. Prior runtime/dependency evidence remains applicable because that scope did
+not change. Earlier failed test invocation/coverage configuration attempts remain in the development record and do
+not count as CLI model sessions.
 
 External review R1/R2 are addressed by source-bound classification and feasibility records; R3 by staged dependency validation with rollback on caught writes; R4 by saved provenance for every search attempt. Rollback does not claim power-loss atomicity.

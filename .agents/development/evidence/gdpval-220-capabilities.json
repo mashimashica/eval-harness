@@ -14625,6 +14625,35 @@
         "path": ".audit/2026-09-21-publication-scan.json",
         "sha256": "742bcbc752c98ac2816d527a74c0306bb93fcac8037edf4357dd627dbc03fd63"
       }
+    },
+    "post_handoff_route_correction": {
+      "status": "passed_for_bounded_correction_with_declared_fern_warning",
+      "controller_verification": {
+        "path": ".audit/2026-09-21-review-correction-controller/quality.json",
+        "sha256": "0c64ae2855bc2504950c1c62205832d49dc1b224196efd3eb619fd2ddbcd665b"
+      },
+      "worker_self_verification": {
+        "path": ".audit/2026-09-21-route-corrections/handoff.json",
+        "sha256": "8122ac6e2295f826de3cab57ce732b736945c373c0a1db3c78eb1458c3f84025"
+      },
+      "helper_tests_passed": 35,
+      "helper_statements_covered": 153,
+      "helper_statements_total": 160,
+      "helper_coverage_percent": 95.625,
+      "strict_mypy": "passed",
+      "ruff": "passed",
+      "doc_link_checks_passed": 14,
+      "fern_errors": 0,
+      "fern_warnings": 1,
+      "new_model_calls": 0,
+      "unaffected_runtime_and_dependency_evidence_reused": true,
+      "publication_scan": {
+        "path": ".audit/2026-09-21-route-correction-publication-scan.json",
+        "sha256": "aac09a60608019adfa25b55926429b356e875a1df9ce26ecb41ebbceb3e09fa8",
+        "status": "passed",
+        "files": 11,
+        "findings": 0
+      }
     }
   },
   "failure_disposition": [
@@ -22812,33 +22841,43 @@
   },
   "route_applicability_record": {
     "path": ".agents/development/evidence/gdpval-220-route-applicability.json",
-    "sha256": "513b8e92cd02657b36c315752545c42200d3da98bdce616f2daf00917e56941c"
+    "sha256": "fae3089c2729032bc81cd016eb67b12b83d35edb3b4f0e316223fd66fc1f30d2"
   },
   "route_applicability_summary": {
     "tasks": 220,
     "original_criteria": 10453,
     "generation_status_counts": {
-      "shared_routes_applicable": 169,
-      "partial_shared_routes": 51
+      "shared_routes_applicable": 181,
+      "partial_shared_routes": 39
     },
     "generation_capability_status_counts": {
-      "shared_route_applicable": 557,
-      "partial_shared_route": 76,
+      "shared_route_applicable": 568,
+      "partial_shared_route": 64,
       "infrastructure_pending": 1,
       "unconfirmed": 1
     },
     "criterion_route_status_counts": {
-      "shared_route_applicable": 10278,
+      "shared_route_applicable": 10306,
       "unconfirmed": 5,
       "provisional_human_observation_pending": 75,
-      "partial_shared_route": 63,
+      "partial_shared_route": 35,
       "infrastructure_pending": 32
     },
     "source_bound_239_overrides": 239,
     "source_bound_143_overrides": 143,
     "sufficient_machine_alternatives": 5,
     "task_successes_inferred": 0,
-    "criterion_results_inferred": 0
+    "criterion_results_inferred": 0,
+    "required_generation_capability_status_counts": {
+      "shared_route_applicable": 568,
+      "partial_shared_route": 63,
+      "infrastructure_pending": 1,
+      "unconfirmed": 1
+    },
+    "optional_generation_capability_status_counts": {
+      "partial_shared_route": 1
+    },
+    "source_bound_requirement_correction_tasks": 13
   },
   "reviewed_observation_routes": {
     "record": {
@@ -23445,6 +23484,165 @@
       "status": "met_for_verified_preservation_resume_aggregation_paths",
       "evidence": "resume_checks,saved_comparison_check,inspection_record_correction",
       "limit": "Re-evaluation creates a new identity; does not fabricate missing inspection. Human aggregate policy is separate."
+    }
+  },
+  "pdf_png_embedding_evidence": {
+    "path": ".audit/2026-09-21-pdf-png-embedding/report.json",
+    "sha256": "686cb397207104aa33d2c89abb60a6545375aac8670e08ea11960f529fc5513f",
+    "status": "author_reopen_render_and_visual_check_passed",
+    "environment_fingerprint": "cff019360b687a84017824c3ef60cf11316e61a0f62291c10240b4ff5367db56",
+    "elapsed_seconds": 38.99236466595903,
+    "model_calls": 0,
+    "network_calls": 0,
+    "originals_unchanged": true,
+    "checks": [
+      {
+        "action": "Embed two protected PNG inputs into two-page PDF image objects, attach exact PNG source bytes, reopen and compare every decoded RGB pixel and page order",
+        "observation": [
+          {
+            "decoded_rgb_sha256": "df4e469252780a37e4fa83b101c682a03477bc5ef25c56dd5a9af8b3aa2eb1da",
+            "dimensions": [
+              400,
+              240
+            ],
+            "image_count": 1,
+            "page": 1,
+            "pixel_bytes_exact": true,
+            "source_png_attachment_exact": true
+          },
+          {
+            "decoded_rgb_sha256": "0e40d3f206e93d908f1d0d0d52c7ca52af3efe0b41c9485b7f99ab620501dd14",
+            "dimensions": [
+              400,
+              200
+            ],
+            "image_count": 1,
+            "page": 2,
+            "pixel_bytes_exact": true,
+            "source_png_attachment_exact": true
+          }
+        ]
+      }
+    ],
+    "rendered_pages": [
+      {
+        "bytes": 18220,
+        "image_sha256": "cf0bc377472c9603a4bde0b6d4ad5c1ba6fd7a852e1ec3e186067481134cc37d",
+        "page": 1,
+        "page_count": 2,
+        "pdf_sha256": "b1a503c2b3973636e0591793a65ef5a28e5d777141ad905b561d561f67a77053",
+        "region": null,
+        "source": "scratch/embedded-known-images.pdf",
+        "source_sha256": "b1a503c2b3973636e0591793a65ef5a28e5d777141ad905b561d561f67a77053"
+      },
+      {
+        "bytes": 17339,
+        "image_sha256": "a7e5c06a2dabddb1ce4ee0c3d9ceb8a949a3e507f5b7b4867271057f277d5d99",
+        "page": 2,
+        "page_count": 2,
+        "pdf_sha256": "b1a503c2b3973636e0591793a65ef5a28e5d777141ad905b561d561f67a77053",
+        "region": null,
+        "source": "scratch/embedded-known-images.pdf",
+        "source_sha256": "b1a503c2b3973636e0591793a65ef5a28e5d777141ad905b561d561f67a77053"
+      }
+    ],
+    "visual_review": {
+      "method": "view_image on actual native-rendered page PNGs",
+      "pages": [
+        {
+          "image_sha256": "cf0bc377472c9603a4bde0b6d4ad5c1ba6fd7a852e1ec3e186067481134cc37d",
+          "observed": "KNOWN DIAGRAM 4827; blue rectangular frame and square",
+          "page": 1
+        },
+        {
+          "image_sha256": "a7e5c06a2dabddb1ce4ee0c3d9ceb8a949a3e507f5b7b4867271057f277d5d99",
+          "observed": "KNOWN TABLE 9163; green rectangular frame and square",
+          "page": 2
+        }
+      ],
+      "reviewer_role": "development controller AI",
+      "scope": "Known fixture visual correspondence only; not a participant artifact judgment"
+    },
+    "limitations": "Known PNG-to-PDF image embedding, exact RGB/source-PNG reopening and native page rendering only. No benchmark solution, criterion pass, editable Word document, PDF form interactivity or image semantic correctness inferred."
+  },
+  "post_handoff_requirement_correction": {
+    "baseline_commit": "01d2058ab78fe658543fd2ec774c411107f4c36b",
+    "correction_record": {
+      "path": ".agents/development/evidence/gdpval-route-corrections-2026-09-21.json",
+      "sha256": "40602ae7657e27ef73aa1bfe5643930dc14ceaf669e44e83055126c3c80c468e"
+    },
+    "previous_route_applicability_record": {
+      "path": ".agents/development/evidence/gdpval-220-route-applicability.json",
+      "sha256": "513b8e92cd02657b36c315752545c42200d3da98bdce616f2daf00917e56941c"
+    },
+    "previous_route_applicability_summary": {
+      "tasks": 220,
+      "original_criteria": 10453,
+      "generation_status_counts": {
+        "shared_routes_applicable": 169,
+        "partial_shared_routes": 51
+      },
+      "generation_capability_status_counts": {
+        "shared_route_applicable": 557,
+        "partial_shared_route": 76,
+        "infrastructure_pending": 1,
+        "unconfirmed": 1
+      },
+      "criterion_route_status_counts": {
+        "shared_route_applicable": 10278,
+        "unconfirmed": 5,
+        "provisional_human_observation_pending": 75,
+        "partial_shared_route": 63,
+        "infrastructure_pending": 32
+      },
+      "source_bound_239_overrides": 239,
+      "source_bound_143_overrides": 143,
+      "sufficient_machine_alternatives": 5,
+      "task_successes_inferred": 0,
+      "criterion_results_inferred": 0
+    },
+    "scope_verification": {
+      "path": ".audit/2026-09-21-review-correction-controller/scope-verification.json",
+      "sha256": "fd8e9515f1b51ccc98644a328784d82545b7b8f3c65304fc71069febb25e823c"
+    },
+    "changed_task_count": 13,
+    "unchanged_task_count": 207,
+    "changed_criterion_mapping_count": 29,
+    "before_required_gap_tasks": 52,
+    "after_required_gap_tasks": 40,
+    "current_common_route_tasks": 180,
+    "classification_only_gap_task_removals": [
+      "02314fc6-a24e-42f4-a8cd-362cae0f0ec1",
+      "045aba2e-4093-42aa-ab7f-159cc538278c",
+      "0ec25916-1b5c-4bfe-93d3-4e103d860f3a",
+      "211d0093-2c64-4bd0-828c-0201f18924e7",
+      "22c0809b-f8db-489e-93b3-b4da225e3e0e",
+      "55ddb773-23a4-454c-8704-d432fe1b99d9",
+      "58ac1cc5-5754-4580-8c9c-8c67e1a9d619",
+      "854f3814-681c-4950-91ac-55b0db0e3781",
+      "b3573f20-5d3e-4954-948f-9461fda693d2",
+      "fd6129bd-f095-429b-873c-dcc3137be2c3",
+      "fe0d3941-e32c-4bf1-a643-b566d2b4cb3c"
+    ],
+    "new_actual_pdf_png_proof_gap_task_removals": [
+      "99ac6944-4ec6-4848-959c-a460ac705c6f"
+    ],
+    "optional_strengthening": "Overpass endpoint execution remains optional and unverified; original query and execution instructions remain required.",
+    "unaffected_records_preserved": {
+      "path": ".audit/2026-09-21-review-correction-controller/preserved-records-before.json",
+      "sha256": "bce8623655a597e4e788949b37b47295f80d0104a0cb640edc0b1230d5874469"
+    },
+    "runtime_or_inspection_protocol_changes": false,
+    "new_model_calls": 0,
+    "scope": "Five owner-identified overbroad classifications and directly affected category members, not a new all-task audit.",
+    "impact": "Regenerated readiness only; prior artifacts, scores and frozen protocols are unchanged. No generation rerun or reassignment of old experiment evidence follows from these classification corrections.",
+    "regenerated_ledger": {
+      "path": ".agents/development/gdpval-task-readiness.json",
+      "sha256": "df0a7b8a6a81f85c1b14b9defead7663145b413733f1d346ebd2bc2e48e5b5af"
+    },
+    "regeneration_receipt": {
+      "path": ".audit/2026-09-21-review-correction-controller/readiness-generator.json",
+      "sha256": "c5c171b17cd18d446e097e90911556147db4a76bcc4443b7cfba1edd2a6cc1ab"
     }
   }
 }
