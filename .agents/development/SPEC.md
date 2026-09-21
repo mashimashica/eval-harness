@@ -454,14 +454,17 @@ Source entries may include `size` or `bytes` only when they match the original f
 Record actual operations and results; functional checks need the relevant changed input and observed output.
 Reference `captured_stdout_path` with `stdout_sha256`, or `captured_stderr_path` with `stderr_sha256`, for shell evidence.
 These canonical `.harness_evidence/outputs/...` paths are materialized after the session; do not use temporary absolute
-paths or construct a stream filename from `call_id`. Include an explicit reference for every required method.
+paths or construct a stream filename from `call_id`. Include an explicit reference for every required method on each
+criterion. Match the original criterion ID to its description; another item's references do not supply missing coverage.
+`inspect_document` supplies structure evidence; content readings need an actual captured shell record. A checked absence
+can be recorded as `observation: {matches: [], count: 0}`; an unexplained empty observation is insufficient.
 A scratch workbook or a modified copy alone does not bind the inspected original to a recorded check.
 A research comparison must bind the inspected submission and source bytes. Newly fetched sources use the persistent
 `.harness_evidence/research/<sha256>.bin` path in references and shell source records; the returned `scratch/research/`
 path is a reading location during the session. Participant research already staged under `research/` and provided
 `reference_files/` keep their original relative paths. A pairwise check must cover both anonymous submissions.
 
-#### Evidence from a derived image
+#### Evidence from a derived image or PDF
 
 A shell record may also contain `derived_artifacts`. Each entry has exactly `path`, `sha256`, `source_paths` and
 `location`. For example, a frame extraction record has this shape; replace both hash placeholders with the actual
@@ -489,11 +492,13 @@ whose `source_paths` contains only `submission_A/...` cannot establish coverage 
 record's source list includes both submissions.
 
 After extraction, call `view_image` on the derivative and cite its returned `captured_path`, `rendered_sha256` and
-`call_id` with `method: visual` and a specific location. The captured rendered image may have different bytes from the
-extracted file. The controller matches the view receipt's `source_sha256` to the declared derivative hash, verifies the
-captured shell stream against its successful journal-bound receipt, and checks the original and derivative bytes.
-Extraction or a declaration without an actual view does not establish visual inspection. Matching this chain records
-provenance; it does not prove that the declared transformation actually produced the frame from those originals.
+`call_id` with `method: visual` and a specific location. For a derived PDF, use `render_pages` and cite the PDF's canonical
+`.harness_evidence/scratch/...` path, returned `source_sha256` and `call_id`. The session's `scratch/...` reading path is
+not a persistent reference. The captured rendered image may have different bytes from the extracted file. The controller
+matches the view/render receipt's `source_sha256` to the declared derivative hash, verifies the captured shell stream
+against its successful journal-bound receipt, and checks original and derivative bytes. Extraction or a declaration
+without an actual view does not establish visual inspection. Matching this chain records provenance; it does not prove
+transformation truth. A modified copy shows its modified state, not the original's unchanged layout or values.
 Still-image inspection does not establish unobserved motion or sound.
 
 After execution, the controller checks these references against captured files, journal and receipts. It retains raw

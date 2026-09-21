@@ -86,6 +86,24 @@ Eleven removals correct classifications/optional checks; the IEM removal also us
 strict typing, Ruff, scoped source preservation and regeneration checks pass. The five corrections are accepted
 within this bounded scope; all-220 acceptance remains incomplete for the explicitly retained gaps.
 
+### Evaluation follow-up and native feasibility (2026-09-21)
+
+The owner requested additional model budgets as needed to close concrete acceptance gaps. This does not authorize
+unlimited or unannounced inference. The [six-session proposal](evidence/gdpval-next-acceptance-plan.md) records saved
+causes, the bounded correction, known fixtures, models, timeouts, failure policy and remaining gaps. Authorization is
+pending; no additional model calls have run. The exhausted old eleven and newer ten sessions stay separate.
+
+The candidate adds exact-hash derivative-PDF inspection lineage and clarifies per-item evidence references, method
+coverage and criterion IDs. 159 targeted tests pass; saved judgments replay unchanged. Model-free probes establish
+exact crop transport and a science-source package-namespace rendering difference on a copy. Neither relabels an old
+judgment or accepts future model behavior. The all-task ledger stays at 180 applicable common routes / 40 required-route
+gaps, with no newly accepted task from these diagnostic checks. Installed native apps are being checked for bounded
+isolated feasibility; installation alone does not establish native Office or browser acceptance.
+
+The controller owns plan/evidence/docs/PR integration; one Astra worker prepares the finite six-slot runner without
+model calls, and one Astra specialist owns the native feasibility diagnostics. No nested delegation. The next action is
+explicit owner authorization for the concrete finite model batch while independent model-free development continues.
+
 ## Historical increment: GDPval work and assessment environment (2026-09-15)
 
 Owner change request `draft-1`, including the fixed acceptance task order, governs O1–O6 alongside R01–R10.

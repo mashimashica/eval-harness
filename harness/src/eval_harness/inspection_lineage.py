@@ -176,7 +176,9 @@ def find_derived_scopes(
     calls, non-JSON streams, absent lineage, and unrelated hashes confer no scope.
     Malformed declared lineage raises ``ArtifactError`` and must not be promoted
     to a confirmed inspection. The caller must bind ``view_source_sha256`` to an
-    actual successful view_image receipt before invoking this function.
+    actual successful view_image or render_pages receipt before invoking this
+    function. It must not infer an original's unchanged appearance from a
+    modified derivative; semantic interpretation remains the evaluator's duty.
     """
     if not _digest(view_source_sha256):
         raise ArtifactError("viewed source hash is invalid")

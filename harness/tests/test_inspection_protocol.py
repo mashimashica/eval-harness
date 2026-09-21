@@ -546,6 +546,12 @@ def test_native_schema_and_prompt_have_unambiguous_inspection_contract() -> None
     assert "nonempty string/list/object, finite number, or boolean" in inspection
     assert "nested null/empty JSON values" in inspection
     assert "nonnegative integers matching the original file size" in inspection
+    assert "For all shell references, including structure checks" in inspection
+    assert "For a derived scratch image or PDF" in inspection
+    assert "not a persistent evidence reference" in inspection
+    assert "evidence_refs covering every required method" in inspection
+    assert "match each original criterion ID to its own description" in inspection
+    assert "modified state, not the original's unchanged layout or values" in inspection
     legacy = parse_scalar_score(
         json.dumps(
             {
@@ -557,6 +563,38 @@ def test_native_schema_and_prompt_have_unambiguous_inspection_contract() -> None
         _task_criteria(),
     )
     assert legacy.valid and legacy.score == 0.8
+
+
+@pytest.mark.parametrize("include_structure_reference", [False, True])
+def test_one_performed_shell_record_needs_explicit_references_for_each_required_method(
+    tmp_path: Path, include_structure_reference: bool
+) -> None:
+    _, reference = _evidence(tmp_path, path="submission/workbook.xlsx", tool="shell")
+    record = read_json(tmp_path / reference["path"])
+    record["checks"] = [
+        {
+            "action": "Enumerate worksheet names and read the data header cells",
+            "observation": {"worksheets": ["Data"], "headers": {"A1": "Value", "B1": "Total"}},
+        }
+    ]
+    digest = _capture_shell_record(tmp_path, reference, record)
+    reference["method"] = "content"
+    item = _item(reference)
+    if include_structure_reference:
+        item["evidence_refs"].append(
+            {**reference, "method": "structure", "location": "checks[0].observation.worksheets"}
+        )
+    result = apply_inspection_protocol(
+        [item],
+        protocol=_protocol(methods=["structure", "content"]),
+        task_id="task-1",
+        task_criteria=_task_criteria(),
+        workspace=tmp_path,
+        evidence_sha256=digest,
+        artifact_hashes=["a" * 64],
+    )[0]
+    assert result["status"] == ("pass" if include_structure_reference else "unconfirmed")
+    assert result["reported_status"] == "pass"
 
 
 class _InspectionExecutor(_ApplicationExecutor):

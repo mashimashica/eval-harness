@@ -16,7 +16,7 @@ import pytest
 from eval_harness.artifacts import file_manifest, manifest_hash, sha256_file, write_json, write_jsonl
 from eval_harness.errors import ArtifactError
 from eval_harness.inspection_lineage import find_derived_scopes, validate_derivations
-from eval_harness.inspection_protocol import _shell_record_scopes, _verified_calls
+from eval_harness.inspection_protocol import _check_ref, _shell_record_scopes, _verified_calls
 
 _FRAME = base64.b64decode(
     "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADElEQVR4nGP4z8AAAAMBAQDJ/pLvAAAAAElFTkSuQmCC"
@@ -333,3 +333,78 @@ def test_record_size_bound_and_non_json_logs_confer_no_scope(tmp_path: Path) -> 
     assert _find(tmp_path, record, calls) == set()
     calls[_CALL]["result"]["stdout_sha256"] = _put(tmp_path, _STREAM, b"ordinary process output\n")
     assert _find(tmp_path, record, calls) == set()
+
+
+def _rendered_pdf_fixture(workspace: Path) -> tuple[dict[str, Any], dict[str, dict[str, Any]], dict[str, Any]]:
+    original = "submission/workbook.xlsx"
+    derived = ".harness_evidence/scratch/recalculated.pdf"
+    source_hash = _put(workspace, original, b"known synthetic workbook bytes")
+    pdf_hash = _put(workspace, derived, b"%PDF-1.4 synthetic provenance fixture; no native rendering is performed")
+    record = {
+        "schema_version": 1,
+        "source_artifacts": [{"path": original, "sha256": source_hash}],
+        "checks": [
+            {
+                "action": "Recalculate a scratch copy with a changed input and export its result",
+                "observation": {"changed_input": 4, "observed_total": 12, "pages": 1},
+            }
+        ],
+        "derived_artifacts": [{"path": derived, "sha256": pdf_hash, "source_paths": [original], "location": "page 1"}],
+    }
+    calls = _calls(workspace, record)
+    call_id = "000002-rendered-pdf"
+    calls[call_id] = {
+        "call_id": call_id,
+        "tool": "render_pages",
+        "arguments": {"path": "scratch/recalculated.pdf", "pages": [1]},
+        "failure": None,
+        "result": [
+            {
+                "type": "text",
+                "text": json.dumps(
+                    {
+                        "source": "scratch/recalculated.pdf",
+                        "source_sha256": pdf_hash,
+                        "pdf_sha256": pdf_hash,
+                        "page": 1,
+                        "page_count": 1,
+                    }
+                ),
+            }
+        ],
+    }
+    reference = {"path": derived, "sha256": pdf_hash, "call_id": call_id, "method": "visual", "location": "page 1"}
+    return record, calls, reference
+
+
+def test_rendered_scratch_pdf_uses_exact_original_lineage(tmp_path: Path) -> None:
+    _, calls, reference = _rendered_pdf_fixture(tmp_path)
+    # These are synthetic controller receipts: the test proves provenance
+    # routing only, not native rendering or the declared transformation's truth.
+    assert _check_ref(reference, tmp_path, calls) == ("visual", {"submission"})
+
+
+@pytest.mark.parametrize(
+    "mutation", ["undeclared", "failed_shell", "unrelated_hash", "source_tampered", "scratch_alias"]
+)
+def test_rendered_scratch_pdf_does_not_infer_unbound_originals(tmp_path: Path, mutation: str) -> None:
+    record, calls, reference = _rendered_pdf_fixture(tmp_path)
+    if mutation == "undeclared":
+        record.pop("derived_artifacts")
+        calls.update(_calls(tmp_path, record))
+    elif mutation == "failed_shell":
+        calls[_CALL]["result"]["returncode"] = 1
+    elif mutation == "unrelated_hash":
+        other = ".harness_evidence/scratch/other.pdf"
+        digest = _put(tmp_path, other, b"another PDF's bytes")
+        record["derived_artifacts"][0].update(path=other, sha256=digest)
+        calls.update(_calls(tmp_path, record))
+    elif mutation == "source_tampered":
+        (tmp_path / "submission/workbook.xlsx").write_bytes(b"changed after the original hash")
+    else:
+        reference["path"] = "scratch/recalculated.pdf"
+    if mutation in {"source_tampered", "scratch_alias"}:
+        with pytest.raises(ArtifactError, match="hash|missing"):
+            _check_ref(reference, tmp_path, calls)
+    else:
+        assert _check_ref(reference, tmp_path, calls) == ("visual", set())
