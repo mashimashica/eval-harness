@@ -367,6 +367,104 @@ def test_static_forms_preserve_required_layout_and_source_operations(
         )
 
 
+def test_office_form_layout_preserves_active_input_and_native_gates(
+    corrected_routes: tuple[dict[str, Any], dict[str, Any], dict[str, Any]],
+) -> None:
+    _, routes, reviews = corrected_routes
+    correction = routes["form_layout_source_correction"]
+    assert correction["classification_only"] is True
+    assert correction["new_operation_proofs"] == 0
+    assert len(correction["tasks"]) == 7
+    pending_tasks = {
+        "4d61a19a-8438-4d4c-9fc2-cf167e36dcd6",
+        "41f6ef59-88c9-4b2c-bcc7-9ceb88422f48",
+        "a0552909-bc66-4a3a-8970-ee0d17b49718",
+    }
+    pending_items = 0
+    for task_id, source in correction["tasks"].items():
+        task = routes["tasks"][task_id]
+        form = next(c for c in task["generation"]["capabilities"] if c["capability"] == "form_layout")
+        assert form["status"] == "shared_route_applicable"
+        assert form["route_ids"] == ["office_authoring", "page_render_and_transport"]
+        assert source["row_sha256"] == task["row_sha256"] == reviews[task_id]["row_sha256"]
+        criteria = {item["criterion_id"]: item for item in task["criteria"]}
+        for gate in source["existing_native_gates_unchanged"]:
+            assert criteria[gate["criterion_id"]] == gate
+            assert gate["status"] == "infrastructure_pending"
+            assert "functional" in gate["methods"]
+            pending_items += 1
+        record = {
+            "required_capabilities": deepcopy(reviews[task_id]["required_capabilities"]),
+            "environment_support": {"required_evaluation_methods": []},
+            "assessment": {"inspection_protocol": {}},
+        }
+        current.apply_route_evidence(record, reviews[task_id], {"route_applicability": routes["tasks"]})
+        expected = "route_gaps_remain" if task_id in pending_tasks else "common_routes_applicable_with_limits"
+        assert record["environment_support"]["task_level_acceptance"] == expected
+        assert record["environment_support"]["criterion_routes"]["actual_artifact_observation_inferred"] is False
+    assert pending_items == 8
+    pathology = routes["tasks"]["a0552909-bc66-4a3a-8970-ee0d17b49718"]
+    controls = next(
+        c
+        for c in pathology["generation"]["capabilities"]
+        if c["capability"] == "spreadsheet_input_controls_and_behavior"
+    )
+    assert controls["status"] == "partial_shared_route"
+    outreach = routes["tasks"]["41f6ef59-88c9-4b2c-bcc7-9ceb88422f48"]
+    table_or_filter = next(
+        c for c in outreach["criteria"] if c["criterion_id"] == "53b88dce-5f98-426f-aa59-86e53a232351"
+    )
+    assert table_or_filter["alternative_ref"].endswith("/machine_alternative")
+
+
+@pytest.mark.parametrize(
+    "task_id",
+    ["43dc9778-450b-4b46-b77e-b6d82b202035", "e6429658-4de1-42dd-a9e0-2d2b9b02fb10"],
+)
+def test_shared_form_retrieval_preserves_unconfirmed_source_requirements(
+    corrected_routes: tuple[dict[str, Any], dict[str, Any], dict[str, Any]], task_id: str
+) -> None:
+    _, routes, reviews = corrected_routes
+    mapped = routes["tasks"][task_id]
+    review = reviews[task_id]
+    original_external = deepcopy(review["external_data"])
+    record = {
+        "required_capabilities": deepcopy(review["required_capabilities"]),
+        "environment_support": {"required_evaluation_methods": []},
+        "assessment": {"inspection_protocol": {}},
+        "task_specific_checks": {
+            "content_feasibility": deepcopy(review["content_feasibility"]),
+            "external_data": deepcopy(original_external),
+            "source_input_uncertainty": {"existing_fixture_issue": "unconfirmed"},
+        },
+    }
+    current.apply_route_evidence(record, review, {"route_applicability": routes["tasks"]})
+    acquisition = next(
+        c for c in mapped["generation"]["capabilities"] if c["capability"] == "official_form_acquisition"
+    )
+    assert acquisition["status"] == "shared_route_applicable"
+    assert acquisition["route_ids"] == ["public_source_access"]
+    checks = record["task_specific_checks"]
+    obligations = checks["external_data"].pop("source_input_obligations")
+    assert checks["external_data"] == original_external
+    assert obligations == mapped["source_input_obligations"]
+    assert obligations["status"] == "unconfirmed"
+    assert obligations["participant_retrieval_required"] is True
+    assert obligations["exact_source_fetched_in_this_review"] is False
+    assert obligations["task_success_inferred"] is False
+    assert set(obligations["criterion_ids"]) <= {item[0] for item in review["rubric_routes"]}
+    if task_id.startswith("43dc"):
+        assert obligations["required_source"]["tax_year"] == 2024
+    else:
+        assert obligations["required_source"]["url"] in original_external["source_urls_in_prompt"]
+        assert obligations["required_source"]["archived_edition_explicitly_named"] is False
+    assert checks["content_feasibility"] == review["content_feasibility"]
+    assert checks["source_input_uncertainty"] == {"existing_fixture_issue": "unconfirmed"}
+    assert review["external_data"] == original_external
+    obligations["status"] = "changed_in_generated_copy"
+    assert mapped["source_input_obligations"]["status"] == "unconfirmed"
+
+
 def test_notebook_only_actual_interface_item_retains_browser_requirement(
     corrected_routes: tuple[dict[str, Any], dict[str, Any], dict[str, Any]],
 ) -> None:
@@ -418,7 +516,7 @@ def test_supplied_gmp_form_and_optional_overpass_are_source_bound(
     assert optional_cap["status"] == "partial_shared_route"
 
 
-def test_pdf_embedding_proof_does_not_accept_editable_word_embedding(
+def test_pdf_and_word_embedding_require_separate_operation_proofs(
     corrected_routes: tuple[dict[str, Any], dict[str, Any], dict[str, Any]],
 ) -> None:
     corrections, routes, _ = corrected_routes
@@ -431,5 +529,15 @@ def test_pdf_embedding_proof_does_not_accept_editable_word_embedding(
     assert word_id not in corrections["tasks"]
     word = routes["tasks"][word_id]
     word_cap = next(c for c in word["generation"]["capabilities"] if c["capability"] == "word_diagram_embedding")
-    assert word_cap["status"] == "partial_shared_route"
+    assert word_cap["status"] == "shared_route_applicable"
+    assert word_cap["route_ids"] == ["word_image_text_roundtrip"]
     assert "pdf_png_embedding" not in word_cap["route_ids"]
+    accepted = json.loads((SCRIPT.parents[1] / "evidence/gdpval-document-operations-2026-09-22.json").read_text())
+    adoption = routes["common_document_operation_adoption"]
+    word_route = routes["route_catalog"]["word_image_text_roundtrip"]
+    assert adoption["proof_ref"] == accepted["proof"]
+    assert accepted["proof"] in word_route["proof_refs"]
+    assert accepted["controller_visual_review"] in word_route["proof_refs"]
+    assert corrections["operation_proof_addendum"] not in word_route["proof_refs"]
+    assert adoption["tasks"][word_id]["row_sha256"] == word["row_sha256"]
+    assert set(adoption["tasks"][word_id]["criteria"]) == set(accepted["affected_task_item_components"][word_id])

@@ -1,0 +1,279 @@
+{
+  "schema_version": 1,
+  "kind": "completed-owner-approved-six-session-acceptance",
+  "authorization": {
+    "reference": "call_DQsuIKOxjasvJXr28TSHaEr7: maximum six sessions approved",
+    "maximum_sessions": 6,
+    "model_timeout_seconds_total": 6000,
+    "concurrency": 1,
+    "automatic_retries": 0,
+    "billing": "existing subscriptions only; no auxiliary AI/API route; reported token-price estimates are not actual incremental cost",
+    "previous_eleven_and_ten_sessions_are_separate": true,
+    "remaining_sessions": 0
+  },
+  "sessions": [
+    {
+      "slot": "probe-claude-code",
+      "started_at": "2026-09-21T14:28:17.231772+00:00",
+      "finished_at": "2026-09-21T14:32:59.948869+00:00",
+      "status": "completed",
+      "model_calls": 1,
+      "model_timeout_seconds": 600,
+      "model_execution_elapsed_seconds": 198.83990924997488,
+      "automatic_retries": 0,
+      "originals_unchanged": true,
+      "usage": {
+        "cache_creation_input_tokens": 41126,
+        "cached_input_tokens": 273288,
+        "cost_usd": null,
+        "input_tokens": 26,
+        "output_tokens": 8879,
+        "reasoning_tokens": 648,
+        "reported_cost_usd": 0.770009
+      },
+      "lifecycle_elapsed_seconds": 282.70950233301846,
+      "result": {
+        "path": ".audit/2026-09-21-next-acceptance/sessions/probe-claude-code/slot-result.json",
+        "sha256": "002631a43636e8b9eed51b45236ed8d778d8c46eaec8b6f1e05f05e1c612a7a3"
+      },
+      "environment_fingerprint": "701baddb85dcb7eabd6440be838fd9e7d31f63e53d94caa935fa1cd965021d3e",
+      "model": "claude-opus-5",
+      "effort": "medium"
+    },
+    {
+      "slot": "probe-codex",
+      "started_at": "2026-09-21T14:19:51.256122+00:00",
+      "finished_at": "2026-09-21T14:26:05.432847+00:00",
+      "status": "completed",
+      "model_calls": 1,
+      "model_timeout_seconds": 600,
+      "model_execution_elapsed_seconds": 345.6078127080109,
+      "automatic_retries": 0,
+      "originals_unchanged": true,
+      "usage": {
+        "cached_input_tokens": 372224,
+        "cost_usd": null,
+        "input_tokens": 409826,
+        "output_tokens": 8290,
+        "reasoning_tokens": 2874
+      },
+      "lifecycle_elapsed_seconds": 374.1665997080272,
+      "result": {
+        "path": ".audit/2026-09-21-next-acceptance/sessions/probe-codex/slot-result.json",
+        "sha256": "d5e8c740c0824d15af1384110609c6c3458954e1e5e1f048a6ad7c65a51305b4"
+      },
+      "environment_fingerprint": "701baddb85dcb7eabd6440be838fd9e7d31f63e53d94caa935fa1cd965021d3e",
+      "model": "gpt-5.6-sol",
+      "effort": "medium"
+    },
+    {
+      "slot": "evaluation-1-claude-code",
+      "started_at": "2026-09-21T14:50:53.311128+00:00",
+      "finished_at": "2026-09-21T15:00:03.535234+00:00",
+      "status": "returned",
+      "model_calls": 1,
+      "model_timeout_seconds": 1200,
+      "model_execution_elapsed_seconds": 470.974517332972,
+      "automatic_retries": 0,
+      "originals_unchanged": true,
+      "usage": {
+        "cache_creation_input_tokens": 182215,
+        "cached_input_tokens": 2246215,
+        "cost_usd": null,
+        "input_tokens": 52,
+        "output_tokens": 23979,
+        "reasoning_tokens": 4829,
+        "reported_cost_usd": 3.890378000000001
+      },
+      "lifecycle_elapsed_seconds": 550.2404780000215,
+      "result": {
+        "path": ".audit/2026-09-21-next-acceptance-revised-evaluation/sessions/evaluation-1-claude-code/slot-result.json",
+        "sha256": "4e3a0abe2b2af46321272e6e3603f8a1a1292432fd7df48fbabb4aac4998f24f"
+      },
+      "environment_fingerprint": "00620ae4f577e98a5c2d0e7d731cf3d84f592be285130b1cecb765a77d935f7c",
+      "model": "claude-opus-5",
+      "effort": "medium",
+      "judgment": {
+        "path": ".audit/2026-09-21-next-acceptance-revised-evaluation/sessions/evaluation-1-claude-code/evaluation/judgments/acceptance/9e39df84-ac57-4c9b-a2e3-12b8abf2c797/repeat_0/judgment.json",
+        "sha256": "75bc64365c5b3f20a87731819968d8b67a49a87a985ffc053a61736f9f8d80f9"
+      },
+      "effective_counts": {
+        "unconfirmed": 57
+      },
+      "reported_counts": {
+        "unconfirmed": 55,
+        "fail": 2
+      },
+      "score": null,
+      "assessment_status": "unconfirmed"
+    },
+    {
+      "slot": "evaluation-1-codex",
+      "started_at": "2026-09-21T14:40:00.499431+00:00",
+      "finished_at": "2026-09-21T14:50:33.133462+00:00",
+      "status": "returned",
+      "model_calls": 1,
+      "model_timeout_seconds": 1200,
+      "model_execution_elapsed_seconds": 597.7381168330321,
+      "automatic_retries": 0,
+      "originals_unchanged": true,
+      "usage": {
+        "cached_input_tokens": 980608,
+        "cost_usd": null,
+        "input_tokens": 1067386,
+        "output_tokens": 27915,
+        "reasoning_tokens": 2396
+      },
+      "lifecycle_elapsed_seconds": 632.6168802919565,
+      "result": {
+        "path": ".audit/2026-09-21-next-acceptance-revised-evaluation/sessions/evaluation-1-codex/slot-result.json",
+        "sha256": "a75cbfbaa9c8e8e86a7fc260316109cd65d1a3dd8877af2af0faa720c7c7cd11"
+      },
+      "environment_fingerprint": "00620ae4f577e98a5c2d0e7d731cf3d84f592be285130b1cecb765a77d935f7c",
+      "model": "gpt-5.6-sol",
+      "effort": "medium",
+      "judgment": {
+        "path": ".audit/2026-09-21-next-acceptance-revised-evaluation/sessions/evaluation-1-codex/evaluation/judgments/acceptance/9e39df84-ac57-4c9b-a2e3-12b8abf2c797/repeat_0/judgment.json",
+        "sha256": "c4827c93441c313eb68128714a466f159dd7561136626d84f1e1e78a7a9401de"
+      },
+      "effective_counts": {
+        "pass": 49,
+        "unconfirmed": 2,
+        "fail": 6
+      },
+      "reported_counts": {
+        "pass": 49,
+        "unconfirmed": 2,
+        "fail": 6
+      },
+      "score": null,
+      "assessment_status": "unconfirmed"
+    },
+    {
+      "slot": "evaluation-2-claude-code",
+      "started_at": "2026-09-21T15:26:52.890262+00:00",
+      "finished_at": "2026-09-21T15:38:21.267133+00:00",
+      "status": "returned",
+      "model_calls": 1,
+      "model_timeout_seconds": 1200,
+      "model_execution_elapsed_seconds": 660.9545165000018,
+      "automatic_retries": 0,
+      "originals_unchanged": true,
+      "usage": {
+        "cache_creation_input_tokens": 139194,
+        "cached_input_tokens": 1903315,
+        "cost_usd": null,
+        "input_tokens": 44,
+        "output_tokens": 44127,
+        "reasoning_tokens": 10024,
+        "reported_cost_usd": 3.4469925000000003
+      },
+      "lifecycle_elapsed_seconds": 688.395914624969,
+      "result": {
+        "path": ".audit/2026-09-22-science-evaluation-correction/sessions/evaluation-2-claude-code/slot-result.json",
+        "sha256": "2dafa2422c9fb0d0a8690add9a12d2c77c01bcb8ef4c08b6c3e5993ea7d51c8d"
+      },
+      "environment_fingerprint": "ecd1071aac425229104a253df7de66b92e89c6fbcaf0b4c76848a4c08d9328e4",
+      "model": "claude-opus-5",
+      "effort": "medium",
+      "judgment": {
+        "path": ".audit/2026-09-22-science-evaluation-correction/sessions/evaluation-2-claude-code/evaluation/judgments/acceptance/5d0feb24-e8b6-4ace-b64f-d5cd1a8b563d/repeat_0/judgment.json",
+        "sha256": "704500884c25cd4c2ce75961b8de5a007d76eeed1cc591ef92d428444f93845c"
+      },
+      "effective_counts": {
+        "unconfirmed": 3,
+        "pass": 39,
+        "fail": 4
+      },
+      "reported_counts": {
+        "unconfirmed": 2,
+        "pass": 40,
+        "fail": 4
+      },
+      "score": null,
+      "assessment_status": "unconfirmed"
+    },
+    {
+      "slot": "evaluation-2-codex",
+      "started_at": "2026-09-21T15:19:15.129353+00:00",
+      "finished_at": "2026-09-21T15:26:24.643597+00:00",
+      "status": "returned",
+      "model_calls": 1,
+      "model_timeout_seconds": 1200,
+      "model_execution_elapsed_seconds": 403.4604489579797,
+      "automatic_retries": 0,
+      "originals_unchanged": true,
+      "usage": {
+        "cached_input_tokens": 383488,
+        "cost_usd": null,
+        "input_tokens": 471797,
+        "output_tokens": 19557,
+        "reasoning_tokens": 3070
+      },
+      "lifecycle_elapsed_seconds": 429.52613054198446,
+      "result": {
+        "path": ".audit/2026-09-22-science-evaluation-correction/sessions/evaluation-2-codex/slot-result.json",
+        "sha256": "3bd54e89a3c238e5d265363384280514d6443be261d086073a30298dabb3af5c"
+      },
+      "environment_fingerprint": "ecd1071aac425229104a253df7de66b92e89c6fbcaf0b4c76848a4c08d9328e4",
+      "model": "gpt-5.6-sol",
+      "effort": "medium",
+      "judgment": {
+        "path": ".audit/2026-09-22-science-evaluation-correction/sessions/evaluation-2-codex/evaluation/judgments/acceptance/5d0feb24-e8b6-4ace-b64f-d5cd1a8b563d/repeat_0/judgment.json",
+        "sha256": "b52129cbf09506131b49079bb3d74b0322bceebd9aa9b06af3bdbdfce5a37a31"
+      },
+      "effective_counts": {
+        "unconfirmed": 3,
+        "pass": 32,
+        "fail": 11
+      },
+      "reported_counts": {
+        "unconfirmed": 2,
+        "pass": 33,
+        "fail": 11
+      },
+      "score": null,
+      "assessment_status": "unconfirmed"
+    }
+  ],
+  "model_execution_seconds_total": 2677.5753215819714,
+  "workflow_seconds_total": 2957.655505499977,
+  "all_originals_preserved": true,
+  "participant_regenerations": 0,
+  "runtime_changes_between_allocated_slots": "Probes retained their version. Dashboard slots used unrelated-derivation filtering/prompt correction. Science slots also used durable evaluator context and private Poppler fonts. Old and revised controllers prevent duplicate allocation; no frozen session was rewritten.",
+  "read_only_reviews": [
+    {
+      "path": ".audit/2026-09-21-next-acceptance-revised-evaluation/probe-review.json",
+      "sha256": "1d54744a9627e0ba80736ce933a40268ba436bfbb7eada57b50e92b729784117"
+    },
+    {
+      "path": ".audit/2026-09-21-next-acceptance-revised-review/evaluation-1-codex/report.json",
+      "sha256": "7354d7930342fb54ba5cac37ac73ac57e6cb67c8a1adb32ceb8950d466e5c451"
+    },
+    {
+      "path": ".audit/2026-09-22-science-review-codex/report.json",
+      "sha256": "2e01ebad1493e1f5feee8e86e154674889ea6b98d6e0a5fb4d2c14f3c235f586"
+    },
+    {
+      "path": ".audit/2026-09-22-science-review-claude/report.json",
+      "sha256": "8e8579e08825097c8c01a785b59f2aacddf1f25dc3c145c334b17c34865a307d"
+    }
+  ],
+  "findings": [
+    "Both probes use incremental 30-page and crop viewing. Claude matches all known fields; Codex full-page7/9 and crop3/3, with retained invalid-reference and corrected unrelated-derivation findings.",
+    "Codex dashboard copied input/recalculation observed; native gates remain unknown. Two literal rubric percentages conflict with supplied data; preserve the conflict and reported failures. Changed-chart evidence scope is limited.",
+    "Claude dashboard compacted context and returned all57 unconfirmed. Durable context is subsequently repaired; no pre-fix failure is removed.",
+    "Both science judgments have exactly46 original item IDs and valid provenance hashes. Codex32/11/3 and Claude39/4/3 effective pass/fail/unconfirmed; both retain two native gates and one forbidden-inference unknown.",
+    "Codex science selected source snippets and only hashed the supplied draft in a claimed comparison; a separate controller comparison does not count as judge evidence. Claude actually compares normalized reject-all text with the original and fetches three public pages. Neither establishes all-item semantic correctness.",
+    "Claude source-DOCX rendering fails in three rendering calls and two direct soffice operations; text/structure and submitted six-page rendering succeed. Preserve source appearance as unobserved.",
+    "No direct durable-context reread or native compaction event is observed in these two post-fix science sessions. Actual recovery is tested separately, not inferred from files."
+  ],
+  "classification": "Infrastructure acceptance evidence and observed evaluator behavior, not an ALPS comparison or proof that participant answers are correct.",
+  "existing_experiment_impact": {
+    "procedure_only": "Re-evaluate saved unchanged outputs under a new identity. Preserve original judgments, raw claims, validation and controller observations separately.",
+    "generation_changes": "If public-network/dependency/runtime changes affected outputs, assess rerun of the whole affected N/S/A comparison unit; never apply changes retrospectively.",
+    "human": "Requester coordinates; actual reviewers must be appointed before experiment; no human observation performed."
+  },
+  "extra_dashboard_recovery": "Separately approved one-session envelope; not part of these six or reusable remaining budget.",
+  "all220_accepted": false
+}

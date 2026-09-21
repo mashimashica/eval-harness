@@ -380,9 +380,9 @@ def test_bound_workbook_structured_observations_preserve_reported_assessment(tmp
 
 
 @pytest.mark.parametrize(
-    "observation", ["observed", [None, "", [], {}], {"blank": None}, 0, -2, 0.0, 1.25, True, False]
+    "observation", ["observed", [], {}, [None, "", [], {}], {"blank": None}, 0, -2, 0.0, 1.25, True, False]
 )
-def test_shell_accepts_nonempty_or_scalar_finite_json_observation(tmp_path: Path, observation: Any) -> None:
+def test_shell_accepts_recorded_finite_json_observation(tmp_path: Path, observation: Any) -> None:
     _, reference = _evidence(tmp_path, tool="shell")
     record = read_json(tmp_path / reference["path"])
     record["checks"][0]["observation"] = observation
@@ -392,9 +392,9 @@ def test_shell_accepts_nonempty_or_scalar_finite_json_observation(tmp_path: Path
 
 @pytest.mark.parametrize(
     "observation",
-    [None, "", " \n", [], {}, float("nan"), float("inf"), float("-inf"), [float("nan")], {"cells": [float("inf")]}],
+    [None, "", " \n", float("nan"), float("inf"), float("-inf"), [float("nan")], {"cells": [float("inf")]}],
 )
-def test_shell_rejects_empty_or_nonfinite_observation(tmp_path: Path, observation: Any) -> None:
+def test_shell_rejects_missing_text_or_nonfinite_observation(tmp_path: Path, observation: Any) -> None:
     _, reference = _evidence(tmp_path, tool="shell")
     record = read_json(tmp_path / reference["path"])
     record["checks"][0]["observation"] = observation
@@ -402,6 +402,35 @@ def test_shell_rejects_empty_or_nonfinite_observation(tmp_path: Path, observatio
     item = _apply(tmp_path, digest, reference, protocol=_protocol(methods=["functional"]))
     assert item["status"] == "unconfirmed"
     assert any("observation" in issue for issue in item["evidence_validation"]["issues"])
+
+
+def test_recorded_empty_collections_do_not_discard_other_performed_checks(tmp_path: Path) -> None:
+    artifact = tmp_path / "submission/known.xlsx"
+    artifact.parent.mkdir()
+    workbook = Workbook()
+    sheet = workbook.active
+    assert sheet is not None
+    sheet["A1"] = 4827
+    workbook.save(artifact)
+    _, reference = _evidence(tmp_path, path="submission/known.xlsx", tool="shell")
+    reference["method"] = "content"
+    record = read_json(tmp_path / reference["path"])
+    record["checks"] = [
+        {"action": "read cell A1", "observation": sheet["A1"].value},
+        {
+            "action": "enumerate cell comments",
+            "observation": [c.coordinate for row in sheet for c in row if c.comment],
+        },
+        {"action": "enumerate defined names", "observation": dict(workbook.defined_names)},
+    ]
+    digest = _capture_shell_record(tmp_path, reference, record)
+    result = _apply(tmp_path, digest, reference, protocol=_protocol(methods=["content"]))
+    assert result["status"] == result["reported_status"] == "pass"
+    assert "not semantic verification" in result["evidence_validation"]["scope"]
+    # An absent observation remains unknown even beside otherwise valid checks.
+    record["checks"][1]["observation"] = None
+    digest = _capture_shell_record(tmp_path, reference, record)
+    assert _apply(tmp_path, digest, reference, protocol=_protocol(methods=["content"]))["status"] == "unconfirmed"
 
 
 @pytest.mark.parametrize("keys", [("size",), ("bytes",), ("size", "bytes")])
@@ -543,8 +572,10 @@ def test_native_schema_and_prompt_have_unambiguous_inspection_contract() -> None
     )
     assert "numeric score" not in prompt and "or null" in prompt
     inspection = protocol_prompt(_protocol(), _protocol()["tasks"]["task-1"])
-    assert "nonempty string/list/object, finite number, or boolean" in inspection
-    assert "nested null/empty JSON values" in inspection
+    assert "nonempty string, list/object, finite number, or boolean" in inspection
+    assert "may be empty when the described query actually returned no entries" in inspection
+    assert "does not establish that the query or interpretation was correct" in inspection
+    assert "nested null/empty values" in inspection
     assert "nonnegative integers matching the original file size" in inspection
     assert "For all shell references, including structure checks" in inspection
     assert "For a derived scratch image or PDF" in inspection

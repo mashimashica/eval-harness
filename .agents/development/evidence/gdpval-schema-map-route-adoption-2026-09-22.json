@@ -1,0 +1,69 @@
+{
+  "schema_version": 1,
+  "kind": "controller-adopted-two-task-schema-map-operation-mapping",
+  "review": {
+    "path": ".audit/2026-09-22-schema-map-operations/adoption/report.json",
+    "sha256": "6948d72809cf22d2bceac912a5897b274ef822f886ed72ad63e3bd84d1cdd6b6"
+  },
+  "operation_proof": {
+    "path": ".agents/development/evidence/gdpval-schema-map-operations-2026-09-22.json",
+    "sha256": "464c1fa7091b60b71dcfa65012f6ed7666e187824e520da244a698b1686d0e62"
+  },
+  "decision": "Adopt exact two-task operations and14 OpenAPI item-operation links. Map authoring is a prompt obligation; all29 map criteria unchanged. Preserve source/content clarification and original scoring.",
+  "changed_task_ids": [
+    "2c249e0f-4a8c-4f8e-b4f4-6508ba29b34f",
+    "11593a50-734d-4449-b5b4-f8986a133fd8"
+  ],
+  "changed_criterion_ids": {
+    "2c249e0f-4a8c-4f8e-b4f4-6508ba29b34f": [
+      "65382062-827f-44a9-a418-43da5161c62b",
+      "0e7c8be7-f9b6-463a-a96f-16bbb944966f",
+      "36c5fa14-2873-46a3-b5b6-f72931437212",
+      "8745a5dd-9104-49db-8b09-73cfeb4bd780",
+      "dabb313f-29b1-4665-a7a3-2ea88883a33d",
+      "893d29e7-dc23-40e3-90fd-dbfcc60fd5bc",
+      "6068be5d-b58c-4a24-8c63-db7199d378a4",
+      "3cc3ed3c-5435-42f4-8cad-20cb1153cfd3",
+      "4035aed7-d04a-4d45-bccf-dd0a010b8cab",
+      "eb445b32-15b2-4bbe-a989-eca35afe6f25",
+      "d2c35957-636f-4a74-aa13-740877fe0d12",
+      "4ecfa96b-97fa-4f92-831c-f979e4fd43ee",
+      "7f60c6fb-1e66-4a3e-9fd4-832c3f51e418",
+      "dcf66d7a-7059-42ae-924e-91ca440ff52b"
+    ],
+    "11593a50-734d-4449-b5b4-f8986a133fd8": []
+  },
+  "unchanged_tasks": 218,
+  "unchanged_criterion_records": 10439,
+  "all_original_ids_methods_statuses_scores_and_hashes_preserved": true,
+  "combined_before": {
+    "common": 183,
+    "gaps": 37
+  },
+  "combined_after": {
+    "common": 185,
+    "gaps": 35
+  },
+  "generation_after": {
+    "common": 186,
+    "gaps": 34
+  },
+  "evaluation_after": {
+    "common": 196,
+    "gaps": 24
+  },
+  "route": {
+    "path": ".agents/development/evidence/gdpval-220-route-applicability.json",
+    "sha256": "ae76df8b5763f7d314b77a7c5d939c065cdaaf6ddc638c7ce957983090b4fe9f"
+  },
+  "readiness": {
+    "path": ".agents/development/gdpval-task-readiness.json",
+    "sha256": "3245014251ec2afca0a53b46076370402dcd3f5af13e5e58a7e2622e8670e86e"
+  },
+  "verification": {
+    "helper_tests": "35 passed",
+    "scoped_preservation": "passed",
+    "generator_test_runtime_changes": false
+  },
+  "all220_accepted": false
+}

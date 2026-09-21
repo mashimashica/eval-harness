@@ -214,8 +214,8 @@
     "target_environment_acceptance": {
       "dimension": "target-environment support and task acceptance",
       "task_level_status_counts": {
-        "common_routes_applicable_with_limits": 181,
-        "route_gaps_remain": 39
+        "common_routes_applicable_with_limits": 191,
+        "route_gaps_remain": 29
       },
       "common_profile": {
         "ref": "gdpval-v2",
@@ -224,8 +224,8 @@
         "not_task_acceptance_count": true
       },
       "generation_status_counts": {
-        "partial_shared_routes": 38,
-        "shared_routes_applicable": 182
+        "partial_shared_routes": 25,
+        "shared_routes_applicable": 195
       },
       "evaluation_status_counts": {
         "partial_shared_routes": 24,
@@ -3362,7 +3362,27 @@
         "external_data": {
           "source_urls_in_prompt": [],
           "required_or_relevant": true,
-          "task_specific_constraint": "Use tax-year-2024 forms/rules and supplied records; no actual filing requested"
+          "task_specific_constraint": "Use tax-year-2024 forms/rules and supplied records; no actual filing requested",
+          "source_input_obligations": {
+            "status": "unconfirmed",
+            "kind": "external_source_availability_and_version",
+            "required_source": {
+              "authority": "IRS",
+              "tax_year": 2024,
+              "specific_url_in_prompt": null
+            },
+            "requirement": "Identify and obtain the official IRS Form 1040 and required schedules/forms for tax year 2024, retaining source and edition evidence; actual filing is not requested.",
+            "remaining_obligation": "Exact required tax-year-2024 form and schedule availability, edition and completeness are unconfirmed. Participant retrieval and comparison with the original requirements remain necessary; do not substitute another tax year.",
+            "criterion_ids": [
+              "8204401e-d008-44ad-b42f-26e3256db111",
+              "18b1321f-4219-4787-af09-d3a58a253893",
+              "4d5e14f9-8bf7-4719-84ad-85125f1d77bb"
+            ],
+            "basis_ref": ".agents/development/evidence/gdpval-220-route-applicability.json#/official_form_source_access_correction/tasks/43dc9778-450b-4b46-b77e-b6d82b202035",
+            "participant_retrieval_required": true,
+            "exact_source_fetched_in_this_review": false,
+            "task_success_inferred": false
+          }
         },
         "provided_input_staging": {
           "status": "passed",
@@ -3667,27 +3687,28 @@
         "known_unsupported": [],
         "generation_vs_evaluation": {
           "generation": {
-            "status": "partial_shared_routes",
+            "status": "shared_routes_applicable",
             "evidence_scope": "shared",
             "capabilities": [
               {
-                "status": "partial_shared_route",
+                "status": "shared_route_applicable",
                 "route_ids": [
                   "public_source_access"
                 ],
-                "basis_ref": ".agents/development/evidence/gdpval-220-route-applicability.json#/generation_capability_catalog/official_form_acquisition",
-                "remaining_obligation": "Public retrieval is proved; availability/version of the exact original official form must be established without changing the requested source.",
+                "basis_ref": ".agents/development/evidence/gdpval-220-route-applicability.json#/official_form_source_access_correction/tasks/43dc9778-450b-4b46-b77e-b6d82b202035",
+                "remaining_obligation": "Exact required tax-year-2024 form and schedule availability, edition and completeness are unconfirmed. Participant retrieval and comparison with the original requirements remain necessary; do not substitute another tax year.",
                 "capability": "official_form_acquisition"
               },
               {
-                "status": "partial_shared_route",
+                "status": "shared_route_applicable",
                 "route_ids": [
-                  "file_text_structure",
-                  "page_render_and_transport"
+                  "pdf_text_field_roundtrip",
+                  "pdf_original_page_label_append"
                 ],
                 "basis_ref": ".agents/development/evidence/gdpval-220-route-applicability.json#/generation_capability_catalog/pdf_form_fill",
-                "remaining_obligation": "PDF reading/rendering and file writes are proved; interactive form-field filling/appearance round-trip was not identified in the existing bounded proof.",
-                "capability": "pdf_form_fill"
+                "remaining_obligation": "Complete the original PDF with typed content using a matching field or independent text-label operation; retain intentionally blank data. No persistent electronic interactivity is required by the examined clauses. Official-form access, non-text controls, multi-form completeness and subject correctness remain separate. Generic PDF field/text-entry primitive only. Source does not require retained interactive fields. Exact official tax-year forms, source acquisition, non-text controls, multi-form assembly, tax calculations and required schedule completeness are unproved by this fixture; official_form_acquisition remains unchanged. Named field-item IDs illustrate exact typed-entry components, not tax-result acceptance.",
+                "capability": "pdf_form_fill",
+                "common_operation_adoption_ref": ".agents/development/evidence/gdpval-220-route-applicability.json#/common_document_operation_adoption/tasks/43dc9778-450b-4b46-b77e-b6d82b202035"
               },
               {
                 "status": "shared_route_applicable",
@@ -3709,7 +3730,7 @@
           },
           "proofs_are_separate": true
         },
-        "task_level_acceptance": "route_gaps_remain",
+        "task_level_acceptance": "common_routes_applicable_with_limits",
         "interpretation": "Common route applicability is bounded infrastructure evidence, not a successful participant solution or completed artifact inspection. Source conflicts, input defects, conditional branches and actual observations remain separate. Pending operations are not inherently human-only.",
         "criterion_routes": {
           "record_ref": ".agents/development/evidence/gdpval-220-route-applicability.json#/tasks/43dc9778-450b-4b46-b77e-b6d82b202035/criteria",
@@ -60555,7 +60576,7 @@
         "known_unsupported": [],
         "generation_vs_evaluation": {
           "generation": {
-            "status": "partial_shared_routes",
+            "status": "shared_routes_applicable",
             "evidence_scope": "shared",
             "capabilities": [
               {
@@ -60586,14 +60607,15 @@
                 "capability": "spreadsheet_author"
               },
               {
-                "status": "partial_shared_route",
+                "status": "shared_route_applicable",
                 "route_ids": [
                   "office_authoring",
                   "page_render_and_transport"
                 ],
                 "basis_ref": ".agents/development/evidence/gdpval-220-route-applicability.json#/generation_capability_catalog/form_layout",
-                "remaining_obligation": "Ordinary Office writing/rendering is proved. Native field/control editability and form-specific interaction require their mapped operation evidence.",
-                "capability": "form_layout"
+                "remaining_obligation": "Create and inspect the original labeled Office text, cells, tables, blank response/signature spaces and visible paper marks. Ordinary form layout does not require native controls. Preserve any separately specified numeric entry, dropdowns, protection, validation, native opening, links and original OR alternatives; shared layout evidence does not prove those operations or task content correctness. The Excel form requires labeled ordinary cells, line-item columns and blank name/signature/date spaces, and the workflow explicitly prints it. No active signature control, dropdown or electronic form interaction is specified. The totals-row requirement remains a separate spreadsheet/content operation; unchanged original phone-number conflict is not resolved.",
+                "capability": "form_layout",
+                "source_correction_ref": ".agents/development/evidence/gdpval-220-route-applicability.json#/form_layout_source_correction/tasks/62f04c2f-e0f7-4710-876c-54ee9c2e8256"
               },
               {
                 "status": "shared_route_applicable",
@@ -60615,7 +60637,7 @@
           },
           "proofs_are_separate": true
         },
-        "task_level_acceptance": "route_gaps_remain",
+        "task_level_acceptance": "common_routes_applicable_with_limits",
         "interpretation": "Common route applicability is bounded infrastructure evidence, not a successful participant solution or completed artifact inspection. Source conflicts, input defects, conditional branches and actual observations remain separate. Pending operations are not inherently human-only.",
         "criterion_routes": {
           "record_ref": ".agents/development/evidence/gdpval-220-route-applicability.json#/tasks/62f04c2f-e0f7-4710-876c-54ee9c2e8256/criteria",
@@ -86133,7 +86155,7 @@
         "known_unsupported": [],
         "generation_vs_evaluation": {
           "generation": {
-            "status": "partial_shared_routes",
+            "status": "shared_routes_applicable",
             "evidence_scope": "shared",
             "capabilities": [
               {
@@ -86146,14 +86168,15 @@
                 "capability": "spreadsheet_author"
               },
               {
-                "status": "partial_shared_route",
+                "status": "shared_route_applicable",
                 "route_ids": [
                   "office_authoring",
                   "page_render_and_transport"
                 ],
                 "basis_ref": ".agents/development/evidence/gdpval-220-route-applicability.json#/generation_capability_catalog/form_layout",
-                "remaining_obligation": "Ordinary Office writing/rendering is proved. Native field/control editability and form-specific interaction require their mapped operation evidence.",
-                "capability": "form_layout"
+                "remaining_obligation": "Create and inspect the original labeled Office text, cells, tables, blank response/signature spaces and visible paper marks. Ordinary form layout does not require native controls. Preserve any separately specified numeric entry, dropdowns, protection, validation, native opening, links and original OR alternatives; shared layout evidence does not prove those operations or task content correctness. The field labels/layout and ordinary editable cells use Office authoring. f66d5db7 explicitly permits instructions or labeling instead of protection for that original unit; 64755c9a separately requires locked/protected versus editable fields. Preserve native-opening, numeric-entry and protection gates. 98115f22 requires positive numeric acceptance; data validation is an example, not an additional requirement to reject nonnumbers. This check does not change its existing operation procedure.",
+                "capability": "form_layout",
+                "source_correction_ref": ".agents/development/evidence/gdpval-220-route-applicability.json#/form_layout_source_correction/tasks/4d61a19a-8438-4d4c-9fc2-cf167e36dcd6"
               },
               {
                 "status": "shared_route_applicable",
@@ -86939,7 +86962,7 @@
         "known_unsupported": [],
         "generation_vs_evaluation": {
           "generation": {
-            "status": "partial_shared_routes",
+            "status": "shared_routes_applicable",
             "evidence_scope": "shared",
             "capabilities": [
               {
@@ -86952,14 +86975,15 @@
                 "capability": "word_document_author"
               },
               {
-                "status": "partial_shared_route",
+                "status": "shared_route_applicable",
                 "route_ids": [
                   "office_authoring",
                   "page_render_and_transport"
                 ],
                 "basis_ref": ".agents/development/evidence/gdpval-220-route-applicability.json#/generation_capability_catalog/form_layout",
-                "remaining_obligation": "Ordinary Office writing/rendering is proved. Native field/control editability and form-specific interaction require their mapped operation evidence.",
-                "capability": "form_layout"
+                "remaining_obligation": "Create and inspect the original labeled Office text, cells, tables, blank response/signature spaces and visible paper marks. Ordinary form layout does not require native controls. Preserve any separately specified numeric entry, dropdowns, protection, validation, native opening, links and original OR alternatives; shared layout evidence does not prove those operations or task content correctness. The deliverable is a Word form. Rubric asks visible response space, option lists and question-to-Google-Forms-type correspondence for future implementation; it does not require live Google Forms, clickable Word controls or digital submission. Multi-select wording and optional/conditional questions retain their exact original semantics.",
+                "capability": "form_layout",
+                "source_correction_ref": ".agents/development/evidence/gdpval-220-route-applicability.json#/form_layout_source_correction/tasks/6436ff9e-c5f2-47ba-9aaa-49d89b0594ab"
               },
               {
                 "status": "shared_route_applicable",
@@ -86981,7 +87005,7 @@
           },
           "proofs_are_separate": true
         },
-        "task_level_acceptance": "route_gaps_remain",
+        "task_level_acceptance": "common_routes_applicable_with_limits",
         "interpretation": "Common route applicability is bounded infrastructure evidence, not a successful participant solution or completed artifact inspection. Source conflicts, input defects, conditional branches and actual observations remain separate. Pending operations are not inherently human-only.",
         "criterion_routes": {
           "record_ref": ".agents/development/evidence/gdpval-220-route-applicability.json#/tasks/6436ff9e-c5f2-47ba-9aaa-49d89b0594ab/criteria",
@@ -95519,7 +95543,7 @@
         "known_unsupported": [],
         "generation_vs_evaluation": {
           "generation": {
-            "status": "partial_shared_routes",
+            "status": "shared_routes_applicable",
             "evidence_scope": "shared",
             "capabilities": [
               {
@@ -95550,22 +95574,24 @@
                 "capability": "step_export_import"
               },
               {
-                "status": "partial_shared_route",
+                "status": "shared_route_applicable",
                 "route_ids": [
-                  "science_plot"
+                  "step_derived_drawing_bom_and_views"
                 ],
                 "basis_ref": ".agents/development/evidence/gdpval-220-route-applicability.json#/generation_capability_catalog/engineering_drawing_author",
-                "remaining_obligation": "Scientific plots and basic STEP geometry are proved; CAD-derived dimensional drawing/annotation operations remain outside those fixtures.",
-                "capability": "engineering_drawing_author"
+                "remaining_obligation": "Apply the proved bounded drawing operation to each originally required actual assembly/sub-assembly and inspect geometry correspondence, scale, annotations, material BOM and balloon membership. Known straight-edge wireframe proof does not establish arbitrary curves/hidden-line removal, actual concept engineering quality, every required sheet or native CAD UI. Preserve the original conditional ZIP branch.",
+                "capability": "engineering_drawing_author",
+                "common_operation_adoption_ref": ".agents/development/evidence/gdpval-220-route-applicability.json#/common_cad_drawing_operation_adoption/tasks/5e2b6aab-f9fb-4dd6-a1a5-874ef1743909"
               },
               {
-                "status": "partial_shared_route",
+                "status": "shared_route_applicable",
                 "route_ids": [
-                  "science_plot"
+                  "step_derived_drawing_bom_and_views"
                 ],
                 "basis_ref": ".agents/development/evidence/gdpval-220-route-applicability.json#/generation_capability_catalog/bom_balloons_exploded_assembled_views",
-                "remaining_obligation": "Plots and basic STEP assemblies are proved; exploded-view/balloon/BOM geometry-linked drawing operations are outside that fixture.",
-                "capability": "bom_balloons_exploded_assembled_views"
+                "remaining_obligation": "Apply the proved bounded drawing operation to each originally required actual assembly/sub-assembly and inspect geometry correspondence, scale, annotations, material BOM and balloon membership. Known straight-edge wireframe proof does not establish arbitrary curves/hidden-line removal, actual concept engineering quality, every required sheet or native CAD UI. Preserve the original conditional ZIP branch.",
+                "capability": "bom_balloons_exploded_assembled_views",
+                "common_operation_adoption_ref": ".agents/development/evidence/gdpval-220-route-applicability.json#/common_cad_drawing_operation_adoption/tasks/5e2b6aab-f9fb-4dd6-a1a5-874ef1743909"
               },
               {
                 "status": "shared_route_applicable",
@@ -95597,7 +95623,7 @@
           },
           "proofs_are_separate": true
         },
-        "task_level_acceptance": "route_gaps_remain",
+        "task_level_acceptance": "common_routes_applicable_with_limits",
         "interpretation": "Common route applicability is bounded infrastructure evidence, not a successful participant solution or completed artifact inspection. Source conflicts, input defects, conditional branches and actual observations remain separate. Pending operations are not inherently human-only.",
         "criterion_routes": {
           "record_ref": ".agents/development/evidence/gdpval-220-route-applicability.json#/tasks/5e2b6aab-f9fb-4dd6-a1a5-874ef1743909/criteria",
@@ -102914,7 +102940,7 @@
         "known_unsupported": [],
         "generation_vs_evaluation": {
           "generation": {
-            "status": "partial_shared_routes",
+            "status": "shared_routes_applicable",
             "evidence_scope": "shared",
             "capabilities": [
               {
@@ -102927,14 +102953,15 @@
                 "capability": "word_document_author"
               },
               {
-                "status": "partial_shared_route",
+                "status": "shared_route_applicable",
                 "route_ids": [
                   "office_authoring",
                   "page_render_and_transport"
                 ],
                 "basis_ref": ".agents/development/evidence/gdpval-220-route-applicability.json#/generation_capability_catalog/form_layout",
-                "remaining_obligation": "Ordinary Office writing/rendering is proved. Native field/control editability and form-specific interaction require their mapped operation evidence.",
-                "capability": "form_layout"
+                "remaining_obligation": "Create and inspect the original labeled Office text, cells, tables, blank response/signature spaces and visible paper marks. Ordinary form layout does not require native controls. Preserve any separately specified numeric entry, dropdowns, protection, validation, native opening, links and original OR alternatives; shared layout evidence does not prove those operations or task content correctness. Applications, roadmap and evaluation forms are Word document templates. No active input widget is specified. Clickable file hyperlinks are a separate explicit document-link obligation, not an input-control requirement, and stay in their existing criterion route. DGHT/OIIDP and source-branding conflicts remain unchanged.",
+                "capability": "form_layout",
+                "source_correction_ref": ".agents/development/evidence/gdpval-220-route-applicability.json#/form_layout_source_correction/tasks/c9bf9801-9640-45fa-8166-1ab01f2d98e4"
               },
               {
                 "status": "shared_route_applicable",
@@ -102956,7 +102983,7 @@
           },
           "proofs_are_separate": true
         },
-        "task_level_acceptance": "route_gaps_remain",
+        "task_level_acceptance": "common_routes_applicable_with_limits",
         "interpretation": "Common route applicability is bounded infrastructure evidence, not a successful participant solution or completed artifact inspection. Source conflicts, input defects, conditional branches and actual observations remain separate. Pending operations are not inherently human-only.",
         "criterion_routes": {
           "record_ref": ".agents/development/evidence/gdpval-220-route-applicability.json#/tasks/c9bf9801-9640-45fa-8166-1ab01f2d98e4/criteria",
@@ -104480,7 +104507,7 @@
         "known_unsupported": [],
         "generation_vs_evaluation": {
           "generation": {
-            "status": "partial_shared_routes",
+            "status": "shared_routes_applicable",
             "evidence_scope": "shared",
             "capabilities": [
               {
@@ -104493,14 +104520,15 @@
                 "capability": "spreadsheet_author"
               },
               {
-                "status": "partial_shared_route",
+                "status": "shared_route_applicable",
                 "route_ids": [
                   "office_authoring",
                   "page_render_and_transport"
                 ],
                 "basis_ref": ".agents/development/evidence/gdpval-220-route-applicability.json#/generation_capability_catalog/form_layout",
-                "remaining_obligation": "Ordinary Office writing/rendering is proved. Native field/control editability and form-specific interaction require their mapped operation evidence.",
-                "capability": "form_layout"
+                "remaining_obligation": "Create and inspect the original labeled Office text, cells, tables, blank response/signature spaces and visible paper marks. Ordinary form layout does not require native controls. Preserve any separately specified numeric entry, dropdowns, protection, validation, native opening, links and original OR alternatives; shared layout evidence does not prove those operations or task content correctness. Layout and the general efficiency feature allow static/structural choices: date formatting or other listed alternatives can satisfy 70296102, and prices can use a legend. Preserve the independent status-checkbox/dropdown, freeze-pane, conditional-formatting and validation requirements. Preserve all current item statuses, both existing native gates and the exact Excel Table OR filterable-header alternative; generic form-layout proof cannot clear them.",
+                "capability": "form_layout",
+                "source_correction_ref": ".agents/development/evidence/gdpval-220-route-applicability.json#/form_layout_source_correction/tasks/41f6ef59-88c9-4b2c-bcc7-9ceb88422f48"
               },
               {
                 "status": "shared_route_applicable",
@@ -105420,14 +105448,15 @@
                 "capability": "spreadsheet_author"
               },
               {
-                "status": "partial_shared_route",
+                "status": "shared_route_applicable",
                 "route_ids": [
                   "office_authoring",
                   "page_render_and_transport"
                 ],
                 "basis_ref": ".agents/development/evidence/gdpval-220-route-applicability.json#/generation_capability_catalog/form_layout",
-                "remaining_obligation": "Ordinary Office writing/rendering is proved. Native field/control editability and form-specific interaction require their mapped operation evidence.",
-                "capability": "form_layout"
+                "remaining_obligation": "Create and inspect the original labeled Office text, cells, tables, blank response/signature spaces and visible paper marks. Ordinary form layout does not require native controls. Preserve any separately specified numeric entry, dropdowns, protection, validation, native opening, links and original OR alternatives; shared layout evidence does not prove those operations or task content correctness. Table layout, headers and editable ordinary cells are separable from the expressly required Yes/No/N/A dropdowns. Adopt only layout; preserve all three dropdown operation gates and the separate spreadsheet_input_controls_and_behavior generation capability. Do not infer active dropdown operation from stored OOXML definitions or page rendering.",
+                "capability": "form_layout",
+                "source_correction_ref": ".agents/development/evidence/gdpval-220-route-applicability.json#/form_layout_source_correction/tasks/a0552909-bc66-4a3a-8970-ee0d17b49718"
               },
               {
                 "status": "shared_route_applicable",
@@ -115991,7 +116020,29 @@
             "https://www.abbvie.com/content/dam/abbvie-com2/pdfs/pap/general-product-patient-assistance-application.pdf"
           ],
           "required_or_relevant": true,
-          "task_specific_constraint": "Read chart/insurance image; obtain official PDF form, leave unknown fields blank, no actual submission"
+          "task_specific_constraint": "Read chart/insurance image; obtain official PDF form, leave unknown fields blank, no actual submission",
+          "source_input_obligations": {
+            "status": "unconfirmed",
+            "kind": "external_source_availability_and_version",
+            "required_source": {
+              "url": "https://www.abbvie.com/content/dam/abbvie-com2/pdfs/pap/general-product-patient-assistance-application.pdf",
+              "task_time_context": "May 2025",
+              "archived_edition_explicitly_named": false
+            },
+            "requirement": "Obtain the AbbVie Vraylar patient assistance application from the exact URL named in the prompt and retain the returned body/source/version evidence; actual submission is not requested.",
+            "remaining_obligation": "Availability and version of the PDF at the exact prompt URL are unconfirmed. The May 2025 task context does not name an archived PDF edition; do not silently substitute another source or infer that an arbitrary current body meets the original requirement.",
+            "criterion_ids": [
+              "bea6945d-c3b8-4906-9077-8634005e34bd",
+              "84ab15af-ce70-4ea1-83f0-1f780a736a66",
+              "394b53c7-e71c-4d9d-8cee-e58c5e6e4020",
+              "8986db33-4293-456d-8726-06914496cfcf",
+              "38fc4b36-39b4-47cc-9137-bd030228ac27"
+            ],
+            "basis_ref": ".agents/development/evidence/gdpval-220-route-applicability.json#/official_form_source_access_correction/tasks/e6429658-4de1-42dd-a9e0-2d2b9b02fb10",
+            "participant_retrieval_required": true,
+            "exact_source_fetched_in_this_review": false,
+            "task_success_inferred": false
+          }
         },
         "provided_input_staging": {
           "status": "passed",
@@ -116270,7 +116321,7 @@
         "known_unsupported": [],
         "generation_vs_evaluation": {
           "generation": {
-            "status": "partial_shared_routes",
+            "status": "shared_routes_applicable",
             "evidence_scope": "shared",
             "capabilities": [
               {
@@ -116292,23 +116343,24 @@
                 "capability": "paginated_document_render"
               },
               {
-                "status": "partial_shared_route",
+                "status": "shared_route_applicable",
                 "route_ids": [
                   "public_source_access"
                 ],
-                "basis_ref": ".agents/development/evidence/gdpval-220-route-applicability.json#/generation_capability_catalog/official_form_acquisition",
-                "remaining_obligation": "Public retrieval is proved; availability/version of the exact original official form must be established without changing the requested source.",
+                "basis_ref": ".agents/development/evidence/gdpval-220-route-applicability.json#/official_form_source_access_correction/tasks/e6429658-4de1-42dd-a9e0-2d2b9b02fb10",
+                "remaining_obligation": "Availability and version of the PDF at the exact prompt URL are unconfirmed. The May 2025 task context does not name an archived PDF edition; do not silently substitute another source or infer that an arbitrary current body meets the original requirement.",
                 "capability": "official_form_acquisition"
               },
               {
-                "status": "partial_shared_route",
+                "status": "shared_route_applicable",
                 "route_ids": [
-                  "file_text_structure",
-                  "page_render_and_transport"
+                  "pdf_text_field_roundtrip",
+                  "pdf_original_page_label_append"
                 ],
                 "basis_ref": ".agents/development/evidence/gdpval-220-route-applicability.json#/generation_capability_catalog/pdf_form_fill",
-                "remaining_obligation": "PDF reading/rendering and file writes are proved; interactive form-field filling/appearance round-trip was not identified in the existing bounded proof.",
-                "capability": "pdf_form_fill"
+                "remaining_obligation": "Complete the original PDF with typed content using a matching field or independent text-label operation; retain intentionally blank data. No persistent electronic interactivity is required by the examined clauses. Official-form access, non-text controls, multi-form completeness and subject correctness remain separate. The fixture does not acquire or inspect the live AbbVie form, establish all-pages order/completeness, verify clinical data, or create any signature. A blank ordinary text field is observed; arbitrary signature-widget behavior is not. Source does not require retained electronic interactivity. official_form_acquisition remains unchanged.",
+                "capability": "pdf_form_fill",
+                "common_operation_adoption_ref": ".agents/development/evidence/gdpval-220-route-applicability.json#/common_document_operation_adoption/tasks/e6429658-4de1-42dd-a9e0-2d2b9b02fb10"
               },
               {
                 "status": "shared_route_applicable",
@@ -136298,12 +136350,12 @@
               {
                 "status": "shared_route_applicable",
                 "route_ids": [
-                  "file_text_structure",
-                  "page_render_and_transport"
+                  "pdf_original_page_label_append"
                 ],
                 "basis_ref": ".agents/development/evidence/gdpval-route-corrections-2026-09-21.json#/tasks/58ac1cc5-5754-4580-8c9c-8c67e1a9d619",
-                "remaining_obligation": "Read and complete the supplied Change Control Form.pdf on a copy; compare original fields/layout and preserve unknown values as specified. Inspect the final rendered PDF. Retained electronic input fields are not required.",
-                "capability": "pdf_form_fill"
+                "remaining_obligation": "Complete the original PDF with typed content using a matching field or independent text-label operation; retain intentionally blank data. No persistent electronic interactivity is required by the examined clauses. Official-form access, non-text controls, multi-form completeness and subject correctness remain separate. Current mapping already adopts the supplied-form static completion branch. This is additional bounded operation evidence only; it does not reinstate external acquisition or persistent interactive-field requirements, inspect the actual Change Control Form, or judge GMP content.",
+                "capability": "pdf_form_fill",
+                "common_operation_adoption_ref": ".agents/development/evidence/gdpval-220-route-applicability.json#/common_document_operation_adoption/tasks/58ac1cc5-5754-4580-8c9c-8c67e1a9d619"
               },
               {
                 "status": "shared_route_applicable",
@@ -145960,7 +146012,7 @@
         "known_unsupported": [],
         "generation_vs_evaluation": {
           "generation": {
-            "status": "partial_shared_routes",
+            "status": "shared_routes_applicable",
             "evidence_scope": "shared",
             "capabilities": [
               {
@@ -145982,13 +146034,14 @@
                 "capability": "paginated_pdf_render"
               },
               {
-                "status": "partial_shared_route",
+                "status": "shared_route_applicable",
                 "route_ids": [
-                  "science_plot"
+                  "known_coordinate_map_pdf_author_and_inspect"
                 ],
                 "basis_ref": ".agents/development/evidence/gdpval-220-route-applicability.json#/generation_capability_catalog/geospatial_map_author",
-                "remaining_obligation": "Plotting is proved; coordinate projection/geospatial overlay operation proof was not identified in the existing evidence.",
-                "capability": "geospatial_map_author"
+                "remaining_obligation": "Inspect the actual artifact and relevant source data for original content and semantic correctness. The original requires a location-spread map, without naming a projection, coordinate-reference-system transformation, GIS library, basemap service or live geocoding API. The map request is prompt-level; no original rubric item specifically scores a map. Do not invent such an item. Known supplied-coordinate operation only; no actual property selection, source address geocoding, real basemap/road acquisition, licensing or geographic distance/projection accuracy claim. The generic PDF/style rubric items are contextual only and receive no new criterion mapping. Existing prompt/rubric artifact-format conflict remains needs_clarification; the source prompt names Massapequa Park, while supplied/rubric locations use Massabama. No geographic substitution or source reconciliation is performed.",
+                "capability": "geospatial_map_author",
+                "common_operation_adoption_ref": ".agents/development/evidence/gdpval-220-route-applicability.json#/common_schema_map_operation_adoption/tasks/11593a50-734d-4449-b5b4-f8986a133fd8"
               },
               {
                 "status": "shared_route_applicable",
@@ -146019,7 +146072,7 @@
           },
           "proofs_are_separate": true
         },
-        "task_level_acceptance": "route_gaps_remain",
+        "task_level_acceptance": "common_routes_applicable_with_limits",
         "interpretation": "Common route applicability is bounded infrastructure evidence, not a successful participant solution or completed artifact inspection. Source conflicts, input defects, conditional branches and actual observations remain separate. Pending operations are not inherently human-only.",
         "criterion_routes": {
           "record_ref": ".agents/development/evidence/gdpval-220-route-applicability.json#/tasks/11593a50-734d-4449-b5b4-f8986a133fd8/criteria",
@@ -151781,7 +151834,7 @@
         "known_unsupported": [],
         "generation_vs_evaluation": {
           "generation": {
-            "status": "partial_shared_routes",
+            "status": "shared_routes_applicable",
             "evidence_scope": "shared",
             "capabilities": [
               {
@@ -151812,13 +151865,14 @@
                 "capability": "spreadsheet_render"
               },
               {
-                "status": "partial_shared_route",
+                "status": "shared_route_applicable",
                 "route_ids": [
-                  "page_render_and_transport"
+                  "pdf_original_page_label_append"
                 ],
                 "basis_ref": ".agents/development/evidence/gdpval-220-route-applicability.json#/generation_capability_catalog/source_layout_preserving_pdf_author",
-                "remaining_obligation": "PDF/render primitives are proved; editable source-to-PDF layout preservation across the original form is not established by the known-page fixture.",
-                "capability": "source_layout_preserving_pdf_author"
+                "remaining_obligation": "Append typed labels to the original PDF while retaining its background content and numbering; verify the actual labels, minimum font size, placement and unobscured source layout. The original source is a PDF, so editable-source conversion is not required. Known one-page operation proof does not establish actual vendor assignments. The original references are PDFs; editable-source conversion and electronic form controls are not required. The label stream tests the matching flat-PDF annotation operation independently of the separate AcroForm field. It does not assign actual vendors, inspect both actual layouts, prove 10-point text on submitted artifacts, or handle every possible PDF resource/font construction.",
+                "capability": "source_layout_preserving_pdf_author",
+                "common_operation_adoption_ref": ".agents/development/evidence/gdpval-220-route-applicability.json#/common_document_operation_adoption/tasks/a73fbc98-90d4-4134-a54f-2b1d0c838791"
               },
               {
                 "status": "shared_route_applicable",
@@ -151840,7 +151894,7 @@
           },
           "proofs_are_separate": true
         },
-        "task_level_acceptance": "route_gaps_remain",
+        "task_level_acceptance": "common_routes_applicable_with_limits",
         "interpretation": "Common route applicability is bounded infrastructure evidence, not a successful participant solution or completed artifact inspection. Source conflicts, input defects, conditional branches and actual observations remain separate. Pending operations are not inherently human-only.",
         "criterion_routes": {
           "record_ref": ".agents/development/evidence/gdpval-220-route-applicability.json#/tasks/a73fbc98-90d4-4134-a54f-2b1d0c838791/criteria",
@@ -155219,7 +155273,7 @@
         "known_unsupported": [],
         "generation_vs_evaluation": {
           "generation": {
-            "status": "partial_shared_routes",
+            "status": "shared_routes_applicable",
             "evidence_scope": "shared",
             "capabilities": [
               {
@@ -155232,14 +155286,15 @@
                 "capability": "word_document_author"
               },
               {
-                "status": "partial_shared_route",
+                "status": "shared_route_applicable",
                 "route_ids": [
                   "office_authoring",
                   "page_render_and_transport"
                 ],
                 "basis_ref": ".agents/development/evidence/gdpval-220-route-applicability.json#/generation_capability_catalog/form_layout",
-                "remaining_obligation": "Ordinary Office writing/rendering is proved. Native field/control editability and form-specific interaction require their mapped operation evidence.",
-                "capability": "form_layout"
+                "remaining_obligation": "Create and inspect the original labeled Office text, cells, tables, blank response/signature spaces and visible paper marks. Ordinary form layout does not require native controls. Preserve any separately specified numeric entry, dropdowns, protection, validation, native opening, links and original OR alternatives; shared layout evidence does not prove those operations or task content correctness. The fax cover/checklist Word files need labeled writable spaces, table cells and four marked-option boxes. Viewing/printing is explicit in the rubric; no click-to-toggle electronic checkbox, protection or form submission is required. Ordinary editable text or printable response spaces satisfy the form container obligation; clinical/source text and page limits remain actual-artifact checks.",
+                "capability": "form_layout",
+                "source_correction_ref": ".agents/development/evidence/gdpval-220-route-applicability.json#/form_layout_source_correction/tasks/7151c60a-d4cb-4fc4-8169-3d4cb446e6b9"
               },
               {
                 "status": "shared_route_applicable",
@@ -155261,7 +155316,7 @@
           },
           "proofs_are_separate": true
         },
-        "task_level_acceptance": "route_gaps_remain",
+        "task_level_acceptance": "common_routes_applicable_with_limits",
         "interpretation": "Common route applicability is bounded infrastructure evidence, not a successful participant solution or completed artifact inspection. Source conflicts, input defects, conditional branches and actual observations remain separate. Pending operations are not inherently human-only.",
         "criterion_routes": {
           "record_ref": ".agents/development/evidence/gdpval-220-route-applicability.json#/tasks/7151c60a-d4cb-4fc4-8169-3d4cb446e6b9/criteria",
@@ -176697,7 +176752,7 @@
         "known_unsupported": [],
         "generation_vs_evaluation": {
           "generation": {
-            "status": "partial_shared_routes",
+            "status": "shared_routes_applicable",
             "evidence_scope": "shared",
             "capabilities": [
               {
@@ -176728,14 +176783,14 @@
                 "capability": "diagram_author"
               },
               {
-                "status": "partial_shared_route",
+                "status": "shared_route_applicable",
                 "route_ids": [
-                  "office_authoring",
-                  "science_plot"
+                  "word_image_text_roundtrip"
                 ],
                 "basis_ref": ".agents/development/evidence/gdpval-220-route-applicability.json#/generation_capability_catalog/word_diagram_embedding",
-                "remaining_obligation": "Office writing and plot generation are proved; an editable Word diagram-embedding round-trip was not separately identified in the existing evidence.",
-                "capability": "word_diagram_embedding"
+                "remaining_obligation": "Word image embedding alongside editable body text is available; the image is not a native editable diagram object and the original task does not require one. Inspect actual diagram/process content, document pagination and readability separately. The prompt requires visual diagrams, not separately editable native shapes/SmartArt. The linked flow-section/text items are contextual predicates; the fixture proves their Word image/text container operation, not the requested process stages or actual two-diagram content. No native Microsoft Word UI or task pagination/content result is claimed. Original prompt/rubric page-limit difference is unchanged.",
+                "capability": "word_diagram_embedding",
+                "common_operation_adoption_ref": ".agents/development/evidence/gdpval-220-route-applicability.json#/common_document_operation_adoption/tasks/bb499d9c-0263-4684-9238-75e8e86077b1"
               }
             ],
             "task_success_inferred": false
@@ -176748,7 +176803,7 @@
           },
           "proofs_are_separate": true
         },
-        "task_level_acceptance": "route_gaps_remain",
+        "task_level_acceptance": "common_routes_applicable_with_limits",
         "interpretation": "Common route applicability is bounded infrastructure evidence, not a successful participant solution or completed artifact inspection. Source conflicts, input defects, conditional branches and actual observations remain separate. Pending operations are not inherently human-only.",
         "criterion_routes": {
           "record_ref": ".agents/development/evidence/gdpval-220-route-applicability.json#/tasks/bb499d9c-0263-4684-9238-75e8e86077b1/criteria",
@@ -185787,17 +185842,18 @@
         "known_unsupported": [],
         "generation_vs_evaluation": {
           "generation": {
-            "status": "partial_shared_routes",
+            "status": "shared_routes_applicable",
             "evidence_scope": "shared",
             "capabilities": [
               {
-                "status": "partial_shared_route",
+                "status": "shared_route_applicable",
                 "route_ids": [
-                  "file_text_structure"
+                  "known_openapi_yaml_author_and_inspect"
                 ],
                 "basis_ref": ".agents/development/evidence/gdpval-220-route-applicability.json#/generation_capability_catalog/yaml_openapi_author_and_schema_validation",
-                "remaining_obligation": "Text/YAML operations are available; an OpenAPI-specific validator execution route was not identified in the existing proofs.",
-                "capability": "yaml_openapi_author_and_schema_validation"
+                "remaining_obligation": "Inspect the actual artifact and relevant source data for original content and semantic correctness. The original asks for a specification/design artifact and explicitly tests YAML syntax and document content. A dedicated OpenAPI validator, endpoint deployment, cloud backend or 200GB upload execution is not an original mandatory prerequisite. Exact OpenAPI semantic correctness still needs inspection on the actual specification. Known generic marker contract only; no robot/mission design or benchmark solution was authored. No full OpenAPI meta-schema validator was executed. JSON Schema Draft4 checks cover only the known reusable object subset and do not certify all OpenAPI3 constraints. Conditional authentication items retain their original if-authentication branches. Item links adopt format/structural operations only; actual field content, design semantics and original criterion outcomes remain separate.",
+                "capability": "yaml_openapi_author_and_schema_validation",
+                "common_operation_adoption_ref": ".agents/development/evidence/gdpval-220-route-applicability.json#/common_schema_map_operation_adoption/tasks/2c249e0f-4a8c-4f8e-b4f4-6508ba29b34f"
               },
               {
                 "status": "shared_route_applicable",
@@ -185819,7 +185875,7 @@
           },
           "proofs_are_separate": true
         },
-        "task_level_acceptance": "route_gaps_remain",
+        "task_level_acceptance": "common_routes_applicable_with_limits",
         "interpretation": "Common route applicability is bounded infrastructure evidence, not a successful participant solution or completed artifact inspection. Source conflicts, input defects, conditional branches and actual observations remain separate. Pending operations are not inherently human-only.",
         "criterion_routes": {
           "record_ref": ".agents/development/evidence/gdpval-220-route-applicability.json#/tasks/2c249e0f-4a8c-4f8e-b4f4-6508ba29b34f/criteria",
@@ -186265,7 +186321,7 @@
     }
   ],
   "verification": {
-    "receipt_path": ".audit/2026-09-22-output-route-mapping/readiness-generator.json",
+    "receipt_path": ".audit/2026-09-22-form-layout-source-check/adoption/readiness-generator-final.json",
     "model_runs": 0,
     "model_runs_meaning": "Generator runs no models; task trials are referenced under axes.target_environment_acceptance.task_trial_coverage.",
     "remote_writes": 0

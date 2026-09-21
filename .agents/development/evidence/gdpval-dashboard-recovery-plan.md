@@ -48,3 +48,12 @@ File availability alone does not establish that the model recovered or judged co
 participant failures remain distinct from evaluator/infrastructure failures. The two unsupported native-control items
 remain gated, and the original day/night rubric/source conflict is retained. There is no all-220 or ALPS production
 acceptance from this one session. It creates a new evaluation identity and preserves all earlier records.
+
+## Completion — 2026-09-22 JST
+
+The owner approved and the single session completed after both science evaluations:859.25 model/tool seconds,
+887.62 workflow seconds, one model call, unchanged originals and no retries. All57 criterion outputs returned.
+The frozen validation is50pass/7unconfirmed. An explicitly versioned empty-query observation format revision yields
+53pass/2fail/2unconfirmed in a separate saved-record validation, preserving the original judgment. Actual model
+compaction and durable-file rereading did not occur, so recovery after compaction remains unconfirmed.
+See [completion and limitations](gdpval-dashboard-recovery-2026-09-22.json). This envelope has no unused sessions.

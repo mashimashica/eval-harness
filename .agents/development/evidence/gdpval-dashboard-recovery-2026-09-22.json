@@ -1,0 +1,102 @@
+{
+  "schema_version": 1,
+  "kind": "completed-owner-approved-one-session-dashboard-recovery",
+  "authorization": {
+    "reference": "call_7eXkCegChjfhMiXRcWhP9LPO: additional one session approved",
+    "model": "claude-opus-5",
+    "effort": "medium",
+    "max_turns": 40,
+    "sessions": 1,
+    "timeout_seconds": 1200,
+    "concurrency": 1,
+    "automatic_retries": 0,
+    "billing": "existing subscription; no auxiliary AI/API or extra usage",
+    "other_six_evaluations_complete_before_start": true,
+    "remaining_sessions": 0
+  },
+  "manifest": {
+    "path": ".audit/2026-09-22-dashboard-recovery/manifest.json",
+    "sha256": "64ac327cbc5d22e3c3d64e37f88c8089676599f11c3411a12604fc90e1c7e3cc"
+  },
+  "result": {
+    "path": ".audit/2026-09-22-dashboard-recovery/session/slot-result.json",
+    "sha256": "ef2d80dae7f8e8262dbf032004d45be714a41331cc01face12645e40cc2fc49f"
+  },
+  "controller_review": {
+    "path": ".audit/2026-09-22-dashboard-recovery/review/report.json",
+    "sha256": "562b405d7f77bb9c5af9ffe457ad6e7ed1a4b3097b262a17ea9084c148b3eb12"
+  },
+  "environment_fingerprint": "ecd1071aac425229104a253df7de66b92e89c6fbcaf0b4c76848a4c08d9328e4",
+  "model_calls": 1,
+  "model_execution_seconds": 859.254576959007,
+  "workflow_seconds": 887.6179723329842,
+  "usage": {
+    "cache_creation_input_tokens": 154319,
+    "cached_input_tokens": 2276792,
+    "cost_usd": null,
+    "input_tokens": 42,
+    "output_tokens": 47650,
+    "reasoning_tokens": 6625,
+    "reported_cost_usd": 3.8730459999999995
+  },
+  "originals_preserved": true,
+  "evaluation_id": "e0c2e72c709a46d384618c04e2e026ab",
+  "original_effective_counts": {
+    "pass": 50,
+    "unconfirmed": 7
+  },
+  "reported_counts": {
+    "pass": 53,
+    "unconfirmed": 2,
+    "fail": 2
+  },
+  "raw_protocol_recovery": "All57 item outputs returned without compaction; no direct durable-context reread observed. Actual post-compaction recovery is unconfirmed.",
+  "format_correction": {
+    "old_rule": "The former documented contract rejected every top-level empty collection, even a captured zero-result query, and invalidated the entire multi-check record.",
+    "new_rule": "Explicitly permit finite empty list/object query results with a nonempty action. Missing/null/blank-text observations, empty check lists, source/journal/hash/method failures and pending native/human prerequisites remain rejected.",
+    "reason": "Call000005 contains seven populated checks and an empty drawing-anchor query result. Rejecting that entire record withheld5 otherwise-reported KPI/content claims;2 native gates also accumulated redundant format issues.",
+    "validator": {
+      "path": "harness/src/eval_harness/inspection_protocol.py",
+      "sha256": "c650453781c5010002d78af0e155acac888980d53f18068600218eb682432e7c"
+    },
+    "tests": {
+      "path": "harness/tests/test_inspection_protocol.py",
+      "sha256": "1ed0222eea95723de095d0872e7bbb4e93b9acffea15a28e8e5db2949d80a0c2"
+    },
+    "saved_revalidation": {
+      "path": ".audit/2026-09-22-empty-observation-correction/revalidation-report.json",
+      "sha256": "2fa7f2b90a8857b6d6de2c900b533ce9fc7a18410c1cd2d50d12e3c9a26c48d2"
+    },
+    "new_revalidation_counts": {
+      "pass": 53,
+      "fail": 2,
+      "unconfirmed": 2
+    },
+    "original_judgments_modified": false,
+    "other_four_saved_evaluations_changed": false,
+    "new_model_calls": 0,
+    "verification": {
+      "targeted_tests": 187,
+      "measured_validator_coverage_percent": 90,
+      "strict_mypy": "2 source/test files and1 replay script passed",
+      "ruff_and_format": "passed",
+      "fern_links": "14 checks and20 subtests passed",
+      "fern": "0 errors;1 existing unauthenticated redirects warning",
+      "test_log": {
+        "path": ".audit/2026-09-22-empty-observation-correction/final-tests-risk-policy.log",
+        "sha256": "4ca0bf092476324dde91f4f0a1a80ee0cb8fd07d8429d312e98df42fc36bf2fb"
+      },
+      "coverage_policy": "Risk-based changed-scope policy in development README; inherited upstream95% default is not the harness gate. Observed validator coverage90%. Initial run187passed but inherited coverage gate failed; retained separately."
+    },
+    "test_preparation_failures": "Initial new regression also had a mismatched method label; preserve its failure and the corrected regression against the old frozen validator, then the174-test successful result before the final prompt wording update. Initial replay loaded wrapper snapshots incorrectly; corrected parser and bounded expected issue/status delta, without modifying any saved session. Latest prompt wording required updating the explicit prompt-contract assertion. A mistyped test path and missing PYTHONPATH caused no-test/collection failures; those logs are retained separately.",
+    "prompt_exposure": "The completed one-session evaluator used the frozen pre-correction prompt. The revised empty-collection wording has schema/unit and saved-record evidence only; no additional model session ran or remains authorized."
+  },
+  "qualification": [
+    "Original model output remains53pass/2fail/2unknown; original effective result remains50pass/7unknown. The new53/2/2 validation is a separate record, not a new model judgment or replacement.",
+    "The two day/night failures conflict with supplied data and two native input-control gates remain unknown. Aggregate quality remains null.",
+    "Compatible copy edits/recalculation, actual PivotTable page-field changes and source readbacks are observed; native Excel UI behavior and every changed chart display are not.",
+    "141 reference hashes and20 journal-bound calls are valid;2 evaluator shell-code failures are retained. This does not establish correctness of every interpretation.",
+    "The format revision is explicit and source-versioned; empty output may reflect an incorrect query. It does not convert unperformed inspections into evidence."
+  ],
+  "all220_accepted": false
+}

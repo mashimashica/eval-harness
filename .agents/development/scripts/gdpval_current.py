@@ -127,6 +127,10 @@ def apply_route_evidence(record: dict[str, Any], review: dict[str, Any], evidenc
         return
     if mapped.get("row_sha256") != review["row_sha256"] or not mapped.get("evidence_ref"):
         raise ValueError("route applicability does not bind the original row and evidence")
+    if "source_input_obligations" in mapped:
+        record["task_specific_checks"]["external_data"]["source_input_obligations"] = deepcopy(
+            mapped["source_input_obligations"]
+        )
     expected = {route[0] for route in review["rubric_routes"]}
     criteria = mapped.get("criteria", [])
     if len(criteria) != len(expected) or {item["criterion_id"] for item in criteria} != expected:

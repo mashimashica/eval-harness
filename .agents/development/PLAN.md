@@ -30,7 +30,7 @@ Owner authorized on 2026-09-21: a **new** maximum ten CLI sessions (four applica
 two known-content probes at300s), `gpt-5.6-sol/medium` and `claude-opus-5/medium`, concurrency1, automatic retries0,
 existing subscriptions only, no auxiliary AI or API billing. Old eleven sessions do not supply remaining budget. The owner is the human-review coordination owner; actual reviewers will be named before the experiment. Unassigned human checks remain unconfirmed and cannot accept a completion receipt. Model-free tests and local locked dependency setup remain separate from this model envelope.
 
-### Current correction and remaining six-session work (2026-09-22 JST)
+### Current correction and completed six-session work (2026-09-22 JST)
 
 Four of the owner-approved six sessions completed before this correction: both known-content probes and both saved
 dashboard evaluations. Codex returned 49 pass / 6 fail / 2 unconfirmed; all 55 non-native item references validate,
@@ -51,34 +51,60 @@ path: 56 targeted tests and a native 36x24-inch PDF render (0.5345s) plus known 
 settings remain separate, original bytes unchanged. Preserve the initial 120.392s timeout as an infrastructure failure.
 See [common-operation evidence](evidence/gdpval-common-output-operations-2026-09-22.json).
 
-The two unused science evaluations are frozen under environment
+The two science evaluations were frozen under environment
 `ecd1071aac425229104a253df7de66b92e89c6fbcaf0b4c76848a4c08d9328e4`, manifest
 `b2b87501923cd60816211e6a3f7a02e29dab8b6ef2259e68538fdafd94c0b434`.
-They retain saved artifacts, v2 protocols, original task order, Sol/Opus medium, each1200s, serial1 and automatic retries0.
-The two older controllers are blocked from consuming their reassigned unused slots. Codex science was dispatched;
-Claude science follows its recorded result. These are slots5/6, not an added model envelope. Actual model recovery,
-source checking and item-level inspection remain empirical acceptance obligations.
+They retained saved artifacts, v2 protocols, original task order, Sol/Opus medium, each1200s, serial1 and automatic retries0.
+The two older controllers are blocked from consuming their reassigned unused slots. Both science slots completed,
+using403.46 and660.95 model/tool seconds. These were slots5/6, not an added model envelope. The full batch consumed
+six sessions and2,677.58 model/tool seconds; no budget remains in it. See the
+[completion receipt](evidence/gdpval-six-session-acceptance-2026-09-22.json) for exact usage, frozen versions and
+preserved limitations. Actual model compaction recovery remains unobserved in these science sessions.
 
 The native-browser follow-up retains three further known-fixture launches (six total, zero model/candidate calls).
 Exact power/Mach controls resolve earlier startup barriers; a one-flag outer-only contrast executes known DOM events
-but times out at30s. This is not candidate-isolation acceptance. The specialist is checking bounded inherited restrictions
-and detached-child cleanup before any product route is adopted. See
+but times out at30s. Two known lifecycle helpers verify inherited restrictions and host cleanup, with sandbox-parent
+cleanup failing. The seventh browser launch completes known CDP interaction and natural shutdown in1.47s; complete
+process-lifetime coverage and executable/IPC policy remain unverified. This is not candidate-isolation acceptance. See
 [native follow-up](evidence/gdpval-native-feasibility-followup-2026-09-22.json).
 
 The six-task ZIP/large-PDF mapping is accepted:181 common-route tasks and39 with required-route gaps. The other214
 records and all original IDs/methods/weights are preserved. The source-bound mapping and current-summary update are
 recorded in [the adoption receipt](evidence/gdpval-output-route-adoption-2026-09-22.json).
 
+The subsequent five-task document-operation adoption is accepted from two actual isolated workflows, known rendered
+appearance and PDF unchanged-region pixel checks. That increment reached183 common/37 gaps; generation
+184/36 and evaluation196/24. All original scoring fields and215 unrelated tasks are preserved.35 helper tests and
+scoped typing/Ruff pass; the stale permanent-Word-gap test now demands separate actual Word proof. See
+[document adoption](evidence/gdpval-document-route-adoption-2026-09-22.json).
+
 The owner separately approved one additional Claude dashboard recovery (Opus5/medium,1200s,max_turns40,serial1,
 retries0,existing subscription only) after both science slots finish. This is a new one-session envelope; the six-session
-batch remains bounded and retains its spent attempts. Codex science completed in403.46 model/tool seconds with
-32pass/11fail/3unconfirmed and unchanged originals. Claude science is running. Controller source/operation review
-retains limited source-comparison observations separately from model results; no raw verdict is overwritten.
+batch remains bounded and retains its spent attempts. Both science sessions are complete with unchanged originals:
+Codex32pass/11fail/3unconfirmed and Claude39pass/4fail/3unconfirmed. The extra dashboard slot completed in859.25 model/tool seconds, with57 outputs and frozen50pass/7unconfirmed.
+A new, explicit observation format accepts captured empty query collections and revalidates the same output to
+53pass/2fail/2unconfirmed; original records remain unchanged. Actual compaction recovery is still unobserved.
+See [completion](evidence/gdpval-dashboard-recovery-2026-09-22.json). All model budgets are exhausted. Controller
+source/operation review retains limited source-comparison observations separately from model results; no raw verdict
+is overwritten and no incomplete scientific check is labeled a hallucination.
 
-Current ownership: controller owns frozen execution, product docs, evidence acceptance and PR; one Astra worker is
-checking only the existing Word diagram/PDF form operation gaps using at most two known-fixture workflows; one Astra
-specialist owns two bounded native lifecycle helpers, with no new Chrome launch. Neither may launch a model or alter
-product runtime. Full all-220 acceptance remains incomplete while mapped gaps are unresolved.
+The subsequent two-task schema/map adoption is accepted:185 common/35 gaps, generation186/34 and evaluation196/24.
+Fourteen exact OpenAPI operation links change; all29 map criteria and218 other tasks are unchanged. See
+[schema/map adoption](evidence/gdpval-schema-map-route-adoption-2026-09-22.json).
+
+The final form/CAD/source-input increment applies to ten task records. Seven form-layout corrections preserve
+eight genuine native gates; one known CAD workflow supplies15 exact operation-component links; two source-access
+corrections retain requested-source availability/version as unconfirmed external-input obligations. Current combined
+applicability is191 common/29 route gaps; generation195/25 and evaluation196/24. All original scoring fields and
+content feasibility statuses are preserved.38 affected helper tests pass with96% measured coverage; strict typing
+and Ruff pass. The first CAD text extraction and row-hash guard failures are preserved with their bounded corrections.
+See the [sealed ten-task adoption](evidence/gdpval-form-cad-source-adoption-2026-09-22.json).
+
+Controller integrates the completed increment, checks publication and updates PR #53. Worker/specialist operations
+are complete. No new model, network, dependency, permission or actual benchmark solution was introduced by the
+late operation/classification work. All model envelopes are spent. Full all-220 acceptance remains incomplete for
+the recorded native/browser, media perception, actual source/content and evaluator-evidence gaps. Their exact tasks,
+items and next required evidence remain in the ledger; no scope is excluded or promoted to completed acceptance.
 
 ### Handoff disposition (2026-09-21)
 

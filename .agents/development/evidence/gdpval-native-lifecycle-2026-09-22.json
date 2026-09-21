@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "kind": "controller-assessed-native-lifecycle-known-helper",
+  "findings": {
+    "path": ".audit/2026-09-22-native-lifecycle/findings.json",
+    "sha256": "d7a81a8812cef7c38ca9a49d6abb79955b049cb1aac3d48a794835dbd5991bba"
+  },
+  "manifest": {
+    "path": ".audit/2026-09-22-native-lifecycle/manifest.json",
+    "sha256": "c10b5d80e7ce5b9df07810ebe97b5f64cdf9e82de68b9553a006c3428e208a2d"
+  },
+  "counts": {
+    "candidate_runs": 0,
+    "chrome_launches": 0,
+    "compile_invocations": 1,
+    "helper_tree_invocations": 2,
+    "model_sessions": 0,
+    "native_retries": 0
+  },
+  "observed": {
+    "restriction_inheritance": "Filesystem/direct TCP/outside Unix denial and private Unix/scratch positives at root/fork/exec/setsid/setsid+exec; ten observations passed.",
+    "unrelated_descriptors": "Only0/1/2 observed despite deliberately inheritable outside-file/listener descriptors; passed.",
+    "host_controller_cleanup": "Identity-checked registered detached child termination and parent reap passed in0.6062s.",
+    "sandboxed_parent_cleanup": "Intended pipe-close child kill failed; child terminated by own10-second SIGALRM, then parent reaped. No kill errno recorded; missing signal authority is a hypothesis, not observed EPERM.",
+    "residual_known_processes": "Both known roots/children absent; exact fixture topology only."
+  },
+  "not_accepted": [
+    "Complete discovery of orphan/double-fork/browser descendants.",
+    "Atomic PID-reuse-safe signalling; checking recorded UID/starttime/executable/ancestry narrows but does not eliminate races.",
+    "Broad fork/Mach/IPC authority or removal of Chrome inner sandbox for participant content.",
+    "Ordinary descriptor closure as proof all inherited Mach/bootstrap authority is absent."
+  ],
+  "next_step": "One separately bounded known-page CDP launch tests private FD3/4 transport and explicit Browser.close. Product browser route remains disabled until containment and lifecycle are accepted.",
+  "product_permissions_changed": false,
+  "browser_route_promoted": false,
+  "all220_accepted": false
+}

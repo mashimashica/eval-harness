@@ -12,11 +12,39 @@ The [evidence record](gdpval-220-capabilities.json) binds candidate versions, so
 ## Follow-up acceptance — 2026-09-22 JST
 
 The later records below supplement the frozen ten-session history. Full220 acceptance remains incomplete.
+Current combined applicability is **191/220 common-route tasks and29 required-route-gap tasks**; generation195/25
+and evaluation196/24. Content feasibility remains201 candidate/16 needing clarification/3 undetermined, with exact
+external-source availability and actual artifact observations recorded separately. These are not task-success counts.
+The [last ten-task adoption](gdpval-form-cad-source-adoption-2026-09-22.json) preserves210 other tasks and10,438
+criterion records;38 helper tests and96% measured helper coverage support the generated ledger.
 
 - The six-task [common-output adoption](gdpval-output-route-adoption-2026-09-22.json) supplies actual ZIP packaging/
-  reopening/extraction and known36x24-inch PDF author/read/render proof. Current common-route counts are **181/220**,
+  reopening/extraction and known36x24-inch PDF author/read/render proof. That increment reached **181/220** common-route tasks,
   with **39 required-route-gap tasks**. Only the poster task's final operation gap closes; other214 task records and
   all original item IDs/methods/signed scores remain unchanged. No submitted artifact result is inferred.
+- The five-task [document-operation adoption](gdpval-document-route-adoption-2026-09-22.json) adds verified Word
+  diagram-image/text editing and PDF digital completion/layout preservation. Two known workflows take13.23 seconds
+  across isolated application/evaluation roles, with unchanged originals and actual rendered/pixel checks. Exactly21
+  matching item-operation links change; the other215 tasks and10,432 item records stay unchanged. That increment reached
+  **183/220 common-route tasks and37 required-route-gap tasks** at that point. Exact external form source/version
+  availability is retained separately from tool capability in the later correction; no
+  editable diagram, retained electronic-form behavior, actual task result or native Office acceptance is invented.
+- The two-task [schema/map adoption](gdpval-schema-map-route-adoption-2026-09-22.json) verifies known OpenAPI YAML
+  authoring/inspection and a coordinate-map PDF. Fourteen OpenAPI operation links change; the map is a prompt-level
+  obligation and its29 criteria are unchanged. That increment reached **185/220**, with **35 route-gap
+  tasks**. A specialized validator, deployed service and named map projection were not original requirements. Actual
+  OpenAPI semantics, real geographic sources and existing content conflicts still require inspection.
+- The [seven-form source correction](gdpval-form-layout-correction-2026-09-22.json) separates ordinary Office
+  layout from active controls. It reuses proved author/read/render operations, preserves eight existing native
+  criterion gates and the separate dropdown/validation capability, and makes no new artifact judgment.
+- The [known CAD workflow](gdpval-cad-drawing-operations-2026-09-22.json) exported/reopened two STEP components and
+  an assembly, matched64 actual PDF strokes to imported STEP geometry, verified2:1 scale, balloons/BOM and dimensions,
+  and rendered a legible ANSI B sheet.12.07 operational seconds include the first failed text-extraction assertion and
+  one evaluator-only correction; no output was regenerated. Runtime and original bytes are unchanged. Fifteen matching
+  item-operation components apply; actual engineering correctness and every-subassembly completeness are separate.
+- The [two official-source classifications](gdpval-official-source-correction-2026-09-22.json) reuse verified public
+  retrieval while retaining exact2024 IRS and linked AbbVie source/version availability as explicitly unconfirmed
+  external-input obligations. No documents were fetched or selected for the participant.
 - [Private font rendering](gdpval-common-output-operations-2026-09-22.json) retains the initial120.392s Fontconfig
   timeout and the corrected0.5345s actual renderer result. The changed policy uses bundled fonts and a private cache,
   with its configuration/hash in each receipt. Prior render/model identities remain unchanged.
@@ -24,24 +52,41 @@ The later records below supplement the frozen ten-session history. Full220 accep
   Claude context compaction. Read-only current-task context excludes other tasks/gold metadata and controller-only
   mechanical answers.181 affected tests, exact57/46-item round trips and actual protection checks pass; correct model
   recovery or semantic judging is not inferred from file availability.
-- The owner-approved six-session batch completed both known probes and both dashboards. Codex dashboard returned
-  49pass/6fail/2unconfirmed; Claude dashboard returned57unconfirmed after compaction. The remaining science slots
-  use new frozen environment `ecd1071a…`, preserving saved artifacts, v2 procedures and original limits. Codex science
-  completed in403.46 model/tool seconds:32pass/11fail/3unconfirmed. Two unknowns are native gates and one is a reported
-  inference forbidden by its rule. Claude science is in progress. A separately approved maximum1 Claude dashboard
-  recovery at1200s follows; see the [fixed plan](gdpval-dashboard-recovery-plan.md).
+- The [owner-approved six-session batch](gdpval-six-session-acceptance-2026-09-22.json) is complete: both known
+  probes and all four saved-artifact evaluations, totaling2,677.58 model/tool seconds and2,957.66 workflow seconds.
+  No participant artifacts were regenerated. Codex dashboard returned49pass/6fail/2unconfirmed; Claude dashboard
+  returned57unconfirmed after compaction. Science evaluations use new frozen environment `ecd1071a…`, preserving
+  saved artifacts, v2 procedures and original limits. Codex science completed in403.46 model/tool seconds with
+  32pass/11fail/3unconfirmed; Claude in660.95 seconds with39pass/4fail/3unconfirmed. Each retains two native gates and
+  one forbidden-inference unknown. The separately approved [one-session dashboard recovery](gdpval-dashboard-recovery-2026-09-22.json)
+  completed in859.25 model/tool seconds: all57 items returned, originally50pass/7unconfirmed. A separately recorded
+  format revision accepts journal-bound empty query results and yields53pass/2fail/2unconfirmed without a new model
+  call or changing the raw judgment. The other four saved evaluations are unchanged. Native controls, the supplied-data/
+  rubric percentage conflict, and actual post-compaction recovery remain open. All authorized model budgets are spent.
 - [Native browser follow-up](gdpval-native-feasibility-followup-2026-09-22.json) executed known DOM events under the
-  outer policy but timed out on shutdown. This trusted diagnostic disabled Chrome's inner process sandboxes, and does
-  not establish a route for participant content. No native Office or hearing/motion perception is newly accepted.
+  outer policy but timed out on shutdown. [Two lifecycle helpers](gdpval-native-lifecycle-2026-09-22.json) verify
+  inherited file/socket restrictions and cleanup of a registered detached child by the host controller. Cleanup by
+  the sandboxed parent failed and relied on a watchdog. A [seventh known browser probe](gdpval-native-cdp-2026-09-22.json)
+  executed the same6-to21 DOM update through private CDP pipes and exited naturally in1.47 seconds. Polling missed a
+  short-lived GPU process, and an external system helper remains outside the prototype cleanup policy. Complete
+  descendant tracking and hostile-content isolation remain unconfirmed; no participant browser route, native Office or hearing/motion perception is accepted.
 
 The Codex science evaluator read participant-acquired study/NASA bytes and rendered four pages. A controller review
 also identified limits: selected source snippets are not a complete scientific claim audit, and one claimed comparison
 with the supplied draft only hashed that input. A later independent readback found all18 original paragraphs in the
 tracked-deletion view; it cannot be credited as the judge's own inspection. These observations do not themselves prove
 an incorrect judgment or hallucination. Preserve raw judgments, effective validation and controller observations as
-separate evidence.
+separate evidence. Claude's later science inspection actually reconstructed the reject-all text and compared it with
+4,441 normalized characters of the supplied draft, fetched three public source pages and rendered all six submitted
+pages. Its five failed operations on the supplied DOCX/copies leave that source's appearance unobserved. Both science
+sessions retain their original outputs; neither observed context compaction or a direct reread of the durable files.
 
-Implementation `764f5b66` [CI passed](https://github.com/mashimashica/eval-harness/actions/runs/35618558921):559 tests,
+The empty-query format revision passes187 targeted tests (90% measured validator coverage), strict typing, Ruff
+and document checks. The saved-record replay covers five frozen evaluations without rewriting them.
+Current published CI status is attached to [PR #53](https://github.com/mashimashica/eval-harness/pull/53/checks);
+individual historical CI and model identities below remain tied to their original versions.
+
+Earlier implementation `764f5b66` [CI passed](https://github.com/mashimashica/eval-harness/actions/runs/35618558921):559 tests,
 4 platform-dependent skips,77% measured coverage; typing, lint, dependency audit, documents and secrets checks passed.
 The macOS context protection test was run locally. Procedure/context/font changes require new evaluation identities;
 participant generation is not repeated solely for these corrections. Generation/network changes still require matching

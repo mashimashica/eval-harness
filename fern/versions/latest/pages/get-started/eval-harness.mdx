@@ -345,7 +345,9 @@ workspace-relative file, byte SHA256, specific location, completed tool `call_id
 provide the call IDs and captured output paths. Shell inspections must print a JSON record containing
 `schema_version: 1`, `source_artifacts: [{path, sha256}]`, and nonempty `checks: [{action, observation}]`.
 Each `action` is a nonempty string. An `observation` may be a nonempty string, list or object, a finite number, or a
-boolean; nested blank/null values can describe empty cells, but a top-level null/empty observation is insufficient.
+boolean. Empty lists/objects are recorded query results (for example, no matching comments or named values); they
+must describe the performed action, and do not establish that its query or interpretation was correct. Missing/null
+observations, blank strings and nonfinite numbers remain insufficient. Nested blank/null values can describe cells.
 Source entries may include `size` or `bytes` only when they match the original file's nonnegative byte size.
 Record actual operations and results; functional checks need the relevant changed input and observed output.
 Reference `captured_stdout_path` with `stdout_sha256`, or `captured_stderr_path` with `stderr_sha256`, for shell evidence.
@@ -353,7 +355,11 @@ These canonical `.harness_evidence/outputs/...` paths are materialized after the
 paths or construct a stream filename from `call_id`. Include an explicit reference for every required method on each
 criterion. Match the original criterion ID to its description; another item's references do not supply missing coverage.
 `inspect_document` supplies structure evidence; content readings need an actual captured shell record. A checked absence
-can be recorded as `observation: {matches: [], count: 0}`; an unexplained empty observation is insufficient.
+can be recorded as `observation: {matches: [], count: 0}` or `observation: []` with the query described in `action`.
+The check list itself must remain nonempty. A captured zero-result query is distinct from a missing inspection;
+source hashes, successful captured calls, required methods and native/human gates remain mandatory. This revises the
+earlier format rule that rejected all top-level empty collections; retain old validation and record any saved-evidence
+revalidation separately under the changed validator identity. Do not rewrite old judgments or infer semantic accuracy.
 A scratch workbook or a modified copy alone does not bind the inspected original to a recorded check.
 A research comparison must bind the inspected submission and source bytes. Newly fetched sources use the persistent
 `.harness_evidence/research/<sha256>.bin` path in references and shell source records; the returned `scratch/research/`
@@ -550,6 +556,11 @@ classifications. All 220 tasks remain in scope. The two owner-selected tasks sta
 original order; they do not limit coverage. Current content feasibility is recorded independently as `candidate`,
 `needs_clarification`, or `undetermined`, with reasons and assumptions. Input reading, output authoring and evaluation
 are separate requirements. Creating an artifact or registering a route does not establish functional acceptance.
+Where a verified retrieval tool can obtain public materials, exact requested-source availability and version can still
+remain unconfirmed. The ledger preserves these separately under
+`task_specific_checks.external_data.source_input_obligations`, with the original source/year constraints and affected
+criterion IDs. A shared retrieval route does not assert that a particular document was obtained. The participant
+performs the required search, acquisition and selection; the harness does not preselect replacements.
 
 ## The six commands
 

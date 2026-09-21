@@ -39,13 +39,15 @@ def _text(value: Any) -> bool:
 
 
 def _observation(value: Any) -> bool:
-    """Allow nonempty structured JSON, including nested blank-cell values."""
+    """Allow finite recorded results, including an explicitly observed empty collection.
+
+    The surrounding check still requires an action and a captured successful
+    tool call. Empty collections can mean that a query returned no matches;
+    neither they nor nonempty results establish the interpretation's truth.
+    """
     if isinstance(value, str):
         return _text(value)
-    if isinstance(value, (list, dict)):
-        if not value:
-            return False
-    elif not isinstance(value, (bool, int, float)):
+    if not isinstance(value, (list, dict, bool, int, float)):
         return False
     try:
         json.dumps(value, allow_nan=False)
@@ -214,10 +216,11 @@ def protocol_prompt(protocol: Mapping[str, Any], rules: Mapping[str, Any]) -> st
         "to originals, without proving transformation truth. A modified copy shows its modified state, not the "
         "original's unchanged layout or values. Source entries may also include "
         "size or bytes as nonnegative integers matching the original file size; no other keys. Each check has "
-        "exactly action (nonempty string) and observation (nonempty string/list/object, finite number, or boolean). "
-        "Structured observations may contain nested null/empty JSON values; null/empty top-level observations "
-        "and nonfinite numbers at any depth are invalid. Record a checked absence as, for example, "
-        "observation:{matches:[],count:0}, not an unexplained empty observation. Record actual commands/checks and "
+        "exactly action (nonempty string) and observation (nonempty string, list/object, finite number, or boolean). "
+        "A list/object may be empty when the described query actually returned no entries. Missing/null observations, "
+        "blank strings and nonfinite numbers are invalid; nested null/empty values may describe cells. Record a "
+        "checked absence as, for example, observation:{matches:[],count:0} or observation:[] with the query in action. "
+        "An empty result does not establish that the query or interpretation was correct. Record actual commands/checks and "
         "observed results; include each inspected original's workspace-relative path and hash. Empty records "
         "or shell activity alone are insufficient. For research using shell, bind both the inspected submission "
         "and supplied source files under reference_files/ or research/ in source_artifacts. "
