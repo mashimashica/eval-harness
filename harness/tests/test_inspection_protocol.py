@@ -548,6 +548,11 @@ def test_native_schema_and_prompt_have_unambiguous_inspection_contract() -> None
     assert "nonnegative integers matching the original file size" in inspection
     assert "For all shell references, including structure checks" in inspection
     assert "For a derived scratch image or PDF" in inspection
+    assert "location as a nonempty string" in inspection
+    assert "not an object or list" in inspection
+    assert "not a visual-method evidence reference" in inspection
+    assert "cite the actual render_pages or view_image call" in inspection
+    assert "with the visible scratch/... path during the session" in inspection
     assert "not a persistent evidence reference" in inspection
     assert "evidence_refs covering every required method" in inspection
     assert "match each original criterion ID to its own description" in inspection
@@ -563,6 +568,28 @@ def test_native_schema_and_prompt_have_unambiguous_inspection_contract() -> None
         _task_criteria(),
     )
     assert legacy.valid and legacy.score == 0.8
+
+
+def test_shell_visual_self_report_is_not_promoted_by_an_additional_valid_render(tmp_path: Path) -> None:
+    _, rendered = _evidence(tmp_path, tool="render_pages")
+    digest, shell = _evidence(tmp_path, tool="shell")
+    shell["method"] = "visual"
+    item = _item(rendered)
+    item["evidence_refs"].append(shell)
+    result = apply_inspection_protocol(
+        [item],
+        protocol=_protocol(methods=["visual"]),
+        task_id="task-1",
+        task_criteria=_task_criteria(),
+        workspace=tmp_path,
+        evidence_sha256=digest,
+        artifact_hashes=["a" * 64],
+    )[0]
+    assert result["status"] == "unconfirmed"
+    assert result["evidence_validation"]["issues"] == [
+        "evidence reference has no completed call of the required method"
+    ]
+    assert _apply(tmp_path, digest, rendered, protocol=_protocol(methods=["visual"]))["status"] == "pass"
 
 
 @pytest.mark.parametrize("include_structure_reference", [False, True])

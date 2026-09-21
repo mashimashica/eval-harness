@@ -106,6 +106,30 @@ the authorized known-fixture probes, controller review, then saved-artifact eval
 A [native feasibility receipt](evidence/gdpval-native-feasibility-2026-09-21.json) records three model-free Chrome
 launches, private singleton creation followed by signal 11, and the still-unconfirmed browser/Office routes.
 
+### Six-session batch: probe findings and corrected evaluation version
+
+The two authorized probes completed on fingerprint `701baddb85dcb7eabd6440be838fd9e7d31f63e53d94caa935fa1cd965021d3e`.
+Codex full-page fields are 7/9 and its fixed crop 3/3; actual recalculation, source disagreement and unobserved-audio
+handling are established, while invalid visual references and a non-string derivative locator remain in its old record.
+Claude matches all nine full-page fields, all three crop fields and all six expected criterion states; controller review
+confirmed actual operations, the full-page-before-crop sequence and original preservation. These are bounded fixture
+results, not acceptance of real submissions or all-task semantics.
+
+The Codex probe also exposed a separate harness bug: unrelated historical scratch declarations were checked before
+selecting the viewed derivative, so editing a workbook could invalidate PDF lineage. The correction filters by the
+actual viewed SHA before applying unchanged matching-record guards. Prompt clarification identifies locator strings,
+live versus captured paths and actual visual-call references. 163 targeted tests, typing and Ruff pass. Neither probe
+nor its frozen code or judgment is rewritten.
+
+After the two probes, the same authorized batch reserved **four remaining evaluation slots**, each still 1,200 seconds,
+serial and zero automatic
+retries, with unchanged models/subscriptions/artifacts/rubrics/protocols. They use newly frozen fingerprint
+`00620ae4f577e98a5c2d0e7d731cf3d84f592be285130b1cecb765a77d935f7c`, manifest
+`d5746b506bece3916d15e25ba4f2b301f45666afb251ff79185083840a68bf88`, under
+`.audit/2026-09-21-next-acceptance-revised-evaluation/`. An explicit allocation blocks the original controller from
+running those same slots. The original two calls plus these four stay within the owner's six-session / 100-minute
+model-timeout ceiling. The owner was informed of the version split; no extra authorization or hidden retry is inferred.
+
 ## Historical increment: GDPval work and assessment environment (2026-09-15)
 
 Owner change request `draft-1`, including the fixed acceptance task order, governs O1–O6 alongside R01–R10.

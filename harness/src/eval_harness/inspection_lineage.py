@@ -174,9 +174,12 @@ def find_derived_scopes(
     source/check/observation guard. Its returned scopes are deliberately ignored:
     each matching derivative supplies its own explicit source membership. Failed
     calls, non-JSON streams, absent lineage, and unrelated hashes confer no scope.
-    Malformed declared lineage raises ``ArtifactError`` and must not be promoted
-    to a confirmed inspection. The caller must bind ``view_source_sha256`` to an
-    actual successful view_image or render_pages receipt before invoking this
+    Records declaring the viewed hash retain every source/check/derivative guard.
+    Unrelated historical scratch declarations confer no scope and need not still
+    match files that were legitimately edited later. Malformed matching lineage
+    raises ``ArtifactError`` and must not become a confirmed inspection. The caller
+    must bind ``view_source_sha256`` to an actual successful view_image or
+    render_pages receipt before invoking this
     function. It must not infer an original's unchanged appearance from a
     modified derivative; semantic interpretation remains the evaluator's duty.
     """
@@ -222,6 +225,14 @@ def find_derived_scopes(
             except (json.JSONDecodeError, UnicodeError, RecursionError):
                 continue
             if not isinstance(record, Mapping) or "derived_artifacts" not in record:
+                continue
+            entries = record["derived_artifacts"]
+            if not isinstance(entries, list) or not any(
+                isinstance(entry, Mapping) and entry.get("sha256") == view_source_sha256 for entry in entries
+            ):
+                # Select by the actual viewed bytes before checking historical
+                # scratch files. A later edit to an unrelated working copy must
+                # not invalidate this view's independently recorded lineage.
                 continue
             validate_record(captured, workspace)
             for derivative in validate_derivations(record, workspace):

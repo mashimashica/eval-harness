@@ -345,8 +345,8 @@ path is a reading location during the session. Participant research already stag
 #### Evidence from a derived image or PDF
 
 A shell record may also contain `derived_artifacts`. Each entry has exactly `path`, `sha256`, `source_paths` and
-`location`. For example, a frame extraction record has this shape; replace both hash placeholders with the actual
-file SHA256 values and record the operation and result that occurred:
+`location` (a nonempty string, not an object or list). For example, a frame extraction record has this shape; replace
+both hash placeholders with the actual file SHA256 values and record the operation and result that occurred:
 
 ```json
 {
@@ -367,7 +367,9 @@ of distinct, exact paths from `source_artifacts` in that same successful shell r
 derivative must still exist with the recorded byte hash. Absolute paths, basename aliases, traversal and symlinks are
 rejected. Records are bounded to 2 MiB. In a pairwise record, list only the originals used for each derivative: a frame
 whose `source_paths` contains only `submission_A/...` cannot establish coverage for `submission_B/...`, even when the
-record's source list includes both submissions.
+record's source list includes both submissions. Only records declaring the actual viewed source hash are candidates
+for that view's lineage check. An unrelated historical scratch file may have been edited later; its obsolete declaration
+does not invalidate a different view. Every source/check/derivative guard still applies to a matching record.
 
 After extraction, call `view_image` on the derivative and cite its returned `captured_path`, `rendered_sha256` and
 `call_id` with `method: visual` and a specific location. For a derived PDF, use `render_pages` and cite the PDF's canonical
@@ -377,7 +379,10 @@ matches the view/render receipt's `source_sha256` to the declared derivative has
 against its successful journal-bound receipt, and checks original and derivative bytes. Extraction or a declaration
 without an actual view does not establish visual inspection. Matching this chain records provenance; it does not prove
 transformation truth. A modified copy shows its modified state, not the original's unchanged layout or values.
-Still-image inspection does not establish unobserved motion or sound.
+A shell-written report of what the model saw is a procedure log. Cite the actual `render_pages` or `view_image` call
+for a visual-method reference; a shell self-report cannot supply that method. Use `scratch/...` to call the live tool and
+the canonical captured path in the final evidence reference. Still-image inspection does not establish unobserved
+motion or sound.
 
 After execution, the controller checks these references against captured files, journal and receipts. It retains raw
 model claims separately and makes insufficiently supported items unconfirmed. This validates recorded provenance and

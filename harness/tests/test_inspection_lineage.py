@@ -8,10 +8,12 @@ from __future__ import annotations
 import base64
 import copy
 import json
+import shutil
 from pathlib import Path
 from typing import Any
 
 import pytest
+from openpyxl import Workbook, load_workbook
 
 from eval_harness.artifacts import file_manifest, manifest_hash, sha256_file, write_json, write_jsonl
 from eval_harness.errors import ArtifactError
@@ -297,6 +299,13 @@ def test_missing_location_duplicate_sources_and_stale_sizes_are_rejected(tmp_pat
         validate_derivations(record, tmp_path)
 
 
+def test_structured_derivative_location_is_rejected_under_the_string_contract(tmp_path: Path) -> None:
+    record = _fixture(tmp_path)
+    record["derived_artifacts"][0]["location"] = {"source_page": 21, "derived_page": 1}
+    with pytest.raises(ArtifactError, match="location"):
+        _find(tmp_path, record, _calls(tmp_path, record))
+
+
 def test_stream_hash_cannot_be_borrowed_from_other_result_field(tmp_path: Path) -> None:
     record = _fixture(tmp_path)
     calls = _calls(tmp_path, record)
@@ -384,8 +393,60 @@ def test_rendered_scratch_pdf_uses_exact_original_lineage(tmp_path: Path) -> Non
     assert _check_ref(reference, tmp_path, calls) == ("visual", {"submission"})
 
 
+def test_edited_earlier_workbook_copy_does_not_poison_unrelated_pdf_lineage(tmp_path: Path) -> None:
+    record, calls, reference = _rendered_pdf_fixture(tmp_path)
+    original = tmp_path / "submission/earlier-workbook.xlsx"
+    workbook = Workbook()
+    workbook.worksheets[0].append([2, 3, "=A1+B1"])
+    workbook.save(original)
+    scratch = tmp_path / ".harness_evidence/scratch/earlier-workbook.xlsx"
+    shutil.copyfile(original, scratch)
+    initial_hash = sha256_file(scratch)
+    historical = {
+        "schema_version": 1,
+        "source_artifacts": [{"path": "submission/earlier-workbook.xlsx", "sha256": sha256_file(original)}],
+        "checks": [{"action": "Create the initial workbook copy before changing its input", "observation": {"A1": 2}}],
+        "derived_artifacts": [
+            {
+                "path": ".harness_evidence/scratch/earlier-workbook.xlsx",
+                "sha256": initial_hash,
+                "source_paths": ["submission/earlier-workbook.xlsx"],
+                "location": "before editing A1",
+            }
+        ],
+    }
+    edited = load_workbook(scratch)
+    edited.worksheets[0]["A1"] = 7
+    edited.save(scratch)
+    assert sha256_file(scratch) != initial_hash
+    assert load_workbook(original).worksheets[0]["A1"].value == 2
+    with pytest.raises(ArtifactError, match="derived artifact hash"):
+        validate_derivations(historical, tmp_path)
+    old_id = "000000-initial-workbook-copy"
+    old_stream = ".harness_evidence/outputs/initial-workbook-copy.stdout.log"
+    old_call = {
+        "call_id": old_id,
+        "tool": "shell",
+        "failure": None,
+        "result": {
+            "status": "completed",
+            "returncode": 0,
+            "captured_stdout_path": old_stream,
+            "stdout_sha256": _put(tmp_path, old_stream, json.dumps(historical).encode()),
+        },
+    }
+    assert find_derived_scopes(reference["sha256"], tmp_path, {old_id: old_call}, validate_record=_guard) == set()
+    assert _check_ref(reference, tmp_path, {old_id: old_call, **calls}) == ("visual", {"submission"})
+    # The old declaration is excluded only from the unrelated PDF lookup. The
+    # actual source/check/derivative guard still rejects it when it is the target.
+    with pytest.raises(ArtifactError, match="derived artifact hash"):
+        find_derived_scopes(initial_hash, tmp_path, {old_id: old_call, **calls}, validate_record=_guard)
+    assert validate_derivations(record, tmp_path)[0].sha256 == reference["sha256"]
+
+
 @pytest.mark.parametrize(
-    "mutation", ["undeclared", "failed_shell", "unrelated_hash", "source_tampered", "scratch_alias"]
+    "mutation",
+    ["undeclared", "failed_shell", "unrelated_hash", "source_tampered", "derivative_tampered", "scratch_alias"],
 )
 def test_rendered_scratch_pdf_does_not_infer_unbound_originals(tmp_path: Path, mutation: str) -> None:
     record, calls, reference = _rendered_pdf_fixture(tmp_path)
@@ -401,9 +462,11 @@ def test_rendered_scratch_pdf_does_not_infer_unbound_originals(tmp_path: Path, m
         calls.update(_calls(tmp_path, record))
     elif mutation == "source_tampered":
         (tmp_path / "submission/workbook.xlsx").write_bytes(b"changed after the original hash")
+    elif mutation == "derivative_tampered":
+        (tmp_path / reference["path"]).write_bytes(b"PDF changed after the viewed hash")
     else:
         reference["path"] = "scratch/recalculated.pdf"
-    if mutation in {"source_tampered", "scratch_alias"}:
+    if mutation in {"source_tampered", "derivative_tampered", "scratch_alias"}:
         with pytest.raises(ArtifactError, match="hash|missing"):
             _check_ref(reference, tmp_path, calls)
     else:
