@@ -120,12 +120,10 @@ def execute_with_capabilities(executor: Any, request: ExecutionRequest, kind: st
         prepared = prepare_environment(session.workspace, session.workspace.parent, request.settings, request.purpose)
         probe_environment(prepared, session)
         protected = _protected_manifest(session.workspace, request.purpose)
-        prompt = request.prompt + environment_prompt(request.purpose)
-        prompt += (
-            "Allowed public HTTPS hostnames: "
-            + ", ".join(prepared.receipt["specification"]["network_domains"])
-            + ".\n"
-        )
+        specification = prepared.receipt["specification"]
+        prompt = request.prompt + environment_prompt(request.purpose, specification)
+        if specification.get("network_policy", "allowlist") == "allowlist":
+            prompt += "Allowed public HTTPS hostnames: " + ", ".join(specification["network_domains"]) + ".\n"
         (prepared.state / "effective_prompt.txt").write_text(prompt, encoding="utf-8")
         mcp = {"command": prepared.command[0], "args": list(prepared.command[1:])}
         if kind == "codex":

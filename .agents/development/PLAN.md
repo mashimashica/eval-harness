@@ -1,7 +1,70 @@
 <!-- SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved. -->
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 
-## Active increment: GDPval work and assessment environment (2026-09-15)
+## Active increment: all 220 GDPval tasks (2026-09-21)
+
+The owner's expanded request supersedes the former two-task acceptance scope. All 220 tasks and 10,453 original
+rubric items remain in scope. The original dashboard and science-editing tasks retain their execution order as the
+starting real-CLI checks. Baseline is PR #53 commit `a77babf707ceceb27cb1f6da931bbac7ebb44db1`; earlier evidence and
+the exhausted eleven-session envelope below remain historical. No merge or production ALPS run is authorized.
+
+The controller owns integration, dependency/runtime preparation, startup checks, inspection protocol, generated
+readiness ledger, documentation, acceptance and PR update. One Astra implementation worker owns network/service
+repairs (R3/R4, public HTTPS policy) and their tests. One Astra specialist owns the source-grounded requirements
+review for all tasks (R1/R2 input, output and criterion distinctions). No nested delegation or overlapping writers.
+
+Work sequence and evidence:
+
+1. Repair transactional dependency installation and save every search attempt; verify public HTTPS and blocked
+   internal/redirect/error paths. Keep explicit legacy allowlist mode and bind the policy to new fingerprints.
+2. Preserve each original prompt/rubric, acquire only the 261 provided files, and verify all-task staging/integrity.
+   Distinguish content conflicts from environment gaps and absent verification in the eight-section ledger.
+3. Supply and test required common authoring/inspection capabilities, including applicable media/CAD routes.
+   Map evidence to task and criterion IDs; a proposed route or installed package is not acceptance evidence.
+4. Add a separately versioned inspection protocol, evidence references and conservative unconfirmed results;
+   human-only checks retain named responsibility and an explicit handoff procedure. Custom grading is not claimed
+   equivalent to official GDPval grading. Missing inspection does not establish a false judgment or hallucination.
+5. Run authorized applicable checks, retain originals and failures, update impact/re-evaluation guidance and PR #53.
+
+Owner authorized on 2026-09-21: a **new** maximum ten CLI sessions (four applications at900s, four evaluations at600s,
+two known-content probes at300s), `gpt-5.6-sol/medium` and `claude-opus-5/medium`, concurrency1, automatic retries0,
+existing subscriptions only, no auxiliary AI or API billing. Old eleven sessions do not supply remaining budget. The owner is the human-review coordination owner; actual reviewers will be named before the experiment. Unassigned human checks remain unconfirmed and cannot accept a completion receipt. Model-free tests and local locked dependency setup remain separate from this model envelope.
+
+### Handoff disposition (2026-09-21)
+
+Implementation and bounded acceptance evidence are ready for the existing Draft PR #53; full all-220 acceptance
+remains **unconfirmed**, with no scope exclusions. See [the outcome report](evidence/gdpval-220-capabilities.md),
+[versioned evidence](evidence/gdpval-220-capabilities.json), [common route mapping](evidence/gdpval-220-route-applicability.json)
+and the [current ledger](gdpval-task-readiness.json). The all-task requirements review preserves 220 prompts,
+261 supplied files, 10,453 original criteria and 94 negative signed weights. All supplied bytes match pinned remote
+objects; five original-file defects and content questions remain separate from infrastructure and participant failures.
+
+The owner-requested observation review supersedes the provisional 239 human tags: 120 machine-observable;
+39 application operations (7 shared routes verified, 32 infrastructure pending); 75 perception items (4 sufficient
+machine alternatives); 5 source/meaning uncertainties. Preserve original OR branches and mixed scoring units.
+The requester coordinates human review; observers are assigned before the experiment. No actual human observation
+has been inferred. The separate 143-code-item review keeps source/documentation requirements distinct from execution.
+
+The new ten-session envelope is exhausted: four applications completed; three evaluators completed and Claude's
+science evaluator timed out; both known-content probes completed. Incremental pages 1, 21 and 30 reached both CLIs.
+Claude recognized 9/9 marker fields and Codex 7/9; preserve the latter's page 21 code/shape recognition failure.
+The original eleven-session history is unchanged. No automatic model retry, model/billing substitution or production
+comparison was run. The controller's mistaken no-op resume fixture on the timed-out session invoked zero CLI/model
+calls; its simulated failure is separately archived and the entire original session was restored to its exact prior hash.
+
+Common component evidence may establish matching operations without a successful participant solution. It cannot
+substitute for actual artifact/source observations. The final candidate fingerprint is `cff019360b687a84017824c3ef60cf11316e61a0f62291c10240b4ff5367db56`;
+the ten sessions retain `18af2df6448d179ea371c15b90f1b37db3bd1a368c1f622795b597abb16de570`.
+Only grader/provenance source differs; affected mechanics have unit, native-frame and saved-record checks.
+A new model trial of the revised prompt is not authorized by the exhausted envelope and is not claimed.
+
+Remaining acceptance work is limited to the task/item gaps in the ledger: native/browser operations, actual hearing/
+motion observations, source/meaning clarification, and missing evaluator evidence. Resolve those before accepting
+affected scopes. Re-evaluate unchanged outputs under a new evaluation identity for procedure-only changes; assess
+whole-comparison-unit generation reruns when network/tool changes affected outputs. Do not retrospectively alter
+old N/S/A conditions or choose replacement tasks by outcome. No merge is authorized.
+
+## Historical increment: GDPval work and assessment environment (2026-09-15)
 
 Owner change request `draft-1`, including the fixed acceptance task order, governs O1–O6 alongside R01–R10.
 Baseline `0cb774f7`; branch `codex/gdpval-capability-environment`, worktree `.worktrees/gdpval-capability-environment`.

@@ -16,11 +16,14 @@ import base64
 import hashlib
 import io
 import json
+import math
 import os
 import shutil
 import sys
+import tempfile
 import threading
 import time
+import unicodedata
 import uuid
 import zipfile
 from dataclasses import dataclass
@@ -28,7 +31,15 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Iterable, Mapping, Sequence
 
-from .capability_network import NetworkClient, fetch_summary, json_summary, search_summary
+from .capability_network import (
+    HTTPExchange,
+    NetworkClient,
+    NetworkError,
+    SearchAttempt,
+    fetch_summary,
+    json_summary,
+    search_summary,
+)
 from .capability_sandbox import (
     MAX_SHELL_TIMEOUT_SECONDS,
     MAX_TOOL_TEXT_BYTES,
@@ -53,6 +64,7 @@ MAX_REGION_COORDINATE = 20_000
 CONTEXT_FOLDERS = ("reference_files", "skill", "creation_inputs", "creator_skills", "evidence")
 CONFIG_KEYS = {
     "network_domains",
+    "network_policy",
     "python",
     "python_roots",
     "package_paths",
@@ -76,6 +88,7 @@ class CapabilityConfig:
     """Validated JSON configuration passed by the trusted parent harness."""
 
     network_domains: tuple[str, ...]
+    network_policy: str
     python: Path | None
     python_roots: tuple[Path, ...]
     package_paths: tuple[Path, ...]
@@ -105,6 +118,9 @@ class CapabilityConfig:
             return tuple(raw)
 
         network_domains = strings("network_domains")
+        network_policy = value.get("network_policy", "allowlist")
+        if not isinstance(network_policy, str) or network_policy not in {"allowlist", "public_https"}:
+            raise CapabilityError("network_policy must be allowlist or public_https")
         path_values = strings("path")
         python_roots = strings("python_roots")
         package_paths = strings("package_paths")
@@ -115,7 +131,13 @@ class CapabilityConfig:
 
         def positive_number(name: str, default: float, maximum: float) -> float:
             raw = value.get(name, default)
-            if isinstance(raw, bool) or not isinstance(raw, (int, float)) or raw <= 0 or raw > maximum:
+            if (
+                isinstance(raw, bool)
+                or not isinstance(raw, (int, float))
+                or not math.isfinite(raw)
+                or raw <= 0
+                or raw > maximum
+            ):
                 raise CapabilityError(f"{name} must be between 0 and {maximum}")
             return float(raw)
 
@@ -148,6 +170,7 @@ class CapabilityConfig:
         snapshot = json.loads(json.dumps(dict(value), ensure_ascii=False))
         return cls(
             network_domains=network_domains,
+            network_policy=network_policy,
             python=Path(raw_python).expanduser() if isinstance(raw_python, str) else None,
             python_roots=tuple(Path(item).expanduser() for item in python_roots),
             package_paths=tuple(Path(item).expanduser() for item in package_paths),
@@ -439,6 +462,7 @@ class CapabilityService:
 
         self.network = NetworkClient(
             self.config.network_domains,
+            network_policy=self.config.network_policy,
             max_bytes=self.config.fetch_max_bytes,
             timeout_seconds=self.config.fetch_timeout_seconds,
         )
@@ -535,6 +559,7 @@ class CapabilityService:
             "shell": self.probe,
             "tools": [tool["name"] for tool in self.tool_definitions()],
             "network_domains": list(self.config.network_domains),
+            "network_policy": self.config.network_policy,
             "office_rendering": dict(self.config.office_rendering) if self.config.office_rendering else None,
         }
 
@@ -687,20 +712,77 @@ class CapabilityService:
         # Return the service-owned output locations and bounded previews; complete
         # streams remain available only in private state.
         value["call_id"] = call_id
+        value["captured_stdout_path"] = ".harness_evidence/" + result.stdout_path.relative_to(self.state).as_posix()
+        value["captured_stderr_path"] = ".harness_evidence/" + result.stderr_path.relative_to(self.state).as_posix()
         return value
+
+    def _network_blob(self, body: bytes) -> tuple[Path, str]:
+        body_hash = _sha256_bytes(body)
+        blob = self._network / f"{body_hash}.bin"
+        if blob.is_symlink():
+            raise CapabilityError("research evidence path must not be a symbolic link")
+        if not blob.exists():
+            self._write_private(blob, body)
+        return blob, body_hash
+
+    def _exchange_evidence(self, exchanges: Sequence[HTTPExchange]) -> list[dict[str, Any]]:
+        evidence: list[dict[str, Any]] = []
+        for exchange in exchanges:
+            entry: dict[str, Any] = {
+                "url": exchange.url,
+                "retrieved_at": exchange.retrieved_at,
+                "request_elapsed_seconds": exchange.elapsed_seconds,
+                "status": exchange.status,
+                "content_type": exchange.content_type,
+                "body_complete": exchange.body_complete,
+                "error": exchange.error,
+                "location": exchange.location,
+            }
+            if exchange.body is not None:
+                blob, body_hash = self._network_blob(exchange.body)
+                entry.update({"bytes": len(exchange.body), "sha256": body_hash, "body_file": blob.name})
+            evidence.append(entry)
+        return evidence
+
+    def _search_attempt_evidence(self, attempts: Sequence[SearchAttempt]) -> list[dict[str, Any]]:
+        return [
+            {
+                "backend": attempt.backend,
+                "requested_url": attempt.requested_url,
+                "final_url": attempt.final_url,
+                "redirects": list(attempt.redirects),
+                "retrieved_at": attempt.retrieved_at,
+                "request_elapsed_seconds": attempt.elapsed_seconds,
+                "status": attempt.status,
+                "error": attempt.error,
+                "exchanges": self._exchange_evidence(attempt.exchanges),
+            }
+            for attempt in attempts
+        ]
 
     def _fetch(self, arguments: Mapping[str, Any], call_id: str) -> dict[str, Any]:
         self._only(arguments, ("url",))
         request_started = time.monotonic()
         retrieved_at = datetime.now(timezone.utc).isoformat()
-        response = self.network.fetch(arguments["url"])
+        try:
+            response = self.network.fetch(arguments["url"])
+        except NetworkError as exc:
+            self._write_research_receipt(
+                call_id,
+                {
+                    "type": "harness.research",
+                    "requested_url": arguments["url"],
+                    "final_url": exc.final_url,
+                    "redirects": list(exc.redirects),
+                    "retrieved_at": retrieved_at,
+                    "request_elapsed_seconds": time.monotonic() - request_started,
+                    "error": str(exc),
+                    "exchanges": self._exchange_evidence(exc.exchanges),
+                },
+            )
+            raise
         request_elapsed = time.monotonic() - request_started
-        body_hash = _sha256_bytes(response.body)
-        blob = self._network / f"{body_hash}.bin"
-        if blob.is_symlink():
-            raise CapabilityError("research evidence path must not be a symbolic link")
-        if not blob.exists():
-            self._write_private(blob, response.body)
+        blob, body_hash = self._network_blob(response.body)
         suffix = ".bin"
         if (
             response.content_type.startswith("text/")
@@ -711,6 +793,7 @@ class CapabilityService:
         visible = self._copy_visible_research(call_id, suffix, response.body)
         summary = fetch_summary(response, body_sha256=body_hash, visible_path=str(visible))
         summary["state_path"] = str(blob)
+        summary["exchanges"] = self._exchange_evidence(response.exchanges)
         self._write_research_receipt(
             call_id,
             {
@@ -718,6 +801,7 @@ class CapabilityService:
                 "retrieved_at": retrieved_at,
                 "request_elapsed_seconds": request_elapsed,
                 **fetch_summary(response, body_sha256=body_hash),
+                "exchanges": summary["exchanges"],
             },
         )
         if response.status < 200 or response.status >= 300:
@@ -728,17 +812,28 @@ class CapabilityService:
         self._only(arguments, ("query",))
         request_started = time.monotonic()
         retrieved_at = datetime.now(timezone.utc).isoformat()
-        result = self.network.search(arguments["query"])
+        try:
+            result = self.network.search(arguments["query"])
+        except NetworkError as exc:
+            self._write_research_receipt(
+                call_id,
+                {
+                    "type": "harness.research",
+                    "query": arguments["query"],
+                    "retrieved_at": retrieved_at,
+                    "request_elapsed_seconds": time.monotonic() - request_started,
+                    "error": str(exc),
+                    "attempts": self._search_attempt_evidence(exc.attempts),
+                },
+            )
+            raise
         request_elapsed = time.monotonic() - request_started
-        body_hash = _sha256_bytes(result.response.body)
-        blob = self._network / f"{body_hash}.bin"
-        if blob.is_symlink():
-            raise CapabilityError("research evidence path must not be a symbolic link")
-        if not blob.exists():
-            self._write_private(blob, result.response.body)
+        blob, body_hash = self._network_blob(result.response.body)
+        attempts = self._search_attempt_evidence(result.attempts)
         visible = self._copy_visible_research(call_id, ".html", result.response.body)
         summary = search_summary(result, body_sha256=body_hash, visible_path=str(visible))
         summary["state_path"] = str(blob)
+        summary["attempts"] = attempts
         self._write_research_receipt(
             call_id,
             {
@@ -749,6 +844,7 @@ class CapabilityService:
                 "request_elapsed_seconds": request_elapsed,
                 **fetch_summary(result.response, body_sha256=body_hash),
                 "results": list(result.results),
+                "attempts": attempts,
             },
         )
         return summary
@@ -816,6 +912,8 @@ class CapabilityService:
         derived_path = self._derived / "images" / f"{call_id}.png"
         self._write_private(derived_path, encoded)
         metadata = {
+            "call_id": call_id,
+            "captured_path": ".harness_evidence/" + derived_path.relative_to(self.state).as_posix(),
             "path": str(path),
             "source_sha256": source_hash,
             "source_bytes": size,
@@ -854,71 +952,61 @@ class CapabilityService:
         if not parsed.path.lower().endswith(".whl") or parsed.fragment:
             raise CapabilityError("install_wheel URL must name a .whl file and have no fragment")
         response = self.network.fetch(url)
-        if response.status < 200 or response.status >= 300:
-            raise CapabilityError(f"wheel download returned HTTP {response.status}")
         wheel_hash = _sha256_bytes(response.body)
-        if wheel_hash.lower() != expected.lower():
-            raise CapabilityError("wheel SHA256 does not match the expected digest")
-        if len(response.body) > self.config.wheel_max_bytes:
-            raise CapabilityError("wheel exceeds the configured size limit")
         state_wheel = self._wheels / f"{wheel_hash}.whl"
         if state_wheel.is_symlink():
             raise CapabilityError("wheel evidence path must not be a symbolic link")
         if not state_wheel.exists():
             self._write_private(state_wheel, response.body)
-        try:
-            with zipfile.ZipFile(io.BytesIO(response.body)) as package:
-                entries = package.infolist()
-                if not entries or len(entries) > MAX_WHEEL_ENTRIES:
-                    raise CapabilityError("wheel has too many or no archive entries")
-                expanded = 0
-                safe_entries: list[zipfile.ZipInfo] = []
-                for entry in entries:
-                    name = entry.filename
-                    if not name or "\x00" in name or "\\" in name:
-                        raise CapabilityError("wheel contains an invalid archive path")
-                    parts = Path(name).parts
-                    if Path(name).is_absolute() or any(part in {"", ".", ".."} for part in parts):
-                        raise CapabilityError("wheel contains a traversal path")
-                    mode = (entry.external_attr >> 16) & 0o170000
-                    if mode == 0o120000:
-                        raise CapabilityError("wheel symbolic links are not allowed")
-                    if name.lower().endswith(".pth"):
-                        raise CapabilityError("wheel .pth files are not allowed")
-                    expanded += entry.file_size
-                    if entry.file_size > MAX_WHEEL_FILE_BYTES or expanded > MAX_WHEEL_EXPANDED_BYTES:
-                        raise CapabilityError("wheel expanded size exceeds the bounded limit")
-                    safe_entries.append(entry)
-                target_root = self._packages
-                if target_root.is_symlink():
-                    raise CapabilityError("package destination must not be a symbolic link")
-                target_root.mkdir(parents=True, exist_ok=True, mode=0o700)
-                extracted: list[str] = []
-                for entry in safe_entries:
-                    destination = target_root / entry.filename
-                    current = target_root
-                    try:
-                        relative_destination = destination.relative_to(target_root)
-                    except ValueError as exc:  # defensive; archive paths were checked above
-                        raise CapabilityError("wheel destination escapes package directory") from exc
-                    for part in relative_destination.parts:
-                        current /= part
-                        if current.is_symlink():
-                            raise CapabilityError(f"wheel destination contains a symbolic link: {current}")
-                    if entry.is_dir() or entry.filename.endswith("/"):
-                        destination.mkdir(parents=True, exist_ok=True, mode=0o700)
-                        continue
-                    destination.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
-                    # Reject pre-existing files/symlinks.  A wheel install never
-                    # overwrites a participant artifact or an earlier package.
-                    if destination.exists() or destination.is_symlink():
-                        raise CapabilityError(f"wheel destination already exists: {destination}")
-                    with package.open(entry) as source, destination.open("xb") as sink:
-                        shutil.copyfileobj(source, sink, length=1024 * 1024)
-                    destination.chmod(0o600)
-                    extracted.append(entry.filename)
-        except zipfile.BadZipFile as exc:
-            raise CapabilityError(f"wheel is not a valid ZIP archive: {exc}") from exc
+        self._write_private(
+            self._wheels / f"{call_id}.json",
+            _json_bytes(
+                {
+                    **fetch_summary(response, body_sha256=wheel_hash),
+                    "expected_sha256": expected.lower(),
+                    "wheel_file": state_wheel.name,
+                }
+            )
+            + b"\n",
+        )
+        if response.status < 200 or response.status >= 300:
+            raise CapabilityError(f"wheel download returned HTTP {response.status}")
+        if wheel_hash.lower() != expected.lower():
+            raise CapabilityError("wheel SHA256 does not match the expected digest")
+        if len(response.body) > self.config.wheel_max_bytes:
+            raise CapabilityError("wheel exceeds the configured size limit")
+        # Hold the service lock through staging/publication. Validation and CRC
+        # reads cannot affect the import tree; publication tracks only new paths
+        # so any later I/O failure removes them without touching earlier installs.
+        with self._lock:
+            try:
+                with zipfile.ZipFile(io.BytesIO(response.body)) as package:
+                    safe_entries = self._validate_wheel_entries(package)
+                    with tempfile.TemporaryDirectory(prefix=".install-", dir=self._wheels) as staging_name:
+                        staging = Path(staging_name)
+                        extracted: list[str] = []
+                        directories: set[Path] = set()
+                        for entry in safe_entries:
+                            relative = Path(entry.filename)
+                            directories.update(parent for parent in relative.parents if parent != Path("."))
+                            if entry.is_dir():
+                                directories.add(relative)
+                            destination = staging / relative
+                            if entry.is_dir():
+                                destination.mkdir(parents=True, exist_ok=True, mode=0o700)
+                                # Reading explicit directory members also checks
+                                # their CRC; hidden data in these is not ignored.
+                                if package.read(entry):
+                                    raise CapabilityError("wheel directory entries must be empty")
+                                continue
+                            destination.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
+                            with package.open(entry) as source, destination.open("xb") as sink:
+                                shutil.copyfileobj(source, sink, length=1024 * 1024)
+                            destination.chmod(0o600)
+                            extracted.append(entry.filename)
+                        self._publish_wheel(staging, extracted, directories)
+            except (zipfile.BadZipFile, EOFError, NotImplementedError, RuntimeError) as exc:
+                raise CapabilityError(f"wheel is not a valid supported ZIP archive: {exc}") from exc
         return {
             "url": response.final_url,
             "requested_url": response.requested_url,
@@ -931,6 +1019,80 @@ class CapabilityService:
             "install_elapsed_seconds": time.monotonic() - started,
             "call_id": call_id,
         }
+
+    def _validate_wheel_entries(self, package: zipfile.ZipFile) -> list[zipfile.ZipInfo]:
+        entries = package.infolist()
+        if not entries or len(entries) > MAX_WHEEL_ENTRIES:
+            raise CapabilityError("wheel has too many or no archive entries")
+        if self._packages.is_symlink() or not self._packages.is_dir():
+            raise CapabilityError("package destination must be a directory without symbolic links")
+        expanded = 0
+        members: dict[str, bool] = {}
+        for entry in entries:
+            name = entry.orig_filename
+            if not name or "\x00" in name or "\\" in name or name != entry.filename:
+                raise CapabilityError("wheel contains an invalid archive path")
+            path_name = name[:-1] if entry.is_dir() else name
+            if not path_name or any(part in {"", ".", ".."} for part in path_name.split("/")):
+                raise CapabilityError("wheel contains a traversal path")
+            relative = Path(path_name)
+            if relative.is_absolute():
+                raise CapabilityError("wheel contains a traversal path")
+            mode = (entry.external_attr >> 16) & 0o170000
+            if mode not in {0, 0o040000 if entry.is_dir() else 0o100000}:
+                raise CapabilityError("wheel links and special files are not allowed")
+            if name.lower().endswith(".pth"):
+                raise CapabilityError("wheel .pth files are not allowed")
+            if entry.flag_bits & 1:
+                raise CapabilityError("encrypted wheel members are not allowed")
+            key = unicodedata.normalize("NFD", path_name).casefold()
+            if key in members:
+                raise CapabilityError("wheel contains duplicate archive destinations")
+            members[key] = entry.is_dir()
+            expanded += entry.file_size
+            if entry.file_size > MAX_WHEEL_FILE_BYTES or expanded > MAX_WHEEL_EXPANDED_BYTES:
+                raise CapabilityError("wheel expanded size exceeds the bounded limit")
+            current = self._packages
+            for part in relative.parts:
+                current /= part
+                if current.is_symlink():
+                    raise CapabilityError(f"wheel destination contains a symbolic link: {current}")
+                if current.exists() and (
+                    not current.is_dir() or current == self._packages / relative and not entry.is_dir()
+                ):
+                    raise CapabilityError(f"wheel destination already exists: {current}")
+        for key in members:
+            for parent in Path(key).parents:
+                if members.get(parent.as_posix()) is False:
+                    raise CapabilityError("wheel file conflicts with an archive directory")
+        return entries
+
+    def _publish_wheel(self, staging: Path, files: Sequence[str], directories: set[Path]) -> None:
+        created_files: list[Path] = []
+        created_directories: list[Path] = []
+        try:
+            for relative in sorted(directories, key=lambda path: (len(path.parts), path.as_posix())):
+                destination = self._packages / relative
+                try:
+                    destination.mkdir(mode=0o700)
+                except FileExistsError:
+                    if destination.is_symlink() or not destination.is_dir():
+                        raise CapabilityError(f"wheel destination already exists: {destination}")
+                else:
+                    created_directories.append(destination)
+            for name in files:
+                destination = self._packages / name
+                with destination.open("xb") as sink:
+                    created_files.append(destination)
+                    with (staging / name).open("rb") as source:
+                        shutil.copyfileobj(source, sink, length=1024 * 1024)
+                destination.chmod(0o600)
+        except BaseException:
+            for path in reversed(created_files):
+                path.unlink()
+            for path in reversed(created_directories):
+                path.rmdir()
+            raise
 
     def _inspection_call(self, name: str, arguments: Mapping[str, Any]) -> Any:
         if self._inspection is None:
@@ -976,6 +1138,10 @@ class CapabilityService:
         self._journal_started(call_id, name, args, started_at)
         try:
             result = self._dispatch(name, args, call_id)
+            if isinstance(result, dict):
+                result["call_id"] = call_id
+            elif isinstance(result, list) and name == "render_pages":
+                result.append({"type": "text", "text": json_summary({"call_id": call_id})})
         except BaseException as exc:
             try:
                 self._journal(call_id, name, args, started, error=exc, started_at=started_at)
@@ -1015,7 +1181,7 @@ class CapabilityService:
             [
                 {
                     "name": "fetch",
-                    "description": "Fetch a public HTTPS URL allowed by network_domains, recording provenance.",
+                    "description": "Fetch an anonymous public HTTPS URL permitted by the configured network policy, recording provenance.",
                     "inputSchema": {
                         "type": "object",
                         "properties": {"url": {"type": "string"}},

@@ -12,15 +12,16 @@ from copy import deepcopy
 from pathlib import Path
 from typing import Any, NoReturn, cast
 
+from gdpval_current import EVIDENCE_PATH, REVIEW_PATH, apply_review
 
 ROOT = Path(__file__).resolve().parents[3]
 OUTPUT_PATH = ROOT / ".agents/development/gdpval-task-readiness.json"
-RECEIPT_PATH = ROOT / ".audit/acceptance/gdpval-task-readiness-restructure.json"
+RECEIPT_PATH = ROOT / ".audit/2026-09-21-all-tasks/readiness-generator.json"
 HISTORY_PATH = ROOT / ".agents/development/evidence/gdpval-content-triage-2026-09-16.json"
 HISTORY_RELATIVE_PATH = ".agents/development/evidence/gdpval-content-triage-2026-09-16.json"
 TASK_VERIFICATION_PATH = ROOT / ".agents/development/evidence/gdpval-capabilities-01.json"
 TASK_VERIFICATION_RELATIVE_PATH = ".agents/development/evidence/gdpval-capabilities-01.json"
-GENERATED_DATE = "2026-09-16"
+GENERATED_DATE = "2026-09-21"
 CURRENT_SECTION_KEYS = {
     "identity",
     "primary_route",
@@ -693,7 +694,7 @@ if {key: len(value) for key, value in legacy_content_membership.items()} != {
 history_document = {
     "schema_version": 1,
     "history_kind": "legacy-readiness-ledger-and-content-triage",
-    "generated_date": GENERATED_DATE,
+    "generated_date": "2026-09-16",
     "source": deepcopy(source_info),
     "source_hashes": {
         "frozen_jsonl_sha256": source_info["sha256"],
@@ -763,7 +764,8 @@ history_document = {
     },
 }
 HISTORY_PATH.parent.mkdir(parents=True, exist_ok=True)
-HISTORY_PATH.write_text(json.dumps(history_document, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+if not HISTORY_PATH.exists():
+    HISTORY_PATH.write_text(json.dumps(history_document, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 history_sha256 = sha256_path(HISTORY_PATH)
 if history_sha256 is None:
     fail("content-triage history could not be hashed after writing")
@@ -1123,45 +1125,7 @@ def build_task_specific_checks(
     }
 
 
-def known_unsupported(line_number: int, route: str, formats: list[str], prompt: str) -> list[dict[str, Any]]:
-    text = prompt.lower()
-    result: list[dict[str, Any]] = []
-
-    def add(capability: str, reason: str) -> None:
-        result.append(
-            {
-                "capability": capability,
-                "status": "known_unsupported",
-                "scope": "current declared route only",
-                "permanent_exclusion": False,
-                "reason": reason,
-            }
-        )
-
-    if "audio" in formats or "video" in formats or re.search(r"\b(audio|video|music|film|vfx)\b", text):
-        add(
-            "full audio/video authoring or listening-grade review",
-            "The shared route does not provide task-specific media authoring or whole temporal/auditory review.",
-        )
-    if (
-        "STEP/CAD" in formats
-        or "CAD" in formats
-        or re.search(r"\b(cad|3d model|step file|step model|step format)\b", text)
-    ):
-        add(
-            "native 3D/CAD geometry authoring and evaluation",
-            "No task-specific native CAD/STEP geometry route is established by the shared environment proof.",
-        )
-    if re.search(r"\b(interactive|notebook|user interface|ui|screen reader)\b", text) and route == "code":
-        add(
-            "task-specific interactive UI or notebook behavior",
-            "The shared route can execute code but has no task-specific interactive UI acceptance proof.",
-        )
-    return result
-
-
 def environment_support(line_number: int, row: dict[str, Any], route: str, formats: list[str]) -> dict[str, Any]:
-    prompt = str(row.get("prompt") or "")
     task_capabilities = [
         {
             "capability": f"task-specific {route} generation",
@@ -1176,14 +1140,13 @@ def environment_support(line_number: int, row: dict[str, Any], route: str, forma
             "permanent_exclusion": False,
         },
     ]
-    unsupported = known_unsupported(line_number, route, formats, prompt)
     return {
         "common_profile_ref": COMMON_ENVIRONMENT["profile"],
         "common_profile_status_ref": "common_environment.shared_profile_status",
         "applicable_roles": ["creation", "application", "evaluation"],
         "client_role_support_ref": "common_environment.client_role_support",
         "task_specific_capabilities": task_capabilities,
-        "known_unsupported": unsupported,
+        "known_unsupported": [],
         "generation_vs_evaluation": {
             "generation": {"status": "unverified", "proof_is_task_specific": True},
             "evaluation": {"status": "unverified", "proof_is_task_specific": True},
@@ -1683,7 +1646,46 @@ def build_task_record(index: int, row: dict[str, Any], review_task: dict[str, An
     return result
 
 
-items = [build_task_record(index, row, reviewed.get(row["task_id"])) for index, row in enumerate(rows)]
+requirements_review = load_json(ROOT / REVIEW_PATH, "all-task requirements review")
+current_review = task_map(requirements_review["tasks"], "all-task requirements")
+if requirements_review["source"]["sha256"] != source_hash or set(current_review) != set(row_ids):
+    fail("current requirements review must cover the exact frozen 220-task source")
+current_evidence = (
+    load_json(ROOT / EVIDENCE_PATH, "all-task capability evidence") if (ROOT / EVIDENCE_PATH).exists() else {}
+)
+route_reference = current_evidence.get("route_applicability_record")
+if route_reference is not None:
+    route_path = ROOT / ".agents/development/evidence/gdpval-220-route-applicability.json"
+    if route_reference.get("path") != route_path.relative_to(ROOT).as_posix():
+        fail("unexpected current route mapping path")
+    if hashlib.sha256(route_path.read_bytes()).hexdigest() != route_reference.get("sha256"):
+        fail("current route mapping differs from its evidence hash")
+    current_routes = load_json(route_path, "source-bound common routes")
+    current_evidence["route_applicability"] = current_routes["tasks"]
+historical_environment = deepcopy(COMMON_ENVIRONMENT)
+COMMON_ENVIRONMENT.update(
+    profile="gdpval-v2",
+    shared_profile_status=current_evidence.get("common_environment_acceptance", {}).get("status", "unverified"),
+    role_evidence=current_evidence.get("role_evidence", {}),
+    evidence_refs=[EVIDENCE_PATH],
+    client_role_support=current_evidence.get(
+        "client_role_support",
+        {
+            client: {"status": "unverified", "roles": ["creation", "application", "evaluation"]}
+            for client in ("codex", "claude")
+        },
+    ),
+    interpretation="Common native checks, real CLI dispatch and task-level acceptance are separate. Historical gdpval-v1 evidence is retained with explicit applicability.",
+)
+items = [
+    apply_review(
+        build_task_record(index, row, reviewed.get(row["task_id"])),
+        row,
+        current_review[row["task_id"]],
+        current_evidence,
+    )
+    for index, row in enumerate(rows)
+]
 if len(items) != len(rows):
     fail(f"output coverage changed: expected {len(rows)}, got {len(items)}")
 if {item["identity"]["task_id"] for item in items} != set(row_ids):
@@ -1691,7 +1693,7 @@ if {item["identity"]["task_id"] for item in items} != set(row_ids):
 if len({item["identity"]["task_id"] for item in items}) != len(items):
     fail("output task IDs are duplicated")
 
-content_counts = Counter(item["primary_route"]["content_readiness"]["category"] for item in items)
+content_counts = Counter(item["primary_route"]["content_readiness"]["status"] for item in items)
 environment_task_counts = Counter(item["environment_support"]["task_level_acceptance"] for item in items)
 generation_counts = Counter(
     item["environment_support"]["generation_vs_evaluation"]["generation"]["status"] for item in items
@@ -1707,15 +1709,17 @@ included = [
         "line_number": item["identity"]["dataset_line"],
     }
     for item in items
-    if item["acceptance_scope"]["status"] == "included"
+    if item["acceptance_scope"]["fixed_acceptance_order"] is not None
 ]
 included.sort(key=lambda value: value["order"])
-if dict(scope_counts) != {"excluded": 218, "included": 2}:
+if dict(scope_counts) != {"included": 220}:
     fail(f"current acceptance inclusion counts changed: {dict(scope_counts)}")
 if [value["line_number"] for value in included] != [88, 129] or [value["order"] for value in included] != [1, 2]:
     fail("current fixed acceptance order changed")
-if dict(environment_task_counts) != {"unverified": len(items)}:
-    fail("task-level environment acceptance must remain unverified")
+if set(environment_task_counts) - {"unverified", "common_routes_applicable_with_limits", "route_gaps_remain"}:
+    fail("unknown route acceptance state")
+if any(item["assessment"]["scoring"]["result_status"] != "unconfirmed" for item in items):
+    fail("route adoption must not invent artifact scores")
 if sum(content_counts.values()) != len(items):
     fail("content readiness counts do not cover all tasks")
 
@@ -1723,7 +1727,7 @@ axes = {
     "content_readiness": {
         "dimension": "content-based readiness",
         "counts": dict(sorted(content_counts.items())),
-        "status_counts": {"preliminary_or_reviewed_inference_unconfirmed": len(items)},
+        "status_counts": dict(sorted(content_counts.items())),
         "basis": "Per-task prompt, rubric, occupation, and declared file metadata; no category is empirical acceptance.",
         "candidate_is_not_empirical_acceptance": True,
         "historical_triage_ref": HISTORY_RELATIVE_PATH,
@@ -1732,14 +1736,15 @@ axes = {
         "dimension": "target-environment support and task acceptance",
         "task_level_status_counts": dict(sorted(environment_task_counts.items())),
         "common_profile": {
-            "ref": "gdpval-v1",
-            "status": "verified",
+            "ref": "gdpval-v2",
+            "status": current_evidence.get("common_environment_acceptance", {}).get("status", "unverified"),
             "defined_once_in_common_environment": True,
             "not_task_acceptance_count": True,
         },
         "generation_status_counts": dict(sorted(generation_counts.items())),
         "evaluation_status_counts": dict(sorted(evaluation_counts.items())),
         "task_trial_coverage": {
+            "scope": "Historical eleven-session record; current trials are separate below.",
             "source_ref": TASK_VERIFICATION_RELATIVE_PATH,
             "source_sha256": TASK_VERIFICATION_SHA256,
             "source_hash_kind": "canonical_task_verification_map",
@@ -1748,20 +1753,41 @@ axes = {
             "full_task_acceptance_status_counts": full_task_acceptance_coverage(items),
             "interpretation": "Counts recorded client trials and dispatch evidence; they are not task success or full environment acceptance.",
         },
-        "status_vocabulary": COMMON_ENVIRONMENT["status_vocabulary"],
+        "current_trial_coverage": {
+            "source_ref": EVIDENCE_PATH,
+            "application_status_counts": dict(
+                Counter(
+                    result.get("execution_status", "unconfirmed")
+                    for session in current_evidence.get("model_sessions", [])
+                    if session["mode"] == "application"
+                    for result in session.get("results", [])
+                )
+            ),
+            "evaluation_status_counts": dict(
+                Counter(
+                    result.get("judge_execution_status", "unconfirmed")
+                    for session in current_evidence.get("model_sessions", [])
+                    if session["mode"] == "evaluation"
+                    for result in session.get("results", [])
+                )
+            ),
+            "task_success_inferred": False,
+        },
+        "status_vocabulary": ["unverified", "common_routes_applicable_with_limits", "route_gaps_remain"],
         "interpretation": "Shared profile verification and task-level functional acceptance are separate; one failure does not establish permanent unsupported status.",
     },
     "current_acceptance_scope": {
         "dimension": "current inclusion or exclusion scope",
         "counts": dict(sorted(scope_counts.items())),
-        "included_task_order": included,
+        "first_real_cli_task_order": included,
         "status_vocabulary": ["included", "excluded"],
         "interpretation": "Only inclusion/exclusion is represented here. Historical triage membership is in the separate history file.",
     },
 }
 
 output = {
-    "schema_version": 2,
+    "schema_version": 3,
+    "historical_environment": historical_environment,
     "date": GENERATED_DATE,
     "ledger_kind": "GDPval task readiness ledger with independent axes",
     "source": {
@@ -1778,11 +1804,11 @@ output = {
     "common_environment": deepcopy(COMMON_ENVIRONMENT),
     "axes": axes,
     "policy": {
-        "empirical_acceptance": "Every task remains unconfirmed until task-specific generation and evaluation evidence is recorded.",
+        "empirical_acceptance": "Common capability evidence may support multiple tasks when applicability is established; participant task success is not an infrastructure acceptance condition. Unverified requirements remain unconfirmed.",
         "unknown": "Unknown is not zero, pass, or failure.",
         "inference": "Content and capability requirements are labelled inferred/preliminary when they are not backed by task evidence.",
         "scope": "Current acceptance scope is independent from content readiness and environment support.",
-        "exhaustive_audit": "No all-220 rubric audit was requested; unmapped criteria remain explicitly unconfirmed.",
+        "exhaustive_audit": "All 220 tasks and 10453 original rubric items have a source-grounded requirements mapping and draft inspection procedures. Registration alone is not empirical capability acceptance.",
     },
     "history": {
         "path": HISTORY_RELATIVE_PATH,
@@ -1811,7 +1837,7 @@ output = {
     ),
     "tasks": items,
     "verification": {
-        "receipt_path": ".audit/acceptance/gdpval-task-readiness-restructure.json",
+        "receipt_path": ".audit/2026-09-21-all-tasks/readiness-generator.json",
         "model_runs": 0,
         "model_runs_meaning": "Generator runs no models; task trials are referenced under axes.target_environment_acceptance.task_trial_coverage.",
         "remote_writes": 0,
@@ -1890,7 +1916,7 @@ receipt = {
             "result_status": "unconfirmed",
         }
         for item in items
-        if item["acceptance_scope"]["status"] == "included"
+        if item["acceptance_scope"]["fixed_acceptance_order"] is not None
     ],
     "preservation": deepcopy(output["preservation"]),
     "model_runs": 0,
@@ -1907,7 +1933,7 @@ print(
             "output_sha256": output_sha256,
             "history": HISTORY_RELATIVE_PATH,
             "history_sha256": history_sha256,
-            "receipt": ".audit/acceptance/gdpval-task-readiness-restructure.json",
+            "receipt": ".audit/2026-09-21-all-tasks/readiness-generator.json",
             "receipt_sha256": receipt_sha256,
             "task_count": len(items),
             "axes": axes,

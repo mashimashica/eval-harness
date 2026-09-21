@@ -11,7 +11,7 @@ import math
 import shutil
 import uuid
 from collections.abc import Callable
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import datetime, timezone
 from pathlib import Path
 from time import monotonic
@@ -47,6 +47,16 @@ from .errors import ArtifactError, ConfigError, HarnessError
 from .executor import AuthStatus, ExecutionRequest, ExecutionResult, Executor, ParsedCodexOutput, preflight_executor
 from .gdpval import task_directory_name
 from .grading_criteria import criteria_for_task, criteria_hash, mechanical_findings
+from .inspection_protocol import (
+    apply_inspection_protocol,
+    evidence_ref_schema,
+    human_handoff,
+    load_inspection_protocol,
+    protocol_for_task,
+    protocol_hash,
+    protocol_prompt,
+    verify_captured_evidence,
+)
 from .office_rendering import OFFICE_SUFFIXES, attach_previews, parse_rendering, prepare_render_cache
 
 ExecutorFactory: TypeAlias = Callable[[str], Executor]
@@ -140,6 +150,9 @@ def _inspection_prompt(prompt: str) -> str:
     )
     prompt = prompt.replace(
         "current read-only workspace", "workspace containing read-only originals and writable scratch"
+    ).replace(
+        "with a numeric score between 0 and 1 and a short",
+        "with a score between 0 and 1 (or null for unconfirmed criteria) and a short",
     )
     return (
         prompt
@@ -308,7 +321,8 @@ def _preflight_panel(
             task_id = record.get("task_id")
             if not isinstance(task_id, str):
                 raise ArtifactError("source run state has invalid task identity")
-            criteria_for_task(config.criteria, task_id, source_benchmark)
+            selected = criteria_for_task(config.criteria, task_id, source_benchmark)
+            protocol_for_task(config.inspection_protocol, task_id, selected)
 
 
 def _write_criteria_snapshot(evaluation_dir: Path, criteria: Mapping[str, Any] | None) -> str | None:
@@ -321,6 +335,64 @@ def _write_criteria_snapshot(evaluation_dir: Path, criteria: Mapping[str, Any] |
     manifest.update({"criteria_sha256": digest, "criteria_snapshot": "criteria_snapshot.json"})
     write_json(evaluation_dir / "evaluation_manifest.json", manifest)
     return digest
+
+
+def _write_protocol_snapshot(evaluation_dir: Path, protocol: Mapping[str, Any] | None) -> None:
+    if protocol is None:
+        return
+    digest = protocol_hash(protocol)
+    write_json(
+        evaluation_dir / "inspection_protocol_snapshot.json",
+        {
+            "inspection_protocol": dict(protocol),
+            "inspection_protocol_sha256": digest,
+        },
+    )
+    manifest = read_json(evaluation_dir / "evaluation_manifest.json")
+    manifest.update(
+        inspection_protocol_sha256=digest, inspection_protocol_snapshot="inspection_protocol_snapshot.json"
+    )
+    write_json(evaluation_dir / "evaluation_manifest.json", manifest)
+
+
+def _verify_protocol_snapshot(root: Path, manifest: Mapping[str, Any], config: EvaluationConfig) -> None:
+    digest = protocol_hash(config.inspection_protocol)
+    if digest is None and manifest.get("inspection_protocol_sha256") is None:
+        return
+    if (
+        manifest.get("inspection_protocol_sha256") != digest
+        or manifest.get("inspection_protocol_snapshot") != "inspection_protocol_snapshot.json"
+    ):
+        raise ArtifactError("saved inspection protocol identity does not match its frozen configuration")
+    value = read_json(root / "inspection_protocol_snapshot.json")
+    if (
+        not isinstance(value, Mapping)
+        or value.get("inspection_protocol") != config.inspection_protocol
+        or value.get("inspection_protocol_sha256") != digest
+    ):
+        raise ArtifactError("saved inspection protocol snapshot changed")
+
+
+def _verify_protocol_judgment_evidence(root: Path) -> None:
+    journal = root / "judgments.jsonl"
+    if not journal.is_file():
+        return
+    for record in read_jsonl(journal):
+        evidence = record.get("capability_evidence")
+        digest = evidence.get("evidence_sha256") if isinstance(evidence, Mapping) else None
+        if record.get("evaluation_status") != "completed" or not isinstance(digest, str):
+            continue
+        response_path = record.get("judge_response_path")
+        if (
+            not isinstance(response_path, str)
+            or Path(response_path).is_absolute()
+            or ".." in Path(response_path).parts
+        ):
+            raise ArtifactError("saved inspection judgment path is invalid")
+        workspace = root / Path(response_path).parent / "workspace"
+        if not workspace.resolve().is_relative_to(root.resolve()):
+            raise ArtifactError("saved inspection judgment escaped the evaluation directory")
+        verify_captured_evidence(workspace, digest)
 
 
 def _load_criteria_snapshot(root: Path, manifest: Mapping[str, Any]) -> dict[str, Any] | None:
@@ -394,7 +466,11 @@ def _criteria_prompt(task_criteria: Mapping[str, Any] | None) -> str:
 
 
 def _judge_response_schema(
-    method: str, task_criteria: Mapping[str, Any] | None = None, *, allow_unconfirmed: bool = False
+    method: str,
+    task_criteria: Mapping[str, Any] | None = None,
+    *,
+    allow_unconfirmed: bool = False,
+    inspection_protocol: bool = False,
 ) -> dict[str, Any]:
     """Build the native structured-output contract for one evaluator call."""
 
@@ -432,6 +508,15 @@ def _judge_response_schema(
                 "additionalProperties": False,
             },
         }
+        if inspection_protocol:
+            item_schema = properties["criteria_results"]["items"]
+            item_schema["properties"].update(
+                {
+                    "observation_kind": {"type": "string", "enum": ["direct", "inference", "unconfirmed"]},
+                    "evidence_refs": evidence_ref_schema(),
+                }
+            )
+            item_schema["required"].extend(["observation_kind", "evidence_refs"])
         required.append("criteria_results")
     return {
         "type": "object",
@@ -441,7 +526,12 @@ def _judge_response_schema(
     }
 
 
-def _parse_criteria_results(value: Any, task_criteria: Mapping[str, Any] | None) -> tuple[dict[str, Any], ...] | None:
+def _parse_criteria_results(
+    value: Any,
+    task_criteria: Mapping[str, Any] | None,
+    *,
+    inspection_protocol: bool = False,
+) -> tuple[dict[str, Any], ...] | None:
     if task_criteria is None:
         return None
     raw_items = task_criteria.get("ai", [])
@@ -455,7 +545,9 @@ def _parse_criteria_results(value: Any, task_criteria: Mapping[str, Any] | None)
     results: list[dict[str, Any]] = []
     seen: set[str] = set()
     for item in value:
-        if not isinstance(item, Mapping) or set(item) != {"id", "status", "evidence", "reason"}:
+        basic = {"id", "status", "evidence", "reason"}
+        allowed = basic | {"observation_kind", "evidence_refs"} if inspection_protocol else basic
+        if not isinstance(item, Mapping) or not basic.issubset(item) or set(item) - allowed:
             return None
         identifier = item.get("id")
         status = item.get("status")
@@ -473,6 +565,8 @@ def _parse_criteria_results(value: Any, task_criteria: Mapping[str, Any] | None)
             return None
         seen.add(identifier)
         results.append({"id": identifier, "status": status, "evidence": evidence, "reason": reason})
+        if inspection_protocol:
+            results[-1].update(observation_kind=item.get("observation_kind"), evidence_refs=item.get("evidence_refs"))
     if seen != set(expected):
         return None
     return tuple(results)
@@ -483,7 +577,11 @@ def _timestamp() -> str:
 
 
 def parse_scalar_score(
-    text: str, task_criteria: Mapping[str, Any] | None = None, *, allow_unconfirmed: bool = False
+    text: str,
+    task_criteria: Mapping[str, Any] | None = None,
+    *,
+    allow_unconfirmed: bool = False,
+    inspection_protocol: bool = False,
 ) -> ScalarScore:
     """Parse exactly one JSON object using the evaluator response schema."""
 
@@ -499,7 +597,9 @@ def parse_scalar_score(
     if any(key not in allowed for key in value):
         return ScalarScore(None, None, False, "judge response contained an unsupported top-level field")
     score = value.get("score")
-    uncertain_results = _parse_criteria_results(value.get("criteria_results"), task_criteria)
+    uncertain_results = _parse_criteria_results(
+        value.get("criteria_results"), task_criteria, inspection_protocol=inspection_protocol
+    )
     uncertain = uncertain_results and any(item.get("status") == "unconfirmed" for item in uncertain_results)
     if allow_unconfirmed and uncertain:
         rationale = value.get("rationale")
@@ -521,14 +621,20 @@ def parse_scalar_score(
     rationale = value.get("rationale")
     if not isinstance(rationale, str) or not rationale.strip():
         return ScalarScore(None, None, False, "judge rationale was missing or not a string")
-    criteria_results = _parse_criteria_results(value.get("criteria_results"), task_criteria)
+    criteria_results = _parse_criteria_results(
+        value.get("criteria_results"), task_criteria, inspection_protocol=inspection_protocol
+    )
     if task_criteria is not None and task_criteria.get("ai") and criteria_results is None:
         return ScalarScore(None, rationale, False, "judge criteria_results were missing, unknown, or incomplete")
     return ScalarScore(score_float, rationale, True, None, criteria_results)
 
 
 def parse_pairwise_score(
-    text: str, task_criteria: Mapping[str, Any] | None = None, *, allow_unconfirmed: bool = False
+    text: str,
+    task_criteria: Mapping[str, Any] | None = None,
+    *,
+    allow_unconfirmed: bool = False,
+    inspection_protocol: bool = False,
 ) -> PairwiseScore:
     """Parse exactly one anonymous pairwise judgment."""
 
@@ -549,7 +655,9 @@ def parse_pairwise_score(
     rationale = value.get("rationale")
     if not isinstance(rationale, str) or not rationale.strip():
         return PairwiseScore(None, None, False, "pairwise judge rationale was missing or not a string")
-    criteria_results = _parse_criteria_results(value.get("criteria_results"), task_criteria)
+    criteria_results = _parse_criteria_results(
+        value.get("criteria_results"), task_criteria, inspection_protocol=inspection_protocol
+    )
     if task_criteria is not None and task_criteria.get("ai") and criteria_results is None:
         return PairwiseScore(None, rationale, False, "judge criteria_results were missing, unknown, or incomplete")
     if allow_unconfirmed and any(item.get("status") == "unconfirmed" for item in criteria_results or ()):
@@ -990,6 +1098,74 @@ def _pair_schedule(
     return schedule
 
 
+def _add_protocol_prompt(
+    prompt: str,
+    config: EvaluationConfig,
+    task_id: str,
+    task_criteria: Mapping[str, Any] | None,
+    judgment_dir: Path,
+    artifact_hashes: Sequence[str],
+) -> str:
+    rules = protocol_for_task(config.inspection_protocol, task_id, task_criteria)
+    if rules is None or config.inspection_protocol is None or task_criteria is None:
+        return prompt
+    handoffs = [
+        human_handoff(config.inspection_protocol, task_id, criterion, artifact_hash)
+        for criterion in task_criteria["ai"]
+        if rules[criterion["id"]]["required_methods"] == ["human"]
+        for artifact_hash in artifact_hashes
+    ]
+    if handoffs:
+        write_json(judgment_dir / "human_handoffs.json", handoffs)
+    return prompt.replace(
+        "exactly its id, status, evidence, and reason.",
+        "its id, status, evidence, reason, observation_kind, and evidence_refs.",
+    ) + protocol_prompt(config.inspection_protocol, rules)
+
+
+def _protocol_effective_items(
+    score: ScalarScore | PairwiseScore,
+    result: ExecutionResult,
+    config: EvaluationConfig,
+    task_id: str,
+    task_criteria: Mapping[str, Any],
+    workspace: Path,
+    artifact_hashes: Sequence[str],
+) -> tuple[dict[str, Any], ...]:
+    assert config.inspection_protocol is not None
+    receipt = next((event for event in result.parsed.events if event.get("type") == "harness.runtime"), {})
+    digest = receipt.get("evidence_sha256")
+    return apply_inspection_protocol(
+        score.criteria_results or (),
+        protocol=config.inspection_protocol,
+        task_id=task_id,
+        task_criteria=task_criteria,
+        workspace=workspace,
+        evidence_sha256=digest if isinstance(digest, str) else None,
+        artifact_hashes=artifact_hashes,
+    )
+
+
+def _record_protocol_result(
+    record: dict[str, Any],
+    config: EvaluationConfig,
+    reported: ScalarScore | PairwiseScore,
+) -> None:
+    if config.inspection_protocol is None:
+        return
+    record["inspection_protocol_sha256"] = protocol_hash(config.inspection_protocol)
+    record["reported_criteria_results"] = list(reported.criteria_results or ())
+    record["reported_score" if isinstance(reported, ScalarScore) else "reported_winner"] = (
+        reported.score if isinstance(reported, ScalarScore) else reported.winner
+    )
+    if any(item.get("status") == "unconfirmed" for item in record.get("criteria_results", [])):
+        record.update(
+            score_valid=False,
+            assessment_status="unconfirmed",
+            quality_score_withheld_reason="inspection protocol evidence is unconfirmed",
+        )
+
+
 def _evaluate_one(
     source_dir: Path,
     source_benchmark: str,
@@ -1100,6 +1276,8 @@ def _evaluate_one(
         )
     if task_criteria is not None and task_criteria.get("ai"):
         prompt += "Return criteria_results alongside score and rationale.\n"
+    artifact_hashes = [str(execution["artifact_sha256"])]
+    prompt = _add_protocol_prompt(prompt, config, task_id, task_criteria, judgment_dir, artifact_hashes)
     (judgment_dir / "evaluator_prompt.txt").write_text(prompt, encoding="utf-8")
     images: tuple[Path, ...] = ()
     if capability_enabled(selected_judge.runtime.settings):
@@ -1121,7 +1299,10 @@ def _evaluate_one(
                 settings=selected_judge.runtime.settings,
                 purpose="evaluation",
                 response_schema=_judge_response_schema(
-                    "scalar", task_criteria, allow_unconfirmed=capability_enabled(selected_judge.runtime.settings)
+                    "scalar",
+                    task_criteria,
+                    allow_unconfirmed=capability_enabled(selected_judge.runtime.settings),
+                    inspection_protocol=config.inspection_protocol is not None,
                 ),
                 images=images,
             )
@@ -1136,10 +1317,21 @@ def _evaluate_one(
             result.parsed.final_text,
             task_criteria,
             allow_unconfirmed=capability_enabled(selected_judge.runtime.settings),
+            inspection_protocol=config.inspection_protocol is not None,
         )
         if result.status == "completed"
         else ScalarScore(None, None, False, result.error or "judge execution failed")
     )
+    reported_score = score
+    if config.inspection_protocol is not None and task_criteria is not None and result.status == "completed":
+        effective = _protocol_effective_items(
+            score, result, config, task_id, task_criteria, workspace, artifact_hashes
+        )
+        score = replace(
+            score,
+            criteria_results=effective,
+            score=None if any(item["status"] == "unconfirmed" for item in effective) else score.score,
+        )
     record = _judgment_record(
         execution,
         result,
@@ -1153,6 +1345,7 @@ def _evaluate_one(
         criteria_digest=criteria_digest,
         mechanical_findings_path=mechanical_findings_path,
     )
+    _record_protocol_result(record, config, reported_score)
     write_json(judgment_dir / "judgment.json", record)
     return record
 
@@ -1347,6 +1540,8 @@ def _evaluate_pair(
             workspace / "research" / "submission_B",
             (executions[1].get("capability_evidence") or {}).get("evidence_sha256"),
         )
+    artifact_hashes = [str(first["artifact_sha256"]), str(second["artifact_sha256"])]
+    prompt = _add_protocol_prompt(prompt, config, task_id, task_criteria, judgment_dir, artifact_hashes)
     (judgment_dir / "evaluator_prompt.txt").write_text(prompt, encoding="utf-8")
     images: tuple[Path, ...] = ()
     if capability_enabled(selected_judge.runtime.settings):
@@ -1367,7 +1562,9 @@ def _evaluate_pair(
                 model=selected_judge.runtime.model,
                 settings=selected_judge.runtime.settings,
                 purpose="evaluation",
-                response_schema=_judge_response_schema("pairwise", task_criteria),
+                response_schema=_judge_response_schema(
+                    "pairwise", task_criteria, inspection_protocol=config.inspection_protocol is not None
+                ),
                 images=images,
             )
         )
@@ -1381,10 +1578,21 @@ def _evaluate_pair(
             result.parsed.final_text,
             task_criteria,
             allow_unconfirmed=capability_enabled(selected_judge.runtime.settings),
+            inspection_protocol=config.inspection_protocol is not None,
         )
         if result.status == "completed"
         else PairwiseScore(None, None, False, result.error or "pairwise judge execution failed")
     )
+    reported_score = score
+    if config.inspection_protocol is not None and task_criteria is not None and result.status == "completed":
+        effective = _protocol_effective_items(
+            score, result, config, task_id, task_criteria, workspace, artifact_hashes
+        )
+        score = replace(
+            score,
+            criteria_results=effective,
+            winner="unjudgeable" if any(item["status"] == "unconfirmed" for item in effective) else score.winner,
+        )
     pair_with_artifacts = dict(pair)
     pair_with_artifacts["submission_A_files"] = first_entries
     pair_with_artifacts["submission_B_files"] = second_entries
@@ -1403,6 +1611,7 @@ def _evaluate_pair(
         criteria_digest=criteria_digest,
         mechanical_findings_paths=mechanical_findings_paths,
     )
+    _record_protocol_result(record, config, reported_score)
     write_json(judgment_dir / "judgment.json", record)
     return record
 
@@ -1447,6 +1656,7 @@ def _pairwise_manifest(
         },
     )
     _write_criteria_snapshot(evaluation_dir, config.criteria)
+    _write_protocol_snapshot(evaluation_dir, config.inspection_protocol)
 
 
 def _evaluate_pairwise_run(
@@ -2321,6 +2531,7 @@ def _evaluation_config_from_snapshot(snapshot: Mapping[str, Any]) -> EvaluationC
         criteria=dict(criteria) if isinstance(criteria, Mapping) else None,
         pairs=pairs,
         office_rendering=parse_rendering(snapshot.get("office_rendering"), Path.cwd()),
+        inspection_protocol=load_inspection_protocol(snapshot.get("inspection_protocol"), Path.cwd(), criteria),
     )
 
 
@@ -2430,6 +2641,7 @@ def evaluate_run(
         },
     )
     criteria_digest = _write_criteria_snapshot(evaluation_dir, config.criteria)
+    _write_protocol_snapshot(evaluation_dir, config.inspection_protocol)
     source_snapshot_dir = _freeze_source_run(source_dir, state, run_manifest, evaluation_dir)
     manifest = read_json(evaluation_dir / "evaluation_manifest.json")
     manifest["source_snapshot_dir"] = str(source_snapshot_dir)
@@ -2563,6 +2775,9 @@ def resume_evaluation(
     if not isinstance(source_dir, str) or not isinstance(snapshot, Mapping):
         raise ArtifactError("evaluation manifest is missing its source run or config")
     config = _evaluation_config_from_snapshot(snapshot)
+    _verify_protocol_snapshot(root, manifest, config)
+    if config.inspection_protocol is not None:
+        _verify_protocol_judgment_evidence(root)
     errors = validate_evaluation_config(config)
     if errors:
         raise ConfigError("saved evaluation configuration is invalid:\n" + "\n".join(f"- {error}" for error in errors))

@@ -16,11 +16,16 @@ import html
 import http.client
 import ipaddress
 import json
+import math
+import queue
 import re
 import socket
 import ssl
+import threading
+import time
 import urllib.parse
 from dataclasses import dataclass
+from datetime import datetime, timezone
 from html.parser import HTMLParser
 from typing import Any, Callable, Iterable, Mapping, Sequence
 
@@ -34,8 +39,43 @@ MAX_SEARCH_RESULTS = 10
 USER_AGENT = "eval-harness-capability/1"
 
 
-class NetworkError(HarnessError):
-    """A URL did not satisfy the public network policy or its request failed."""
+# A resolver can outlive a caller's deadline. Bound these daemon workers so a
+# stalled system resolver cannot accumulate an unbounded number of threads.
+_DNS_SLOTS = threading.BoundedSemaphore(4)
+MAX_DNS_ADDRESSES = 16
+_RESERVED_HOSTS = (
+    "localhost",
+    "local",
+    "localdomain",
+    "alt",
+    "internal",
+    "lan",
+    "home",
+    "home.arpa",
+    "onion",
+    "test",
+    "invalid",
+    "example",
+    "example.com",
+    "example.net",
+    "example.org",
+    "arpa",
+)
+
+
+@dataclass(frozen=True)
+class HTTPExchange:
+    """One address attempt, including bounded partial bytes on failure."""
+
+    url: str
+    retrieved_at: str
+    elapsed_seconds: float
+    status: int | None = None
+    content_type: str | None = None
+    body: bytes | None = None
+    body_complete: bool = False
+    error: str | None = None
+    location: str | None = None
 
 
 @dataclass(frozen=True)
@@ -48,6 +88,7 @@ class FetchResponse:
     content_type: str
     body: bytes
     redirects: tuple[str, ...] = ()
+    exchanges: tuple[HTTPExchange, ...] = ()
 
     @property
     def byte_count(self) -> int:
@@ -55,14 +96,61 @@ class FetchResponse:
 
 
 @dataclass(frozen=True)
+class SearchAttempt:
+    """Provenance for each backend, whether successful or unsuccessful."""
+
+    backend: str
+    requested_url: str
+    final_url: str
+    redirects: tuple[str, ...]
+    retrieved_at: str
+    elapsed_seconds: float
+    status: int | None
+    error: str | None
+    exchanges: tuple[HTTPExchange, ...]
+
+
+class NetworkError(HarnessError):
+    """A policy or transport failure retaining any received response evidence."""
+
+    def __init__(
+        self,
+        message: str,
+        *,
+        final_url: str | None = None,
+        redirects: tuple[str, ...] = (),
+        exchanges: tuple[HTTPExchange, ...] = (),
+        attempts: tuple[SearchAttempt, ...] = (),
+    ) -> None:
+        super().__init__(message)
+        self.final_url = final_url
+        self.redirects = redirects
+        self.exchanges = exchanges
+        self.attempts = attempts
+
+
+@dataclass(frozen=True)
 class SearchResult:
-    """Public search results plus the response provenance needed for a receipt."""
+    """Public search results plus all backend attempts needed for a receipt."""
 
     query: str
     backend: str
     url: str
     response: FetchResponse
     results: tuple[dict[str, str], ...]
+    attempts: tuple[SearchAttempt, ...] = ()
+
+
+@dataclass
+class _RequestBudget:
+    deadline: float
+    remaining_bytes: int
+
+    def remaining_seconds(self) -> float:
+        remaining = self.deadline - time.monotonic()
+        if remaining <= 0:
+            raise NetworkError("network request exceeded the total deadline")
+        return remaining
 
 
 def _idna_host(host: str) -> str:
@@ -119,63 +207,110 @@ def _is_public_address(value: str) -> bool:
 
 
 class _PinnedHTTPSConnection(http.client.HTTPSConnection):
-    """HTTPSConnection that never performs a second DNS lookup."""
+    """HTTPSConnection that connects only to a previously validated IP address."""
 
     def __init__(self, hostname: str, address: str, *, timeout: float, context: ssl.SSLContext) -> None:
-        # The base class stores a host used for request headers and error messages.
-        # ``connect`` below uses the already resolved address instead.
         super().__init__(hostname, 443, timeout=timeout, context=context)
         self._capability_hostname = hostname
         self._capability_address = address
         self._capability_context = context
+        self._capability_deadline = time.monotonic() + timeout
+        self._capability_socket: socket.socket | None = None
 
     def connect(self) -> None:
-        sock = socket.create_connection((self._capability_address, self.port), self.timeout)
+        # socket.create_connection would call getaddrinfo again even for a numeric
+        # address. An explicit AF_INET/AF_INET6 socket avoids that lookup entirely.
+        family = socket.AF_INET6 if ":" in self._capability_address else socket.AF_INET
+        sock = socket.socket(family, socket.SOCK_STREAM)
+        self._capability_socket = sock
         try:
-            self.sock = self._capability_context.wrap_socket(sock, server_hostname=self._capability_hostname)
+            sock.settimeout(max(0.001, self._capability_deadline - time.monotonic()))
+            sock.connect((self._capability_address, 443))
+            remaining = self._capability_deadline - time.monotonic()
+            if remaining <= 0:
+                raise TimeoutError("network request exceeded the total deadline")
+            sock.settimeout(remaining)
+            # Expose the SSL socket before its handshake so the deadline watchdog
+            # can shut down a stalled handshake as well as a stalled body/header.
+            wrapped = self._capability_context.wrap_socket(
+                sock, server_hostname=self._capability_hostname, do_handshake_on_connect=False
+            )
+            self._capability_socket = wrapped
+            self.sock = wrapped
+            wrapped.do_handshake()
         except BaseException:
-            sock.close()
+            self.abort()
             raise
+
+    def abort(self) -> None:
+        sock = self._capability_socket
+        if sock is not None:
+            try:
+                sock.shutdown(socket.SHUT_RDWR)
+            except OSError:
+                pass
+            sock.close()
+        self.close()
 
 
 class NetworkClient:
-    """Perform policy-checked public HTTPS GETs and the shared HTML search."""
+    """Anonymous GET/443 with an exact allowlist or the public HTTPS policy."""
 
     def __init__(
         self,
         network_domains: Sequence[str],
         *,
+        network_policy: str = "allowlist",
         max_bytes: int = MAX_FETCH_BYTES,
         timeout_seconds: float = MAX_FETCH_TIMEOUT_SECONDS,
         resolver: Callable[..., list[tuple[Any, ...]]] | None = None,
     ) -> None:
         domains = _canonical_domains(network_domains)
-        if max_bytes <= 0 or max_bytes > MAX_FETCH_BYTES:
+        if network_policy not in {"allowlist", "public_https"}:
+            raise NetworkError("network_policy must be allowlist or public_https")
+        if isinstance(max_bytes, bool) or not isinstance(max_bytes, int) or not 0 < max_bytes <= MAX_FETCH_BYTES:
             raise NetworkError(f"fetch byte limit must be between 1 and {MAX_FETCH_BYTES}")
-        if timeout_seconds <= 0 or timeout_seconds > MAX_FETCH_TIMEOUT_SECONDS:
+        if (
+            isinstance(timeout_seconds, bool)
+            or not math.isfinite(timeout_seconds)
+            or not 0 < timeout_seconds <= MAX_FETCH_TIMEOUT_SECONDS
+        ):
             raise NetworkError(f"fetch timeout must be between 0 and {MAX_FETCH_TIMEOUT_SECONDS} seconds")
         self.domains = domains
-        self.max_bytes = int(max_bytes)
+        self.network_policy = network_policy
+        self.max_bytes = max_bytes
         self.timeout_seconds = float(timeout_seconds)
         self._resolver = resolver or socket.getaddrinfo
 
     def _allowed_host(self, host: str) -> str:
         canonical = _idna_host(host)
-        if canonical not in self.domains:
+        if self.network_policy == "allowlist" and canonical not in self.domains:
             raise NetworkError(f"network host is outside the configured public allowlist: {canonical}")
-        # Literal IP URLs bypass DNS and make the allowlist easier to accidentally
-        # broaden.  Public HTTPS should use a hostname so certificate pinning stays
-        # meaningful.
         try:
             ipaddress.ip_address(canonical)
         except ValueError:
-            return canonical
-        raise NetworkError("network URLs must use a DNS hostname, not an IP address")
+            pass
+        else:
+            raise NetworkError("network URLs must use a DNS hostname, not an IP address")
+        if self.network_policy == "public_https" and (
+            "." not in canonical
+            or all(char.isdigit() or char == "." for char in canonical)
+            or any(canonical == suffix or canonical.endswith("." + suffix) for suffix in _RESERVED_HOSTS)
+        ):
+            raise NetworkError("public HTTPS forbids internal, reserved, or literal hosts")
+        return canonical
 
     def _validate_url(self, value: str) -> tuple[str, urllib.parse.SplitResult]:
-        if not isinstance(value, str) or not value.strip() or "\x00" in value:
-            raise NetworkError("URL must be a non-empty string without NUL bytes")
-        parsed = urllib.parse.urlsplit(value.strip())
+        if (
+            not isinstance(value, str)
+            or not value.strip()
+            or any(ord(char) < 32 or ord(char) == 127 for char in value)
+        ):
+            raise NetworkError("URL must be a non-empty string without control characters")
+        try:
+            parsed = urllib.parse.urlsplit(value.strip())
+        except ValueError as exc:
+            raise NetworkError("URL is malformed") from exc
         if parsed.scheme.lower() != "https":
             raise NetworkError("network requests require HTTPS")
         if parsed.username is not None or parsed.password is not None:
@@ -187,30 +322,48 @@ class NetworkClient:
         if port not in (None, 443):
             raise NetworkError("network requests only allow HTTPS port 443")
         host = self._allowed_host(parsed.hostname or "")
-        # Normalize the host while preserving the path/query exactly as supplied.
         normalized = parsed._replace(scheme="https", netloc=host).geturl()
         return normalized, parsed._replace(scheme="https", netloc=host)
 
-    def _resolve_public(self, host: str) -> tuple[str, ...]:
+    def _resolve_public(self, host: str, *, budget: _RequestBudget | None = None) -> tuple[str, ...]:
+        budget = budget or self._new_budget()
+        if not _DNS_SLOTS.acquire(timeout=budget.remaining_seconds()):
+            raise NetworkError("DNS resolution exceeded the total deadline")
+        answer: queue.Queue[list[tuple[Any, ...]] | Exception] = queue.Queue(maxsize=1)
+
+        def resolve() -> None:
+            try:
+                answer.put(self._resolver(host, 443, type=socket.SOCK_STREAM))
+            except Exception as exc:
+                answer.put(exc)
+            finally:
+                _DNS_SLOTS.release()
+
+        worker = threading.Thread(target=resolve, daemon=True, name="capability-dns")
         try:
-            infos = self._resolver(host, 443, type=socket.SOCK_STREAM)
-        except OSError as exc:
-            raise NetworkError(f"DNS resolution failed for {host}: {exc}") from exc
+            worker.start()
+        except BaseException:
+            _DNS_SLOTS.release()
+            raise
+        try:
+            result = answer.get(timeout=budget.remaining_seconds())
+        except queue.Empty as exc:
+            raise NetworkError("DNS resolution exceeded the total deadline") from exc
+        budget.remaining_seconds()
+        if isinstance(result, Exception):
+            raise NetworkError(f"DNS resolution failed for {host}: {result}") from result
         addresses: list[str] = []
-        for info in infos:
-            if len(info) < 5:
+        for info in result:
+            if len(info) < 5 or not info[4]:
                 continue
-            sockaddr = info[4]
-            if not sockaddr:
-                continue
-            address = str(sockaddr[0])
+            address = str(info[4][0])
             if not _is_public_address(address):
                 raise NetworkError(f"DNS for {host} resolved to a non-public address")
             if address not in addresses:
                 addresses.append(address)
         if not addresses:
             raise NetworkError(f"DNS returned no usable address for {host}")
-        return tuple(addresses)
+        return tuple(addresses[:MAX_DNS_ADDRESSES])
 
     @staticmethod
     def _request_target(parsed: urllib.parse.SplitResult) -> str:
@@ -219,14 +372,31 @@ class NetworkClient:
             target += "?" + parsed.query
         return target
 
-    def _get_once(self, url: str) -> tuple[int, str, bytes, str | None]:
+    def _new_budget(self) -> _RequestBudget:
+        return _RequestBudget(time.monotonic() + self.timeout_seconds, self.max_bytes)
+
+    def _get_once(self, url: str, *, budget: _RequestBudget) -> tuple[tuple[HTTPExchange, ...], str | None]:
         normalized, parsed = self._validate_url(url)
         host = parsed.hostname or ""
-        addresses = self._resolve_public(host)
+        addresses = self._resolve_public(host, budget=budget)
         context = ssl.create_default_context()
-        last_error: BaseException | None = None
+        exchanges: list[HTTPExchange] = []
         for address in addresses:
-            connection = _PinnedHTTPSConnection(host, address, timeout=self.timeout_seconds, context=context)
+            started = time.monotonic()
+            retrieved_at = datetime.now(timezone.utc).isoformat()
+            status: int | None = None
+            content_type: str | None = None
+            location: str | None = None
+            body: bytearray | None = None
+            response: http.client.HTTPResponse | None = None
+            try:
+                remaining = budget.remaining_seconds()
+            except NetworkError as exc:
+                raise NetworkError(str(exc), exchanges=tuple(exchanges)) from exc
+            connection = _PinnedHTTPSConnection(host, address, timeout=remaining, context=context)
+            watchdog = threading.Timer(remaining, connection.abort)
+            watchdog.daemon = True
+            watchdog.start()
             try:
                 connection.request(
                     "GET",
@@ -240,6 +410,12 @@ class NetworkClient:
                     },
                 )
                 response = connection.getresponse()
+                status = response.status
+                content_type = (
+                    (response.getheader("Content-Type") or "application/octet-stream").split(";", 1)[0].strip().lower()
+                )
+                location = response.getheader("Location")
+                body = bytearray()
                 content_length = response.getheader("Content-Length")
                 if content_length is not None:
                     try:
@@ -248,65 +424,124 @@ class NetworkClient:
                         declared = -1
                     if declared < 0:
                         raise NetworkError("response has an invalid Content-Length")
-                    if declared > self.max_bytes:
-                        raise NetworkError(f"response exceeds the {self.max_bytes}-byte limit")
-                body = response.read(self.max_bytes + 1)
-                if len(body) > self.max_bytes:
-                    raise NetworkError(f"response exceeds the {self.max_bytes}-byte limit")
-                content_type = response.getheader("Content-Type") or "application/octet-stream"
-                location = response.getheader("Location")
-                return response.status, content_type, body, location
-            except NetworkError:
-                raise
-            except (OSError, http.client.HTTPException, ssl.SSLError) as exc:
-                last_error = exc
+                    if declared > budget.remaining_bytes:
+                        raise NetworkError(f"response exceeds the {self.max_bytes}-byte total limit")
+                while True:
+                    remaining = budget.remaining_seconds()
+                    if connection.sock is not None:
+                        connection.sock.settimeout(remaining)
+                    # One sentinel byte detects undeclared overflow. It is never
+                    # retained; total retained bytes stay within the shared limit.
+                    chunk = response.read1(min(64 * 1024, budget.remaining_bytes + 1))
+                    if not chunk:
+                        break
+                    accepted = chunk[: budget.remaining_bytes]
+                    body.extend(accepted)
+                    budget.remaining_bytes -= len(accepted)
+                    if len(accepted) != len(chunk):
+                        raise NetworkError(f"response exceeds the {self.max_bytes}-byte total limit")
+                budget.remaining_seconds()
+                if content_length is not None and len(body) != int(content_length):
+                    raise NetworkError("response ended before its declared Content-Length")
+                exchanges.append(
+                    HTTPExchange(
+                        normalized,
+                        retrieved_at,
+                        time.monotonic() - started,
+                        status,
+                        content_type,
+                        bytes(body),
+                        True,
+                        location=location,
+                    )
+                )
+                return tuple(exchanges), location
+            except (NetworkError, OSError, http.client.HTTPException) as exc:
+                if isinstance(exc, http.client.IncompleteRead) and body is not None:
+                    accepted = exc.partial[: budget.remaining_bytes]
+                    body.extend(accepted)
+                    budget.remaining_bytes -= len(accepted)
+                error = str(exc)
+                if time.monotonic() >= budget.deadline:
+                    error = "network request exceeded the total deadline"
+                exchanges.append(
+                    HTTPExchange(
+                        normalized,
+                        retrieved_at,
+                        time.monotonic() - started,
+                        status,
+                        content_type,
+                        bytes(body) if body is not None else None,
+                        False,
+                        error,
+                        location,
+                    )
+                )
+                # A received response is evidence, not an invitation to redownload
+                # it from another address. Retry only connection-level failures.
+                if isinstance(exc, NetworkError) or status is not None or time.monotonic() >= budget.deadline:
+                    raise NetworkError(error, exchanges=tuple(exchanges)) from exc
             finally:
-                connection.close()
-        raise NetworkError(f"HTTPS request failed for {normalized}: {last_error}")
+                watchdog.cancel()
+                if response is not None:
+                    response.close()
+                connection.abort()
+        raise NetworkError(f"HTTPS request failed for {normalized}: {exchanges[-1].error}", exchanges=tuple(exchanges))
 
-    def fetch(self, url: str) -> FetchResponse:
-        """GET a public allowlisted URL with bounded, validated redirects."""
+    def fetch(self, url: str, *, _budget: _RequestBudget | None = None) -> FetchResponse:
+        """GET with one deadline and byte budget across DNS, addresses, and hops."""
 
+        budget = _budget or self._new_budget()
         requested, _ = self._validate_url(url)
         current = requested
         redirects: list[str] = []
-        for _ in range(MAX_REDIRECTS + 1):
-            status, content_type, body, location = self._get_once(current)
-            if len(body) > self.max_bytes:
-                raise NetworkError(f"response exceeds the {self.max_bytes}-byte limit")
-            if status in {301, 302, 303, 307, 308}:
-                if not location:
-                    raise NetworkError(f"redirect from {current} has no Location header")
-                next_url = urllib.parse.urljoin(current, location)
-                normalized, _ = self._validate_url(next_url)
-                redirects.append(normalized)
-                current = normalized
-                if len(redirects) > MAX_REDIRECTS:
-                    raise NetworkError("too many redirects")
-                continue
-            return FetchResponse(
-                requested_url=requested,
-                final_url=current,
-                status=status,
-                content_type=content_type.split(";", 1)[0].strip().lower() or "application/octet-stream",
-                body=body,
-                redirects=tuple(redirects),
-            )
-        raise NetworkError("too many redirects")
+        exchanges: list[HTTPExchange] = []
+        try:
+            for _ in range(MAX_REDIRECTS + 1):
+                budget.remaining_seconds()
+                hop_exchanges, location = self._get_once(current, budget=budget)
+                exchanges.extend(hop_exchanges)
+                hop = hop_exchanges[-1]
+                if hop.status in {301, 302, 303, 307, 308}:
+                    if not location:
+                        raise NetworkError(f"redirect from {current} has no Location header")
+                    next_url = urllib.parse.urljoin(current, location)
+                    normalized, _ = self._validate_url(next_url)
+                    if len(redirects) >= MAX_REDIRECTS:
+                        raise NetworkError("too many redirects")
+                    redirects.append(normalized)
+                    current = normalized
+                    continue
+                assert hop.status is not None and hop.body is not None
+                return FetchResponse(
+                    requested,
+                    current,
+                    hop.status,
+                    hop.content_type or "application/octet-stream",
+                    hop.body,
+                    tuple(redirects),
+                    tuple(exchanges),
+                )
+        except NetworkError as exc:
+            raise NetworkError(
+                str(exc), final_url=current, redirects=tuple(redirects), exchanges=tuple(exchanges) + exc.exchanges
+            ) from exc
+        raise NetworkError(
+            "too many redirects", final_url=current, redirects=tuple(redirects), exchanges=tuple(exchanges)
+        )
 
     def _search_backends(self) -> tuple[tuple[str, str], ...]:
-        # Keep one ordered backend contract for all roles.  Bing RSS is an
-        # explicitly allowlisted fallback for installations where DDG is blocked;
-        # it is never contacted unless its host was selected by configuration.
+        # Search endpoint selection is independent of URLs returned as results.
+        # Broad public research does not enable arbitrary search backend URLs.
         backends: list[tuple[str, str]] = []
-        if "html.duckduckgo.com" in self.domains:
+        if self.network_policy == "public_https" or "html.duckduckgo.com" in self.domains:
             backends.append(("duckduckgo-html", "https://html.duckduckgo.com/html/"))
-        if "www.bing.com" in self.domains:
+        if self.network_policy == "public_https" or "www.bing.com" in self.domains:
             backends.append(("bing-rss", "https://www.bing.com/search"))
         return tuple(backends)
 
     def search(self, query: str) -> SearchResult:
-        """Search via the configured public unauthenticated backend."""
+        """Search fixed anonymous backends, retaining every attempted response."""
 
         if not isinstance(query, str) or not query.strip():
             raise NetworkError("search query must be a non-empty string")
@@ -315,14 +550,16 @@ class NetworkClient:
         backends = self._search_backends()
         if not backends:
             raise NetworkError("search requires html.duckduckgo.com or www.bing.com in network_domains")
-        errors: list[str] = []
+        attempts: list[SearchAttempt] = []
+        budget = self._new_budget()
         for backend, endpoint in backends:
-            if backend == "duckduckgo-html":
-                target = endpoint + "?" + urllib.parse.urlencode({"q": query})
-            else:
-                target = endpoint + "?" + urllib.parse.urlencode({"q": query, "format": "rss"})
+            params = {"q": query} if backend == "duckduckgo-html" else {"q": query, "format": "rss"}
+            target = endpoint + "?" + urllib.parse.urlencode(params)
+            started = time.monotonic()
+            retrieved_at = datetime.now(timezone.utc).isoformat()
+            response: FetchResponse | None = None
             try:
-                response = self.fetch(target)
+                response = self.fetch(target, _budget=budget)
                 if not 200 <= response.status < 300:
                     raise NetworkError(f"search backend returned HTTP {response.status}")
                 results = (
@@ -332,10 +569,70 @@ class NetworkClient:
                 )
                 if not results:
                     raise NetworkError(f"{backend} returned no parseable results")
-                return SearchResult(query, backend, response.final_url, response, tuple(results))
+                budget.remaining_seconds()
             except NetworkError as exc:
-                errors.append(f"{backend}: {exc}")
-        raise NetworkError("all configured search backends failed: " + "; ".join(errors))
+                exchanges = response.exchanges if response is not None else exc.exchanges
+                if response is not None and not exchanges:
+                    exchanges = (
+                        HTTPExchange(
+                            response.final_url,
+                            retrieved_at,
+                            time.monotonic() - started,
+                            response.status,
+                            response.content_type,
+                            response.body,
+                            True,
+                        ),
+                    )
+                attempts.append(
+                    SearchAttempt(
+                        backend,
+                        target,
+                        response.final_url if response is not None else exc.final_url or target,
+                        response.redirects if response is not None else exc.redirects,
+                        retrieved_at,
+                        time.monotonic() - started,
+                        response.status
+                        if response is not None
+                        else next(
+                            (item.status for item in reversed(exchanges) if item.url == (exc.final_url or target)),
+                            None,
+                        ),
+                        str(exc),
+                        exchanges,
+                    )
+                )
+                continue
+            exchanges = response.exchanges or (
+                HTTPExchange(
+                    response.final_url,
+                    retrieved_at,
+                    time.monotonic() - started,
+                    response.status,
+                    response.content_type,
+                    response.body,
+                    True,
+                ),
+            )
+            attempts.append(
+                SearchAttempt(
+                    backend,
+                    target,
+                    response.final_url,
+                    response.redirects,
+                    retrieved_at,
+                    time.monotonic() - started,
+                    response.status,
+                    None,
+                    exchanges,
+                )
+            )
+            return SearchResult(query, backend, response.final_url, response, tuple(results), tuple(attempts))
+        raise NetworkError(
+            "all configured search backends failed: "
+            + "; ".join(f"{item.backend}: {item.error}" for item in attempts),
+            attempts=tuple(attempts),
+        )
 
 
 class _DuckDuckGoParser(HTMLParser):

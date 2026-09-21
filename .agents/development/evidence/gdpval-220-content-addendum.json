@@ -1,0 +1,479 @@
+{
+  "schema_version": 1,
+  "kind": "controller_adopted_content_feasibility_addendum",
+  "source_sha256": "4d58ee30485093010bf8b0a11708f80924831eef2a643db4c2d23b72fd426470",
+  "frozen_review": {
+    "path": ".agents/development/evidence/gdpval-220-requirements-review.json",
+    "sha256": "96aa6c1575c08505eb8446bd9f6e24b86f54929c3596718a912a3811b182d1bc",
+    "unchanged": true,
+    "frozen_content_feasibility_counts": {
+      "needs_clarification": 13,
+      "candidate": 201,
+      "undetermined": 6
+    }
+  },
+  "basis": {
+    "path": ".audit/2026-09-21-content-clarification/findings.json",
+    "sha256": "c43faa455e9bb3325ad491f9447d820ec2308aff128166b7904258c82ee87477"
+  },
+  "scope": {
+    "task_ids": [
+      "76d10872-9ffa-4ede-83ee-e0f1ec5e2b8d",
+      "be830ca0-b352-4658-a5bd-57139d6780ba",
+      "4de6a529-4f61-41a1-b2dc-64951ba03457"
+    ],
+    "provided_file_count": 6,
+    "bounded_shell_examinations": 3,
+    "supplemental_pdf_page_render_count": 1,
+    "model_cli_sessions": 0,
+    "network_requests": 0,
+    "participant_task_solutions_created": 0,
+    "fresh_ACES_or_calculator_execution": false
+  },
+  "originals_unchanged": true,
+  "no_task_or_rubric_changed": true,
+  "no_task_excluded": true,
+  "tasks": [
+    {
+      "task_id": "76d10872-9ffa-4ede-83ee-e0f1ec5e2b8d",
+      "source_row_sha256": "c76898a610580ca070ee0a474cd043dae3f984a6ce6a7aa4bea0cb7652076c56",
+      "previous_content_feasibility": {
+        "status": "undetermined",
+        "basis": "Original rubric asserts ACES-generated identifiers and a Washington State Calculator v3.2 run. Inspect supplied case guide for recorded evidence; do not fabricate runtime completion or assume live-system access is needed.",
+        "assumptions": [
+          "Rubric asserts named Washington calculator run; establish supplied evidence versus actual execution requirement"
+        ]
+      },
+      "content_feasibility": {
+        "status": "needs_clarification",
+        "basis": "Named ACES IDs, status, and calculator-run statement exist in the supplied guide; fresh external execution is not explicitly requested. Clarify court-case identifier reconciliation for the two explicit court-number criteria, with the general identifier criterion related.",
+        "assumptions": [
+          "Identify which court number the report should use or how the DV/PT discrepancy should be disclosed without changing the original rubric."
+        ]
+      },
+      "required_clarification": "Identify which court number the report should use or how the DV/PT discrepancy should be disclosed without changing the original rubric.",
+      "affected_criterion_ids": [
+        "7132dbef-3a66-4e2c-b580-8cd9690b3edd",
+        "43e54ae5-6010-4f06-b7e3-4cb813d345aa"
+      ],
+      "related_criterion_ids": [
+        "af8f24e3-e851-4f27-855b-6760eaf7ee22"
+      ],
+      "constraint_location": "identified original criteria",
+      "inspection": {
+        "call_id": "000001-ca3a3f9089f0493f8465cdecf2944293",
+        "tool": "shell",
+        "receipt": {
+          "path": ".audit/2026-09-21-content-clarification/state/receipts/000001-ca3a3f9089f0493f8465cdecf2944293.json",
+          "sha256": "a26ccc89874d5e0e875d51494a8a302d83ca3fbb51112d7ea72e38216acba261"
+        },
+        "extraction": {
+          "path": ".audit/2026-09-21-content-clarification/workspace/scratch/76d10872-9ffa-4ede-83ee-e0f1ec5e2b8d.json",
+          "sha256": "563c95eafe2dae90ce2857cf3b9e875b51d8620d11a685bc51357f61c37095cb"
+        },
+        "elapsed_seconds": 3.11929937498644,
+        "source_read_only": true
+      },
+      "observations": [
+        {
+          "finding_id": "wa-supplied-system-assertions",
+          "criterion_ids": [
+            "075afba3-7afd-470f-b951-9758475acfad",
+            "fe88e0d7-c6cd-4d02-bfc9-b2a3172679d2",
+            "ef4a3cfc-ad81-495d-a516-0784d6f3d465",
+            "3aca5540-f3b5-491b-b0fc-b74f4bf562a8"
+          ],
+          "observed": "The supplied guide pre-fills the generated case number, participant IDs, initial status, and a verified calculator-run statement.",
+          "conclusion": "These are supplied narrative assertions that can be attributed to the guide. They are not an independently recorded execution or evidence that a participant ran the calculator.",
+          "evidence": [
+            {
+              "path": "reference_files/76d10872-9ffa-4ede-83ee-e0f1ec5e2b8d/Case Creation Guide for Michael Reynolds (Case PT-2025-1782).pdf",
+              "sha256": "7bd7f89afe2ea208b44e1b5942bfa4c96da16d8ec4fc56351f9086408c47796b",
+              "location": {
+                "page_one_based": 2,
+                "extracted_line_start_one_based": 121,
+                "extracted_line_end_inclusive": 127
+              }
+            },
+            {
+              "path": "reference_files/76d10872-9ffa-4ede-83ee-e0f1ec5e2b8d/Case Creation Guide for Michael Reynolds (Case PT-2025-1782).pdf",
+              "sha256": "7bd7f89afe2ea208b44e1b5942bfa4c96da16d8ec4fc56351f9086408c47796b",
+              "location": {
+                "page_one_based": 2,
+                "extracted_line_start_one_based": 131,
+                "extracted_line_end_inclusive": 141
+              }
+            },
+            {
+              "path": "reference_files/76d10872-9ffa-4ede-83ee-e0f1ec5e2b8d/Case Creation Guide for Michael Reynolds (Case PT-2025-1782).pdf",
+              "sha256": "7bd7f89afe2ea208b44e1b5942bfa4c96da16d8ec4fc56351f9086408c47796b",
+              "location": {
+                "page_one_based": 2,
+                "extracted_line_start_one_based": 145,
+                "extracted_line_end_inclusive": 153
+              }
+            },
+            {
+              "path": "reference_files/76d10872-9ffa-4ede-83ee-e0f1ec5e2b8d/Case Creation Guide for Michael Reynolds (Case PT-2025-1782).pdf",
+              "sha256": "7bd7f89afe2ea208b44e1b5942bfa4c96da16d8ec4fc56351f9086408c47796b",
+              "location": {
+                "page_one_based": 5,
+                "extracted_line_start_one_based": 4,
+                "extracted_line_end_inclusive": 20
+              }
+            }
+          ]
+        },
+        {
+          "finding_id": "wa-fresh-execution-wording",
+          "criterion_ids": [
+            "3aca5540-f3b5-491b-b0fc-b74f4bf562a8"
+          ],
+          "observed": "The original task asks for a report using the provided information. The criterion says the calculator 'was run'; no explicit demand for a fresh participant-run session was found in the original prompt or 74 rubric items.",
+          "conclusion": "The frozen named-system access question is resolved narrowly as supplied-source reporting. This does not authorize a report to misstate a new action as actually performed.",
+          "evidence": [
+            {
+              "path": "frozen_source",
+              "sha256": null,
+              "location": {
+                "jsonl_line_one_based": 25,
+                "field": "prompt",
+                "character_start_zero_based": 742,
+                "character_end_exclusive": 932
+              }
+            },
+            {
+              "path": null,
+              "sha256": null,
+              "location": null
+            }
+          ]
+        },
+        {
+          "finding_id": "wa-income-and-blank-verification",
+          "criterion_ids": [
+            "22d2336e-20f3-4dd3-863f-078338dbc749",
+            "c8417c43-c230-4b78-95cb-b54e81d37326"
+          ],
+          "observed": "Both summary and order state NCP annual income of $65,000. The guide leaves the income-match, guideline-percentage, and mathematical-accuracy fields blank. The order refers to a calculator worksheet but none is separately supplied in the four-file input set.",
+          "conclusion": "The income-match comparison is supported by supplied text. A prefilled run assertion does not establish mathematical correctness. This audit did not recalculate support or establish that recalculation is infeasible; lack of such work is not a new task-level blocker.",
+          "evidence": [
+            {
+              "path": "reference_files/76d10872-9ffa-4ede-83ee-e0f1ec5e2b8d/Case Detail Summary for Michael Reynolds (Case PT-2025-1782).pdf",
+              "sha256": "5ec3ba1a57dd92417f235a95bb7bbd038ada94af5a278f8a084c2ba300946b49",
+              "location": {
+                "page_one_based": 1,
+                "extracted_line_start_one_based": 158,
+                "extracted_line_end_inclusive": 174
+              }
+            },
+            {
+              "path": "reference_files/76d10872-9ffa-4ede-83ee-e0f1ec5e2b8d/Order of Child Support for Michael Reynolds (Case PT-2025-1782).pdf",
+              "sha256": "e81944488c9ceebac52552098e35f3b711e7ab4f58d95a6a7540c367b2effa33",
+              "location": {
+                "page_one_based": 1,
+                "extracted_line_start_one_based": 61,
+                "extracted_line_end_inclusive": 97
+              }
+            },
+            {
+              "path": "reference_files/76d10872-9ffa-4ede-83ee-e0f1ec5e2b8d/Case Creation Guide for Michael Reynolds (Case PT-2025-1782).pdf",
+              "sha256": "7bd7f89afe2ea208b44e1b5942bfa4c96da16d8ec4fc56351f9086408c47796b",
+              "location": {
+                "page_one_based": 5,
+                "extracted_line_start_one_based": 24,
+                "extracted_line_end_inclusive": 36
+              }
+            },
+            {
+              "path": "reference_files/76d10872-9ffa-4ede-83ee-e0f1ec5e2b8d/Case Creation Guide for Michael Reynolds (Case PT-2025-1782).pdf",
+              "sha256": "7bd7f89afe2ea208b44e1b5942bfa4c96da16d8ec4fc56351f9086408c47796b",
+              "location": {
+                "page_one_based": 5,
+                "extracted_line_start_one_based": 40,
+                "extracted_line_end_inclusive": 50
+              }
+            },
+            {
+              "path": "reference_files/76d10872-9ffa-4ede-83ee-e0f1ec5e2b8d/Case Creation Guide for Michael Reynolds (Case PT-2025-1782).pdf",
+              "sha256": "7bd7f89afe2ea208b44e1b5942bfa4c96da16d8ec4fc56351f9086408c47796b",
+              "location": {
+                "page_one_based": 5,
+                "extracted_line_start_one_based": 54,
+                "extracted_line_end_inclusive": 62
+              }
+            }
+          ]
+        },
+        {
+          "finding_id": "wa-court-identifier-conflict",
+          "criterion_ids": [
+            "7132dbef-3a66-4e2c-b580-8cd9690b3edd",
+            "43e54ae5-6010-4f06-b7e3-4cb813d345aa"
+          ],
+          "observed": "The order body identifies court Case DV-2025-1782, while its filename, the guide filename, paternity report, and original court-number criteria use PT-2025-1782.",
+          "conclusion": "The documents contain a concrete identifier conflict. The audit does not decide whether DV and PT refer to different proceedings, a typo, or the intended court cross-reference.",
+          "evidence": [
+            {
+              "path": "reference_files/76d10872-9ffa-4ede-83ee-e0f1ec5e2b8d/Order of Child Support for Michael Reynolds (Case PT-2025-1782).pdf",
+              "sha256": "e81944488c9ceebac52552098e35f3b711e7ab4f58d95a6a7540c367b2effa33",
+              "location": {
+                "page_one_based": 1,
+                "extracted_line_start_one_based": 1,
+                "extracted_line_end_inclusive": 11
+              }
+            },
+            {
+              "path": "reference_files/76d10872-9ffa-4ede-83ee-e0f1ec5e2b8d/Paternity Test Results for Michael Reynolds (Case PT-2025-1782).pdf",
+              "sha256": "018aa1c14ee1d037b18e55d1b38b4efa2f915c87c1fe6638030f065fe1d37989",
+              "location": {
+                "page_one_based": 1,
+                "extracted_line_start_one_based": 25,
+                "extracted_line_end_inclusive": 35
+              }
+            },
+            {
+              "path": null,
+              "sha256": null,
+              "location": null
+            },
+            {
+              "path": null,
+              "sha256": null,
+              "location": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "task_id": "be830ca0-b352-4658-a5bd-57139d6780ba",
+      "source_row_sha256": "712a01a3a324a2796da07b45f46c3c33c270eefac13a77aaff66eb91737c0283",
+      "previous_content_feasibility": {
+        "status": "undetermined",
+        "basis": "Cp/Cpk are requested while the prompt supplies a target of 3400 UPR. Source-workbook inspection must establish specification bounds or an explicitly justified one-sided interpretation.",
+        "assumptions": [
+          "Minitab is illustrative software; verify specified charts and reconcile specification-limit assumptions"
+        ]
+      },
+      "content_feasibility": {
+        "status": "needs_clarification",
+        "basis": " Only the numerical Cp/Cpk and associated capability-interpretation clauses depend on the missing bound/interpretation. The histogram portion and other analyses are not declared infeasible.",
+        "assumptions": [
+          "Supply intended specification bounds, or explicitly confirm a one-sided lower-threshold treatment and how the original request for Cp is to be handled. Do not silently derive a USL from observed data or substitute another statistic as Cp."
+        ]
+      },
+      "required_clarification": "Supply intended specification bounds, or explicitly confirm a one-sided lower-threshold treatment and how the original request for Cp is to be handled. Do not silently derive a USL from observed data or substitute another statistic as Cp.",
+      "affected_criterion_ids": [
+        "0e97d6ed-569e-4e8b-a26a-81d6d68cfd2a",
+        "964d6cf4-fa77-4b13-b87f-43e9f47a30e7"
+      ],
+      "related_criterion_ids": [],
+      "constraint_location": "identified original criteria",
+      "inspection": {
+        "call_id": "000002-3f62937f4e5b42a08cbf9ccc0a058e24",
+        "tool": "shell",
+        "receipt": {
+          "path": ".audit/2026-09-21-content-clarification/state/receipts/000002-3f62937f4e5b42a08cbf9ccc0a058e24.json",
+          "sha256": "087bcebc0ea5f31e7f4bf7bd47fd6184a24861d921e16c0b0792dae38e73891a"
+        },
+        "extraction": {
+          "path": ".audit/2026-09-21-content-clarification/workspace/scratch/be830ca0-b352-4658-a5bd-57139d6780ba.json",
+          "sha256": "449e6f5ff89782aecb31222127a02ea6d8d3b7543add7fbcb89f21949ce7a873"
+        },
+        "elapsed_seconds": 1.7713870000443421,
+        "source_read_only": true
+      },
+      "observations": [
+        {
+          "finding_id": "cp-workbook-limits-absent",
+          "criterion_ids": [
+            "0e97d6ed-569e-4e8b-a26a-81d6d68cfd2a",
+            "964d6cf4-fa77-4b13-b87f-43e9f47a30e7"
+          ],
+          "observed": "The sole workbook has two visible data sheets with daily/stage/weekday and time-of-day UPR observations. No explicit USL, LSL, specification interval, tolerance, or capability-limit note was observed in cells, comments, defined names, or workbook relationships.",
+          "conclusion": "The workbook does not supply explicit specification bounds or a prescribed one-sided capability procedure.",
+          "evidence": [
+            {
+              "path": "reference_files/be830ca0-b352-4658-a5bd-57139d6780ba/Processing Data.xlsx",
+              "sha256": "d18f030de4c4854185daf048383248572ce003d8baef31cb27dd76f68c4f7ab0",
+              "location": "All cells on Sheet1 (B1:E49 stored range; populated through row 46) and Sheet2 (A1:B36); defined_names; archive_members; supplemental_xml"
+            }
+          ]
+        },
+        {
+          "finding_id": "cp-one-sided-operational-intent",
+          "criterion_ids": [
+            "0e97d6ed-569e-4e8b-a26a-81d6d68cfd2a",
+            "964d6cf4-fa77-4b13-b87f-43e9f47a30e7"
+          ],
+          "observed": "The original prompt describes a target of 3400 UPR and performance consistently at or above 3400 UPR. It simultaneously requests Cp and Cpk.",
+          "conclusion": "The wording supports considering 3400 as a lower-sided operational threshold, not inventing an upper limit. It does not resolve how the simultaneous Cp request should be handled under a one-sided interpretation. No capability values were computed.",
+          "evidence": [
+            {
+              "path": "frozen_source",
+              "sha256": null,
+              "location": {
+                "jsonl_line_one_based": 105,
+                "field": "prompt",
+                "character_start_zero_based": 4185,
+                "character_end_exclusive": 4330
+              }
+            },
+            {
+              "path": "frozen_source",
+              "sha256": null,
+              "location": {
+                "jsonl_line_one_based": 105,
+                "field": "prompt",
+                "character_start_zero_based": 4417,
+                "character_end_exclusive": 4519
+              }
+            },
+            {
+              "path": "frozen_source",
+              "sha256": null,
+              "location": {
+                "jsonl_line_one_based": 105,
+                "field": "prompt",
+                "character_start_zero_based": 4707,
+                "character_end_exclusive": 4848
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "task_id": "4de6a529-4f61-41a1-b2dc-64951ba03457",
+      "source_row_sha256": "abfd2a59baf90a9d9fcb16eb64f83df4261ae4991a3c6078b012a8e6320291d9",
+      "previous_content_feasibility": {
+        "status": "undetermined",
+        "basis": "Prompt requires only Stanton independent Q1 views and changes from prior quarter, but lists an asset-category overview as the sole supplied file. Inspect it for actual views/baseline before attributing positions to Stanton.",
+        "assumptions": [
+          "Source may only list asset categories; establish access to independent current/prior views before attributing them"
+        ]
+      },
+      "content_feasibility": {
+        "status": "needs_clarification",
+        "basis": " Original prompt: independent current Stanton line-item positions, conviction/justification, and prior-quarter positions needed to determine changes.",
+        "assumptions": [
+          "Supply attributable current and prior views or explicitly authorize a hypothetical outlook. No external firm's views or invented baseline should be silently substituted."
+        ]
+      },
+      "required_clarification": "Supply attributable current and prior views or explicitly authorize a hypothetical outlook. No external firm's views or invented baseline should be silently substituted.",
+      "affected_criterion_ids": [],
+      "related_criterion_ids": [
+        "1a238c8b-fdee-4935-8026-7ca893791174",
+        "4e52ed52-fcc4-42db-be11-2b8349861a56",
+        "c88a140f-f88a-44cf-8735-3908521940f7",
+        "9ba29b50-0a86-418b-8236-bb9a4a6b0ced",
+        "2cc02945-6c77-4961-85b2-2d1365b3c646",
+        "2dc00776-72f9-480d-ab9f-e586baf580c8"
+      ],
+      "constraint_location": "original prompt",
+      "inspection": {
+        "call_id": "000003-2dfc1bae208042aa80e91f9e5529a011",
+        "tool": "shell",
+        "receipt": {
+          "path": ".audit/2026-09-21-content-clarification/state/receipts/000003-2dfc1bae208042aa80e91f9e5529a011.json",
+          "sha256": "76bda443d67abaadd751969570878a4e239fa5196363584ee3205dd30fdc7b71"
+        },
+        "extraction": {
+          "path": ".audit/2026-09-21-content-clarification/workspace/scratch/4de6a529-4f61-41a1-b2dc-64951ba03457.json",
+          "sha256": "2af2a521be3d3012f2cacd8b0214ac35be9bdd71ca088922e4f80f52a6e9d859"
+        },
+        "elapsed_seconds": 1.2869141250266694,
+        "source_read_only": true,
+        "visual_check": {
+          "tool": "render_pages",
+          "call_id": "000001-85968edd6604453a9d204deaa61aadde",
+          "receipt": {
+            "path": ".audit/2026-09-21-content-clarification/render-state/receipts/000001-85968edd6604453a9d204deaa61aadde.json",
+            "sha256": "b7e8c9f7be116130e7058728dc3968f8279ac72d6f97021832a707677330914a"
+          },
+          "rendered_page_image": {
+            "path": ".audit/2026-09-21-content-clarification/render-state/inspection/9f6f0f17b5219718e792c08bf2140e016b0c34ee74471a6003daedfd3ad1edb9.pdf/page-0001.png",
+            "sha256": "8e957d424fe12c2c7a9a31bde0db407ac8a0f8a8e9872146cdd415e426f506fe"
+          },
+          "visually_inspected": true,
+          "service_returned_image": {
+            "path": ".audit/2026-09-21-content-clarification/render-state/inspection/9f6f0f17b5219718e792c08bf2140e016b0c34ee74471a6003daedfd3ad1edb9.pdf/2351ed6d511f97ba0483770347ed4cc6e64c7bfa03b30329f0f3fc0cbd5815f5.png",
+            "sha256": "2351ed6d511f97ba0483770347ed4cc6e64c7bfa03b30329f0f3fc0cbd5815f5"
+          },
+          "service_view_receipt": {
+            "path": ".audit/2026-09-21-content-clarification/render-state/inspection/9f6f0f17b5219718e792c08bf2140e016b0c34ee74471a6003daedfd3ad1edb9.pdf/2351ed6d511f97ba0483770347ed4cc6e64c7bfa03b30329f0f3fc0cbd5815f5.view.json",
+            "sha256": "2e785b2ce7e9f2f775cb2c796df69cf2563e2f6ba0700d24467128261eb49d00"
+          }
+        }
+      },
+      "observations": [
+        {
+          "finding_id": "stanton-category-only-input",
+          "criterion_ids": [],
+          "observed": "The sole one-page PDF shows an asset-category list: three main opportunity categories and columns of equity, fixed-income, and currency sub-assets. Full-page text and rendered-page inspection show no current/prior opinions, position weights, conviction ratings, change arrows, as-of dates, or narrative justifications. The PDF has no embedded images, annotations, or attachments.",
+          "conclusion": "The provided PDF establishes category labels, not independent current or prior Stanton views.",
+          "evidence": [
+            {
+              "path": "reference_files/4de6a529-4f61-41a1-b2dc-64951ba03457/Stanton Capital Sub Asset Classes.pdf",
+              "sha256": "9f6f0f17b5219718e792c08bf2140e016b0c34ee74471a6003daedfd3ad1edb9",
+              "location": {
+                "page_one_based": 1,
+                "extracted_line_start_one_based": 1,
+                "extracted_line_end_inclusive": 11
+              }
+            },
+            {
+              "path": null,
+              "sha256": null,
+              "location": null
+            }
+          ]
+        },
+        {
+          "finding_id": "stanton-required-views-and-baseline",
+          "criterion_ids": [],
+          "observed": "The prompt requires only Stanton's independent Q1 2025 views and a line-item change against the previous quarter, but supplies only three generic macro premises and definitions of stance/conviction.",
+          "conclusion": "The supplied macro premises do not uniquely identify a firm's independent line-item positions or prior-quarter baseline. Populating the related columns would not establish the requested attribution. This does not invalidate the rubric's structural column-presence checks.",
+          "evidence": [
+            {
+              "path": "frozen_source",
+              "sha256": null,
+              "location": {
+                "jsonl_line_one_based": 208,
+                "field": "prompt",
+                "character_start_zero_based": 998,
+                "character_end_exclusive": 1057
+              }
+            },
+            {
+              "path": "frozen_source",
+              "sha256": null,
+              "location": {
+                "jsonl_line_one_based": 208,
+                "field": "prompt",
+                "character_start_zero_based": 1550,
+                "character_end_exclusive": 1645
+              }
+            },
+            {
+              "path": "frozen_source",
+              "sha256": null,
+              "location": {
+                "jsonl_line_one_based": 208,
+                "field": "prompt",
+                "character_start_zero_based": 1775,
+                "character_end_exclusive": 1959
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "current_counts_after_only_this_addendum": {
+    "candidate": 201,
+    "needs_clarification": 16,
+    "undetermined": 3
+  }
+}

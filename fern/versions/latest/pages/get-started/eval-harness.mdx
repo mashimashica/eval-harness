@@ -163,7 +163,7 @@ pages are not silently truncated. Rendering time is separate from model-session 
 
 ## Shared GDPval capability environment
 
-Select `settings.environment.profile: gdpval-v1` explicitly for each creation, application and AI evaluation runtime.
+Select `settings.environment.profile: gdpval-v2` explicitly for each creation, application and AI evaluation runtime.
 This opt-in macOS environment uses the same local MCP tools and copied, locked Python dependencies for Codex 0.154.0
 and Claude Code 2.1.270. It is a new experimental environment; existing runs keep their original settings and records.
 Do not combine it with `tool_mode` or the legacy evaluation-level `office_rendering` option.
@@ -173,38 +173,67 @@ settings:
   reasoning_effort: medium
   timeout_seconds: 600
   environment:
-    profile: gdpval-v1
-    network_domains: [www.bing.com, pypi.org, files.pythonhosted.org]
+    profile: gdpval-v2
+    network_policy: public_https
+    executables:
+      ffmpeg: /absolute/path/to/isolated-ffmpeg
+      ffprobe: /absolute/path/to/isolated-ffprobe
+      node: /absolute/path/to/isolated-node
     office_rendering:
       soffice: /absolute/path/to/soffice
       pdftoppm: /absolute/path/to/pdftoppm
 ```
 
-Declare the exact research hostnames needed by the selected tasks before execution. The example enables a search
-backend and package retrieval only; add the task's research domains to the frozen configuration. Search results outside
-that list remain discoverable but cannot be fetched. A blocked domain or inaccessible source is recorded, not silently
-replaced with controller-selected research. Wildcards, private addresses, credentials in URLs, non-HTTPS requests,
-and redirects outside the list are rejected. Shell processes cannot connect to the network. `search` uses an explicitly
-allowed public backend (DuckDuckGo HTML, or Bing RSS when configured); availability and result quality are external
-conditions recorded with each request. No API keys or auxiliary AI services are provided.
+Install the extended locked Python bundle with `uv sync --project harness --extra capabilities --group dev --locked`.
+The prior `gdpval-v1` profile retains its smaller package set. Native executable paths are optional and explicit;
+configure the programs needed by the task before freezing the comparison. Their bytes are copied into the private
+runtime and fingerprinted. Do not expose an unaudited downloaded binary as an accepted capability.
+
+`network_policy: public_https` allows anonymous HTTPS GET on port443, including public redirect targets discovered
+by participants. Each hop validates all DNS answers, pins the connection address, verifies TLS, and shares bounded
+time/bytes/redirect limits. Private, reserved and mixed public/private answers, URL credentials and non-HTTPS requests
+are rejected. No ambient cookies, account headers or proxy configuration are used. Shell network access stays denied.
+`search` tries fixed public DuckDuckGo HTML/Bing RSS backends; every attempt and available response body is retained,
+including a failed attempt before successful fallback. Availability and result relevance are external conditions.
+
+For legacy restricted configurations, omit `network_policy` or set `allowlist`, and supply explicit
+`network_domains: [www.bing.com, pypi.org, files.pythonhosted.org]`. Public mode requires this list to be empty or
+omitted. Research access does not authorize auxiliary AI, authenticated services, remote deployment, or another
+model/billing route. A failed retrieval is not replaced with controller-selected research.
 
 | Capability | Skill creation | Task execution | Evaluation |
 | --- | --- | --- | --- |
 | `shell`: bounded code, files and local helper tools | Write own workspace; supplied creation inputs read-only | Write own workspace; supplied references and Skill read-only | Read originals; write and execute inspection copies in `scratch/` |
 | Python baseline | Same locked openpyxl, python-docx, python-pptx, Pillow, pypdf, XlsxWriter and transitive packages | Same | Same |
-| `search`, `fetch` | Explicit public HTTPS domains | Same; participant performs required research and selection | Same domains when required for evidence |
+| `search`, `fetch` | Frozen public HTTPS or explicit-domain policy | Same; participant performs required research and selection | Same policy when required for evidence |
+| Extended v2 libraries | NumPy, SciPy, pandas, Matplotlib, psd-tools, OCP, nbformat, ipywidgets and locked dependencies | Same | Same; installation alone is not capability proof |
+| Explicit native commands | Configured FFmpeg/ffprobe/Node bytes | Same | Same; execute inspection copies |
 | `install_wheel` | SHA256-pinned wheel into private task packages | Same; installation time is part of execution | Same, for inspection dependencies |
 | `inspect_document` | DOCX revisions/comments, XLSX formulas/PivotTable structure, PDF page count, Office member inventory | Same | Same; structural presence alone is not a functional pass |
 | `render_pages`, `view_image` | Selected pages or crop, native image content | Same | Same; frozen common PDFs for independent judges |
 | Personal settings, other conditions, grading material | Not staged | Not staged | Only anonymous assigned submissions and declared grading material |
 
 The shell permits one foreground process. Prefix external programs with `exec`, such as `exec python -c 'print(1)'`. Use Python for file operations and sequencing, or separate tool calls; the OS denies child processes, pipelines, subprocesses and background jobs. Invoke `exec soffice ...` separately for copied native conversion. This explicit restriction prevents code from detaching beyond its measured execution boundary. Python runs from a copied private runtime. Wheel installation does not run package setup scripts, rejects unsafe archive
-paths and `.pth` files, and never writes global packages. Dependencies requiring system installation or an unsupported
+paths and `.pth` files, and never writes global packages. Entries and CRCs are validated in staging before publication;
+caught write failures roll back newly written files and directories. The downloaded wheel and failure stay recorded.
+This is not a power-loss/SIGKILL transaction guarantee. Dependencies requiring system installation or an unsupported
 binary platform need an explicitly revised environment. The native LibreOffice/Poppler paths are optional, but required
 for rendered inspection. They are hashed with the Python packages, interpreter and harness code. CLI-native shell,
 web, plug-ins and autonomous subagents are disabled; file/code operations pass through the shared service. A native
 positive/negative sandbox probe must succeed before execution. The supported boundary is macOS Seatbelt; another OS
 fails preflight instead of running without isolation.
+
+For JavaScript tests, invoke installed library APIs in one `exec node` process. Native `npm test` runners that spawn
+children are outside this shell boundary. Task-local package tarballs can be retrieved with `fetch`, verified by exact
+hash, and safely extracted in the workspace; package lifecycle scripts are not a prerequisite. The known-content
+acceptance exercised React Testing Library 16.3.0, Sinon 21.1.2, TypeScript 5.8.3 and JSDOM 26.1.0 this way. These are
+additional task-local dependencies, not an implicit baseline bundle or proof of native browser/accessibility behavior.
+
+For fresh notebook execution, the verified route creates an actual `ipykernel.inprocess` kernel in one Python process,
+executes ordered cells and captures their output/error messages. Install compatible exact-hash wheels as task-local
+dependencies; the baseline `nbformat` library alone only handles notebook files. This route does not enable a separate
+Jupyter server, socket-based child kernel or native notebook UI. Dependency setup and helper construction remain part
+of the participant's measured task time, with the same opportunity in each Skill condition.
 
 Both CLIs receive the seven shared work tools. Codex also retains native MCP resource-discovery helpers; the sole
 configured service exposes no resources or resource templates. Claude additionally exposes its output-only
@@ -242,7 +271,11 @@ must cite observed evidence. Native PivotTable parts, formulas, validations and 
 recalculation and changed-input behavior require actual checks on copies. A screenshot does not establish refresh,
 editable Track Changes, audio quality, video timing, or interactive application behavior. Microsoft Office-specific
 behavior and perceptual audio/video judgments need an explicitly assigned human or compatible native evaluation path.
-They remain unconfirmed until that path is exercised. The current profile supplies no audio/video player or CAD engine.
+They remain unconfirmed until that path is exercised. V2 provides OCP geometry APIs and optional FFmpeg processing;
+the CLI tools still do not give judges auditory perception, temporal playback perception, or native desktop UI control.
+Inspecting waveforms, metadata or selected frames cannot establish those perceptual properties. Professional subject
+matter alone does not require human grading: source-grounded AI judgments remain available, with expert escalation
+when a specific evidence gap requires it.
 
 Native format conversion can reuse saved formula values. A functional check must record changed inputs/selectors and
 the resulting dependent values; conversion success alone does not establish recalculation. If needed, invalidate formula
@@ -254,6 +287,212 @@ If any AI scalar criterion is `unconfirmed`, the saved overall score is `null` a
 the raw judgment and per-item findings are retained. Reports show unconfirmed and failed counts, preserve the planned
 sample denominator, and exclude unavailable numbers from arithmetic. They do not turn missing evidence into zero or a
 successful assessment. Pairwise `unjudgeable` retains its existing meaning and contributes no win credit.
+
+### Freeze the inspection procedure separately from the rubric
+
+`evaluation.criteria` retains the original item IDs and descriptions. Optional
+`evaluation.inspection_protocol` points to a separate JSON/YAML document, bound to the canonical SHA256 of those
+criteria. It must cover every selected AI item exactly. The protocol declares required evidence methods, any allowed
+inference, specific conditions requiring an unconfirmed result, and human handoffs. It cannot replace descriptions or
+change original tolerances. These are custom harness procedures; equivalence to official GDPval grading is unconfirmed.
+[The official grading guidance](https://evals.openai.com/gdpval/grading) identifies pairwise human expert preferences as
+the standard and rubric-based LLM judgments as an estimate. This harness's evidence-bound scalar checks, null handling
+and optional human handoffs have not been calibrated to that expert preference procedure; report their results under
+the frozen harness protocol, not as an official GDPval score. This correspondence was checked on 2026-09-21.
+
+```yaml
+method: scalar
+executor: codex
+model: gpt-5.6-sol
+criteria: tasks/example/criteria.json
+inspection_protocol: tasks/example/inspection_protocol.json
+settings:
+  reasoning_effort: medium
+  timeout_seconds: 600
+  environment:
+    profile: gdpval-v2
+    network_policy: public_https
+```
+
+Include the explicitly selected native tools and Office rendering paths in the environment when needed. A criterion
+rule uses `required_methods` (`content`, `structure`, `visual`, `functional`, `research`, or exclusively `human`),
+`acceptable_inference` (null or an explicitly described alternative with its required methods),
+`unconfirmed_conditions`, and `human_review`. A filename or occupational keyword is not sufficient to choose a route.
+For example, PivotTable presence is structural; changing a week selector and observing resulting values is functional;
+scientific accuracy may require a comparison with authoritative sources. Supplied-document comparison can use the
+supplied original without an unnecessary external search.
+
+Every reported item distinguishes `observation_kind: direct|inference|unconfirmed`. Its `evidence_refs` identify the
+workspace-relative file, byte SHA256, specific location, completed tool `call_id`, and evidence `method`. Tool responses
+provide the call IDs and captured output paths. Shell inspections must print a JSON record containing
+`schema_version: 1`, `source_artifacts: [{path, sha256}]`, and nonempty `checks: [{action, observation}]`.
+Each `action` is a nonempty string. An `observation` may be a nonempty string, list or object, a finite number, or a
+boolean; nested blank/null values can describe empty cells, but a top-level null/empty observation is insufficient.
+Source entries may include `size` or `bytes` only when they match the original file's nonnegative byte size.
+Record actual operations and results; functional checks need the relevant changed input and observed output.
+Reference `captured_stdout_path` with `stdout_sha256`, or `captured_stderr_path` with `stderr_sha256`, for shell evidence.
+These canonical `.harness_evidence/outputs/...` paths are materialized after the session; do not use temporary absolute
+paths or construct a stream filename from `call_id`. Include an explicit reference for every required method.
+A scratch workbook or a modified copy alone does not bind the inspected original to a recorded check.
+A research comparison must bind the inspected submission and source bytes. Newly fetched sources use the persistent
+`.harness_evidence/research/<sha256>.bin` path in references and shell source records; the returned `scratch/research/`
+path is a reading location during the session. Participant research already staged under `research/` and provided
+`reference_files/` keep their original relative paths. A pairwise check must cover both anonymous submissions.
+
+#### Evidence from a derived image
+
+A shell record may also contain `derived_artifacts`. Each entry has exactly `path`, `sha256`, `source_paths` and
+`location`. For example, a frame extraction record has this shape; replace both hash placeholders with the actual
+file SHA256 values and record the operation and result that occurred:
+
+```json
+{
+  "schema_version": 1,
+  "source_artifacts": [{"path": "submission/clip.mp4", "sha256": "ORIGINAL_SHA256"}],
+  "checks": [{"action": "Extract the frame at 00:00:01.000", "observation": {"frames_written": 1}}],
+  "derived_artifacts": [{
+    "path": ".harness_evidence/scratch/frames/frame-0001.png",
+    "sha256": "DERIVATIVE_SHA256",
+    "source_paths": ["submission/clip.mp4"],
+    "location": "timestamp 00:00:01.000"
+  }]
+}
+```
+
+Use the canonical `.harness_evidence/scratch/...` path for each captured derivative. `source_paths` is a nonempty list
+of distinct, exact paths from `source_artifacts` in that same successful shell record. Every declared original and
+derivative must still exist with the recorded byte hash. Absolute paths, basename aliases, traversal and symlinks are
+rejected. Records are bounded to 2 MiB. In a pairwise record, list only the originals used for each derivative: a frame
+whose `source_paths` contains only `submission_A/...` cannot establish coverage for `submission_B/...`, even when the
+record's source list includes both submissions.
+
+After extraction, call `view_image` on the derivative and cite its returned `captured_path`, `rendered_sha256` and
+`call_id` with `method: visual` and a specific location. The captured rendered image may have different bytes from the
+extracted file. The controller matches the view receipt's `source_sha256` to the declared derivative hash, verifies the
+captured shell stream against its successful journal-bound receipt, and checks the original and derivative bytes.
+Extraction or a declaration without an actual view does not establish visual inspection. Matching this chain records
+provenance; it does not prove that the declared transformation actually produced the frame from those originals.
+Still-image inspection does not establish unobserved motion or sound.
+
+After execution, the controller checks these references against captured files, journal and receipts. It retains raw
+model claims separately and makes insufficiently supported items unconfirmed. This validates recorded provenance and
+activity, not the truth of a judgment, the adequacy of every locator, or whether a chosen perturbation is meaningful.
+The procedure still needs criterion-level review. Resume verifies the frozen protocol; changed procedures use a new
+evaluation directory rather than altering a completed judgment.
+
+### Human responsibility and pending work
+
+The initial draft's 239 human-tagged items are a provisional routing population, not a count of inherently human-only
+criteria. The source-bound observation review classifies those original items without changing their descriptions,
+conditions, scoring units or signed weights:
+
+| Necessary observation | Route and acceptance condition |
+| --- | --- |
+| Numeric, structural, text or still-image facts | Mechanical inspection or current AI tools, with an applicable common proof and actual artifact evidence |
+| Application opening, editing, updating or control behavior | Functional inspection; an unverified operation remains infrastructure/verification pending, rather than inherently human-only |
+| Currently unavailable perception of sound or motion | A provisional human observes the specified intervals and qualities; metadata and stills do not substitute for this observation |
+| Ambiguous original predicate or insufficient evidence | Unconfirmed with its reason and affected task/item IDs |
+
+Mixed items list their component observations but keep one original criterion and weight. A provisional human may
+integrate recorded machine checks with the remaining perceptual observation; this does not make numeric components
+human-only. Specialist or qualitative judgment alone does not require a human route.
+
+An optional nonempty per-item `pending_reason` freezes an unresolved inspection prerequisite. A plausible result or
+valid references alone cannot clear this gate. The only machine exception is an explicitly predeclared
+`machine_alternative` for a sufficient branch of the unchanged original OR criterion:
+
+```yaml
+machine_alternative:
+  condition: "Exact sufficient branch from the original OR criterion"
+  required_methods: [visual]
+```
+
+The field has exactly `condition` and `required_methods`; the methods must be nonhuman. Confirm from the original
+criterion that the stated branch is sufficient before freezing the protocol. The model must report `status: pass`,
+`observation_kind: direct`, a reason naming the observed branch, and nonempty `evidence_refs` that validate all required
+methods and submission scopes. Permitted inference alone cannot establish this exception. The controller records
+`inspection_branch: machine_alternative`; it checks evidence provenance, not the semantic truth of the branch claim.
+A failed, unobserved or insufficiently supported branch remains unconfirmed: it cannot fail the full OR criterion while
+another branch is unobserved. A separately supplied human receipt takes precedence for the full original criterion;
+an invalid or incomplete human receipt does not fall back to the machine alternative.
+
+Without that supported predeclared alternative, resolve the prerequisite and freeze a new protocol to remove the gate;
+unrelated items can proceed. Keep one original criterion, scoring unit and signed weight across its branches. This
+does not change the existing null aggregate rule or reinterpret earlier v1 protocols and judgments.
+
+For this development acceptance, the requester is the human-review coordination owner. Actual reviewers must be named
+before the comparison experiment. A pending rule may specify
+`human_review: {coordination_owner: user, reviewer: null, procedure: ...}`. AI checks can proceed; without a supported
+predeclared machine alternative, those human items remain unconfirmed. The generated `human_handoffs.json` binds
+task/item IDs, original criterion, artifact and protocol
+hashes, procedure and responsibility. A pending handoff is not an evaluation result.
+
+Before actual human review, the coordination owner names a reviewer and freezes a new protocol identity. The reviewer
+receives the unchanged criterion, anonymous original artifacts, necessary references and isolated inspection copies.
+They perform the stated native interaction, listening, playback or other unavailable observation, recording the
+application/version, inspected pages/times/actions, observed results, evidence, an explicit pass/fail/unconfirmed
+decision and a timezone-qualified completion time. The owner verifies reviewer identity and preserves the receipt
+beside the handoff; hashes alone do not authenticate a person.
+
+The controller API `human_handoff`, `validate_human_receipt` and `apply_inspection_protocol(human_receipts=...)` supports
+hash-bound item receipts and rejects completion while a reviewer is unassigned. AI output cannot supply these receipts.
+There is no automatic CLI merge of human item decisions into an AI aggregate. The existing `method: human` inbox remains
+the path for separately recorded overall human ratings; do not overwrite AI results or label an unperformed review as
+complete. Report the AI and human scopes separately until an explicit combined scoring procedure is frozen.
+
+### Reproduce the full-task preparation and correspondence
+
+The development helpers consume the pinned original public dataset, never gold deliverables or research substituted
+for participant work:
+
+```sh
+uv run --project harness --no-sync python .agents/development/scripts/gdpval_startup_check.py \
+  --source /path/to/public-tasks.jsonl --source-sha256 SOURCE_SHA256 \
+  --revision DATASET_COMMIT --output .audit/all-task-inputs --fetch \
+  --download-timeout 900 --max-download-mib 2048
+uv run --project harness --no-sync python .agents/development/scripts/gdpval_inspection_plan.py \
+  --source /path/to/public-tasks.jsonl --source-sha256 SOURCE_SHA256 \
+  --review .agents/development/evidence/gdpval-220-requirements-review.json \
+  --routing-review .agents/development/evidence/gdpval-239-observation-routes.json \
+  --code-routing-review .agents/development/evidence/gdpval-143-code-routes.json \
+  --out .audit/all-task-inspection-v2 --human-coordination-owner user
+```
+
+The startup helper verifies all 220 original prompts and 261 provided files, their staged byte hashes, and absence of
+rubrics/gold in participant inputs. It binds the exact provided-path set to metadata from the pinned dataset revision,
+checks remote size and LFS SHA256 or Git blob SHA1, and requires the same identity check for cached files. Partial or
+mismatched downloads cannot become completed inputs. Existing receipts remain unchanged; failed attempts and received
+partial bodies are retained. Downloads have explicit byte/time limits; preserve failed reports and use a new
+`--report-name` for a further attempt. Without `--fetch`, missing metadata or inputs stop preparation.
+
+Successful identity checks establish faithful acquisition, not semantic validity. A malformed file that matches the
+pinned source remains a source-input issue; do not silently repair the original or count affected criteria as failed.
+Record the precise readable portion, affected task/item IDs and any unresolved interpretation separately. Use the
+recorded local input paths as `tasks.reference_file_overrides` in experiment configurations.
+
+The inspection helper writes per-task `criteria.json`, `source_scores.json`, `candidate_plan.json` and, where assignment
+policy permits, `inspection_protocol.json`, plus a manifest. All 10,453 original criteria are represented; 94 negative
+source weights remain signed in the sidecar. No automatic official weighted score is claimed. Generated procedures are
+drafts: confirm applicability for each item before adopting them. All 220 remain included; unresolved content conflicts,
+missing empirical checks and pending human assignments are visible independently in the readiness ledger.
+
+`--routing-review` requires exact coverage of the original provisional-human population and verifies source, review,
+row and original-item hashes, descriptions and signed weights before writing anything. It writes a new v2 inspection
+identity, component evidence requirements and pending-route IDs. Without either route-review option, the helper
+reproduces the legacy conservative v1 draft; its broad modality tags must not be reported as established human-only requirements.
+
+The optional `--code-routing-review` separately covers exactly 143 original criteria in the three reviewed code tasks.
+It verifies the source, row, prompt, item, description and signed score identities before applying only their reviewed
+methods. Behavioral requirements retain `functional` evidence; source, query and documentation requirements use
+`content` or `structure`. The two review populations must not overlap. Its file hash is recorded in the protocol version,
+provenance and manifest. Route selection preserves original branches and weights and does not establish artifact success.
+Existing generated directories, trial protocols, outputs and judgments are retained. Procedure-only corrections use
+saved originals in a new evaluation identity; no generation rerun is implied.
+
+Source hashes, component-specific proof, failed attempts and current limitations are recorded in
+`.agents/development/evidence/gdpval-220-capabilities.json`. The readiness ledger connects that evidence to the original
+task/item IDs. Registration, an installed library or a successful participant answer alone is not acceptance proof.
+
 
 ### Applying an environment change to existing experiments
 
@@ -270,8 +509,10 @@ required capabilities, task-specific checks, Codex/Claude support, assessment me
 and inclusion in this acceptance. Current summaries keep content readiness, environment acceptance and acceptance
 inclusion independent. A planned method is not an executed check; an unreviewed file, URL or criterion stays unconfirmed.
 The earlier content partition is retained in a separate dated historical evidence file and does not constrain current
-classifications. Only the two owner-selected tasks enter this acceptance, in their original order; other tasks are not
-permanently excluded. Creating an artifact does not establish that its required functional behavior can be assessed.
+classifications. All 220 tasks remain in scope. The two owner-selected tasks start real-CLI verification in their
+original order; they do not limit coverage. Current content feasibility is recorded independently as `candidate`,
+`needs_clarification`, or `undetermined`, with reasons and assumptions. Input reading, output authoring and evaluation
+are separate requirements. Creating an artifact or registering a route does not establish functional acceptance.
 
 ## The six commands
 
