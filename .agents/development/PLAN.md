@@ -90,8 +90,8 @@ within this bounded scope; all-220 acceptance remains incomplete for the explici
 
 The owner requested additional model budgets as needed to close concrete acceptance gaps. This does not authorize
 unlimited or unannounced inference. The [six-session proposal](evidence/gdpval-next-acceptance-plan.md) records saved
-causes, the bounded correction, known fixtures, models, timeouts, failure policy and remaining gaps. Authorization is
-pending; no additional model calls have run. The exhausted old eleven and newer ten sessions stay separate.
+causes, the bounded correction, known fixtures, models, timeouts, failure policy and remaining gaps. The owner explicitly authorized this maximum six-session batch; preparations and model-free preflight precede
+dispatch. No additional model calls have run as of this plan update. The exhausted old eleven and newer ten sessions stay separate.
 
 The candidate adds exact-hash derivative-PDF inspection lineage and clarifies per-item evidence references, method
 coverage and criterion IDs. 159 targeted tests pass; saved judgments replay unchanged. Model-free probes establish
@@ -102,7 +102,9 @@ isolated feasibility; installation alone does not establish native Office or bro
 
 The controller owns plan/evidence/docs/PR integration; one Astra worker prepares the finite six-slot runner without
 model calls, and one Astra specialist owns the native feasibility diagnostics. No nested delegation. The next action is
-explicit owner authorization for the concrete finite model batch while independent model-free development continues.
+the authorized known-fixture probes, controller review, then saved-artifact evaluations under the same six-slot cap.
+A [native feasibility receipt](evidence/gdpval-native-feasibility-2026-09-21.json) records three model-free Chrome
+launches, private singleton creation followed by signal 11, and the still-unconfirmed browser/Office routes.
 
 ## Historical increment: GDPval work and assessment environment (2026-09-15)
 

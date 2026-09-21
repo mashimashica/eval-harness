@@ -3,8 +3,8 @@
 
 # GDPval evaluation acceptance follow-up — proposed six sessions
 
-Status: prepared, awaiting explicit owner authorization. The old eleven-session and newer ten-session batches are
-exhausted and preserved. This is a finite request for additional acceptance evidence, not a production ALPS run.
+Status: explicitly authorized by the owner on 2026-09-21: maximum six sessions under the limits below. The old eleven-session and newer ten-session batches are
+exhausted and preserved. This is a finite acceptance batch, not a production ALPS run.
 Baseline: PR #53, `89967aa6605655232d623f3b047156c8cbd69557`, plus the inspection prompt/derived-PDF correction.
 The candidate environment fingerprint is `701baddb85dcb7eabd6440be838fd9e7d31f63e53d94caa935fa1cd965021d3e`.
 
@@ -44,10 +44,10 @@ inspection procedure, not future model recognition. The prior Codex recognition 
 Maximum **6 model sessions**, model timeout sum **6,000 seconds (100 minutes)**. Concurrency **1**, automatic
 session retries **0**, Claude `max_turns: 40`. Native versions: Codex CLI **0.154.0**, Claude Code **2.1.270**.
 Use existing account subscriptions only; no extra usage, API billing, model fallback or auxiliary AI.
-Preparation/capture/cleanup have separate watchdog targets of 780 seconds per probe and 1,380 seconds per full
-reevaluation (118 minutes summed targets), followed by interruption and owned-process cleanup. These targets are not
-an OS-hard guarantee for total wall time; the enforced model timeout sum is 100 minutes. Preserve actual wall time,
-native usage and unknown costs; unavailable telemetry remains null.
+The controller uses the existing CLI timeout and owned-process cleanup. The enforced model timeout sum is 100
+minutes; prerequisite preparation, capture and cleanup are measured separately, so total wall time can exceed it.
+The earlier prepared JSON's 780/1,380-second lifecycle targets are not adopted as enforced limits. Preserve actual
+wall time, native usage and unknown costs; unavailable telemetry remains null.
 
 Each session starts in a fresh isolated workspace. Freeze current source/config/protocol/input hashes before dispatch;
 verify authentication, prerequisites and native isolation. The fixture's known answers stay outside the model workspace.
@@ -83,3 +83,13 @@ It does not establish all-220 acceptance or resolve native Office/browser operat
 The owner coordinates human evaluation; actual reviewers are assigned before an experiment. Procedure-only changes
 create new evaluation identities for the same artifacts. Generation reruns are unnecessary for this correction;
 previously identified execution-environment changes still require matched N/S/A units under a newly frozen environment.
+
+## Native feasibility work alongside this batch
+
+The [source-bound native diagnostic receipt](gdpval-native-feasibility-2026-09-21.json) maps 19 tasks / 70 original
+items to the actual remaining obligations. Three bounded Chrome launches used known controller HTML and zero model
+sessions. Private Unix communication, outside Unix/TCP denial, filesystem protection and owned-process termination
+were demonstrated. With a private Chromium temporary directory, singleton creation succeeded, but Chrome terminated
+with signal 11 before producing DOM. Its cause remains unconfirmed; the browser route is not accepted. Installed
+Word/Excel/PowerPoint interfaces were inspected without launching Office, so activation and native operations remain
+unconfirmed. Original files and earlier diagnostic receipts are unchanged. These checks do not change the 180/40 ledger.
