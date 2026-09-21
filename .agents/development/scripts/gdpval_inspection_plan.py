@@ -27,9 +27,9 @@ from typing import Any, Sequence
 
 TASK_COUNT = 220
 CRITERION_COUNT = 10453
-VERSION = "gdpval-inspection-draft-v1"
-REVIEWED_VERSION = "gdpval-inspection-reviewed-routes-v2"
-CODE_REVIEWED_VERSION = "gdpval-inspection-reviewed-code-routes-v2"
+VERSION = "gdpval-inspection-draft-v3"
+REVIEWED_VERSION = "gdpval-inspection-reviewed-routes-v3"
+CODE_REVIEWED_VERSION = "gdpval-inspection-reviewed-code-routes-v3"
 CODE_TASK_CRITERION_COUNTS = {
     "0e386e32-df20-4d1f-b536-7159bc409ad5": 55,
     "4122f866-01fa-400b-904d-fa171cdab7c7": 65,
@@ -59,6 +59,11 @@ LEGACY_ROUTES = {
 SCIENCE_IDS = {
     "42a88af8-d5f8-4de9-af05-5911589c1a5c",
     "1b0e95d5-8151-4324-a079-5c3f91e16cb6",
+}
+SCIENCE_BASELINE_COMPARISON_IDS = {
+    "87a706cb-3ef7-4cf2-aa8a-3a8a79b000a4",
+    "d6d7b699-7f02-4a34-9b70-05f3dd2be953",
+    "994ad064-730c-4fe6-b1d0-3619e5c528ac",
 }
 PIVOT_PRESENCE_ID = "9890a9ff-5bb3-4998-9e3d-b561d630a95f"
 DASHBOARD_TASK_ID = "9e39df84-ac57-4c9b-a2e3-12b8abf2c797"
@@ -274,6 +279,10 @@ def _procedures(
         if "source_comparison" not in categories:
             categories.append("source_comparison")
         overrides.append("controller_scientific_accuracy_requires_authoritative_comparison")
+    if task["task_id"] == SCIENCE_TASK_ID and identifier in SCIENCE_BASELINE_COMPARISON_IDS:
+        if "source_comparison" not in categories:
+            categories.append("source_comparison")
+        overrides.append("controller_tracked_edit_claims_require_original_text_comparison")
     if identifier == PIVOT_PRESENCE_ID:
         categories = ["structure"]
         overrides.append("controller_native_pivot_presence_is_structural_not_ui_behavior")
@@ -290,6 +299,15 @@ def _procedures(
             categories.append("visual")
         overrides.append("controller_dashboard_outputs_require_functional_observation")
     procedures = [BRANCH_PROCEDURE, *[METHOD_PROCEDURES[category] for category in categories]]
+    if task["task_id"] == SCIENCE_TASK_ID and identifier in SCIENCE_BASELINE_COMPARISON_IDS:
+        procedures.append(
+            "Read the supplied draft and the submission's original/revised text, retaining paragraph order and "
+            "actual inserted/deleted passages. Compare the relevant complete text and track-change/comment "
+            "records for this predicate. Record concrete original and submitted passages or the paragraph "
+            "comparison results with locations and extraction limitations. Hashing the draft without reading "
+            "its contents cannot establish tracked preservation or whether paragraphs moved. Do not infer "
+            "native Word operation from XML extraction."
+        )
     if identifier in SCIENCE_IDS:
         procedures.append(
             "For this scientific-accuracy criterion, actually compare the relevant scientific claims and simplified "
@@ -387,6 +405,10 @@ def criterion_plan(
         "unconfirmed_conditions": [BRANCH_PROCEDURE, *conditions],
         "human_review": human,
     }
+    if task["task_id"] == SCIENCE_TASK_ID and item["rubric_item_id"] in SCIENCE_IDS | SCIENCE_BASELINE_COMPARISON_IDS:
+        rule["required_observations"] = {"pass": ["source_comparison"]}
+    if task["task_id"] == DASHBOARD_TASK_ID and item["rubric_item_id"] == "a7c98919-f78d-497b-a82e-0b619385ba87":
+        rule["required_observations"] = {"pass": ["input_change"]}
     return {
         "criterion_id": item["rubric_item_id"],
         "original_description": item["criterion"],

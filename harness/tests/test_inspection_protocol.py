@@ -993,3 +993,137 @@ def test_machine_alternative_requires_sufficient_original_condition_and_nonhuman
     protocol["tasks"]["task-1"]["useful"]["machine_alternative"] = alternative
     with pytest.raises(ConfigError, match="machine_alternative"):
         load_inspection_protocol(protocol, tmp_path, _criteria())
+
+
+@pytest.mark.parametrize("kind", ["source_comparison", "input_change"])
+def test_item_bound_observations_reject_hash_only_and_unrelated_checks(tmp_path: Path, kind: str) -> None:
+    digest, reference = _evidence(tmp_path, tool="shell")
+    method = "research" if kind == "source_comparison" else "functional"
+    reference["method"] = method
+    protocol = _protocol(methods=[method])
+    protocol["tasks"]["task-1"]["useful"]["required_observations"] = {"pass": [kind]}
+    assert load_inspection_protocol(protocol, tmp_path, _criteria()) == protocol
+    record = read_json(tmp_path / reference["path"])
+    source = tmp_path / "reference_files/original.txt"
+    source.parent.mkdir()
+    source.write_text("Original: ten units")
+    record["source_artifacts"].append({"path": "reference_files/original.txt", "sha256": sha256_file(source)})
+    digest = _capture_shell_record(tmp_path, reference, record)
+    result = _apply(tmp_path, digest, reference, protocol=protocol)
+    assert result["status"] == "unconfirmed"
+    assert any("item-bound observations missing" in issue for issue in result["evidence_validation"]["issues"])
+    observation: dict[str, Any] = {"kind": kind, "criterion_ids": ["useful"], "comparison": "Observed ten units."}
+    if kind == "source_comparison":
+        observation.update(
+            submission={"path": "submission/document.docx", "location": "paragraph 1", "observed": "Ten units"},
+            reference={"path": "reference_files/original.txt", "location": "line 1", "observed": "ten units"},
+        )
+    else:
+        observation.update(
+            artifact_path="submission/document.docx",
+            engine="test fixture engine",
+            operation="Change existing input A1",
+            operation_mode="direct_cell_write",
+            update_mode="manual_recalculation",
+            before={"inputs": {"A1": 2}, "outputs": {"B1": 4}},
+            after={"inputs": {"A1": 5}, "outputs": {"B1": 10}},
+            expected={"B1": 10},
+        )
+    record["checks"] = [{"action": "Compared actual recorded values", "observation": observation}]
+    digest = _capture_shell_record(tmp_path, reference, record)
+    assert _apply(tmp_path, digest, reference, protocol=protocol)["status"] == "pass"
+    # The same record cannot be used for a different criterion or submission.
+    observation["criterion_ids"] = ["unrelated-id"]
+    digest = _capture_shell_record(tmp_path, reference, record)
+    assert _apply(tmp_path, digest, reference, protocol=protocol)["status"] == "unconfirmed"
+    observation["criterion_ids"] = ["useful"]
+    (tmp_path / "submission_B").mkdir()
+    digest = _capture_shell_record(tmp_path, reference, record)
+    assert _apply(tmp_path, digest, reference, protocol=protocol)["status"] == "unconfirmed"
+
+
+@pytest.mark.parametrize(
+    "requirements",
+    [
+        None,
+        {},
+        [],
+        {"pass": []},
+        {"pass": ["unknown"]},
+        {"unconfirmed": ["source_comparison"]},
+        {"pass": ["source_comparison", "source_comparison"]},
+        {"pass": ["input_change"]},
+    ],
+)
+def test_invalid_observation_requirement_or_method_is_rejected(tmp_path: Path, requirements: Any) -> None:
+    protocol = _protocol(methods=["research"])
+    protocol["tasks"]["task-1"]["useful"]["required_observations"] = requirements
+    with pytest.raises(ConfigError, match="required_observations"):
+        load_inspection_protocol(protocol, tmp_path, _criteria())
+
+
+def test_pass_only_observation_does_not_block_decisive_failure(tmp_path: Path) -> None:
+    digest, reference = _evidence(tmp_path, tool="shell")
+    protocol = _protocol(methods=["functional"])
+    protocol["tasks"]["task-1"]["useful"]["required_observations"] = {"pass": ["input_change"]}
+    item = _item(reference)
+    item["status"] = "fail"
+    result = apply_inspection_protocol(
+        [item],
+        protocol=protocol,
+        task_id="task-1",
+        task_criteria=_task_criteria(),
+        workspace=tmp_path,
+        evidence_sha256=digest,
+        artifact_hashes=["a" * 64],
+    )
+    assert result[0]["status"] == "fail"
+
+
+@pytest.mark.parametrize(
+    "mutate",
+    [
+        lambda item: item.update(criterion_ids=None),
+        lambda item: item.update(criterion_ids=["useful", "useful"]),
+        lambda item: item.update(kind="unknown"),
+        lambda item: item.update(artifact_path="submission/other.xlsx"),
+        lambda item: item.update(after=item["before"]),
+        lambda item: item.update(expected={}),
+        lambda item: item.update(update_mode="assumed"),
+        lambda item: item.update(before=None),
+        lambda item: item["before"].update(inputs={"": None}),
+        lambda item: item["after"].update(outputs={"  ": 1}),
+        lambda item: item.update(expected={"": None}),
+    ],
+)
+def test_incomplete_or_unchanged_input_observation_is_not_covered(mutate: Any) -> None:
+    from eval_harness.inspection_observations import recorded_observations
+
+    observation = {
+        "kind": "input_change",
+        "criterion_ids": ["useful"],
+        "artifact_path": "submission/book.xlsx",
+        "engine": "fixture",
+        "operation": "Edit A1 on a copy",
+        "operation_mode": "direct_cell_write",
+        "update_mode": "manual_recalculation",
+        "before": {"inputs": {"A1": 2}, "outputs": {"B1": 4}},
+        "after": {"inputs": {"A1": 5}, "outputs": {"B1": 4}},
+        "expected": {"B1": 10},
+        "comparison": "Output stayed unchanged, contradicting the expected update.",
+    }
+    record = {
+        "source_artifacts": [{"path": "submission/book.xlsx", "sha256": "a" * 64}],
+        "checks": [{"action": "Edit and observe", "observation": observation}],
+    }
+    # Unchanged outputs are a useful observed failure, not missing inspection.
+    assert recorded_observations(
+        record, identifier="useful", method="functional", source_scope=lambda path, digest: "submission"
+    ) == {"submission": {"input_change"}}
+    mutate(observation)
+    assert (
+        recorded_observations(
+            record, identifier="useful", method="functional", source_scope=lambda path, digest: "submission"
+        )
+        == {}
+    )

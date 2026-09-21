@@ -1,6 +1,17 @@
 <!-- SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved. -->
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 
+## Active continuation: September22 remaining allowance
+
+The owner authorizes valuable work toward ALPS readiness using today's remaining Codex allowance, relayed through
+side task `01a0c290-ff84-71e1-a873-3d614f4cc139`. Baseline324efd26 remains the accepted bounded increment;
+full220 acceptance is still incomplete. See [the finite continuation plan](evidence/gdpval-sept22-continuation-plan.md).
+Actual weekly usage85% at17:00UTC. No resets, credits, additional billing, production experiment or merge are authorized.
+Previous model envelopes stay exhausted. New first Codex batch: at most2 saved-artifact evaluations in fixed task order,
+Sol/medium,900s each,serial1,retries0,subscription only, after model-free prerequisites. No extra Claude slots authorized.
+Controller owns evaluator evidence repair, final experiment decisions and integration; one worker owns exact Excel
+operation feasibility/implementation; one specialist owns browser process-lifetime/permission evidence. No nested delegation.
+
 ## Active increment: all 220 GDPval tasks (2026-09-21)
 
 The owner's expanded request supersedes the former two-task acceptance scope. All 220 tasks and 10,453 original

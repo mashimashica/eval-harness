@@ -414,6 +414,37 @@ activity, not the truth of a judgment, the adequacy of every locator, or whether
 The procedure still needs criterion-level review. Resume verifies the frozen protocol; changed procedures use a new
 evaluation directory rather than altering a completed judgment.
 
+
+### Item-bound observations
+
+A frozen rule may add `required_observations: {pass: [source_comparison]}` or
+`{pass: [input_change]}` (and independently a `fail` list). Requirements apply only to the listed statuses and
+criteria. They do not impose searches or dynamic tests on unrelated predicates. Old protocols remain loadable;
+new requirements produce a different protocol hash and require separately recorded reevaluation.
+
+A matching successful shell `checks[].observation` must name `kind` and `criterion_ids`, and be referenced on that
+item using the corresponding `research` or `functional` method. Each submission needs its own observation.
+
+- `source_comparison`: `submission` and `reference` each contain a source-bound `path`, precise `location`, and
+  `observed` text containing actual relevant passages or concrete values. `comparison` states the comparison and
+  limitations. The reference comes from supplied `reference_files/` or captured `research/` bytes. Hashes alone
+  do not constitute a comparison. Preserve source identity/version and the applicable original conditional branch.
+- `input_change`: `artifact_path` names the original submission in `source_artifacts`; `engine`, `operation`,
+  `operation_mode` (`direct_cell_write`, `existing_control`, `existing_filter`), and `update_mode` (`automatic`,
+  `manual_recalculation`, `manual_refresh`, `not_observed`) describe the actual operation. `before` and `after`
+  each have nonempty `inputs` and `outputs` maps from locations to values. Inputs must differ; observed outputs
+  may stay unchanged. `expected` maps output locations to independently expected values, and `comparison`
+  describes what was observed. Preserve relevant copies/derivatives with the usual evidence procedure.
+
+The validator checks record completeness and source/criterion binding. It cannot certify that the recorded
+passages were actually compared correctly, that input changes were meaningful, or that every required output
+was examined. Review actual commands and observations for the claim being made. Direct cell writes do not prove
+UI input behavior; manual recalculation does not prove automatic updates. Leave unobserved predicates unconfirmed.
+Do not add missing formulas, PivotTables, filters, input controls or connections to a submitted artifact during
+inspection. The participant owns their design, implementation, dependency selection and self-checks. The harness
+provides generic isolated execution means; task-specific solution helpers or repairs are outside this boundary.
+
+
 ### Human responsibility and pending work
 
 The initial draft's 239 human-tagged items are a provisional routing population, not a count of inherently human-only

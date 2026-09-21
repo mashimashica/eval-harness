@@ -826,3 +826,16 @@ def test_code_route_declaration_cannot_turn_unsupported_pass_into_success(
     assert "does not establish execution" in " ".join(
         protocol["tasks"][row["task_id"]]["code-1-0"]["unconfirmed_conditions"]
     )
+
+
+@pytest.mark.parametrize("identifier", sorted(plan.SCIENCE_IDS | plan.SCIENCE_BASELINE_COMPARISON_IDS))
+def test_only_targeted_science_items_require_recorded_comparisons(identifier: str) -> None:
+    row, task = inputs(["text/content"], identifier=identifier, task_id=plan.SCIENCE_TASK_ID)
+    item = json.loads(row["rubric_json"])[0]
+    result = plan.criterion_plan(item, task, task["rubric_routes"][0], None, "user")
+    assert result["original_description"] == item["criterion"]
+    assert result["runtime_rule_candidate"]["required_observations"] == {"pass": ["source_comparison"]}
+    assert "research" in result["runtime_rule_candidate"]["required_methods"]
+    task["task_id"] = "unrelated-task"
+    unrelated = plan.criterion_plan(item, task, task["rubric_routes"][0], None, "user")
+    assert "required_observations" not in unrelated["runtime_rule_candidate"]

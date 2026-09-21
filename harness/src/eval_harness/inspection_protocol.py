@@ -21,6 +21,7 @@ from .artifacts import file_manifest, manifest_hash, read_json, read_jsonl, sha2
 from .errors import ArtifactError, ConfigError
 from .grading_criteria import criteria_hash
 from .inspection_lineage import find_derived_scopes, validate_derivations
+from .inspection_observations import OBSERVATION_METHODS, recorded_observations, valid_requirements
 
 METHOD_TOOLS = {
     "content": {"shell"},
@@ -102,7 +103,7 @@ def load_inspection_protocol(value: Any, base: Path, criteria: Mapping[str, Any]
                 not _text(criterion_id)
                 or not isinstance(rule, Mapping)
                 or not _RULE_KEYS.issubset(rule)
-                or set(rule) - _RULE_KEYS - {"pending_reason", "machine_alternative"}
+                or set(rule) - _RULE_KEYS - {"pending_reason", "machine_alternative", "required_observations"}
             ):
                 raise ConfigError(
                     "inspection protocol items accept procedure fields only; original descriptions cannot change"
@@ -113,6 +114,16 @@ def load_inspection_protocol(value: Any, base: Path, criteria: Mapping[str, Any]
                 )
             if not _methods(rule["required_methods"]):
                 raise ConfigError("inspection protocol required_methods contains an unsupported or repeated method")
+            if "required_observations" in rule:
+                requirements = rule["required_observations"]
+                if not valid_requirements(requirements) or any(
+                    OBSERVATION_METHODS[kind] not in rule["required_methods"]
+                    for kinds in requirements.values()
+                    for kind in kinds
+                ):
+                    raise ConfigError(
+                        "required_observations needs pass/fail lists matching required inspection methods"
+                    )
             conditions = rule["unconfirmed_conditions"]
             if not isinstance(conditions, list) or not conditions or not all(_text(item) for item in conditions):
                 raise ConfigError("inspection protocol unconfirmed_conditions must be a nonempty list of descriptions")
@@ -226,6 +237,22 @@ def protocol_prompt(protocol: Mapping[str, Any], rules: Mapping[str, Any]) -> st
         "and supplied source files under reference_files/ or research/ in source_artifacts. "
         "For pairwise judgments, inspect both anonymous submissions. "
         "A method reference records activity; it does not prove that a criterion is true. Follow the specified "
+        "procedure and unconfirmed conditions. If a rule declares required_observations for the reported status, "
+        "include the corresponding structured observation in a captured shell check on THIS item's evidence_refs. "
+        "Each such observation has kind, criterion_ids (the exact applicable IDs), and comparison (what the "
+        "observed results establish and their limits). For kind source_comparison, use method research and "
+        "submission:{path,location,observed} and reference:{path,location,observed}; observed contains actual "
+        "relevant passages or concrete values from each file, not just its hash or an assertion of comparison. "
+        "Both paths must appear in source_artifacts. For kind input_change, use method functional and "
+        "artifact_path (the original submission in source_artifacts), engine, operation, "
+        "operation_mode (direct_cell_write, existing_control, or existing_filter), update_mode (automatic, "
+        "manual_recalculation, manual_refresh, or not_observed), before:{inputs:{location:value},outputs:{location:value}}, "
+        "after with the same shape, and expected:{location:independently_expected_value}. Inputs must actually "
+        "differ; unchanged outputs may be a real observation. Perform operations on an isolated copy; never repair "
+        "missing formulas, Pivots, controls or connections. Direct cell edits and manual recalculation do not "
+        "establish UI operation or automatic updates. Check those distinctions against the original predicate; "
+        "these record-shape checks cannot decide them. No observation requirement applies to statuses absent "
+        "from that rule; a decisive structural absence may suffice for a failure under its original criterion. Follow the specified "
         "procedure and unconfirmed conditions. Inference is allowed only under its declared procedure. "
         "Before finalizing, match each original criterion ID to its own description and observations; do not "
         "assign evidence by list position. For each item, include evidence_refs covering every required method "
@@ -676,6 +703,7 @@ def apply_inspection_protocol(
             references = item.get("evidence_refs")
             observed: set[str] = set()
             covered: dict[str, set[str]] = {}
+            observations: dict[str, set[str]] = {}
             if not isinstance(references, list) or not references:
                 issues.append("evidence references are missing")
             else:
@@ -685,6 +713,15 @@ def apply_inspection_protocol(
                         observed.add(method)
                         for scope in scopes:
                             covered.setdefault(scope, set()).add(method)
+                        if calls[reference["call_id"]].get("tool") == "shell" and rule.get("required_observations"):
+                            record = read_json(_workspace_file(workspace, reference["path"]))
+                            for scope, kinds in recorded_observations(
+                                record,
+                                identifier=identifier,
+                                method=method,
+                                source_scope=lambda path, digest: _source_scope(workspace, path, digest),
+                            ).items():
+                                observations.setdefault(scope, set()).update(kinds)
                     except (ArtifactError, OSError, TypeError, ValueError) as exc:
                         issues.append(str(exc))
             if not set(methods).issubset(observed):
@@ -694,6 +731,12 @@ def apply_inspection_protocol(
                     not covered.get(scope) or not (set(methods) - {"research"}).issubset(covered.get(scope, set()))
                 ):
                     issues.append(f"required artifact inspection is missing for {scope}")
+                if (workspace / scope).is_dir() and isinstance(status, str):
+                    missing = set(rule.get("required_observations", {}).get(status, [])) - observations.get(
+                        scope, set()
+                    )
+                    if missing:
+                        issues.append(f"item-bound observations missing for {scope}: {', '.join(sorted(missing))}")
         if not isinstance(status, str) or status not in {"pass", "fail"}:
             issues.append("reported criterion is unconfirmed or invalid")
         if issues:
@@ -701,7 +744,7 @@ def apply_inspection_protocol(
         item["evidence_validation"] = {
             "status": "unconfirmed" if issues else "referenced",
             "issues": issues,
-            "scope": "provenance and method coverage only; not semantic verification",
+            "scope": "provenance, method coverage and declared observation shape only; not semantic verification",
         }
         effective.append(item)
     return tuple(effective)
