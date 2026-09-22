@@ -1,0 +1,58 @@
+{
+  "schema_version": 1,
+  "kind": "authorized-small-nsa-pilot-dispatch",
+  "authority": "Explicit owner pilot instruction relayed through01a0c290-ff84-71e1-a873-3d614f4cc139; not full-production or merge authority",
+  "baseline_commit": "e1d5cf0914157366848278ba02de4578e122c3dd",
+  "comparison_design": "matched_skills",
+  "implementation": "Nine one-task/one-condition canonical general projections with controller-verified matched shared Skills and equal settings",
+  "manifest": {
+    "path": ".audit/2026-09-22-nsa-pilot/manifest.json",
+    "sha256": "cc342d7d4cf915a6c3880938bd9b84278bca376c74f1d7a3d88bb1d534bb8929"
+  },
+  "selection": {
+    "path": ".agents/development/evidence/gdpval-nsa-pilot-selection.json",
+    "sha256": "6769c40dc076ee4f3fb03f4727bef336fed93020e30fd1ae9f1503b030bc1bcd"
+  },
+  "environment_fingerprint": "18df98ba80108015b063e77e74542193a286b065757242b13239497f51fffc84",
+  "maximum_sessions": 29,
+  "model_timeout_total_seconds": 30900,
+  "parallelism": 1,
+  "retries": 0,
+  "billing": "existing subscriptions only; no auxiliary AI/API/extra billing/reset/model substitution",
+  "preflight": {
+    "path": ".audit/2026-09-22-nsa-pilot/preflight.json",
+    "sha256": "503b350ce522b792210c8ea1b89dd49cd621b220887110dd3f59da288626c945"
+  },
+  "provided_files": {
+    "path": ".audit/2026-09-22-nsa-pilot/task-preflight/provided-files.json",
+    "sha256": "f41e87d881614ffb788969876bf2bd9986d36a4ce75bb5285825caf3925862f5"
+  },
+  "selected_task_review": {
+    "path": ".audit/2026-09-22-nsa-pilot/task-preflight/report.json",
+    "sha256": "b21655ce7db15b8e84dd3f3f635439e59131f7429e80b699de16d5ed073f03c8"
+  },
+  "procedure_adoption": {
+    "path": ".audit/2026-09-22-nsa-pilot/procedure-adoption.json",
+    "sha256": "eca00e8b60b5429bc3e1710fa565744fe804427ee34ffecde49e40f28ce2ecf6"
+  },
+  "hard_conflict_unknowns": 14,
+  "original_criteria_count": 108,
+  "runner": {
+    "path": ".audit/2026-09-22-nsa-pilot/runner-support/run_slot.py",
+    "sha256": "df807aa554134b2dc145b9c3ca8e39b44100196343ac76e0305560b2a2e36da7"
+  },
+  "runner_verification": {
+    "path": ".audit/2026-09-22-nsa-pilot/runner-support/verification.json",
+    "sha256": "004d58c0e222ea5104b7b062c83ea284b19a5a2c9435bee72250e60e8476e429"
+  },
+  "manifest_validation": {
+    "path": ".audit/2026-09-22-nsa-pilot/runner-support/final-manifest-verification.json",
+    "sha256": "a123b4cf3794b4b199f5074e2e0d0d49bb4d890d226b11d98d5f1d50fb1f4c3d"
+  },
+  "started_creation_S": {
+    "path": ".audit/2026-09-22-nsa-pilot/sessions/creation-S/model-started.json",
+    "sha256": "051cd1065bd8288259108889b5a30b3a5d357a30acb40faa9babd83c9665817d"
+  },
+  "complete": false,
+  "outcome_limit": "Exploratory three tasks, one shared Skill each and one execution percondition; no191/220generalization or stableALPS-superiority conclusion. All failures/unknowns/unstarted slots retained."
+}

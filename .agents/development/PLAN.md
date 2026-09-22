@@ -1,6 +1,19 @@
 <!-- SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved. -->
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 
+## Active work: owner-authorized three-task N/S/A pilot
+
+The new owner instruction, relayed through side task `01a0c290-ff84-71e1-a873-3d614f4cc139`, authorizes a finite29-session
+exploratory comparison, not the220-task production proposal. Follow [the frozen pilot plan](evidence/gdpval-nsa-pilot-plan.md).
+The191-task population and3-task random draw are saved before outcomes; tasks are never replaced. One reusable S Skill
+and one reusable A Skill share the same generic brief and creator; all N/S/A applications share the same environment.
+The controller owns selection/configuration/dispatch/report; worker owns the once-only runner and specialist owns only
+selected-task source/prerequisite review. Existing completed evidence and all spent budgets remain historical.
+Current step: inputs/order/aggregation and29slots are frozen in [the dispatch receipt](evidence/gdpval-nsa-pilot-dispatch.json).
+All4 role/client preflights passed without model calls,5 provided files and108 original criterion units are preserved;
+14 exact housing conflicts remain evaluator-only unknowns. The once-only runner passes14 mock guards and typing/Ruff.
+Creator S started at2026-09-22T00:45:53Z; continue A,9applications and18judges within the new envelope. Preserve unavailable/failed/unstarted slots if quota blocks progression.
+
 ## Active continuation: September22 remaining allowance
 
 Latest checkpoint: the first two additional Codex sessions are complete. Dashboard timed out at900s after copied-input
