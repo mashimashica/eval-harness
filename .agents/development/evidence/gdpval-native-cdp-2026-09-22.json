@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "kind": "known-page-CDP-lifecycle-verification",
+  "findings": {
+    "path": ".audit/2026-09-22-native-cdp/findings.json",
+    "sha256": "086cf8c1928d0ec1341b1c76ec8bd2b60612e52b7dcc91d4413b761d5cb9513f"
+  },
+  "manifest": {
+    "path": ".audit/2026-09-22-native-cdp/manifest.json",
+    "sha256": "49bdf4308d34c19a1e8f01dbd7d913ae9124f0389f4330b949c79a3ab861c5fc"
+  },
+  "result": {
+    "path": ".audit/2026-09-22-native-cdp/result.json",
+    "sha256": "b217827e504b408f46bcfa9db3b537007820c2ebf28e07208f58fbae568cf022"
+  },
+  "model_calls": 0,
+  "candidate_runs": 0,
+  "chrome_launches": 1,
+  "cumulative_known_chrome_launches": 7,
+  "absolute_elapsed_seconds": 1.5091307499678805,
+  "observations": [
+    "Only FDs0/1/2/3/4 survive preparation; deliberate private CDP pipes survive sandbox-exec.",
+    "Browser.getVersion and exact known local DOM observation pass; button states6 then21.",
+    "Browser.close sent at1.382386s, acknowledged; natural exit0 at1.474445s. No forced signals; all observed identities absent.",
+    "All8 fresh filesystem/Unix/TCP controls pass, with unchanged original/runtime inputs."
+  ],
+  "remaining": [
+    "Polling missed a short-lived GPU PID; complete ownership/lifetime enforcement for fast-detached/reparented helpers is unproved.",
+    "Chrome spawned /usr/bin/profiles; executable policy and treatment of owned system helpers need explicit design before forced cleanup can be accepted.",
+    "Inner Chrome sandboxes remain disabled in this trusted diagnostic; broad outer Mach/IPC/fork authority is not accepted for participant content.",
+    "No production browser broker, native Office, frontend/accessibility or task-specific browser result accepted."
+  ],
+  "next_step": "Implement an enforceable controller-owned browser lifetime boundary and explicit executable/IPC policy; preserve shell fork denial. No additional routine page launch is needed to repeat this known CDP result.",
+  "product_permissions_changed": false,
+  "candidate_isolation_accepted": false,
+  "all220_accepted": false
+}

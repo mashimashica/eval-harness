@@ -1,0 +1,176 @@
+{
+  "schema_version": 1,
+  "kind": "controller-accepted-known-cad-drawing-operations",
+  "decision": "Adopt only matching STEP-derived dimensional drawing, assembly/exploded view, BOM and balloon operations. Geometry, actual PDF vectors, source preservation and visible known content were verified; no task correctness is inferred.",
+  "proof": {
+    "path": ".audit/2026-09-22-cad-drawing-operations/findings.json",
+    "sha256": "2f53dd3826a2f78b12435e9f6248fb9dbe589da885ed312d7ac5a07df7209429"
+  },
+  "manifest": {
+    "path": ".audit/2026-09-22-cad-drawing-operations/manifest.json",
+    "sha256": "11ff0d0d0ebcab19623d2f5d26b70d43127d787061399f3e4cb9bb25102aea57"
+  },
+  "applicability": {
+    "path": ".audit/2026-09-22-cad-drawing-operations/source-applicability.json",
+    "sha256": "b716f08acbb5815af2a61b7bcf037f6f174f7ce117fd44eec63d8f5d999a26ea"
+  },
+  "preview": {
+    "path": ".audit/2026-09-22-cad-drawing-operations/drawing-preview.png",
+    "sha256": "93df55aacefdb897da9544f5f4ec442a756d5851a742f3edfb39db28cc2a13e0"
+  },
+  "task_id": "5e2b6aab-f9fb-4dd6-a1a5-874ef1743909",
+  "models": 0,
+  "network_calls": 0,
+  "new_dependencies": 0,
+  "product_permissions_changed": false,
+  "operations": {
+    "application_invocations": 1,
+    "evaluation_shell_invocations": 2,
+    "render_pages_invocations": 1,
+    "operational_elapsed_seconds_sum": 12.070451290986966
+  },
+  "observations": {
+    "components": [
+      {
+        "item": "1",
+        "bounds_mm": [
+          0.0,
+          0.0,
+          0.0,
+          60.0,
+          40.0,
+          10.0
+        ],
+        "volume_mm3": 24000.0,
+        "step_sha256": "79fd5abb2ea95609b0de8147d7def0c24dc969987d3d0a7902351edce4d8e258"
+      },
+      {
+        "item": "2",
+        "bounds_mm": [
+          20.0,
+          10.0,
+          10.0,
+          40.0,
+          30.0,
+          25.0
+        ],
+        "volume_mm3": 6000.0,
+        "step_sha256": "23e2c8a4d5ae61e73ee25993e71a5332b072eb799b6e09e7f1838f739b563636"
+      }
+    ],
+    "assembly_components": 2,
+    "assembly_bounds_mm": [
+      0.0,
+      0.0,
+      0.0,
+      60.0,
+      40.0,
+      25.0
+    ],
+    "PDF_MediaBox_points": [
+      0,
+      0,
+      1224,
+      792
+    ],
+    "actual_vector_edge_matches": [
+      {
+        "view": "assembled isometric",
+        "item": "1",
+        "nondegenerate_step_edges_found_in_pdf": 12
+      },
+      {
+        "view": "assembled isometric",
+        "item": "2",
+        "nondegenerate_step_edges_found_in_pdf": 12
+      },
+      {
+        "view": "exploded",
+        "item": "1",
+        "nondegenerate_step_edges_found_in_pdf": 12
+      },
+      {
+        "view": "exploded",
+        "item": "2",
+        "nondegenerate_step_edges_found_in_pdf": 12
+      },
+      {
+        "view": "assembled front",
+        "item": "1",
+        "nondegenerate_step_edges_found_in_pdf": 8
+      },
+      {
+        "view": "assembled front",
+        "item": "2",
+        "nondegenerate_step_edges_found_in_pdf": 8
+      }
+    ],
+    "matching_nonzero_edges": 64,
+    "numeric_scale_actual_length_mm": 120,
+    "declared_scale": "2:1",
+    "known_geometry_width_mm": 60,
+    "balloons_match_material_BOM": true,
+    "wrong_scale_and_unrelated_vector_rejected": true,
+    "originals_unchanged": true
+  },
+  "failure_preserved": {
+    "receipt": "evaluation-shell.json",
+    "returncode": 1,
+    "cause": "pypdf extracted the exact Top block label as T op block; geometry/XCAF/PDF box checks had completed.",
+    "correction": "Exact BOM-row kerning split only; missing label, joined Topblock/T opblock and changed T op blank all rejected. No geometry/scale expectation relaxed; authored artifacts and original failure unchanged.",
+    "regeneration": false
+  },
+  "preservation": {
+    "original_sources_and_relevant_product_modules_unchanged": true,
+    "original_staged_and_authored_files_unchanged": true,
+    "first_failure_receipt_and_script_unchanged": true,
+    "runtime_component_hashes_unchanged": true,
+    "active_process_registries_empty": true,
+    "validator_only_concurrent_change_excluded": "Root separately owns inspection_protocol.py; CAD operations do not use it."
+  },
+  "root_visual_review": {
+    "status": "observed_and_accepted_for_bounded_known_operations",
+    "observer": "root controller",
+    "image_path": "drawing-preview.png",
+    "image_sha256": "93df55aacefdb897da9544f5f4ec442a756d5851a742f3edfb39db28cc2a13e0",
+    "observations": "Assembled isometric left, exploded pair right, front view with60.00/25.00 dimensions,2:1 labels,two balloons,BOM Base/Top materials,ANSI B title/revision/tolerance block visible and legible. Wireframe explicitly labeled; no hidden-line-removal claim.",
+    "no_cosmetic_rerun": true
+  },
+  "original_item_applicability_count": 15,
+  "source_conditions_preserved": [
+    "No original IDs/descriptions/signed scores changed.",
+    "One known assembly demonstrates common drawing operations; actual per-assembly/sub-assembly completeness remains a task-artifact question.",
+    "Conditional ZIP branch remains conditional on more than five component STEP files; this two-component fixture does not trigger it.",
+    "No engineering design, thermal, sealing, glove operation, battery or mechanical feasibility judgment is claimed."
+  ],
+  "limits": [
+    "Known two-block,straight-edge wireframe geometry only; no arbitrary curved-shape projection or hidden-line removal proved.",
+    "No Toasty design or engineering correctness,manufacturing/thermal/sealing/battery/electrical feasibility,or actual task submission accepted.",
+    "One sheet demonstrates reusable operations; actual required assembly/sub-assembly completeness and every-component BOM mapping require artifact inspection.",
+    "Earlier historical OCP123s timeout remains unchanged; this observation does not guarantee cold-start time.",
+    "No model CLI parity or candidate behavior demonstrated.",
+    "The operation proof does not modify frozen plans,original criteria,weights or outcomes."
+  ],
+  "static_checks": [
+    {
+      "path": ".audit/2026-09-22-cad-drawing-operations/static-checks.json",
+      "sha256": "632898c8290f9a959ea972f79ab4f967b14073f9ea90c058279fc82a701f1f32"
+    },
+    {
+      "path": ".audit/2026-09-22-cad-drawing-operations/continuation-static-checks.json",
+      "sha256": "ce3bd3b6f5b0e37ca3c334ab147239a96742a7b9d421c6eb50d499300bc4eedd"
+    },
+    {
+      "path": ".audit/2026-09-22-cad-drawing-operations/final-static-checks.json",
+      "sha256": "29ace69dd3538bf41bd517474a2243b4fcc82eaaaefa6c5d55bb7a03c1847b66"
+    }
+  ],
+  "all220_accepted": false,
+  "relative_evidence_paths_resolve_against": ".audit/2026-09-22-cad-drawing-operations",
+  "source_row_hash_interpretation": {
+    "task_id": "5e2b6aab-f9fb-4dd6-a1a5-874ef1743909",
+    "raw_jsonl_line_sha256": "839114b180c1d0459c0806aa3316aef6b36ed172c1ff1bd37b38181f91fd3b4a",
+    "canonical_row_sha256": "f298505cf86c06687c21569d6edce3bb85d24861b881f95b63f423be51109b0d",
+    "explanation": "The original CAD proof field original_row_sha256 hashes raw JSONL line.encode(), excluding newline. The mapping row_sha256 hashes canonical JSON. They bind the same frozen source row using different representations; original proof retained."
+  }
+}

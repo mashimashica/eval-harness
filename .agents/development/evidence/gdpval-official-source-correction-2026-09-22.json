@@ -1,0 +1,151 @@
+{
+  "schema_version": 1,
+  "kind": "controller-adopted-two-form-source-input-classification",
+  "decision": "Adopt the already verified public retrieval operation; keep exact requested source availability and version as explicit unconfirmed external input obligations.",
+  "source_review": {
+    "path": ".audit/2026-09-22-form-layout-source-check/official-source-recommendation.json",
+    "sha256": "56ad8e0c6e7d3e7736a7cf74206f999e741200587964bb5d6024dd2423de6ac2"
+  },
+  "source_dataset_sha256": "4d58ee30485093010bf8b0a11708f80924831eef2a643db4c2d23b72fd426470",
+  "classification_only": true,
+  "models": 0,
+  "network_calls": 0,
+  "new_operation_proofs": 0,
+  "source_preselection": false,
+  "source_substitution_permitted": false,
+  "task_success_inferred": false,
+  "component_scope": "The public_source_access catalog is reused with its existing transport limits; no exact IRS or AbbVie URL response or edition is established by this review.",
+  "tasks": {
+    "43dc9778-450b-4b46-b77e-b6d82b202035": {
+      "row_sha256": "f4a94f0c726a36a78897f9ed2636cb02b1b446a75541b93f673a6e7bf4c996e3",
+      "raw_line_sha256": "dbaa49d8871324d018b3a5011da3c6a3562ed8537c88d4ef624f140380e6ef82",
+      "prompt_sha256": "6d25c317fdce343b5dd2434de1eecf3f050c822d1b99445c04ce4a778425259a",
+      "source_line": 4,
+      "prompt_clause": {
+        "text": "The 1040 should be provided in PDF form, and should include any Schedules or Forms that would be required to be e-filed with the Form 1040 according to current IRS regulations for the 2024 tax year.",
+        "start": 515,
+        "end": 713
+      },
+      "criterion_evidence": [
+        {
+          "criterion_id": "8204401e-d008-44ad-b42f-26e3256db111",
+          "original_description": "Provides a PDF of IRS Form 1040 (tax year 2024) containing pages 1 and 2 for Robert (Bob) and Lisa Smith",
+          "original_signed_score": 2,
+          "original_item_sha256": "da110d19e37a2c680e2b57ad2f863c9e6b4b21a80b7cfbf91e80a643f1e6e3d6"
+        },
+        {
+          "criterion_id": "18b1321f-4219-4787-af09-d3a58a253893",
+          "original_description": "Provides a compiled PDF that includes all IRS forms and schedules required to be e-filed with the Form 1040 based on the provided 2024 documents",
+          "original_signed_score": 2,
+          "original_item_sha256": "fb922a7c07237ce5dc40e808ca4f481cb884946d744fc36d6830797f4667e0ac"
+        },
+        {
+          "criterion_id": "4d5e14f9-8bf7-4719-84ad-85125f1d77bb",
+          "original_description": "All included IRS forms and schedules in the deliverable are for tax year 2024",
+          "original_signed_score": 1,
+          "original_item_sha256": "7322b87f101a18247ed308ac8f50bbaed406a8d14c47cca6903841077528988f"
+        }
+      ],
+      "operation": "public_source_access",
+      "operation_status": "shared_route_applicable",
+      "source_input_obligations": {
+        "status": "unconfirmed",
+        "kind": "external_source_availability_and_version",
+        "required_source": {
+          "authority": "IRS",
+          "tax_year": 2024,
+          "specific_url_in_prompt": null
+        },
+        "requirement": "Identify and obtain the official IRS Form 1040 and required schedules/forms for tax year 2024, retaining source and edition evidence; actual filing is not requested.",
+        "remaining_obligation": "Exact required tax-year-2024 form and schedule availability, edition and completeness are unconfirmed. Participant retrieval and comparison with the original requirements remain necessary; do not substitute another tax year.",
+        "criterion_ids": [
+          "8204401e-d008-44ad-b42f-26e3256db111",
+          "18b1321f-4219-4787-af09-d3a58a253893",
+          "4d5e14f9-8bf7-4719-84ad-85125f1d77bb"
+        ],
+        "basis_ref": ".agents/development/evidence/gdpval-220-route-applicability.json#/official_form_source_access_correction/tasks/43dc9778-450b-4b46-b77e-b6d82b202035",
+        "participant_retrieval_required": true,
+        "exact_source_fetched_in_this_review": false,
+        "task_success_inferred": false
+      },
+      "remaining_conditions": [
+        "Exact required tax-year-2024 form and schedule availability, edition and completeness are unconfirmed. Participant retrieval and comparison with the original requirements remain necessary; do not substitute another tax year.",
+        "Retain separate content feasibility, native-application gates, supplied-input uncertainty, and all original criterion methods/statuses/weights."
+      ]
+    },
+    "e6429658-4de1-42dd-a9e0-2d2b9b02fb10": {
+      "row_sha256": "3e66b95e4781638c9498a14ce38a9c4c578cef3bdd7a106a66ccb611f87cb12c",
+      "raw_line_sha256": "eab47c3bb74e6bf5247df00f528264f05d0d0d07041baaaf0c754e431d7a9b4a",
+      "prompt_sha256": "057a512f6c2d433743750d2cca59163f2e70ee419067c68359372337bd5dc285",
+      "source_line": 135,
+      "prompt_clause": {
+        "text": "Access the application at: https://www.abbvie.com/content/dam/abbvie-com2/pdfs/pap/general-product-patient-assistance-application.pdf.",
+        "start": 1328,
+        "end": 1462
+      },
+      "criterion_evidence": [
+        {
+          "criterion_id": "bea6945d-c3b8-4906-9077-8634005e34bd",
+          "original_description": "Deliverable includes a PDF file.",
+          "original_signed_score": 2,
+          "original_item_sha256": "9498f8ea5420323cd7d97de30f074a9cb7c9417cf79889a47ce0b3e4dd4e8c06"
+        },
+        {
+          "criterion_id": "84ab15af-ce70-4ea1-83f0-1f780a736a66",
+          "original_description": "All typed entries on the application are digitally entered (no fabricated handwriting or images to simulate signatures/initials).",
+          "original_signed_score": 1,
+          "original_item_sha256": "001af92fc9595c5c677a178ffe2b5e836a0d85d944d7731b89b0acff94625174"
+        },
+        {
+          "criterion_id": "394b53c7-e71c-4d9d-8cee-e58c5e6e4020",
+          "original_description": "All pages of the completed application are present in the PDF, in order, and typed entries render legibly when opened.",
+          "original_signed_score": 2,
+          "original_item_sha256": "aef264ccc16673f3eb62881864000fee59c0235aa1b393d9852d08139603182a"
+        },
+        {
+          "criterion_id": "8986db33-4293-456d-8726-06914496cfcf",
+          "original_description": "Any fields on the application for which no data are provided in the chart or insurance card are intentionally left blank or marked as not available (no invented data).",
+          "original_signed_score": 1,
+          "original_item_sha256": "1dc0d1c5b37e54a47f44989dc20686d47c2f194bcf4a223121cc4be5469244b7"
+        },
+        {
+          "criterion_id": "38fc4b36-39b4-47cc-9137-bd030228ac27",
+          "original_description": "No fabricated signatures: patient and prescriber signature/date fields are left blank unless signatures/dates are provided in the references.",
+          "original_signed_score": 2,
+          "original_item_sha256": "c0a4759274d33531410bc6ec598847056d7d371b4f0bcf93e8b02c227ea314b7"
+        }
+      ],
+      "operation": "public_source_access",
+      "operation_status": "shared_route_applicable",
+      "source_input_obligations": {
+        "status": "unconfirmed",
+        "kind": "external_source_availability_and_version",
+        "required_source": {
+          "url": "https://www.abbvie.com/content/dam/abbvie-com2/pdfs/pap/general-product-patient-assistance-application.pdf",
+          "task_time_context": "May 2025",
+          "archived_edition_explicitly_named": false
+        },
+        "requirement": "Obtain the AbbVie Vraylar patient assistance application from the exact URL named in the prompt and retain the returned body/source/version evidence; actual submission is not requested.",
+        "remaining_obligation": "Availability and version of the PDF at the exact prompt URL are unconfirmed. The May 2025 task context does not name an archived PDF edition; do not silently substitute another source or infer that an arbitrary current body meets the original requirement.",
+        "criterion_ids": [
+          "bea6945d-c3b8-4906-9077-8634005e34bd",
+          "84ab15af-ce70-4ea1-83f0-1f780a736a66",
+          "394b53c7-e71c-4d9d-8cee-e58c5e6e4020",
+          "8986db33-4293-456d-8726-06914496cfcf",
+          "38fc4b36-39b4-47cc-9137-bd030228ac27"
+        ],
+        "basis_ref": ".agents/development/evidence/gdpval-220-route-applicability.json#/official_form_source_access_correction/tasks/e6429658-4de1-42dd-a9e0-2d2b9b02fb10",
+        "participant_retrieval_required": true,
+        "exact_source_fetched_in_this_review": false,
+        "task_success_inferred": false
+      },
+      "remaining_conditions": [
+        "Availability and version of the PDF at the exact prompt URL are unconfirmed. The May 2025 task context does not name an archived PDF edition; do not silently substitute another source or infer that an arbitrary current body meets the original requirement.",
+        "Retain separate content feasibility, native-application gates, supplied-input uncertainty, and all original criterion methods/statuses/weights."
+      ]
+    }
+  },
+  "ledger_location": "task_specific_checks.external_data.source_input_obligations",
+  "criterion_ids_methods_statuses_weights_changed": 0,
+  "all220_accepted": false
+}

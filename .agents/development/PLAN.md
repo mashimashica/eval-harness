@@ -1,6 +1,401 @@
 <!-- SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved. -->
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 
+## Active work: owner-authorized three-task N/S/A pilot
+
+The owner requests a small random exploratory N/S/A comparison, relayed through side task
+`01a0c290-ff84-71e1-a873-3d614f4cc139`. The29-logical-session baseline was a side-controller operational proposal,
+not an immutable owner requirement; it is separate from the220-task production proposal. Follow [the frozen pilot plan](evidence/gdpval-nsa-pilot-plan.md).
+The191-task population and3-task random draw are saved before outcomes; tasks are never replaced. One reusable S Skill
+and one reusable A Skill share the same generic brief and creator; all N/S/A applications share the same environment.
+The controller owns selection/configuration/dispatch/report; worker owns the once-only runner and specialist owns only
+selected-task source/prerequisite review. Existing completed evidence and all spent budgets remain historical.
+Current step: inputs/order/aggregation and29slots are frozen in [the dispatch receipt](evidence/gdpval-nsa-pilot-dispatch.json).
+All4 role/client preflights passed without model calls,5 provided files and108 original criterion units are preserved;
+14 exact housing conflicts remain evaluator-only unknowns. The once-only runner passes14 mock guards and typing/Ruff.
+Creator S failed after371.46s on provider HTTP529; A failed its availability preflight after7.78s with0model calls.
+Both initial attempts remain preserved. A hash-bound controller adjudication corrects only S's false quota flag
+(the native notification said allowed), preserving all frozen bytes and failures. S/A applications are blocked on their
+missing completed Skills; N applications continue in fixed order. See [failure classification](evidence/gdpval-nsa-pilot-failure-classification.json).
+The product API-error diagnostic repair passes24 targeted tests and types/Ruff; it is not applied to the frozen pilot.
+The owner now explicitly authorizes [finite transient-service recovery](evidence/gdpval-nsa-transient-recovery-plan.md):
+at most2 extra attempts per logical slot, never for timeout/quota/auth/permissions/poor output. Recover creators S/A
+with the same conditions while independent Codex applications continue. First declared batch:2creator retries,600s each,
+Claude Opus5/medium,max_turns24,serial1,subscription only. Preserve all failures and adopt only the first valid completion. The latest owner correction permits one Codex plus
+one Claude concurrently and evaluation of inspectable saved partial artifacts without rewriting failed execution status.
+N1 ended at its900s limit (904.24s measured), is not retry-eligible, and saved only a312-byte response; no workbook
+remains. Its original evaluation slots may assess that exact saved partial submission, retaining execution timeout.
+The old driver finished; controller-only hold markers were archived. No model session was interrupted.
+The v3 dispatcher passes15 mocks and scoped typing/Ruff. A42.89s native zero-model concurrent isolation probe
+confirms private auth homes, own workspace access, denied cross-workspace/auth access and independent timeout cleanup.
+S/A recovery and original N2/N3 began concurrently at01:34UTC, each client serial, with separate outputs and immutable
+first-completion adoptions. Partial scalar evaluation is explicit, manifest-verified and resume-stable;71 affected tests,
+8 evaluation-dispatch guards and scoped typing/Ruff pass. Fern reports0errors/1existing unauthenticated redirect warning.
+The evaluation-only snapshot changes config/evaluation routing, uniformly for all18planned judgments; participant and
+creator snapshots remain unchanged. Real partial-submission evaluation is pending while the two clients are occupied.
+
+## Active continuation: September22 remaining allowance
+
+Latest checkpoint: the first two additional Codex sessions are complete. Dashboard timed out at900s after copied-input
+and changed-chart observations, without any final item judgment; science completed in835.39s. The new collection-aware
+source-observation validator revalidates science to33pass/11fail/2unconfirmed, separately from frozen28/11/7. This is
+record-shape/provenance validation, with accepted-passage order and comprehensive scientific correspondence still
+requiring semantic review. See [the two-session receipt](evidence/gdpval-item-observations-2026-09-22.json).
+Evaluation failure now records stage/status/reason with cause unclassified, instead of automatically assigning
+infrastructure cause.175 affected tests,95% measured observation-guard coverage and scoped types/Ruff pass.
+
+The separately declared Codex dashboard completion session finished in1188.80s (1223.55s lifecycle), returning
+all57 items with preserved originals. Its [completion receipt](evidence/gdpval-dashboard-completion-2026-09-22.json)
+retains raw49pass/6fail/2unconfirmed and frozen49pass/2fail/6unconfirmed. Controller review withholds the chart-update
+pass: the evaluator changed forceFullCalc before recalculation and omitted one chart source from its numeric record.
+The verified narrow complete-package absence route retains the four reported mandatory-Pivot failures in a separate
+v4 replay (49pass/6fail/2unconfirmed); all other behavioral requirements remain. This does not accept the chart pass.
+All220 original scoring files and1,231 historical session/protocol files are unchanged.263 regression tests and34 final
+affected tests pass; strict typing/Ruff and documentation checks pass (Fern retains its authenticated redirect warning). No more model sessions are planned. Weekly usage90%/remaining10% at18:16UTC; no reset/credits,
+Claude addition, production experiment or merge.
+The official complete Office bundle did not reach its Basic entry under the unchanged boundary; three trusted private
+preference reads establish home redirection but no usable preference bootstrap. Native acceptance remains unchanged.
+See [exact operation gaps](evidence/gdpval-sept22-operation-gaps.json). Do not silently widen preference/IPC grants.
+
+The owner authorizes valuable work toward ALPS readiness using today's remaining Codex allowance, relayed through
+side task `01a0c290-ff84-71e1-a873-3d614f4cc139`. Baseline324efd26 remains the accepted bounded increment;
+full220 acceptance is still incomplete. See [the finite continuation plan](evidence/gdpval-sept22-continuation-plan.md).
+Actual weekly usage85% at17:00UTC. No resets, credits, additional billing, production experiment or merge are authorized.
+Previous model envelopes stay exhausted. New first Codex batch: at most2 saved-artifact evaluations in fixed task order,
+Sol/medium,900s each,serial1,retries0,subscription only, after model-free prerequisites. No extra Claude slots authorized.
+Controller owns evaluator evidence repair, final experiment decisions and integration; one worker owns exact Excel
+operation feasibility/implementation; one specialist owns browser process-lifetime/permission evidence. No nested delegation.
+
+## Active increment: all 220 GDPval tasks (2026-09-21)
+
+The owner's expanded request supersedes the former two-task acceptance scope. All 220 tasks and 10,453 original
+rubric items remain in scope. The original dashboard and science-editing tasks retain their execution order as the
+starting real-CLI checks. Baseline is PR #53 commit `a77babf707ceceb27cb1f6da931bbac7ebb44db1`; earlier evidence and
+the exhausted eleven-session envelope below remain historical. No merge or production ALPS run is authorized.
+
+The controller owns integration, dependency/runtime preparation, startup checks, inspection protocol, generated
+readiness ledger, documentation, acceptance and PR update. One Astra implementation worker owns network/service
+repairs (R3/R4, public HTTPS policy) and their tests. One Astra specialist owns the source-grounded requirements
+review for all tasks (R1/R2 input, output and criterion distinctions). No nested delegation or overlapping writers.
+
+Work sequence and evidence:
+
+1. Repair transactional dependency installation and save every search attempt; verify public HTTPS and blocked
+   internal/redirect/error paths. Keep explicit legacy allowlist mode and bind the policy to new fingerprints.
+2. Preserve each original prompt/rubric, acquire only the 261 provided files, and verify all-task staging/integrity.
+   Distinguish content conflicts from environment gaps and absent verification in the eight-section ledger.
+3. Supply and test required common authoring/inspection capabilities, including applicable media/CAD routes.
+   Map evidence to task and criterion IDs; a proposed route or installed package is not acceptance evidence.
+4. Add a separately versioned inspection protocol, evidence references and conservative unconfirmed results;
+   human-only checks retain named responsibility and an explicit handoff procedure. Custom grading is not claimed
+   equivalent to official GDPval grading. Missing inspection does not establish a false judgment or hallucination.
+5. Run authorized applicable checks, retain originals and failures, update impact/re-evaluation guidance and PR #53.
+
+Owner authorized on 2026-09-21: a **new** maximum ten CLI sessions (four applications at900s, four evaluations at600s,
+two known-content probes at300s), `gpt-5.6-sol/medium` and `claude-opus-5/medium`, concurrency1, automatic retries0,
+existing subscriptions only, no auxiliary AI or API billing. Old eleven sessions do not supply remaining budget. The owner is the human-review coordination owner; actual reviewers will be named before the experiment. Unassigned human checks remain unconfirmed and cannot accept a completion receipt. Model-free tests and local locked dependency setup remain separate from this model envelope.
+
+### Current correction and completed six-session work (2026-09-22 JST)
+
+Four of the owner-approved six sessions completed before this correction: both known-content probes and both saved
+dashboard evaluations. Codex returned 49 pass / 6 fail / 2 unconfirmed; all 55 non-native item references validate,
+with a separately recorded limit on direct observation of changed chart outputs. Supplied day/night data conflict with
+two literal rubric percentages; retain those failures and the conflict separately. Claude returned 57 unconfirmed after
+native context compaction removed criterion descriptions from its available conversation. The attempted outside
+transcript read returned `No such file or directory`; it alone does not establish an OS permission-denial cause.
+See [dashboard findings and correction](evidence/gdpval-evaluator-context-correction-2026-09-22.json).
+
+The controller accepts the bounded durable-context repair from 181 affected tests, exact 57/46-item source round trips,
+and model-free evaluator read/write/outside-read protection checks. Scalar and pairwise evaluators now receive only
+current-task prompt/rubric, already-exposed AI criteria, inspection rules, complete evaluator instructions and exact output
+schema in protected `evidence/evaluation-inputs/`. No participant input, scoring rule, model, billing route or limit changes.
+
+A separate known ZIP/PDF operation probe confirmed isolated archive byte round trips and large-format PDF authoring,
+but found Poppler's relocated Fontconfig prefix missing. Private bundled-font configuration repairs the actual rendering
+path: 56 targeted tests and a native 36x24-inch PDF render (0.5345s) plus known visual correspondence pass. Conversion
+settings remain separate, original bytes unchanged. Preserve the initial 120.392s timeout as an infrastructure failure.
+See [common-operation evidence](evidence/gdpval-common-output-operations-2026-09-22.json).
+
+The two science evaluations were frozen under environment
+`ecd1071aac425229104a253df7de66b92e89c6fbcaf0b4c76848a4c08d9328e4`, manifest
+`b2b87501923cd60816211e6a3f7a02e29dab8b6ef2259e68538fdafd94c0b434`.
+They retained saved artifacts, v2 protocols, original task order, Sol/Opus medium, each1200s, serial1 and automatic retries0.
+The two older controllers are blocked from consuming their reassigned unused slots. Both science slots completed,
+using403.46 and660.95 model/tool seconds. These were slots5/6, not an added model envelope. The full batch consumed
+six sessions and2,677.58 model/tool seconds; no budget remains in it. See the
+[completion receipt](evidence/gdpval-six-session-acceptance-2026-09-22.json) for exact usage, frozen versions and
+preserved limitations. Actual model compaction recovery remains unobserved in these science sessions.
+
+The native-browser follow-up retains three further known-fixture launches (six total, zero model/candidate calls).
+Exact power/Mach controls resolve earlier startup barriers; a one-flag outer-only contrast executes known DOM events
+but times out at30s. Two known lifecycle helpers verify inherited restrictions and host cleanup, with sandbox-parent
+cleanup failing. The seventh browser launch completes known CDP interaction and natural shutdown in1.47s; complete
+process-lifetime coverage and executable/IPC policy remain unverified. This is not candidate-isolation acceptance. See
+[native follow-up](evidence/gdpval-native-feasibility-followup-2026-09-22.json).
+
+The six-task ZIP/large-PDF mapping is accepted:181 common-route tasks and39 with required-route gaps. The other214
+records and all original IDs/methods/weights are preserved. The source-bound mapping and current-summary update are
+recorded in [the adoption receipt](evidence/gdpval-output-route-adoption-2026-09-22.json).
+
+The subsequent five-task document-operation adoption is accepted from two actual isolated workflows, known rendered
+appearance and PDF unchanged-region pixel checks. That increment reached183 common/37 gaps; generation
+184/36 and evaluation196/24. All original scoring fields and215 unrelated tasks are preserved.35 helper tests and
+scoped typing/Ruff pass; the stale permanent-Word-gap test now demands separate actual Word proof. See
+[document adoption](evidence/gdpval-document-route-adoption-2026-09-22.json).
+
+The owner separately approved one additional Claude dashboard recovery (Opus5/medium,1200s,max_turns40,serial1,
+retries0,existing subscription only) after both science slots finish. This is a new one-session envelope; the six-session
+batch remains bounded and retains its spent attempts. Both science sessions are complete with unchanged originals:
+Codex32pass/11fail/3unconfirmed and Claude39pass/4fail/3unconfirmed. The extra dashboard slot completed in859.25 model/tool seconds, with57 outputs and frozen50pass/7unconfirmed.
+A new, explicit observation format accepts captured empty query collections and revalidates the same output to
+53pass/2fail/2unconfirmed; original records remain unchanged. Actual compaction recovery is still unobserved.
+See [completion](evidence/gdpval-dashboard-recovery-2026-09-22.json). All model budgets are exhausted. Controller
+source/operation review retains limited source-comparison observations separately from model results; no raw verdict
+is overwritten and no incomplete scientific check is labeled a hallucination.
+
+The subsequent two-task schema/map adoption is accepted:185 common/35 gaps, generation186/34 and evaluation196/24.
+Fourteen exact OpenAPI operation links change; all29 map criteria and218 other tasks are unchanged. See
+[schema/map adoption](evidence/gdpval-schema-map-route-adoption-2026-09-22.json).
+
+The final form/CAD/source-input increment applies to ten task records. Seven form-layout corrections preserve
+eight genuine native gates; one known CAD workflow supplies15 exact operation-component links; two source-access
+corrections retain requested-source availability/version as unconfirmed external-input obligations. Current combined
+applicability is191 common/29 route gaps; generation195/25 and evaluation196/24. All original scoring fields and
+content feasibility statuses are preserved.38 affected helper tests pass with96% measured coverage; strict typing
+and Ruff pass. The first CAD text extraction and row-hash guard failures are preserved with their bounded corrections.
+See the [sealed ten-task adoption](evidence/gdpval-form-cad-source-adoption-2026-09-22.json).
+
+Controller integrates the completed increment, checks publication and updates PR #53. Worker/specialist operations
+are complete. No new model, network, dependency, permission or actual benchmark solution was introduced by the
+late operation/classification work. All model envelopes are spent. Full all-220 acceptance remains incomplete for
+the recorded native/browser, media perception, actual source/content and evaluator-evidence gaps. Their exact tasks,
+items and next required evidence remain in the ledger; no scope is excluded or promoted to completed acceptance.
+
+### Handoff disposition (2026-09-21)
+
+Implementation and bounded acceptance evidence are ready for the existing Draft PR #53; full all-220 acceptance
+remains **unconfirmed**, with no scope exclusions. See [the outcome report](evidence/gdpval-220-capabilities.md),
+[versioned evidence](evidence/gdpval-220-capabilities.json), [common route mapping](evidence/gdpval-220-route-applicability.json)
+and the [current ledger](gdpval-task-readiness.json). The all-task requirements review preserves 220 prompts,
+261 supplied files, 10,453 original criteria and 94 negative signed weights. All supplied bytes match pinned remote
+objects; five original-file defects and content questions remain separate from infrastructure and participant failures.
+
+The owner-requested observation review supersedes the provisional 239 human tags: 120 machine-observable;
+39 application operations (7 shared routes verified, 32 infrastructure pending); 75 perception items (4 sufficient
+machine alternatives); 5 source/meaning uncertainties. Preserve original OR branches and mixed scoring units.
+The requester coordinates human review; observers are assigned before the experiment. No actual human observation
+has been inferred. The separate 143-code-item review keeps source/documentation requirements distinct from execution.
+
+The new ten-session envelope is exhausted: four applications completed; three evaluators completed and Claude's
+science evaluator timed out; both known-content probes completed. Incremental pages 1, 21 and 30 reached both CLIs.
+Claude recognized 9/9 marker fields and Codex 7/9; preserve the latter's page 21 code/shape recognition failure.
+The original eleven-session history is unchanged. No automatic model retry, model/billing substitution or production
+comparison was run. The controller's mistaken no-op resume fixture on the timed-out session invoked zero CLI/model
+calls; its simulated failure is separately archived and the entire original session was restored to its exact prior hash.
+
+Common component evidence may establish matching operations without a successful participant solution. It cannot
+substitute for actual artifact/source observations. The final candidate fingerprint is `cff019360b687a84017824c3ef60cf11316e61a0f62291c10240b4ff5367db56`;
+the ten sessions retain `18af2df6448d179ea371c15b90f1b37db3bd1a368c1f622795b597abb16de570`.
+Only grader/provenance source differs; affected mechanics have unit, native-frame and saved-record checks.
+A new model trial of the revised prompt is not authorized by the exhausted envelope and is not claimed.
+
+Remaining acceptance work is limited to the task/item gaps in the ledger: native/browser operations, actual hearing/
+motion observations, source/meaning clarification, and missing evaluator evidence. Resolve those before accepting
+affected scopes. Re-evaluate unchanged outputs under a new evaluation identity for procedure-only changes; assess
+whole-comparison-unit generation reruns when network/tool changes affected outputs. Do not retrospectively alter
+old N/S/A conditions or choose replacement tasks by outcome. No merge is authorized.
+
+### Bounded post-handoff route correction (2026-09-21)
+
+The owner identified five overbroad capability prerequisites in commit `01d2058a`: electronic interaction for paper
+PDF forms, notebook UI requirements leaking into calculation criteria, external acquisition of a supplied GMP form,
+editable-document embedding for a PDF-only IEM deliverable, and optional Overpass execution counted as mandatory.
+The authorized correction covers these and direct members of the same categories, their generator/aggregation and
+regression checks. It does not authorize another all-task audit, infrastructure expansion, model session or merge.
+
+The controller owns evidence integration, the regenerated ledger, documentation and PR update. One Astra worker owns
+the mapping/generator correction; one Astra specialist independently checks only the source clauses in scope. The
+initial requirements review, 239/143-item reviews, frozen inspection plans, runtime and all prior trials are retained.
+Classification corrections, actual new proof and optional strengthening are reported separately. A model-free
+isolated two-page PNG-to-PDF fixture proves authoring, exact pixel/source-byte reopening, native rendering and known
+visual correspondence in 38.99 seconds; it makes no participant-success or editable-document claim.
+
+The corrected ledger has 180 tasks with applicable common routes and 40 with required-route gaps (previously 168/52).
+Eleven removals correct classifications/optional checks; the IEM removal also uses the new operation proof. Exactly
+13 task maps and 29 notebook criterion maps changed. Original IDs, item hashes and signed weights are preserved;
+207 task maps, runtime and protocols are unchanged. Final helper tests pass 35 cases at 96% changed-helper coverage;
+strict typing, Ruff, scoped source preservation and regeneration checks pass. The five corrections are accepted
+within this bounded scope; all-220 acceptance remains incomplete for the explicitly retained gaps.
+
+### Evaluation follow-up and native feasibility (2026-09-21)
+
+The owner requested additional model budgets as needed to close concrete acceptance gaps. This does not authorize
+unlimited or unannounced inference. The [six-session proposal](evidence/gdpval-next-acceptance-plan.md) records saved
+causes, the bounded correction, known fixtures, models, timeouts, failure policy and remaining gaps. The owner explicitly authorized this maximum six-session batch; preparations and model-free preflight precede
+dispatch. No additional model calls have run as of this plan update. The exhausted old eleven and newer ten sessions stay separate.
+
+The candidate adds exact-hash derivative-PDF inspection lineage and clarifies per-item evidence references, method
+coverage and criterion IDs. 159 targeted tests pass; saved judgments replay unchanged. Model-free probes establish
+exact crop transport and a science-source package-namespace rendering difference on a copy. Neither relabels an old
+judgment or accepts future model behavior. The all-task ledger stays at 180 applicable common routes / 40 required-route
+gaps, with no newly accepted task from these diagnostic checks. Installed native apps are being checked for bounded
+isolated feasibility; installation alone does not establish native Office or browser acceptance.
+
+The controller owns plan/evidence/docs/PR integration; one Astra worker prepares the finite six-slot runner without
+model calls, and one Astra specialist owns the native feasibility diagnostics. No nested delegation. The next action is
+the authorized known-fixture probes, controller review, then saved-artifact evaluations under the same six-slot cap.
+A [native feasibility receipt](evidence/gdpval-native-feasibility-2026-09-21.json) records three model-free Chrome
+launches, private singleton creation followed by signal 11, and the still-unconfirmed browser/Office routes.
+
+### Six-session batch: probe findings and corrected evaluation version
+
+The two authorized probes completed on fingerprint `701baddb85dcb7eabd6440be838fd9e7d31f63e53d94caa935fa1cd965021d3e`.
+Codex full-page fields are 7/9 and its fixed crop 3/3; actual recalculation, source disagreement and unobserved-audio
+handling are established, while invalid visual references and a non-string derivative locator remain in its old record.
+Claude matches all nine full-page fields, all three crop fields and all six expected criterion states; controller review
+confirmed actual operations, the full-page-before-crop sequence and original preservation. These are bounded fixture
+results, not acceptance of real submissions or all-task semantics.
+
+The Codex probe also exposed a separate harness bug: unrelated historical scratch declarations were checked before
+selecting the viewed derivative, so editing a workbook could invalidate PDF lineage. The correction filters by the
+actual viewed SHA before applying unchanged matching-record guards. Prompt clarification identifies locator strings,
+live versus captured paths and actual visual-call references. 163 targeted tests, typing and Ruff pass. Neither probe
+nor its frozen code or judgment is rewritten.
+
+After the two probes, the same authorized batch reserved **four remaining evaluation slots**, each still 1,200 seconds,
+serial and zero automatic
+retries, with unchanged models/subscriptions/artifacts/rubrics/protocols. They use newly frozen fingerprint
+`00620ae4f577e98a5c2d0e7d731cf3d84f592be285130b1cecb765a77d935f7c`, manifest
+`d5746b506bece3916d15e25ba4f2b301f45666afb251ff79185083840a68bf88`, under
+`.audit/2026-09-21-next-acceptance-revised-evaluation/`. An explicit allocation blocks the original controller from
+running those same slots. The original two calls plus these four stay within the owner's six-session / 100-minute
+model-timeout ceiling. The owner was informed of the version split; no extra authorization or hidden retry is inferred.
+
+## Historical increment: GDPval work and assessment environment (2026-09-15)
+
+Owner change request `draft-1`, including the fixed acceptance task order, governs O1–O6 alongside R01–R10.
+Baseline `0cb774f7`; branch `codex/gdpval-capability-environment`, worktree `.worktrees/gdpval-capability-environment`.
+Existing runs, source checkout and unrelated `replication_pipeline 2.py` are preserved. No ALPS experiment is resumed.
+
+The increment provides an explicit opt-in `gdpval-v1` runtime environment shared by both account CLIs. It exposes
+the same isolated Python/file/shell tools, participant-driven public HTTPS search/retrieval, exact-hash wheel
+installation, and incremental document/image inspection through one local stdio MCP service. Network access is
+brokered through the declared public-domain allowlist; untrusted shell processes have no direct network. Baseline
+packages, tools, permission policy, code identity and every operation are recorded. Evaluation can write inspection
+copies and derivatives in scratch, while submitted originals and supplied references remain read-only. Legacy
+environments retain their old behavior and identity. This is a new environment version, never a retroactive patch
+to experimental conditions. No auxiliary AI or API billing route is introduced.
+
+Controller owns executor/config/pipeline integration, inspection adapter, documentation, acceptance and PR.
+One Luna max implementation worker owns the capability service/sandbox/network modules and their self-checks.
+At most one Sol max specialist may review consequential isolation uncertainty; no nested delegation.
+
+### Fixed task and feature matrix before execution
+
+| Order / task | Supplied inputs | Participant capability | Assessment capability |
+| --- | --- | --- | --- |
+| 1 / `9e39df84-ac57-4c9b-a2e3-12b8abf2c797` | Original prompt, Dashboard output week 1 data.xlsx | XLSX, 48 weeks, formulas, real PivotTables, validations, charts, conditional formatting; code/OOXML authoring and dependency installation permitted | Read OOXML/PivotTable parts and formulas; inspect selected sheet/page views; recalculate and perturb an isolated copy; report Excel-specific refresh/UI behavior separately if not confirmed |
+| 2 / `5d0feb24-e8b6-4ace-b64f-d5cd1a8b563d` | Original prompt, TRAPPIST-1 Reporter Draft.docx | Agent searches, retrieves and selects research itself; edits DOCX with tracked insertions/deletions and anchored comments | Read original/revised text and revision/comment XML; follow saved source provenance; inspect selected rendered pages; do not equate rendered strikethrough with native revision semantics |
+| Synthetic / both judges | Known-content document exceeding the legacy 20-image bound | No benchmark solution requirement | Request early and late pages sequentially, inspect exact returned image hashes and observed markers; original unchanged |
+
+The additional context supplies the frozen 220-row source at `/Users/naokishima/experiments/alps-gdpval/2026-09-14-main-stage-01/inputs/gdpval/public-tasks.jsonl` (SHA256 `4d58ee30485093010bf8b0a11708f80924831eef2a643db4c2d23b72fd426470`). Its two target prompts match the initial public-source discovery exactly; the frozen source is authoritative. Task-provided files alone are downloaded by the controller. URLs in the science prompt are research work, not
+provided files: they are not prefetched into participant inputs. Dataset source, HTTP inputs and hashes are retained
+under the source checkout's ignored `.audit/gdpval-capabilities/`; no gold deliverable is staged for participants.
+Each capability receives positive and negative no-model tests before untrusted task code runs.
+
+### Declared live CLI envelope (before any inference)
+
+Purpose: infrastructure acceptance, not ALPS effectiveness or task-selection screening. Exact native versions:
+standalone Codex 0.154.0 and Claude Code 2.1.270; Python 3.13.14, locked harness dependencies. Models are
+`gpt-5.6-sol` / `medium` and `claude-opus-5` / `medium`. Use existing ChatGPT and Claude subscription auth only;
+Claude extra usage must be disabled. No model fallback, paid route or auxiliary AI. Concurrency 1 throughout,
+harness automatic retries 0, Claude native retries 0. Codex native bounded transport retries remain under the
+process timeout; unbounded retries are disabled.
+
+Maximum 10 inference sessions: four applications (each fixed task once per CLI, 900s each, Claude max_turns 60),
+four independent evaluations (each resulting submission once by its corresponding CLI, 600s each, Claude
+max_turns 40), and two known multipage checks (one per CLI, 300s each, Claude max_turns 20). First task's execution
+and evaluation precede the second task's execution. No automatic task/session replacement. A failed prerequisite
+holds its dependent calls; participant failure, infrastructure failure, unjudgeable and unconfirmed are recorded
+separately. No-model CLI auth/capability checks, native sandbox probes and local tests consume zero inference sessions.
+Requests beyond these maxima require a separately declared authorized envelope.
+
+### Authorized corrective CLI check (2026-09-16)
+
+The first Codex model-backed multipage probe completed its CLI turn but every shared work-tool call was rejected by
+native MCP approval configuration. It consumed one session and remains an infrastructure failure with usage and no
+viewed pages. The owner explicitly authorized one additional check after the corrected `enabled_tools` seven-tool list
+and `default_tools_approval_mode: approve` passed a model-free native connection test. The total ceiling is now 11 model
+sessions: the original ten plus one Codex `gpt-5.6-sol/medium` known-document probe, maximum300s, concurrency1 and
+automatic retries0, using the same ChatGPT subscription. Task applications/evaluations, source prompts, task order,
+models, account routes and all other limits remain unchanged. A prior strict-config parse failure consumed zero inference
+sessions and is recorded separately. No existing experimental record is overwritten.
+
+### Native boundary correction before inference (2026-09-16)
+
+Independent synthetic review reproduced a double-fork/setsid survivor after a shell tool returned. All affected model
+calls remain unstarted. Polling process descendants is insufficient. The shared shell is narrowed to one foreground
+process with kernel-denied process creation and explicit `exec` for external programs; Python file/library work and
+separate native conversion calls remain available equally to both CLIs. The tool description and participant prompt
+state this restriction. Native positive code/Office checks plus fork, posix_spawn and timeout checks are required before
+release. Earlier isolation probes do not establish this corrected boundary. Exact-host research allowlists also reject
+subdomains unless individually declared, multicast and reserved addresses. No model or billing settings changed.
+
+### Additional content triage (2026-09-16)
+
+The ledger organizes all 220 frozen tasks into eight sections: identity, primary route, required capabilities,
+task-specific checks, Codex/Claude support, assessment methods and inspected scope, evidence, and current acceptance
+inclusion. Current aggregates separate content readiness, environment acceptance and acceptance inclusion. The initial
+content partition is historical only, retained with its definitions, memberships and evidence in
+`evidence/gdpval-content-triage-2026-09-16.json`; it does not constrain current classification counts. Source files, every
+scoring item and current URL access remain unverified across the full set. The generator validates unique coverage,
+evidence preservation and the distinction between planned and performed checks.
+Correction history retains that a 15-page document can satisfy both a 25-page prompt cap and a 15-page rubric cap,
+that a permitted summary table can meet the PO task without a native pivot, and that instructed missing-input reporting
+is a valid route. No task or experimental condition is replaced.
+
+### Source correction and acceptance
+
+Parent lifecycle correction after the two task1 applications: registered shell/native workers have separate process
+groups, so they must stop before protected-file verification and deliverable collection. Two regression cases reproduced
+the old ordering on ordinary CLI exit and timeout. The correction changes only that ordering; two additional formatting
+changes have identical ASTs. Source snapshots and the applicability record are retained in
+`.audit/acceptance/cleanup-order-version.json`. The previous fingerprint
+`897a166e9aaf372d1515fdfb8a162852cacaaa52298b7545a8471b02571d5d3d` remains attached to completed task1 applications
+and known-page probes. Subsequent four evaluations and two task2 applications use fingerprint
+`b96e51e2f8365cee10f93a8bb3e73756d6eb2039b70ccf472688b1d6e7fbaca2`; no model, tool capability, input or limit changes.
+The existing 11-session ceiling is unchanged. This is acceptance-version history, not a revision of any ALPS experiment.
+
+### Bounded acceptance decision (2026-09-16)
+
+Implementation and the declared macOS paths are verified; complete task-quality acceptance remains unconfirmed.
+See the [acceptance report](evidence/gdpval-capabilities-01.md), [machine-readable receipt](evidence/gdpval-capabilities-01.json),
+[103-criterion matrix](evidence/gdpval-acceptance-criteria.json) and [220-task ledger](gdpval-task-readiness.json).
+All 11 authorized model sessions finished: four applications, four evaluations, and three known-page probes including
+the preserved MCP-approval failure and separately authorized correction. Total workflow time was 3593.43s; native
+usage, cache fields, nullable actual cost and errors remain per session. No additional model sessions were run.
+
+Both CLIs inspected identical page 1/21/30 images from the 30-page fixture. Claude recognized 9/9 fields and Codex 8/9;
+transport success does not erase Codex's square/rectangle reading error. Native structure inspection and 24 isolated-copy
+checks of the actual dashboards establish the bounded calculation path. The Codex workbook lacks native pivots, which
+is a participant result. Both scientific documents contain native tracked changes and comments; their judges retained
+the two Word-native items as unconfirmed with null overall scores. Actual judge scope, unsupported pass assertions,
+unviewed pages, uninspected scientific sources and the ESO redirect denial remain explicit acceptance limitations.
+
+209 regression tests passed, with coverage measured; 29 runtime sources and the ledger generator passed typing.
+Ruff, documentation checks and the 52-package locked Python vulnerability audit passed (native CVE coverage remains
+unconfirmed). Completed resumes made zero model calls and preserved artifacts. Read-only saved comparison retained
+four generations and four judgments, including both unconfirmed assessments. Publication files are secret-scanned.
+
+O1–O6 evidence and residual obligations are mapped in the receipt. The full task pool is not accepted from shared
+profile checks. Native Word human review and evidence-backed quality judgments are required before full quality
+acceptance; future experiments needing the blocked ESO redirect require a separately frozen configuration. Application
+environment changes require matching new N/S/A runs; saved submissions may be re-evaluated under a new identity only
+when required original inputs and research survive. Old experiments remain unchanged and are not resumed.
+
+The authorized handoff is a draft PR with these limits visible. No merge, release, deployment or ALPS comparison is
+included in this increment.
+
 ## Active increment: Office visual evaluation (2026-09-14)
 
 Owner request: add immutable Office rendering, equal Sol/Opus image access, and isolation verification only.

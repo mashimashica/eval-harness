@@ -1,0 +1,230 @@
+{
+  "schema_version": 1,
+  "kind": "bounded-item-observation-acceptance-and-limits",
+  "baseline_commit": "324efd2697333b68240e1f38af1401b01c332e24",
+  "authority": "Owner remaining-Codex-allowance continuation; two separately bounded sessions; earlier11/10/6/1 envelopes spent",
+  "frozen_manifest": {
+    "path": ".audit/2026-09-22-item-observations/manifest.json",
+    "sha256": "400a3b98bca0daa34aa696667f38efd02181fe3614ac964c112432b4d9edeeae"
+  },
+  "frozen_environment_fingerprint": "09d0511d50e71d8fd281c16f000b076432b0cf4f019174ca77db055151f17c9b",
+  "model": "gpt-5.6-sol",
+  "reasoning_effort": "medium",
+  "sessions": 2,
+  "timeout_seconds_each": 900,
+  "parallelism": 1,
+  "automatic_retries": 0,
+  "billing": "existing subscription only",
+  "participant_regeneration": false,
+  "original_task_count": 220,
+  "original_criterion_count": 10453,
+  "original_negative_weights": 94,
+  "new_observation_requirement_item_count": 6,
+  "procedure_change": "Optional status-specific source_comparison or input_change records;5 source/baseline items on science and1 chart-update item on dashboard. Other original criteria unchanged.",
+  "validation_changes": [
+    "Nonblank location keys for input/output/expected maps; frozen batch predates this small guard, replay separately.",
+    "Source observed fields initially accepted only strings. Preserve actual nonempty passage lists/value maps as well, rejecting empty/null/blank-only or nonfinite records. Existing successful evidence replayed separately; no original records changed.",
+    "Interrupted or malformed grading becomes evaluation_failure with stage/evaluation, execution status, reason and unclassified cause. Do not infer infrastructure or participant cause. Preserve legacy rows; protocol missing-item filling cannot conceal failed grading."
+  ],
+  "latest_sources": [
+    {
+      "path": "harness/src/eval_harness/inspection_observations.py",
+      "sha256": "98ab270e43d42f2d39a2e97dd8499c0d2102f55ba6522f29407464a9969e842c",
+      "commit": "6d216bb3e652741ce8d727f99cef4321a6235b1b"
+    },
+    {
+      "path": "harness/src/eval_harness/inspection_protocol.py",
+      "sha256": "bef514b4dc663158c520e89ff0ae90dc8ac6c2f457234845e9839657effb0195",
+      "commit": "6d216bb3e652741ce8d727f99cef4321a6235b1b"
+    },
+    {
+      "path": "harness/src/eval_harness/evaluate_pipeline.py",
+      "sha256": "5232ac33978085f31ac13210c21d08d59eb40f4811c87ed088f70ed0c7605c53",
+      "commit": "6d216bb3e652741ce8d727f99cef4321a6235b1b"
+    }
+  ],
+  "entries": [
+    {
+      "slot": "dashboard",
+      "evaluation_id": "37e91625ceff4ae5aa57935554961dec",
+      "summary_status": "partial",
+      "judge_execution_status": "timeout",
+      "frozen_assessment_status": "infrastructure_failure",
+      "model_calls": 1,
+      "model_execution_elapsed_seconds": 903.0978564579855,
+      "lifecycle_elapsed_seconds": 976.4043879579986,
+      "usage": {
+        "cached_input_tokens": null,
+        "cost_usd": null,
+        "input_tokens": null,
+        "output_tokens": null,
+        "reasoning_tokens": null
+      },
+      "originals_unchanged": true,
+      "reported_criteria_count": 0,
+      "original_criteria_count": 57,
+      "reported_counts": {},
+      "frozen_counts": {},
+      "latest_format_revalidation_counts": null,
+      "tool_counts": {
+        "shell": 9,
+        "inspect_document": 1,
+        "render_pages": 4
+      },
+      "slot_receipt": {
+        "path": ".audit/2026-09-22-item-observations/sessions/dashboard/slot-result.json",
+        "sha256": "7e413c757b4c28ff2f44b78be83e783b9285956ddf60e09024909f949fd20976"
+      },
+      "review": {
+        "path": ".audit/2026-09-22-item-observations/reviews/dashboard-v2/report.json",
+        "sha256": "79b8d74d5592c79792dc9048a255c78edb65d1b9e81437e5fd35bf7d49361b71"
+      },
+      "operation_review": {
+        "path": ".audit/2026-09-22-item-observations/reviews/dashboard-v2/operations-review.json",
+        "sha256": "8c9d9ad15f69f30b7484feef50aaa5d882d6b8e92403921572fb2a17e25ae9e8"
+      }
+    },
+    {
+      "slot": "science",
+      "evaluation_id": "941f3feea2cf4c87a06b9383db3b4105",
+      "summary_status": "completed",
+      "judge_execution_status": "completed",
+      "frozen_assessment_status": "unconfirmed",
+      "model_calls": 1,
+      "model_execution_elapsed_seconds": 835.392030832998,
+      "lifecycle_elapsed_seconds": 872.2353795000236,
+      "usage": {
+        "cached_input_tokens": 411264,
+        "cost_usd": null,
+        "input_tokens": 494087,
+        "output_tokens": 21392,
+        "reasoning_tokens": 1941
+      },
+      "originals_unchanged": true,
+      "reported_criteria_count": 46,
+      "original_criteria_count": 46,
+      "reported_counts": {
+        "unconfirmed": 2,
+        "pass": 33,
+        "fail": 11
+      },
+      "frozen_counts": {
+        "unconfirmed": 7,
+        "pass": 28,
+        "fail": 11
+      },
+      "latest_format_revalidation_counts": {
+        "unconfirmed": 2,
+        "pass": 33,
+        "fail": 11
+      },
+      "tool_counts": {
+        "shell": 4,
+        "inspect_document": 2,
+        "render_pages": 2
+      },
+      "slot_receipt": {
+        "path": ".audit/2026-09-22-item-observations/sessions/science/slot-result.json",
+        "sha256": "271563920d30c86800d001268ce69f95408257dc85b67a504709078163857e4d"
+      },
+      "review": {
+        "path": ".audit/2026-09-22-item-observations/reviews/science-v3/report.json",
+        "sha256": "2701839094fcb74ff165f981a6a04a410abea33465bd1bcadb6db7393a48b2fe"
+      },
+      "operation_review": {
+        "path": ".audit/2026-09-22-item-observations/reviews/science-v3/operations-review.json",
+        "sha256": "4605e91e9f63d7a3418c8fe6d215a8683e1e8b8adfcb058928e006aa689d496c"
+      }
+    }
+  ],
+  "model_execution_elapsed_seconds_total": 1738.4898872909835,
+  "lifecycle_elapsed_seconds_total": 1848.639767458022,
+  "usage_limit": "Dashboard timeout emitted no final usage; all categories unavailable, not zero. Science measured usage is a lower bound on batch usage; subscription cost unknown.",
+  "historical_replay": {
+    "path": ".audit/2026-09-22-item-observations/historical-replay.json",
+    "sha256": "4cc9f0ccb4583cec14a3c81aa7e42b2d5b16845ae32f89c3fe9f42137fd59fda"
+  },
+  "controller_findings": {
+    "dashboard": "Actual copy E5 950->1050 and manual recalculation changed six dependent values; original/changed chart pages delivered. No final model interpretation/judgment before timeout; all57 unassessed. No UI or automatic-update proof.",
+    "science": "All46 original items returned. Actual supplied18 paragraphs and5 selected primary-PDF keyword contexts emitted. Collection-aware format revalidation yields33pass/11fail/2unconfirmed, versus frozen28/11/7. These are model verdicts with format/provenance checks, not certified semantic correctness.",
+    "science_controller_only_corroboration": "Full normalized deleted paragraphs match the original18 in order. This controller comparison was not performed by the judge. Its visible paragraph inventory truncated paragraphs21/37/40 to500characters.",
+    "science_semantic_limits": [
+      {
+        "criterion_ids": [
+          "d6d7b699-7f02-4a34-9b70-05f3dd2be953"
+        ],
+        "gap": "Original deleted-block order does not establish accepted edited-passage order; explicit original-to-edited mapping/conditional-branch review still needed."
+      },
+      {
+        "criterion_ids": [
+          "1b0e95d5-8151-4324-a079-5c3f91e16cb6",
+          "42a88af8-d5f8-4de9-af05-5911589c1a5c"
+        ],
+        "gap": "Five keyword contexts, one absent match, do not prove comprehensive accuracy or every asserted correspondence. Preserve observed improvement and remaining source-review limits separately."
+      }
+    ],
+    "cause_discipline": "Malformed evaluator Python false literal and overlarge page request were corrected within the science session; failure records retained. Timeout alone leaves root cause unclassified. Inspection insufficiency alone does not prove a false judgment or hallucination."
+  },
+  "verification": {
+    "targeted_tests": {
+      "passed": 175,
+      "observation_guard_coverage_percent": 95,
+      "evaluation_pipeline_subset_coverage_percent": 65,
+      "log": {
+        "path": ".audit/2026-09-22-item-observations/final-targeted-corrected-tests.log",
+        "sha256": "ebdea3f74992ca85b04f01cd5cb1a6e8c587c118f5ac1d235c6933933bac4c5a"
+      }
+    },
+    "typing": {
+      "path": ".audit/2026-09-22-item-observations/final-typing.log",
+      "sha256": "71144743c83babea384888a735db0c4daba3d4d7b7942b6839984bd5c21b52bb"
+    },
+    "ruff": {
+      "path": ".audit/2026-09-22-item-observations/final-lint.log",
+      "sha256": "e1882ce887984ba61814aa2fa5b61dcd7e35afc6b18647ddc6cadd265eb515be"
+    },
+    "docs": {
+      "path": ".audit/2026-09-22-item-observations/final-doc-links.log",
+      "sha256": "953f34b58c63ae67b17fe12584d5a99698f607595cfbb4f66f1c7a18f42d4543"
+    },
+    "fern": {
+      "path": ".audit/2026-09-22-item-observations/final-fern.log",
+      "sha256": "da1fc3d25ded6163474677f5eb6cfc3c3fe5f799f0b7fda56c93f1725b499eef"
+    },
+    "prior_CI": {
+      "commit": "86e653dd39fbe7d19d617a6ab57d304a25babe10",
+      "url": "https://github.com/mashimashica/eval-harness/actions/runs/35631731854",
+      "passed": 590,
+      "skipped": 4,
+      "coverage_percent": 77,
+      "applicability": "Before the failure-stage and collection-support corrections; current commit requires its own CI."
+    },
+    "current_CI": {
+      "commit": "6d216bb3e652741ce8d727f99cef4321a6235b1b",
+      "url": "https://github.com/mashimashica/eval-harness/actions/runs/35635621086",
+      "passed": 609,
+      "skipped": 4,
+      "coverage_percent": 78,
+      "typing_source_files": 32,
+      "dependency_audit": "No known vulnerabilities found",
+      "secret_scan": "passed",
+      "log": {
+        "path": ".audit/2026-09-22-item-observations/ci-6d216bb3.log",
+        "sha256": "8f43747e1097856e2c03862376e6d5626dc211c1dfcc5fe19c2dd3f14cdf6d88"
+      },
+      "applicability": "Includes failure-stage and collection-support runtime corrections. Later documentation/evidence-only checkpoint uses unchanged product source."
+    }
+  },
+  "acceptance": {
+    "item_bound_provenance_and_shape_checks": "met_in_targeted_tests_and_saved_evidence_replay",
+    "dashboard_completed_judgment": "not_met_this_batch",
+    "science_completed_judgment": "met_with_native_unknowns_and_semantic_review_limits",
+    "Claude_new_observation_procedure": "unconfirmed_no_added_Claude_authorization",
+    "native_routes": "no_new_acceptance",
+    "all220_full_acceptance": "not_met",
+    "common_route_tasks": 191,
+    "required_route_gap_tasks": 29
+  },
+  "impact": "Originals and old results retained. Procedure changes permit separately versioned saved-artifact reevaluation; no generation rerun is required for these evaluator-only edits. Generic authoring/runtime changes, if later adopted, need a new N/S/A comparison-unit rerun decision. No production/merge or retrospective pooling.",
+  "next": "One additional declared Codex dashboard session at1200seconds is separately recorded in gdpval-sept22-dashboard-completion-plan.md; not an automatic retry or reuse of this spent batch."
+}

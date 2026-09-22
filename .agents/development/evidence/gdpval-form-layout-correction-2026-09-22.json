@@ -1,0 +1,538 @@
+{
+  "schema_version": 1,
+  "kind": "controller-accepted-seven-task-form-layout-source-correction",
+  "decision": "An ordinary printed or editable-cell Office form does not imply native active controls. Adopt only the seven form_layout generation components against already-observed Office author/reopen/render operations.",
+  "source_review": {
+    "path": ".audit/2026-09-22-form-layout-source-check/findings.json",
+    "sha256": "ac6de3ba0e45fb39b7c159162b72413949605eee0f174607c1c71925554cde22"
+  },
+  "source_dataset_sha256": "4d58ee30485093010bf8b0a11708f80924831eef2a643db4c2d23b72fd426470",
+  "scope": "Only seven current partial form_layout records identified by the controller. No generalized all-task review.",
+  "summary": {
+    "form_layout_components_proposed_shared": 7,
+    "tasks_with_no_separate_pending_native_item": 4,
+    "tasks_with_separate_pending_native_items": 3,
+    "existing_pending_native_items_preserved": 8,
+    "criterion_ids_methods_statuses_weights_changed": 0,
+    "separate_input_controls_capability_preserved": 1,
+    "existing_or_branches_preserved": true,
+    "task_successes_inferred": 0
+  },
+  "tasks": {
+    "62f04c2f-e0f7-4710-876c-54ee9c2e8256": {
+      "classification": "static_layout_and_ordinary_editable_cells",
+      "reviewed_original_criterion_count": 53,
+      "prompt_clauses": [
+        {
+          "text": "A copy of this form is to be printed and placed in the return shipment.",
+          "start": 1318
+        },
+        {
+          "text": "Next, please create an Excel spreadsheet that will serve as the Exchange Authorization form.",
+          "start": 1798
+        },
+        {
+          "text": "Please leave a space for the name, signature spaces, and dates of the sales representative, GM and Sales Manager.",
+          "start": 2302
+        }
+      ],
+      "basis": "The Excel form requires labeled ordinary cells, line-item columns and blank name/signature/date spaces, and the workflow explicitly prints it. No active signature control, dropdown or electronic form interaction is specified. The totals-row requirement remains a separate spreadsheet/content operation; unchanged original phone-number conflict is not resolved.",
+      "proposed_route_ids": [
+        "office_authoring",
+        "page_render_and_transport"
+      ],
+      "separate_obligations_unchanged": [
+        {
+          "criterion_id": "309d53a7-fae6-4e9b-940c-d28bdf8b6575",
+          "original_item_sha256": "f55797cc300bf38f31e729c72daa0431dd82df5cb6a7cb6a2ffee6ea528e3c21",
+          "original_signed_score": 1,
+          "description": "The Excel form includes a totals row summing Pairs Shipped.",
+          "current_methods": [
+            "content",
+            "structure"
+          ],
+          "current_status": "shared_route_applicable",
+          "current_basis_ref": ".agents/development/evidence/gdpval-220-requirements-review.json#/tasks/71/rubric_routes/46",
+          "unchanged": true
+        }
+      ],
+      "existing_native_gates_unchanged": [],
+      "conflicts_unchanged": []
+    },
+    "4d61a19a-8438-4d4c-9fc2-cf167e36dcd6": {
+      "classification": "static_layout_plus_separate_spreadsheet_behavior",
+      "reviewed_original_criterion_count": 43,
+      "prompt_clauses": [
+        {
+          "text": "The form should include the basics: promotion dates, product and pricing info, some historical context (e.g., details of previous promotions), merchandising notes, and space for stores to enter their projected units and sign off.",
+          "start": 879
+        },
+        {
+          "text": "Everything except those last two fields should be filled in by the Regional team, stores will only edit their projections and sign-off fields.",
+          "start": 1109
+        }
+      ],
+      "basis": "The field labels/layout and ordinary editable cells use Office authoring. f66d5db7 explicitly permits instructions or labeling instead of protection for that original unit; 64755c9a separately requires locked/protected versus editable fields. Preserve native-opening, numeric-entry and protection gates. 98115f22 requires positive numeric acceptance; data validation is an example, not an additional requirement to reject nonnumbers. This check does not change its existing operation procedure.",
+      "proposed_route_ids": [
+        "office_authoring",
+        "page_render_and_transport"
+      ],
+      "separate_obligations_unchanged": [
+        {
+          "criterion_id": "00295906-e225-4e36-95da-790bc8778eaf",
+          "original_item_sha256": "4165f8ab94c83d88c6e0c837c0a9388fee3d23765ee7f60da7aa89545a3b6275",
+          "original_signed_score": 1,
+          "description": "Both the Excel template and PowerPoint deck open without corruption or repair warnings in their native apps",
+          "current_methods": [
+            "structure",
+            "content",
+            "functional"
+          ],
+          "current_status": "infrastructure_pending",
+          "current_basis_ref": ".agents/development/evidence/gdpval-239-observation-routes.json#/items/216",
+          "unchanged": true
+        },
+        {
+          "criterion_id": "98115f22-024a-4570-81bc-a44484376062",
+          "original_item_sha256": "891c6d3d1775bc12c779c38c6f3109c346dc6999cc4f1c0fcc2cbfd0297caf06",
+          "original_signed_score": 1,
+          "description": "The Projected Units field accepts numeric values (e.g., via data validation)",
+          "current_methods": [
+            "structure",
+            "content",
+            "functional"
+          ],
+          "current_status": "infrastructure_pending",
+          "current_basis_ref": ".agents/development/evidence/gdpval-239-observation-routes.json#/items/217",
+          "unchanged": true
+        },
+        {
+          "criterion_id": "64755c9a-1938-4066-8596-329d00d2a6ef",
+          "original_item_sha256": "81769a258516c3396641e4565927acaf743cdef34a40f4297fd2ff57d0fc8219",
+          "original_signed_score": 1,
+          "description": "Non-editable fields in the Excel template are locked or protected while Projected Units and Sign-off remain editable",
+          "current_methods": [
+            "structure",
+            "content",
+            "functional"
+          ],
+          "current_status": "infrastructure_pending",
+          "current_basis_ref": ".agents/development/evidence/gdpval-239-observation-routes.json#/items/218",
+          "unchanged": true
+        }
+      ],
+      "existing_native_gates_unchanged": [
+        {
+          "criterion_id": "00295906-e225-4e36-95da-790bc8778eaf",
+          "original_item_sha256": "4165f8ab94c83d88c6e0c837c0a9388fee3d23765ee7f60da7aa89545a3b6275",
+          "original_signed_score": 1,
+          "methods": [
+            "structure",
+            "content",
+            "functional"
+          ],
+          "status": "infrastructure_pending",
+          "route_ids": [
+            "named_native_app",
+            "package_metadata",
+            "source_comparison"
+          ],
+          "basis_ref": ".agents/development/evidence/gdpval-239-observation-routes.json#/items/216",
+          "remaining_obligation": "The required native application/input operation has no verified current automation receipt. Metadata/programmatic writes do not establish native opening, editability, enforcement, activation or automatic UI behavior; retain infrastructure_pending for this exact operation.",
+          "components_ref": ".agents/development/evidence/gdpval-239-observation-routes.json#/items/216/component_checks",
+          "actual_artifact_observation_required": true
+        },
+        {
+          "criterion_id": "98115f22-024a-4570-81bc-a44484376062",
+          "original_item_sha256": "891c6d3d1775bc12c779c38c6f3109c346dc6999cc4f1c0fcc2cbfd0297caf06",
+          "original_signed_score": 1,
+          "methods": [
+            "structure",
+            "content",
+            "functional"
+          ],
+          "status": "infrastructure_pending",
+          "route_ids": [
+            "native_controls",
+            "package_metadata",
+            "source_comparison"
+          ],
+          "basis_ref": ".agents/development/evidence/gdpval-239-observation-routes.json#/items/217",
+          "remaining_obligation": "The required native application/input operation has no verified current automation receipt. Metadata/programmatic writes do not establish native opening, editability, enforcement, activation or automatic UI behavior; retain infrastructure_pending for this exact operation.",
+          "components_ref": ".agents/development/evidence/gdpval-239-observation-routes.json#/items/217/component_checks",
+          "actual_artifact_observation_required": true
+        },
+        {
+          "criterion_id": "64755c9a-1938-4066-8596-329d00d2a6ef",
+          "original_item_sha256": "81769a258516c3396641e4565927acaf743cdef34a40f4297fd2ff57d0fc8219",
+          "original_signed_score": 1,
+          "methods": [
+            "structure",
+            "content",
+            "functional"
+          ],
+          "status": "infrastructure_pending",
+          "route_ids": [
+            "native_controls",
+            "package_metadata",
+            "source_comparison"
+          ],
+          "basis_ref": ".agents/development/evidence/gdpval-239-observation-routes.json#/items/218",
+          "remaining_obligation": "The required native application/input operation has no verified current automation receipt. Metadata/programmatic writes do not establish native opening, editability, enforcement, activation or automatic UI behavior; retain infrastructure_pending for this exact operation.",
+          "components_ref": ".agents/development/evidence/gdpval-239-observation-routes.json#/items/218/component_checks",
+          "actual_artifact_observation_required": true
+        }
+      ],
+      "conflicts_unchanged": []
+    },
+    "6436ff9e-c5f2-47ba-9aaa-49d89b0594ab": {
+      "classification": "static_word_form_for_future_digital_implementation",
+      "reviewed_original_criterion_count": 51,
+      "prompt_clauses": [
+        {
+          "text": "Create a Word document that includes a revised version of the student evaluation form that:",
+          "start": 704
+        },
+        {
+          "text": "Is structured in a way that can easily be implemented in Google Forms or another digital tool.",
+          "start": 1236
+        }
+      ],
+      "basis": "The deliverable is a Word form. Rubric asks visible response space, option lists and question-to-Google-Forms-type correspondence for future implementation; it does not require live Google Forms, clickable Word controls or digital submission. Multi-select wording and optional/conditional questions retain their exact original semantics.",
+      "proposed_route_ids": [
+        "office_authoring",
+        "page_render_and_transport"
+      ],
+      "separate_obligations_unchanged": [],
+      "existing_native_gates_unchanged": [],
+      "conflicts_unchanged": []
+    },
+    "c9bf9801-9640-45fa-8166-1ab01f2d98e4": {
+      "classification": "static_word_forms_plus_separate_document_links",
+      "reviewed_original_criterion_count": 47,
+      "prompt_clauses": [
+        {
+          "text": "The Mentor/Mentee applications and Mentorship roadmap template should be separate MS word documents linked in the original file.",
+          "start": 1328
+        },
+        {
+          "text": "Formatting improvements (consistent headings, spacing, and layout for readability)",
+          "start": 1458
+        }
+      ],
+      "basis": "Applications, roadmap and evaluation forms are Word document templates. No active input widget is specified. Clickable file hyperlinks are a separate explicit document-link obligation, not an input-control requirement, and stay in their existing criterion route. DGHT/OIIDP and source-branding conflicts remain unchanged.",
+      "proposed_route_ids": [
+        "office_authoring",
+        "page_render_and_transport"
+      ],
+      "separate_obligations_unchanged": [
+        {
+          "criterion_id": "53fcbf4d-9d52-4c3f-a3e2-302e368bfd6c",
+          "original_item_sha256": "f68186e0a3b45b61cbca59c5e1455f23f7f4f983a54debd40548004cd466de61",
+          "original_signed_score": 1,
+          "description": "The appendix provides clickable hyperlinks for the Mentor application, Mentee application, and Mentorship roadmap template.",
+          "current_methods": [
+            "content"
+          ],
+          "current_status": "shared_route_applicable",
+          "current_basis_ref": ".agents/development/evidence/gdpval-220-requirements-review.json#/tasks/119/rubric_routes/42",
+          "unchanged": true
+        }
+      ],
+      "existing_native_gates_unchanged": [],
+      "conflicts_unchanged": [
+        {
+          "kind": "instruction_conflict",
+          "detail": "Prompt program/division is DGHT; supplied filename and rubric call the program OIIDP. Preserve both identities pending precedence decision.",
+          "criterion_ids": [
+            "a23c69d8-d656-457f-aa5a-97c699f69b9c"
+          ],
+          "resolution_status": "unresolved_in_this_review",
+          "originals_preserved": true
+        }
+      ]
+    },
+    "41f6ef59-88c9-4b2c-bcc7-9ceb88422f48": {
+      "classification": "static_layout_plus_separate_spreadsheet_behavior",
+      "reviewed_original_criterion_count": 39,
+      "prompt_clauses": [
+        {
+          "text": "Utilize pop-up menus, checkboxes, categories or other formatting in the Excel sheet to make the process of inputting the information more efficient.",
+          "start": 1210
+        }
+      ],
+      "basis": "Layout and the general efficiency feature allow static/structural choices: date formatting or other listed alternatives can satisfy 70296102, and prices can use a legend. Preserve the independent status-checkbox/dropdown, freeze-pane, conditional-formatting and validation requirements. Preserve all current item statuses, both existing native gates and the exact Excel Table OR filterable-header alternative; generic form-layout proof cannot clear them.",
+      "proposed_route_ids": [
+        "office_authoring",
+        "page_render_and_transport"
+      ],
+      "separate_obligations_unchanged": [
+        {
+          "criterion_id": "3889385e-1728-4f6b-8f50-73f7c6564ddd",
+          "original_item_sha256": "53c70548825182482d7e1effa90f24fcb77953a584b74d6fc9827a74d6297379",
+          "original_signed_score": 1,
+          "description": "Status columns (emailed, responded, updated payment) use checkboxes or Yes/No dropdowns.",
+          "current_methods": [
+            "content"
+          ],
+          "current_status": "shared_route_applicable",
+          "current_basis_ref": ".agents/development/evidence/gdpval-220-requirements-review.json#/tasks/121/rubric_routes/15",
+          "unchanged": true
+        },
+        {
+          "criterion_id": "53b88dce-5f98-426f-aa59-86e53a232351",
+          "original_item_sha256": "a4557a2a1fa163f79a987af9e825aea95ff931225807a700e305e6a9e555e4fd",
+          "original_signed_score": 1,
+          "description": "Worksheet uses an Excel Table or a filterable header row.",
+          "current_methods": [
+            "structure",
+            "content",
+            "functional"
+          ],
+          "current_status": "infrastructure_pending",
+          "current_basis_ref": ".agents/development/evidence/gdpval-239-observation-routes.json#/items/222",
+          "unchanged": true
+        },
+        {
+          "criterion_id": "af52e368-8be5-402a-aa22-3f1110005b16",
+          "original_item_sha256": "91024d83bf8701efa75ef643a860d230efe220f527cb88667cdb36c3e074a6ce",
+          "original_signed_score": 1,
+          "description": "Header row is frozen to keep column labels visible when scrolling.",
+          "current_methods": [
+            "content",
+            "structure"
+          ],
+          "current_status": "shared_route_applicable",
+          "current_basis_ref": ".agents/development/evidence/gdpval-220-requirements-review.json#/tasks/121/rubric_routes/18",
+          "unchanged": true
+        },
+        {
+          "criterion_id": "84613dbb-c22c-4dd9-b7d6-ca81e2401af1",
+          "original_item_sha256": "4d769b4896d63a13e29bd5d2abb3bdf0994f8e1f909e3ab559a68e30ec57d3b4",
+          "original_signed_score": 1,
+          "description": "Conditional formatting highlights rows where the payment method has not been updated.",
+          "current_methods": [
+            "content",
+            "visual"
+          ],
+          "current_status": "shared_route_applicable",
+          "current_basis_ref": ".agents/development/evidence/gdpval-220-requirements-review.json#/tasks/121/rubric_routes/19",
+          "unchanged": true
+        },
+        {
+          "criterion_id": "6791a39c-a0eb-41ed-8b6f-62d0376dad91",
+          "original_item_sha256": "4e276c4be10a8de3545f5360d94835955f508e8aa372cd0588e56dc222d237c1",
+          "original_signed_score": 1,
+          "description": "Data validation prevents entries in the Subscription Type column outside of Plan A, Plan B, and Plan C.",
+          "current_methods": [
+            "structure",
+            "content",
+            "functional"
+          ],
+          "current_status": "infrastructure_pending",
+          "current_basis_ref": ".agents/development/evidence/gdpval-239-observation-routes.json#/items/223",
+          "unchanged": true
+        }
+      ],
+      "existing_native_gates_unchanged": [
+        {
+          "criterion_id": "53b88dce-5f98-426f-aa59-86e53a232351",
+          "original_item_sha256": "a4557a2a1fa163f79a987af9e825aea95ff931225807a700e305e6a9e555e4fd",
+          "original_signed_score": 1,
+          "methods": [
+            "structure",
+            "content",
+            "functional"
+          ],
+          "status": "infrastructure_pending",
+          "route_ids": [
+            "native_controls",
+            "package_metadata",
+            "source_comparison"
+          ],
+          "basis_ref": ".agents/development/evidence/gdpval-239-observation-routes.json#/items/222",
+          "remaining_obligation": "The required native application/input operation has no verified current automation receipt. Metadata/programmatic writes do not establish native opening, editability, enforcement, activation or automatic UI behavior; retain infrastructure_pending for this exact operation.",
+          "components_ref": ".agents/development/evidence/gdpval-239-observation-routes.json#/items/222/component_checks",
+          "alternative_ref": ".agents/development/evidence/gdpval-239-observation-routes.json#/items/222/machine_alternative",
+          "alternative_result_rule": "A directly evidenced positive sufficient alternative may satisfy the original unit. Missing/failed alternative evidence does not refute the other branch.",
+          "actual_artifact_observation_required": true
+        },
+        {
+          "criterion_id": "6791a39c-a0eb-41ed-8b6f-62d0376dad91",
+          "original_item_sha256": "4e276c4be10a8de3545f5360d94835955f508e8aa372cd0588e56dc222d237c1",
+          "original_signed_score": 1,
+          "methods": [
+            "structure",
+            "content",
+            "functional"
+          ],
+          "status": "infrastructure_pending",
+          "route_ids": [
+            "native_controls",
+            "package_metadata",
+            "source_comparison"
+          ],
+          "basis_ref": ".agents/development/evidence/gdpval-239-observation-routes.json#/items/223",
+          "remaining_obligation": "The required native application/input operation has no verified current automation receipt. Metadata/programmatic writes do not establish native opening, editability, enforcement, activation or automatic UI behavior; retain infrastructure_pending for this exact operation.",
+          "components_ref": ".agents/development/evidence/gdpval-239-observation-routes.json#/items/223/component_checks",
+          "actual_artifact_observation_required": true
+        }
+      ],
+      "conflicts_unchanged": []
+    },
+    "a0552909-bc66-4a3a-8970-ee0d17b49718": {
+      "classification": "static_layout_plus_separate_spreadsheet_behavior",
+      "reviewed_original_criterion_count": 50,
+      "prompt_clauses": [
+        {
+          "text": "Starting from the attached Excel spreadsheet, create three new separate Excel sheets for each of the three pathology labs to serve as bulk forms.",
+          "start": 697
+        }
+      ],
+      "basis": "Table layout, headers and editable ordinary cells are separable from the expressly required Yes/No/N/A dropdowns. Adopt only layout; preserve all three dropdown operation gates and the separate spreadsheet_input_controls_and_behavior generation capability. Do not infer active dropdown operation from stored OOXML definitions or page rendering.",
+      "proposed_route_ids": [
+        "office_authoring",
+        "page_render_and_transport"
+      ],
+      "separate_obligations_unchanged": [
+        {
+          "criterion_id": "e1f0848c-6cb3-4d23-8324-cebd626b08a7",
+          "original_item_sha256": "91b6b92105e65d23b650efd520a5268976d5933f8e764e448b3e59dcc4006da6",
+          "original_signed_score": 2,
+          "description": "In the table in the bulk form for Arizona Pathology, the columns Order Received, Delayed At Another Facility, and Did Not Receive Request include drop-down lists for the following exact values: Yes, No, N/A.",
+          "current_methods": [
+            "structure",
+            "content",
+            "functional"
+          ],
+          "current_status": "infrastructure_pending",
+          "current_basis_ref": ".agents/development/evidence/gdpval-239-observation-routes.json#/items/224",
+          "unchanged": true
+        },
+        {
+          "criterion_id": "2170d243-936d-40c0-9d89-c7e99b54e39e",
+          "original_item_sha256": "d4c318989bc71546aa0bbaef0adf9e56c27fe8dc0838f9528f0b555002548262",
+          "original_signed_score": 2,
+          "description": "In the table in the bulk form for Canyon Pathology, the columns Order Received, Delayed At Another Facility, and Did Not Receive Request include drop-down lists for the following exact values: Yes, No, N/A.",
+          "current_methods": [
+            "structure",
+            "content",
+            "functional"
+          ],
+          "current_status": "infrastructure_pending",
+          "current_basis_ref": ".agents/development/evidence/gdpval-239-observation-routes.json#/items/225",
+          "unchanged": true
+        },
+        {
+          "criterion_id": "66f16260-a385-4d12-9cb4-78f7d723883d",
+          "original_item_sha256": "685d723484679a9e76a48347e7c7481aff0f5baf57b21e044bba2cd0b5b5e165",
+          "original_signed_score": 2,
+          "description": "In the table in the bulk form for Minnesota Pathology, the columns Order Received, Delayed At Another Facility, and Did Not Receive Request include drop-down lists for the following exact values: Yes, No, N/A.",
+          "current_methods": [
+            "structure",
+            "content",
+            "functional"
+          ],
+          "current_status": "infrastructure_pending",
+          "current_basis_ref": ".agents/development/evidence/gdpval-239-observation-routes.json#/items/226",
+          "unchanged": true
+        }
+      ],
+      "existing_native_gates_unchanged": [
+        {
+          "criterion_id": "e1f0848c-6cb3-4d23-8324-cebd626b08a7",
+          "original_item_sha256": "91b6b92105e65d23b650efd520a5268976d5933f8e764e448b3e59dcc4006da6",
+          "original_signed_score": 2,
+          "methods": [
+            "structure",
+            "content",
+            "functional"
+          ],
+          "status": "infrastructure_pending",
+          "route_ids": [
+            "native_controls",
+            "package_metadata",
+            "source_comparison"
+          ],
+          "basis_ref": ".agents/development/evidence/gdpval-239-observation-routes.json#/items/224",
+          "remaining_obligation": "The required native application/input operation has no verified current automation receipt. Metadata/programmatic writes do not establish native opening, editability, enforcement, activation or automatic UI behavior; retain infrastructure_pending for this exact operation.",
+          "components_ref": ".agents/development/evidence/gdpval-239-observation-routes.json#/items/224/component_checks",
+          "actual_artifact_observation_required": true
+        },
+        {
+          "criterion_id": "2170d243-936d-40c0-9d89-c7e99b54e39e",
+          "original_item_sha256": "d4c318989bc71546aa0bbaef0adf9e56c27fe8dc0838f9528f0b555002548262",
+          "original_signed_score": 2,
+          "methods": [
+            "structure",
+            "content",
+            "functional"
+          ],
+          "status": "infrastructure_pending",
+          "route_ids": [
+            "native_controls",
+            "package_metadata",
+            "source_comparison"
+          ],
+          "basis_ref": ".agents/development/evidence/gdpval-239-observation-routes.json#/items/225",
+          "remaining_obligation": "The required native application/input operation has no verified current automation receipt. Metadata/programmatic writes do not establish native opening, editability, enforcement, activation or automatic UI behavior; retain infrastructure_pending for this exact operation.",
+          "components_ref": ".agents/development/evidence/gdpval-239-observation-routes.json#/items/225/component_checks",
+          "actual_artifact_observation_required": true
+        },
+        {
+          "criterion_id": "66f16260-a385-4d12-9cb4-78f7d723883d",
+          "original_item_sha256": "685d723484679a9e76a48347e7c7481aff0f5baf57b21e044bba2cd0b5b5e165",
+          "original_signed_score": 2,
+          "methods": [
+            "structure",
+            "content",
+            "functional"
+          ],
+          "status": "infrastructure_pending",
+          "route_ids": [
+            "native_controls",
+            "package_metadata",
+            "source_comparison"
+          ],
+          "basis_ref": ".agents/development/evidence/gdpval-239-observation-routes.json#/items/226",
+          "remaining_obligation": "The required native application/input operation has no verified current automation receipt. Metadata/programmatic writes do not establish native opening, editability, enforcement, activation or automatic UI behavior; retain infrastructure_pending for this exact operation.",
+          "components_ref": ".agents/development/evidence/gdpval-239-observation-routes.json#/items/226/component_checks",
+          "actual_artifact_observation_required": true
+        }
+      ],
+      "conflicts_unchanged": []
+    },
+    "7151c60a-d4cb-4fc4-8169-3d4cb446e6b9": {
+      "classification": "printable_word_form_with_writable_spaces",
+      "reviewed_original_criterion_count": 33,
+      "prompt_clauses": [
+        {
+          "text": "It should include an option to mark the fax as Urgent, For Review, Please Comment, and Please Reply.",
+          "start": 1681
+        },
+        {
+          "text": "The information should be in table format.",
+          "start": 2262
+        },
+        {
+          "text": "It must include space to add the patient’s name and date of birth above the table on each page.",
+          "start": 2558
+        }
+      ],
+      "basis": "The fax cover/checklist Word files need labeled writable spaces, table cells and four marked-option boxes. Viewing/printing is explicit in the rubric; no click-to-toggle electronic checkbox, protection or form submission is required. Ordinary editable text or printable response spaces satisfy the form container obligation; clinical/source text and page limits remain actual-artifact checks.",
+      "proposed_route_ids": [
+        "office_authoring",
+        "page_render_and_transport"
+      ],
+      "separate_obligations_unchanged": [],
+      "existing_native_gates_unchanged": [],
+      "conflicts_unchanged": []
+    }
+  },
+  "new_models": 0,
+  "new_native_operations": 0,
+  "new_network_calls": 0,
+  "new_dependencies": 0,
+  "original_rubric_changes": 0,
+  "all220_accepted": false
+}

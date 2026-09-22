@@ -1,0 +1,89 @@
+{
+  "schema_version": 1,
+  "date": "2026-09-22",
+  "purpose": "Owner-authorized finite service recovery and uniform saved-partial scalar evaluation; original sources and failures retained",
+  "baseline_manifest_sha256": "cc342d7d4cf915a6c3880938bd9b84278bca376c74f1d7a3d88bb1d534bb8929",
+  "checks": {
+    "v3_mock_tests": 15,
+    "partial_pipeline_and_related_tests": 71,
+    "evaluation_overlay_dispatch_guards": 8,
+    "strict_typing": "passed",
+    "ruff": "passed",
+    "fern": {
+      "errors": 0,
+      "warnings": [
+        "Authenticated redirect check skipped because Fern login is unavailable"
+      ]
+    },
+    "native_concurrent_isolation": {
+      "passed": true,
+      "model_calls": 0,
+      "network_requests": 0,
+      "private_auth_homes_distinct": true,
+      "private_auth_copy_permissions": "0600",
+      "checks": [
+        {
+          "client": "codex",
+          "checks": {
+            "other_workspace_read": true,
+            "other_workspace_write": true,
+            "other_auth_read": true,
+            "own_read": true
+          },
+          "elapsed_seconds": 0.7499076249659993
+        },
+        {
+          "client": "claude-code",
+          "checks": {
+            "other_workspace_read": true,
+            "other_workspace_write": true,
+            "other_auth_read": true,
+            "own_read": true
+          },
+          "elapsed_seconds": 1.0648323339992203
+        }
+      ],
+      "timeout_did_not_kill_other_session": true,
+      "lifetime_statuses": [
+        "timeout",
+        "completed"
+      ],
+      "elapsed_seconds": 42.89338908402715
+    },
+    "evaluation_config_read_only_check": "passed,0model calls",
+    "partial_evaluation_real_cli": "pending"
+  },
+  "evidence_sha256": {
+    "controller-v3/controller.py": "31362e305953cc0f73fdfa0e80c4a9f2ec8a32c4992e51a0690e71fc90fb9ce9",
+    "controller-v3/verification.json": "47ff7319c98852fc3ce8f8fe03eac12f453960af2edd0820152ad1a1fa950898",
+    "concurrent-isolation-probe.json": "4d8bf118cb574d4f7a4fbb139f838a2db279e2b8b5d29971ae471dd4e40af609",
+    "controller-v4/evaluate.py": "5fd3e8c1cc63fe78c49c7ebd4859daefa9a38dc86490224e18d6621858fefcc3",
+    "controller-v4/test_evaluate.py": "facbbb205b48940428d0c4f33500cf7299689b093026e1cbe99b7a24645d2536",
+    "evaluation-runtime-v1.json": "9c512fb68763c051f6032d61095b01849bdd7bc620d6f0d6c415371d5b6c5e23",
+    "recovery-authorizations/creator-recovery-first-batch.json": "41931df4df04201992dfc3afe220f445fcc186a6c66bf4d146ec3c8e2e69bdab",
+    "recovery-authorizations/codex-n-remaining-first-batch.json": "142400f84231ecb7727a5fa259fa609b446c3d539cbae164dfd04d3688bcad9c",
+    "recovery-authorizations/claude-partial-n1-first.json": "7d6a94eab16c34de38bbc28f8dc0a8d8637467f9d5a91279f810dda724e441ae",
+    "recovery-authorizations/codex-partial-n1-first.json": "98c8e6cb19c40e53d1ee7a312fd9e5c439270c5f2c68ac0abccbc7095fe48b01"
+  },
+  "runtime_scope": {
+    "creation_and_application": "original frozen snapshot unchanged",
+    "evaluation": "original snapshot plus config.py and evaluate_pipeline.py only; include_partial_artifacts=true for all18logical evaluations",
+    "product_evaluation_formatting": "snapshot and committed source have identical AST; whitespace formatting differs"
+  },
+  "source_application_N1": {
+    "execution_status": "timeout",
+    "model_elapsed_seconds": 904.2427565000253,
+    "saved_files": [
+      "agent_response.txt"
+    ],
+    "saved_response_bytes": 312,
+    "workbook_present": false,
+    "retry_eligible": false
+  },
+  "limitations": [
+    "Probe establishes the tested concurrent native workspace/auth/process boundaries, not full-benchmark acceptance.",
+    "Model execution and partial-artifact evaluation results are recorded separately as they complete.",
+    "Failed/unknown attempts remain in all resource totals and planned648criterion-judgment denominator.",
+    "Full220task acceptance remains incomplete; this exploratory pilot is not a production comparison."
+  ]
+}

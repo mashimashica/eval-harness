@@ -1,0 +1,136 @@
+{
+  "schema_version": 1,
+  "kind": "controller-adopted-six-task-common-output-mapping",
+  "review": {
+    "path": ".audit/2026-09-22-output-route-mapping/report.json",
+    "sha256": "bbe4b968ebb481e4577f92597299b46dd1edc5a0b90425e66f3915cb86748f39"
+  },
+  "decision": "Adopt only known ZIP package/extract and 36x24-inch PDF author/render operations for the exact six source-bound task records. No other pending capability or actual task result promoted.",
+  "changed_task_ids": [
+    "38889c3b-e3d4-49c8-816a-3cc8e5313aba",
+    "5e2b6aab-f9fb-4dd6-a1a5-874ef1743909",
+    "91060ff0-3eb5-4ddf-9edb-f6758b95499e",
+    "0e386e32-df20-4d1f-b536-7159bc409ad5",
+    "7de33b48-5163-4f50-b5f3-8deea8185e57",
+    "4122f866-01fa-400b-904d-fa171cdab7c7"
+  ],
+  "changed_criterion_ids": {
+    "38889c3b-e3d4-49c8-816a-3cc8e5313aba": [
+      "cd6371ef-3939-42dc-87ea-1e7491ee5daf"
+    ],
+    "5e2b6aab-f9fb-4dd6-a1a5-874ef1743909": [
+      "7fed24d8-7c68-4d0c-b03e-63124a445b0e",
+      "b1e7bcf7-0071-4e1f-a90e-7ea60678f29b",
+      "aefe1228-e25b-471c-a278-1815844827cd"
+    ],
+    "91060ff0-3eb5-4ddf-9edb-f6758b95499e": [
+      "eac33548-e9ea-450f-a0cc-44e35a219262",
+      "22175cd7-0d5a-4232-80fc-08f6d4c8409a",
+      "33a6879e-d232-46b2-8217-5b0aa608df64",
+      "6635a195-7eed-4e96-9ec2-cfc78cf691c7",
+      "48461868-b8b1-46c1-8df8-4d880ae3a8bc",
+      "08587403-d079-4242-98ca-325b942719ee",
+      "e7d01e31-5b09-45b8-b9a7-454314fe5b07",
+      "054fbddc-683d-45e2-9417-2ab7965f49b3"
+    ],
+    "0e386e32-df20-4d1f-b536-7159bc409ad5": [
+      "5b9ecec0-0cab-46e8-bc54-1743c2224723"
+    ],
+    "7de33b48-5163-4f50-b5f3-8deea8185e57": [
+      "528116fe-7fcb-4a8e-9030-1b6e060adc98",
+      "02516b7b-1ed2-4939-a595-3341040fa961",
+      "7da8166e-1668-489e-9d36-56dbe4c49a54",
+      "ae5e1a4a-9808-4c97-9bc9-3397430dc816",
+      "640233df-680c-4f9d-a1b8-966433fa7530",
+      "d9780423-f2eb-41bc-9346-4b143a1fca17"
+    ],
+    "4122f866-01fa-400b-904d-fa171cdab7c7": [
+      "73e62a46-5476-45f8-8967-f50751f81956"
+    ]
+  },
+  "unchanged_tasks": 214,
+  "unchanged_criterion_records": 10433,
+  "all_original_ids_methods_scores_and_hashes_preserved": true,
+  "prior_combined_counts": {
+    "common_routes_applicable_with_limits": 180,
+    "route_gaps_remain": 40
+  },
+  "new_combined_counts": {
+    "common_routes_applicable_with_limits": 181,
+    "route_gaps_remain": 39
+  },
+  "current_summary_before": {
+    "tasks": 220,
+    "original_criteria": 10453,
+    "generation_status_counts": {
+      "shared_routes_applicable": 181,
+      "partial_shared_routes": 39
+    },
+    "generation_capability_status_counts": {
+      "shared_route_applicable": 568,
+      "partial_shared_route": 64,
+      "infrastructure_pending": 1,
+      "unconfirmed": 1
+    },
+    "criterion_route_status_counts": {
+      "shared_route_applicable": 10306,
+      "unconfirmed": 5,
+      "provisional_human_observation_pending": 75,
+      "partial_shared_route": 35,
+      "infrastructure_pending": 32
+    },
+    "source_bound_239_overrides": 239,
+    "source_bound_143_overrides": 143,
+    "sufficient_machine_alternatives": 5,
+    "task_successes_inferred": 0,
+    "criterion_results_inferred": 0,
+    "required_generation_capability_status_counts": {
+      "shared_route_applicable": 568,
+      "partial_shared_route": 63,
+      "infrastructure_pending": 1,
+      "unconfirmed": 1
+    },
+    "optional_generation_capability_status_counts": {
+      "partial_shared_route": 1
+    },
+    "source_bound_requirement_correction_tasks": 13
+  },
+  "current_summary_after": {
+    "tasks": 220,
+    "original_criteria": 10453,
+    "generation_status_counts": {
+      "shared_routes_applicable": 182,
+      "partial_shared_routes": 38
+    },
+    "generation_capability_status_counts": {
+      "shared_route_applicable": 574,
+      "partial_shared_route": 58,
+      "infrastructure_pending": 1,
+      "unconfirmed": 1
+    },
+    "criterion_route_status_counts": {
+      "shared_route_applicable": 10306,
+      "unconfirmed": 5,
+      "provisional_human_observation_pending": 75,
+      "partial_shared_route": 35,
+      "infrastructure_pending": 32
+    },
+    "source_bound_239_overrides": 239,
+    "source_bound_143_overrides": 143,
+    "sufficient_machine_alternatives": 5,
+    "task_successes_inferred": 0,
+    "criterion_results_inferred": 0,
+    "required_generation_capability_status_counts": {
+      "shared_route_applicable": 574,
+      "partial_shared_route": 57,
+      "infrastructure_pending": 1,
+      "unconfirmed": 1
+    },
+    "optional_generation_capability_status_counts": {
+      "partial_shared_route": 1
+    },
+    "source_bound_requirement_correction_tasks": 13
+  },
+  "scope_of_summary_sync": "Update current capabilities summary to the mapped current route counts; retain previous counts here and historical experimental records unchanged.",
+  "full220_accepted": false
+}

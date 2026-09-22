@@ -1,0 +1,68 @@
+{
+  "schema_version": 1,
+  "kind": "controller-accepted-known-schema-and-map-operations",
+  "decision": "Adopt only matching author/reopen/inspect/render operations; no actual artifact result, full OpenAPI certification or real-world geographic accuracy is inferred.",
+  "proof": {
+    "path": ".audit/2026-09-22-schema-map-operations/report.json",
+    "sha256": "7b1c362b0dbd1588ca52bbb1298c544cc64cec5112dd9979020d335c5b3fd359"
+  },
+  "applicability": {
+    "path": ".audit/2026-09-22-schema-map-operations/applicability.json",
+    "sha256": "f7511b57c1755813a257de473ce550bd6668fc3b55eb62a80e0a6dbddec805f1"
+  },
+  "controller_visual_review": {
+    "path": ".audit/2026-09-22-schema-map-operations/controller-visual-review.json",
+    "sha256": "f815a1286b68efe043180b5e72dde213710c266c1f2f87f33940979849419c98"
+  },
+  "roles": [
+    "application",
+    "evaluation"
+  ],
+  "source_dataset_sha256": "4d58ee30485093010bf8b0a11708f80924831eef2a643db4c2d23b72fd426470",
+  "operations": {
+    "yaml_openapi_author_and_schema_validation": "Known OpenAPI3 YAML/text creation, exact YAML roundtrip, field/local-reference inspection and simple reusable JSON body validation with wrong-type/missing-field/malformed-YAML negative controls; no specialized full OpenAPI validator was executed.",
+    "geospatial_map_author": "Known coordinates/roads to one-page PDF, exact known label/page inspection, real native render and independent numerical verification of all pin centers and directional ordering."
+  },
+  "task_components": {
+    "2c249e0f-4a8c-4f8e-b4f4-6508ba29b34f": {
+      "capability": "yaml_openapi_author_and_schema_validation",
+      "criterion_ids": [
+        "65382062-827f-44a9-a418-43da5161c62b",
+        "0e7c8be7-f9b6-463a-a96f-16bbb944966f",
+        "36c5fa14-2873-46a3-b5b6-f72931437212",
+        "8745a5dd-9104-49db-8b09-73cfeb4bd780",
+        "dabb313f-29b1-4665-a7a3-2ea88883a33d",
+        "893d29e7-dc23-40e3-90fd-dbfcc60fd5bc",
+        "6068be5d-b58c-4a24-8c63-db7199d378a4",
+        "3cc3ed3c-5435-42f4-8cad-20cb1153cfd3",
+        "4035aed7-d04a-4d45-bccf-dd0a010b8cab",
+        "eb445b32-15b2-4bbe-a989-eca35afe6f25",
+        "d2c35957-636f-4a74-aa13-740877fe0d12",
+        "4ecfa96b-97fa-4f92-831c-f979e4fd43ee",
+        "7f60c6fb-1e66-4a3e-9fd4-832c3f51e418",
+        "dcf66d7a-7059-42ae-924e-91ca440ff52b"
+      ]
+    },
+    "11593a50-734d-4449-b5b4-f8986a133fd8": {
+      "capability": "geospatial_map_author",
+      "criterion_ids": []
+    }
+  },
+  "model_calls": 0,
+  "network_calls": 0,
+  "new_dependencies": 0,
+  "elapsed_seconds": 14.722312750003766,
+  "originals_preserved": true,
+  "limits": [
+    "Known generic fixtures establish bounded shared operation availability, not actual task success or original criterion outcomes.",
+    "OpenAPI design validity and whole-document semantic conformance still require actual-artifact inspection. No robot/mission design was generated.",
+    "Actual addresses, coordinates, real basemap/source selection and prompt/rubric conflicts remain distinct source/content obligations. No real listings or geocoding were used.",
+    "Controller owns adoption and final acceptance; no runtime/dependency or tracked mapping changes occurred during these workflows."
+  ],
+  "source_classification_clarifications": [
+    "Dedicated OpenAPI validator, deployed endpoint/cloud services and 200GB transfers are not original output prerequisites.",
+    "Named CRS transformation, GIS package or geocoding service is not specified by the location-spread map request.",
+    "Map is a prompt-level obligation; no map-specific rubric item is invented. Existing PDF/style items remain unchanged in the proposed mapping."
+  ],
+  "all220_accepted": false
+}

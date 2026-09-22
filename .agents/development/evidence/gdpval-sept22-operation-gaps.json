@@ -1,0 +1,878 @@
+{
+  "schema_version": 1,
+  "kind": "bounded-native-operation-followup-not-acceptance",
+  "baseline_commit": "324efd2697333b68240e1f38af1401b01c332e24",
+  "model_calls": 0,
+  "candidate_code_runs": 0,
+  "route_acceptance_changes": 0,
+  "scope": {
+    "unique_tasks": 12,
+    "input_control_tasks": 11,
+    "pivot_cases": 2,
+    "source_items_in_selected_tasks": 708,
+    "mapped_operation_items": 67,
+    "existing_nonshared_items": {
+      "infrastructure_pending": 23,
+      "partial_shared_route": 6
+    }
+  },
+  "source_dataset_sha256": "4d58ee30485093010bf8b0a11708f80924831eef2a643db4c2d23b72fd426470",
+  "source_ids_and_hashes_independently_verified": true,
+  "excel": {
+    "status": "existing-runtime-operation-entry-point-unconfirmed",
+    "evidence": {
+      "path": ".audit/2026-09-22-excel-controls/report.json",
+      "sha256": "ea4a883ea714eeba838f974deb1a4cf40d905ecb50b9a4e515799158395f2fc4"
+    },
+    "source_operation_mapping": {
+      "path": ".audit/2026-09-22-excel-controls/source-operation-mapping.json",
+      "sha256": "ca858e8d8440dcc6fd29df079a31a7495254ea9fae56e8f85e9f462ee2ae0b95"
+    },
+    "design": {
+      "path": ".audit/2026-09-22-excel-controls/design.md",
+      "sha256": "8ef05c53ff62fe7b2e9a539a8721960d2313256d371c4e982278ec72d9095c6d"
+    },
+    "observed": "Two trusted native calls1.69/2.54s; first-start profile replacement retained, corrected macro still produced no operation record. Returncode0 did not prove entry point execution. Existing conversion route unchanged.",
+    "remaining": "An operational in-process application entry point plus isolated native control/validation/filter/automatic-update tests. Installed Excel16.101.1 is not proof of launch/license/TCC/isolation.",
+    "full_office_followup": {
+      "evidence": {
+        "path": ".audit/2026-09-22-excel-controls/replacement-research/final-report.json",
+        "sha256": "acad0eaa90100600d4f13ec25125e000753298d49223ebd8bef5b211e5360248"
+      },
+      "application": {
+        "release": "26.8.0",
+        "build": "26.8.0.3",
+        "dmg_bytes": 298773447,
+        "dmg_sha256": "8858d8058da4f862f47559486814e65efc27294da67c5e4bb56b006b1ee59f89",
+        "original_bundle_signature": "Apple anchor / The Document Foundation 7P5S3ZLCN7, strict deep verification passed"
+      },
+      "summary": {
+        "pinned_object_and_original_bundle_signature_verified": true,
+        "full_basic_uno_components_present": true,
+        "trusted_office_launches": 1,
+        "trusted_probe_returncode": 1,
+        "trusted_probe_seconds": 16.324527417018544,
+        "scoped_log_seconds": 2.65882320801029,
+        "actual_preference_read_faults": 72,
+        "exit_causality": "unconfirmed",
+        "originals_unchanged": true,
+        "owned_process_exited": true,
+        "read_only_image_detached": true,
+        "ephemeral_mount_removed": true,
+        "models": 0,
+        "product_or_readiness_changes": 0
+      },
+      "limits": [
+        "Full Basic/UNO component presence is not an operational entry point.",
+        "The trusted launch returned1 without a Basic entry marker; no native workbook behavior proved.",
+        "Observed preference-read faults are not established as the exit cause.",
+        "No blanket preference/IPC grant, product dependency adoption, or candidate execution.",
+        "The copied app failed signature due to FinderInfo; only the verified read-only mounted original was launched."
+      ],
+      "next_prerequisite": "Resolve the native bootstrap dependency on global/current-user preferences while preserving host-data isolation, with source/trace evidence sufficient to identify the actual exit path. An operational headless build with Basic/UNO or an explicitly private preference source is a candidate design, not a verified fix. No blanket user-preference-read grant or further launch is authorized here."
+    },
+    "private_preferences_followup": {
+      "evidence": {
+        "path": ".audit/2026-09-22-private-preferences/findings.json",
+        "sha256": "d08e86393a9ba100c3d54f51ebf476c0ee1bc668f6d20180b61248b94ab67d6a"
+      },
+      "status": "fixed_home_resolution_verified_private_preference_bootstrap_not_established",
+      "trusted_helper_invocations": 3,
+      "elapsed_seconds": 0.48490216600475833,
+      "model_calls": 0,
+      "application_launches": 0,
+      "policy_change": false,
+      "observed": "CFFIXED_USER_HOME redirected CoreFoundation home; direct private plist read worked. Named/global/app CFPreferences lookups remained null under unchanged boundary.",
+      "limits": "No usable private preference bootstrap, no host-fallback guarantee, no established LibreOffice exit cause.",
+      "cleanup": true,
+      "next_prerequisite": "Do not add CFFIXED_USER_HOME as a claimed preference-bootstrap fix. A usable private preference source still needs a concrete current CoreFoundation mechanism that succeeds under the existing read boundary, or an Office runtime/bootstrap that avoids this platform preference dependency. This fixture does not establish either. No blanket preference grant, extra environment knob, or Office relaunch is justified by these results alone."
+    },
+    "inprocess_UNO_design_check": {
+      "evidence": {
+        "path": ".audit/2026-09-22-excel-controls/inprocess-uno-research/report.json",
+        "sha256": "7a3a347c33675df83a88b45400c8c36db7ac937981c906741fad495c993e3498"
+      },
+      "basis": "Nine pinned26.8.0.3 official source files and existing bundle inventory",
+      "decision": "Bundled pyuno is not an operational alternative: private TEST_LIB/test_init supplies process factory, VCL and UCB, while the stock bundle lacks that test library. Public officehelper launches soffice and a pipe.",
+      "limit": "In-process placement does not remove native bootstrap. Prior exit cause, a usable private preference mechanism, and a compiled SVP route remain unconfirmed.",
+      "application_helper_python_model_launches": 0,
+      "originals_unchanged": true,
+      "permission_changes": false,
+      "route_adoption": false
+    }
+  },
+  "browser": {
+    "status": "complete-descendant-lifetime-boundary-unconfirmed",
+    "evidence": {
+      "path": ".audit/2026-09-22-browser-lifetime/findings.json",
+      "sha256": "270a66f7d5a3bd77a7f3f8f27561fd4a53ca66a64693d468f5fe17136f598709"
+    },
+    "manifest": {
+      "path": ".audit/2026-09-22-browser-lifetime/manifest.json",
+      "sha256": "00b272674404f460a8c2def303e96b6d050f35988c258682833df1254a44dedd"
+    },
+    "observed": "Single0.874s trusted helper: automatic kqueue descendant registration rejected error45; ordinary root/known-child controls passed; detached leaf was reparented toPID1. Cleanup verified for three known identities. Audit-token lookup worked, signal0 control inconclusive, no mutating signal sent.",
+    "remaining": "Enforceable inherited process ownership and cleanup before candidate browser execution; proposed narrow executable/IPC boundary is not verified. Polling or faster shutdown cannot fill this gap.",
+    "scope_limit": "Legacy copied probe profile had broad grants and an unused imprecise Unix regex. No Unix operation occurred. This probe is not candidate-isolation evidence or reusable product policy."
+  },
+  "ownership": {
+    "participant": "Designs/implements formulas, PivotTables, filters, controls, linkage; selects helpers/dependencies and self-checks with measured time/usage. No task solution/template/repair distributed.",
+    "harness": "Generic isolated apps/libraries/operations; matching conditions; trusted fixtures kept controller-only.",
+    "evaluator": "Operate existing submitted mechanisms on copies; never add or repair features before passing. Distinguish direct writes/manual recalc from UI/automatic behavior."
+  },
+  "tasks": {
+    "5f6c57dd-feb6-4e70-b152-4969d92d1608": {
+      "row_sha256": "8ac78edaa55a2a1d1e642b31ae82711556ea2035606d720930e2713d0614f1d3",
+      "generation_capabilities": [
+        {
+          "status": "partial_shared_route",
+          "route_ids": [
+            "spreadsheet_recalculation",
+            "native_ui_semantics"
+          ],
+          "basis_ref": ".agents/development/evidence/gdpval-220-route-applicability.json#/generation_capability_catalog/spreadsheet_input_controls_and_behavior",
+          "remaining_obligation": "Copied-input recalculation is proved; native control activation, validation/protection enforcement or edit-trigger behavior requires its exact mapped operation.",
+          "capability": "spreadsheet_input_controls_and_behavior"
+        }
+      ],
+      "items": [
+        {
+          "criterion_id": "d9634635-73eb-4b84-8439-5db3566a6468",
+          "original_item_sha256": "3f4f78a432894f9e3bfbe598ad776934aa4ac770bf839282c5c7508fcb7a913a",
+          "operations": [
+            "existing_dropdown_selection"
+          ],
+          "current_route_status": "infrastructure_pending"
+        },
+        {
+          "criterion_id": "07188e94-9232-45eb-8bed-45e7a86f8fed",
+          "original_item_sha256": "387dd3d19bdbedadf43c8ffd071648c12e297aaccc3a484072baaf6d4f534290",
+          "operations": [
+            "existing_dropdown_selection"
+          ],
+          "current_route_status": "infrastructure_pending"
+        },
+        {
+          "criterion_id": "9cfd959d-585d-4a36-abb3-a18bc10dd1dc",
+          "original_item_sha256": "a307dc9247ac8a136374bfa98f655674951f75287a310ed98c144d97efda7db7",
+          "operations": [
+            "existing_dropdown_selection"
+          ],
+          "current_route_status": "infrastructure_pending"
+        },
+        {
+          "criterion_id": "5f088088-1de1-4617-9442-27161f7965ec",
+          "original_item_sha256": "5af6fd91a2f3039d06dc1d355d58538575536689195f8352b711af3abba479d5",
+          "operations": [
+            "existing_dropdown_selection"
+          ],
+          "current_route_status": "infrastructure_pending"
+        },
+        {
+          "criterion_id": "40127b66-6682-4998-ab07-7b4f816a7a3a",
+          "original_item_sha256": "6800f504747973cf4ec9a4aafde8b4cc2b07bd47a42254a48489faf97efdf3c4",
+          "operations": [
+            "selection_driven_outputs"
+          ],
+          "current_route_status": "shared_route_applicable"
+        },
+        {
+          "criterion_id": "d4e1b8b6-6aed-4801-bd96-0272c2f3a27d",
+          "original_item_sha256": "090d7325351557dd0bc1292816cc729104427eb64f34fba7175a839104023d98",
+          "operations": [
+            "selection_driven_outputs"
+          ],
+          "current_route_status": "shared_route_applicable"
+        },
+        {
+          "criterion_id": "a9909ff4-66eb-4a8a-8418-2d2b59310ce9",
+          "original_item_sha256": "17d643f438df5168efe35e2fdc3232a5720a70260f683b2421468419d8718712",
+          "operations": [
+            "selection_driven_outputs"
+          ],
+          "current_route_status": "shared_route_applicable"
+        },
+        {
+          "criterion_id": "8984c59a-892c-49ea-9c3b-e127052aa979",
+          "original_item_sha256": "6a4eeae9cc0f0da1f09d97ad64050137bdc2b405965b4eb8c552025ea24a27fd",
+          "operations": [
+            "selection_driven_outputs"
+          ],
+          "current_route_status": "shared_route_applicable"
+        },
+        {
+          "criterion_id": "8b483eb5-4b20-4500-8322-0dbc4c31b594",
+          "original_item_sha256": "7c6c635d6b92f38d727b08d4065447d4ca2a36fe94a2eff9c6fee19e8b94c8d4",
+          "operations": [
+            "selection_driven_outputs"
+          ],
+          "current_route_status": "shared_route_applicable"
+        }
+      ]
+    },
+    "b39a5aa7-cd1b-47ad-b249-90afd22f8f21": {
+      "row_sha256": "eb9b5b6f01b7127a1230929b101ee4bfaa3d9b49d06a99b0eef209bbcee9d4e0",
+      "generation_capabilities": [
+        {
+          "status": "partial_shared_route",
+          "route_ids": [
+            "spreadsheet_recalculation",
+            "native_ui_semantics"
+          ],
+          "basis_ref": ".agents/development/evidence/gdpval-220-route-applicability.json#/generation_capability_catalog/spreadsheet_input_controls_and_behavior",
+          "remaining_obligation": "Copied-input recalculation is proved; native control activation, validation/protection enforcement or edit-trigger behavior requires its exact mapped operation.",
+          "capability": "spreadsheet_input_controls_and_behavior"
+        }
+      ],
+      "items": [
+        {
+          "criterion_id": "5357fd32-e705-4912-8004-8e6c0ba70741",
+          "original_item_sha256": "2eb985120b1f36fb9edee672fb8177698a46a82d6393e5af7ac972cd73deff44",
+          "operations": [
+            "ordinary_cell_entry"
+          ],
+          "current_route_status": "infrastructure_pending"
+        },
+        {
+          "criterion_id": "12c467af-29db-473c-b430-a2923c6e1399",
+          "original_item_sha256": "d729d4fb84db7ba58f5fd622d497b6f65b9e9de83b95dc388e6cd39ad83d31f7",
+          "operations": [
+            "input_driven_outputs"
+          ],
+          "current_route_status": "shared_route_applicable"
+        },
+        {
+          "criterion_id": "f84d2e84-50ec-479f-8bda-bcc511769260",
+          "original_item_sha256": "df5a5cc33466d3d2e12f48681dc8e548d61689f92f4a294ce8c272b192f70317",
+          "operations": [
+            "existing_model_row_extension"
+          ],
+          "current_route_status": "shared_route_applicable"
+        }
+      ]
+    },
+    "4520f882-715a-482d-8e87-1cb3cbdfe975": {
+      "row_sha256": "16b9cb0e0326b0f3d086378618869c17871df787ce37dc6e0e4f2345925a8fa5",
+      "generation_capabilities": [
+        {
+          "status": "partial_shared_route",
+          "route_ids": [
+            "spreadsheet_recalculation",
+            "native_ui_semantics"
+          ],
+          "basis_ref": ".agents/development/evidence/gdpval-220-route-applicability.json#/generation_capability_catalog/spreadsheet_input_controls_and_behavior",
+          "remaining_obligation": "Copied-input recalculation is proved; native control activation, validation/protection enforcement or edit-trigger behavior requires its exact mapped operation.",
+          "capability": "spreadsheet_input_controls_and_behavior"
+        }
+      ],
+      "items": [
+        {
+          "criterion_id": "ab955e98-3f04-47cb-8557-0a787d6366bd",
+          "original_item_sha256": "9074c9d3b55e49fc66fa4969fe45c4a7d7010104c4277a757244b760dfb48b20",
+          "operations": [
+            "ordinary_cell_entry"
+          ],
+          "current_route_status": "shared_route_applicable"
+        },
+        {
+          "criterion_id": "cae1f315-7926-4e5a-8430-df0acf6e181f",
+          "original_item_sha256": "a178eee7e01ef0dec0ac8fc24c2b6f2867ef029dfc4b77c037a95ab975dc9532",
+          "operations": [
+            "ordinary_cell_entry"
+          ],
+          "current_route_status": "shared_route_applicable"
+        },
+        {
+          "criterion_id": "0a429234-8c90-4e36-a465-316be176e938",
+          "original_item_sha256": "4b831e5dcda0ddad014c569e633f80466229c05576ebd4984cce53edd9abacb9",
+          "operations": [
+            "ordinary_cell_entry"
+          ],
+          "current_route_status": "shared_route_applicable"
+        },
+        {
+          "criterion_id": "1c8bd84a-5a40-4ec8-a306-a27caa23d48a",
+          "original_item_sha256": "5c67c5471b5a8e2a136143cc3ba5315853d7e5a8da4cedd0ac3a618843ffe88d",
+          "operations": [
+            "ordinary_cell_entry"
+          ],
+          "current_route_status": "shared_route_applicable"
+        },
+        {
+          "criterion_id": "af81dc28-4367-4f1f-bbf2-bf69b83103f1",
+          "original_item_sha256": "20c3720568b0cbec6c7dd0b6cfab0d588ba6197a2f4a98f9f4db2ff368fb2329",
+          "operations": [
+            "ordinary_cell_entry"
+          ],
+          "current_route_status": "shared_route_applicable"
+        },
+        {
+          "criterion_id": "7d7cccb8-a092-46ba-9e0c-0c14bd8e858e",
+          "original_item_sha256": "85e2bf0a3dd29ea7992e8ead62e9a06ed7c6ed5976dd6e97891cb329b184d251",
+          "operations": [
+            "ordinary_cell_entry"
+          ],
+          "current_route_status": "shared_route_applicable"
+        },
+        {
+          "criterion_id": "34c9b9d7-c452-4087-b551-d2bfacd5c02a",
+          "original_item_sha256": "a5cd48ed19224f3e02c97598b79c3a7bb3fd03c24e262ecf0c13e11f15f22f0f",
+          "operations": [
+            "ordinary_cell_entry"
+          ],
+          "current_route_status": "shared_route_applicable"
+        },
+        {
+          "criterion_id": "68aa9a6b-27c3-4132-8b5d-29eeb5ea0bf1",
+          "original_item_sha256": "e3132edc84a202848ea36701b5d76fe4b59a9a4fb5009cc49c105149f2566caf",
+          "operations": [
+            "ordinary_cell_entry"
+          ],
+          "current_route_status": "shared_route_applicable"
+        },
+        {
+          "criterion_id": "6b856f0e-4364-4924-94a6-218ac6a8ee77",
+          "original_item_sha256": "7b42d408ecee05ffa5687e9e750b9a5eeaec1422fb464c71b647ecc3abba2b96",
+          "operations": [
+            "ordinary_cell_entry"
+          ],
+          "current_route_status": "shared_route_applicable"
+        },
+        {
+          "criterion_id": "2858187c-aef7-46aa-8db7-3728276b345a",
+          "original_item_sha256": "c52cef2acaed86dc36cf0a2bf8798f7a7ebb91c2d9054488603cbc416e74c99e",
+          "operations": [
+            "ordinary_cell_entry"
+          ],
+          "current_route_status": "shared_route_applicable"
+        },
+        {
+          "criterion_id": "95f75f3e-c002-459b-bb0a-9a51ca8cdf4d",
+          "original_item_sha256": "ad0e8068c37549c0726d0bdbf5231be314b1f3593a50a64da37f7adbbbe82e96",
+          "operations": [
+            "ordinary_cell_entry"
+          ],
+          "current_route_status": "shared_route_applicable"
+        },
+        {
+          "criterion_id": "30b0af70-5eb2-4c61-a08b-29ee8ded31c7",
+          "original_item_sha256": "fafe6e71e81b75700dd337c1e97d9aee7d14acb7a5478218ac3d84f26ec4d11d",
+          "operations": [
+            "ordinary_cell_entry"
+          ],
+          "current_route_status": "shared_route_applicable"
+        },
+        {
+          "criterion_id": "910fbacf-c57e-46bb-aa3a-7695758f10e9",
+          "original_item_sha256": "7af0dfe8a0e6d096376b419da5353250318aac21d32e2abef0e5b72ef783cef3",
+          "operations": [
+            "ordinary_cell_entry"
+          ],
+          "current_route_status": "shared_route_applicable"
+        },
+        {
+          "criterion_id": "60eb745f-5863-4864-bf52-cdf0878e0898",
+          "original_item_sha256": "da7628d37cbfdce358335d9283860469958934fc0bd81b27bff5bebbe65df08a",
+          "operations": [
+            "ordinary_cell_entry"
+          ],
+          "current_route_status": "shared_route_applicable"
+        },
+        {
+          "criterion_id": "a0b94636-c402-4b60-af0b-833426eaadff",
+          "original_item_sha256": "49d5a5f7fffdbee731b5d3b431987a2c7e76fff822c39606ec179568003a3147",
+          "operations": [
+            "ordinary_cell_entry"
+          ],
+          "current_route_status": "shared_route_applicable"
+        },
+        {
+          "criterion_id": "b94407a2-348b-4891-bd00-1270235f2de5",
+          "original_item_sha256": "20d8d5f7d2aa691b6809da2b61dd2f42e26c5ab812a0fe1c07aa993bca2cd6b3",
+          "operations": [
+            "ordinary_cell_entry"
+          ],
+          "current_route_status": "shared_route_applicable"
+        },
+        {
+          "criterion_id": "419d411b-1760-4c1c-bd56-c65b930f50f9",
+          "original_item_sha256": "0dfe1670385db258095be4b2fc616782a64a28749dc214554d14f2f37b10a0fd",
+          "operations": [
+            "ordinary_cell_entry"
+          ],
+          "current_route_status": "shared_route_applicable"
+        },
+        {
+          "criterion_id": "fb710498-a8da-4df0-9210-489e6442426b",
+          "original_item_sha256": "e80a5012d5c52378bad8fb82531765b9fed80892c9ae4f286fe2ba20b631cc42",
+          "operations": [
+            "ordinary_cell_entry"
+          ],
+          "current_route_status": "shared_route_applicable"
+        },
+        {
+          "criterion_id": "b9d4b2bc-f6d6-412d-84de-0aa845059000",
+          "original_item_sha256": "8ede76c97c23baa5d401ffe52d7fcf30f1c2342674dad0f75acf370b61f1256b",
+          "operations": [
+            "invalid_list_entry_rejection"
+          ],
+          "current_route_status": "shared_route_applicable"
+        },
+        {
+          "criterion_id": "c9c8012e-d940-453b-8631-619186d78e4e",
+          "original_item_sha256": "98bd28409a909d8da9127681a2e42ec0cc21ce73ef7579ba02fad2c525b0603d",
+          "operations": [
+            "input_driven_outputs"
+          ],
+          "current_route_status": "shared_route_applicable"
+        },
+        {
+          "criterion_id": "2d847623-3ca3-48ec-964a-75acb656a317",
+          "original_item_sha256": "55ac83e163d98c57dc0633d8563b4aaed511245e37e2f34d2a7177f4be897027",
+          "operations": [
+            "input_driven_outputs"
+          ],
+          "current_route_status": "shared_route_applicable"
+        },
+        {
+          "criterion_id": "df4bc261-9453-409f-96b9-836c2390c34d",
+          "original_item_sha256": "31ad411c528f7a838147955f275e1f7ecb3386067450139eb07a4182f3b7e982",
+          "operations": [
+            "input_driven_outputs"
+          ],
+          "current_route_status": "shared_route_applicable"
+        },
+        {
+          "criterion_id": "c9ab9af8-d069-45fd-ac2c-cadacfc59fd3",
+          "original_item_sha256": "1041faf1f59d2ab0211d5107ca351e2479494a8ad6cd2bddafb954a8b423d0e0",
+          "operations": [
+            "input_driven_outputs"
+          ],
+          "current_route_status": "shared_route_applicable"
+        },
+        {
+          "criterion_id": "70409557-fe2d-4c62-a9bd-5b02deb59156",
+          "original_item_sha256": "4d18dbd21c2a4c7702c42c0570638b176d44892396cedb9541c9d27f4d695e64",
+          "operations": [
+            "input_driven_outputs"
+          ],
+          "current_route_status": "shared_route_applicable"
+        }
+      ]
+    },
+    "bf68f2ad-eac5-490a-adec-d847eb45bd6f": {
+      "row_sha256": "bfd130e3b8888fda48c6cdebbb06d280f97b2525e40ac726309ff4edb55a246f",
+      "generation_capabilities": [
+        {
+          "status": "partial_shared_route",
+          "route_ids": [
+            "spreadsheet_recalculation",
+            "native_ui_semantics"
+          ],
+          "basis_ref": ".agents/development/evidence/gdpval-220-route-applicability.json#/generation_capability_catalog/spreadsheet_input_controls_and_behavior",
+          "remaining_obligation": "Copied-input recalculation is proved; native control activation, validation/protection enforcement or edit-trigger behavior requires its exact mapped operation.",
+          "capability": "spreadsheet_input_controls_and_behavior"
+        }
+      ],
+      "items": [
+        {
+          "criterion_id": "9b1d5de7-3a71-4962-8c5a-0315b5fa1ca0",
+          "original_item_sha256": "c90260347a5e09b8f704dcab16aaded011c85e42efbeff5fdfe5d584ba4a1240",
+          "operations": [
+            "invalid_list_entry_rejection"
+          ],
+          "current_route_status": "shared_route_applicable"
+        },
+        {
+          "criterion_id": "13d57e2e-3a35-4674-9194-4b032bd42660",
+          "original_item_sha256": "2e4ebe2b6a9147015ac26a1bd2da5a9d9d35c6dd280409e21bfcf059bfa2dfb7",
+          "operations": [
+            "invalid_list_entry_rejection"
+          ],
+          "current_route_status": "infrastructure_pending"
+        }
+      ]
+    },
+    "9e39df84-ac57-4c9b-a2e3-12b8abf2c797": {
+      "row_sha256": "ca1dd9c6562318bd07fc6b394ab6ce3625aac138ca23c1d745028b29a75cdb84",
+      "generation_capabilities": [
+        {
+          "status": "partial_shared_route",
+          "route_ids": [
+            "spreadsheet_recalculation",
+            "native_ui_semantics"
+          ],
+          "basis_ref": ".agents/development/evidence/gdpval-220-route-applicability.json#/generation_capability_catalog/spreadsheet_input_controls_and_behavior",
+          "remaining_obligation": "Copied-input recalculation is proved; native control activation, validation/protection enforcement or edit-trigger behavior requires its exact mapped operation.",
+          "capability": "spreadsheet_input_controls_and_behavior"
+        },
+        {
+          "status": "partial_shared_route",
+          "route_ids": [
+            "pivot_package_objects",
+            "spreadsheet_recalculation",
+            "native_ui_semantics"
+          ],
+          "basis_ref": ".agents/development/evidence/gdpval-220-route-applicability.json#/generation_capability_catalog/pivot_source_binding_and_refresh",
+          "remaining_obligation": "Genuine pivot/cache object authoring and compatible recalculation are proved; native refresh/filter behavior remains unverified.",
+          "capability": "pivot_source_binding_and_refresh"
+        }
+      ],
+      "items": [
+        {
+          "criterion_id": "95e4be82-2487-474e-b51a-a5ed3bbdebf7",
+          "original_item_sha256": "69ee6c62f5bc768a5283765a03ae9473e62cdee272c30f62855a6b5b7359178c",
+          "operations": [
+            "existing_week_control_and_output_filter"
+          ],
+          "current_route_status": "infrastructure_pending"
+        },
+        {
+          "criterion_id": "2a682572-ceef-4b12-bd20-603cbeb1aec1",
+          "original_item_sha256": "52d6ed34bdbfb7a13d48998b2822379da770854f2f1b637bbf41f91335d8f48a",
+          "operations": [
+            "existing_week_control_and_output_filter"
+          ],
+          "current_route_status": "infrastructure_pending"
+        },
+        {
+          "criterion_id": "3293cf5b-3041-455c-98ca-300a6c5e2e68",
+          "original_item_sha256": "97a5a8ab1d7fcb7c55422698e08163346c769ad2fc52411be697db6881da56d2",
+          "operations": [
+            "existing_pivot_objects_and_source_aggregation"
+          ],
+          "current_route_status": "partial_shared_route"
+        },
+        {
+          "criterion_id": "67856dee-3cf4-4e2e-a023-683ec7a0edc4",
+          "original_item_sha256": "6361a3a31d7f3bded461146fe081c45c45e1da5789da274578dc794f22bd74b4",
+          "operations": [
+            "existing_pivot_objects_and_source_aggregation"
+          ],
+          "current_route_status": "partial_shared_route"
+        },
+        {
+          "criterion_id": "feed5a55-59e7-43dc-9cfc-d5be53a04780",
+          "original_item_sha256": "ddd1aa6863999a6622d6e8b681ec24b8d3a1766d1b8ba522caa377cb6ac44af2",
+          "operations": [
+            "existing_pivot_objects_and_source_aggregation"
+          ],
+          "current_route_status": "partial_shared_route"
+        },
+        {
+          "criterion_id": "7a04bbe7-cc07-49ee-bc67-c972635649c0",
+          "original_item_sha256": "8c1faca99d130820d170f6f8dad19173e6394baa2f186fab31e08fb7de842af7",
+          "operations": [
+            "existing_pivot_objects_and_source_aggregation"
+          ],
+          "current_route_status": "partial_shared_route"
+        },
+        {
+          "criterion_id": "a7c98919-f78d-497b-a82e-0b619385ba87",
+          "original_item_sha256": "090c6fd387efc342434e036a6ddcb5a1bb50f00c999aec54e15354efba885335",
+          "operations": [
+            "existing_chart_update_linkage"
+          ],
+          "current_route_status": "partial_shared_route"
+        }
+      ]
+    },
+    "1752cb53-5983-46b6-92ee-58ac85a11283": {
+      "row_sha256": "15b9c24b6b56ea7ebbcb5daaeda8782edab69cfba0c6af373508292dc6c87b89",
+      "generation_capabilities": [
+        {
+          "status": "partial_shared_route",
+          "route_ids": [
+            "spreadsheet_recalculation",
+            "native_ui_semantics"
+          ],
+          "basis_ref": ".agents/development/evidence/gdpval-220-route-applicability.json#/generation_capability_catalog/spreadsheet_input_controls_and_behavior",
+          "remaining_obligation": "Copied-input recalculation is proved; native control activation, validation/protection enforcement or edit-trigger behavior requires its exact mapped operation.",
+          "capability": "spreadsheet_input_controls_and_behavior"
+        }
+      ],
+      "items": [
+        {
+          "criterion_id": "978aa808-896e-4f60-b1fe-5e813772151f",
+          "original_item_sha256": "4ccbf3605736856b2fceb6a16001f7b7ce49790f7358a43a3240c3abeac0f0d4",
+          "operations": [
+            "provided_template_input_only_edit"
+          ],
+          "current_route_status": "shared_route_applicable"
+        },
+        {
+          "criterion_id": "dca62e00-b260-47f0-a931-25cc3b2090e8",
+          "original_item_sha256": "dd23aee3c474e4d0acb1d536432ee60682adb35dea98274c8df068351f97d4cb",
+          "operations": [
+            "invalid_list_entry_rejection"
+          ],
+          "current_route_status": "infrastructure_pending"
+        },
+        {
+          "criterion_id": "0712e5b4-1c08-46df-9054-62a621775624",
+          "original_item_sha256": "6a1ec5f3a80f3c2b71c3c922809eb1864ab611d86a5d4f651069f8582e22b670",
+          "operations": [
+            "invalid_list_entry_rejection"
+          ],
+          "current_route_status": "infrastructure_pending"
+        },
+        {
+          "criterion_id": "0393a197-1359-415a-8278-b520ba903504",
+          "original_item_sha256": "e6671ff3feedfc19802fddc5324a144b8016c1fe6422adc1f04ca2b9d3ed29a5",
+          "operations": [
+            "existing_validation_list_definition"
+          ],
+          "current_route_status": "shared_route_applicable"
+        }
+      ]
+    },
+    "0fad6023-767b-42c1-a1b3-027cd4f583cb": {
+      "row_sha256": "04b1cb058e7a495a68cae84e517718a9d55d60c0284028211a3595e0b7b83198",
+      "generation_capabilities": [
+        {
+          "status": "partial_shared_route",
+          "route_ids": [
+            "spreadsheet_recalculation",
+            "native_ui_semantics"
+          ],
+          "basis_ref": ".agents/development/evidence/gdpval-220-route-applicability.json#/generation_capability_catalog/spreadsheet_input_controls_and_behavior",
+          "remaining_obligation": "Copied-input recalculation is proved; native control activation, validation/protection enforcement or edit-trigger behavior requires its exact mapped operation.",
+          "capability": "spreadsheet_input_controls_and_behavior"
+        }
+      ],
+      "items": [
+        {
+          "criterion_id": "16e8233c-3d6a-4981-bd52-7e7151b7023e",
+          "original_item_sha256": "814f94b4b3a659545cbb1af2ed3416ce64f403b3f7eccd864c092b09d0c9a6e3",
+          "operations": [
+            "ordinary_cell_entry"
+          ],
+          "current_route_status": "infrastructure_pending"
+        },
+        {
+          "criterion_id": "87d6b1e2-b3b9-4120-b4c4-6c01417b85bd",
+          "original_item_sha256": "d54ec06e3cc6293b1c4f4982b2c8fa4df6ee8236ca504c540515cadcdc61e44b",
+          "operations": [
+            "ordinary_cell_entry"
+          ],
+          "current_route_status": "infrastructure_pending"
+        },
+        {
+          "criterion_id": "1dd54b19-02a6-495c-be89-91a7d6ff8ebc",
+          "original_item_sha256": "3f5eb6a431730fe06cb8bf89304b01180758ad2a9d52756921a67d5c8f1fcd7b",
+          "operations": [
+            "automatic_input_triggered_calculation"
+          ],
+          "current_route_status": "infrastructure_pending"
+        },
+        {
+          "criterion_id": "cb37fa66-7cc8-4fb5-9cd5-1be7cf0e276c",
+          "original_item_sha256": "6bb7aad93248380d23605452ba89ae45f70dad2612b58ee89cacdea8fa7d5409",
+          "operations": [
+            "invalid_numeric_entry_rejection"
+          ],
+          "current_route_status": "infrastructure_pending"
+        },
+        {
+          "criterion_id": "fba1feab-b6c2-4888-b335-c4c8714dc172",
+          "original_item_sha256": "ea6c1e04482b34c6c1a35897ec9321d4ba1d78debd463e9d424d06176bd427cb",
+          "operations": [
+            "protection_enforcement_and_editable_inputs"
+          ],
+          "current_route_status": "infrastructure_pending"
+        }
+      ]
+    },
+    "a0552909-bc66-4a3a-8970-ee0d17b49718": {
+      "row_sha256": "a7e0be7c588a2cc88f246a5c081fa287f283d7dafbd514cf75528020c5f3d07c",
+      "generation_capabilities": [
+        {
+          "status": "partial_shared_route",
+          "route_ids": [
+            "spreadsheet_recalculation",
+            "native_ui_semantics"
+          ],
+          "basis_ref": ".agents/development/evidence/gdpval-220-route-applicability.json#/generation_capability_catalog/spreadsheet_input_controls_and_behavior",
+          "remaining_obligation": "Copied-input recalculation is proved; native control activation, validation/protection enforcement or edit-trigger behavior requires its exact mapped operation.",
+          "capability": "spreadsheet_input_controls_and_behavior"
+        }
+      ],
+      "items": [
+        {
+          "criterion_id": "e1f0848c-6cb3-4d23-8324-cebd626b08a7",
+          "original_item_sha256": "91b6b92105e65d23b650efd520a5268976d5933f8e764e448b3e59dcc4006da6",
+          "operations": [
+            "existing_dropdown_selection"
+          ],
+          "current_route_status": "infrastructure_pending"
+        },
+        {
+          "criterion_id": "2170d243-936d-40c0-9d89-c7e99b54e39e",
+          "original_item_sha256": "d4c318989bc71546aa0bbaef0adf9e56c27fe8dc0838f9528f0b555002548262",
+          "operations": [
+            "existing_dropdown_selection"
+          ],
+          "current_route_status": "infrastructure_pending"
+        },
+        {
+          "criterion_id": "66f16260-a385-4d12-9cb4-78f7d723883d",
+          "original_item_sha256": "685d723484679a9e76a48347e7c7481aff0f5baf57b21e044bba2cd0b5b5e165",
+          "operations": [
+            "existing_dropdown_selection"
+          ],
+          "current_route_status": "infrastructure_pending"
+        }
+      ]
+    },
+    "b5d2e6f1-62a2-433a-bcdd-95b260cdd860": {
+      "row_sha256": "1d0ab831ede0cc43232b56fefc9bfcc44aafb09125c8fea210eea844ce9df22c",
+      "generation_capabilities": [
+        {
+          "status": "partial_shared_route",
+          "route_ids": [
+            "pivot_package_objects",
+            "spreadsheet_recalculation",
+            "native_ui_semantics"
+          ],
+          "basis_ref": ".agents/development/evidence/gdpval-220-route-applicability.json#/generation_capability_catalog/pivot_source_binding_and_refresh",
+          "remaining_obligation": "Genuine pivot/cache object authoring and compatible recalculation are proved; native refresh/filter behavior remains unverified.",
+          "capability": "pivot_source_binding_and_refresh"
+        }
+      ],
+      "items": [
+        {
+          "criterion_id": "9890a9ff-5bb3-4998-9e3d-b561d630a95f",
+          "original_item_sha256": "ded215257d22753660927bcc1c476d42dc344eb0dfd17587eee7df735221f946",
+          "operations": [
+            "existing_native_pivot_object_and_source_binding"
+          ],
+          "current_route_status": "partial_shared_route"
+        }
+      ]
+    },
+    "f841ddcf-2a28-4f6d-bac3-61b607219d3e": {
+      "row_sha256": "3e04ebc18c209ec53b6d6ac99a4ba3655eb24a293628d7d994451df4dbb92b8d",
+      "generation_capabilities": [
+        {
+          "status": "partial_shared_route",
+          "route_ids": [
+            "spreadsheet_recalculation",
+            "native_ui_semantics"
+          ],
+          "basis_ref": ".agents/development/evidence/gdpval-220-route-applicability.json#/generation_capability_catalog/spreadsheet_input_controls_and_behavior",
+          "remaining_obligation": "Copied-input recalculation is proved; native control activation, validation/protection enforcement or edit-trigger behavior requires its exact mapped operation.",
+          "capability": "spreadsheet_input_controls_and_behavior"
+        }
+      ],
+      "items": [
+        {
+          "criterion_id": "84489c3d-d042-44ec-ba44-206430d7c6cd",
+          "original_item_sha256": "ec82e7332a1519f8f7e1566dae7d8d3ca3c8da10c08a2fd49e04bcea099f6ee8",
+          "operations": [
+            "existing_filter_apply"
+          ],
+          "current_route_status": "shared_route_applicable"
+        },
+        {
+          "criterion_id": "f362d348-db90-47b4-ae1c-54f5e1d0e7b4",
+          "original_item_sha256": "bd0cb2608347ce640c485a2f06fd38132676db89e05bcfd65f20d2b1fe178f9f",
+          "operations": [
+            "existing_filter_apply"
+          ],
+          "current_route_status": "shared_route_applicable"
+        }
+      ]
+    },
+    "02aa1805-c658-4069-8a6a-02dec146063a": {
+      "row_sha256": "45cdcb80d5243fe3589e3c60648c40e07cf6b2fc426f5efd3c2599decfbffa6d",
+      "generation_capabilities": [
+        {
+          "status": "partial_shared_route",
+          "route_ids": [
+            "spreadsheet_recalculation",
+            "native_ui_semantics"
+          ],
+          "basis_ref": ".agents/development/evidence/gdpval-220-route-applicability.json#/generation_capability_catalog/spreadsheet_input_controls_and_behavior",
+          "remaining_obligation": "Copied-input recalculation is proved; native control activation, validation/protection enforcement or edit-trigger behavior requires its exact mapped operation.",
+          "capability": "spreadsheet_input_controls_and_behavior"
+        }
+      ],
+      "items": [
+        {
+          "criterion_id": "d92ca9ef-423a-4018-bd69-3e7742159696",
+          "original_item_sha256": "bdf9aa7fbb374056752159cc2bb7b45bac8f9c1ea04c9cdb61fd3d810db9c043",
+          "operations": [
+            "existing_filter_apply"
+          ],
+          "current_route_status": "infrastructure_pending"
+        },
+        {
+          "criterion_id": "7768e1e6-904d-4c0d-99db-a803400def39",
+          "original_item_sha256": "211232dae63769f189d58ba1e5d870123ba697d5ad237df2125d536012bf1cdd",
+          "operations": [
+            "existing_filter_apply"
+          ],
+          "current_route_status": "infrastructure_pending"
+        },
+        {
+          "criterion_id": "4a7c34de-3911-418f-b1c2-e939fb8e157f",
+          "original_item_sha256": "5cbc7ae7ed404bce63405cbca94e5632082b7f5c17acfc8c767dc3f92d7dc550",
+          "operations": [
+            "existing_filter_apply"
+          ],
+          "current_route_status": "infrastructure_pending"
+        },
+        {
+          "criterion_id": "c9de05be-ccdf-4ec1-8d73-b01605388446",
+          "original_item_sha256": "c3ba49379f07d9b043952421c724151202b829dbcc76d5de1edba78d524f1805",
+          "operations": [
+            "existing_filter_apply"
+          ],
+          "current_route_status": "shared_route_applicable"
+        }
+      ]
+    },
+    "a99d85fc-eff8-48d2-a7d4-42a75d62f18d": {
+      "row_sha256": "d506f4e1848c82e9eb2cc0608949f8e1997953e2fe0e7bedbbdcae3fd6f031e5",
+      "generation_capabilities": [
+        {
+          "status": "partial_shared_route",
+          "route_ids": [
+            "spreadsheet_recalculation",
+            "native_ui_semantics"
+          ],
+          "basis_ref": ".agents/development/evidence/gdpval-220-route-applicability.json#/generation_capability_catalog/spreadsheet_input_controls_and_behavior",
+          "remaining_obligation": "Copied-input recalculation is proved; native control activation, validation/protection enforcement or edit-trigger behavior requires its exact mapped operation.",
+          "capability": "spreadsheet_input_controls_and_behavior"
+        }
+      ],
+      "items": [
+        {
+          "criterion_id": "947ba0c9-3b0c-41bd-b170-9463a00b8af5",
+          "original_item_sha256": "cc72c4bc052a9774065e253c0027cb8cf695eacc00f3fb2014b142ec5abeee84",
+          "operations": [
+            "ordinary_cell_entry"
+          ],
+          "current_route_status": "infrastructure_pending"
+        },
+        {
+          "criterion_id": "803ac5de-b31a-4bbd-8cb3-2e6121315251",
+          "original_item_sha256": "0b913cd984c00ed2a8341f2ef51b579421b15f4321a6ac4e66d7e12cd0b04167",
+          "operations": [
+            "ordinary_cell_entry"
+          ],
+          "current_route_status": "infrastructure_pending"
+        },
+        {
+          "criterion_id": "97555e3d-d092-4674-aff0-b335b62758e6",
+          "original_item_sha256": "892e5003e7d8834cab5bfee688be23bdd617fd86281976b04e4ea84b1a73f418",
+          "operations": [
+            "ordinary_cell_entry"
+          ],
+          "current_route_status": "shared_route_applicable"
+        }
+      ]
+    }
+  },
+  "impact": "All220 tasks remain in scope.191 common-route/29 gap counts unchanged. Eleven input-control capability gaps include generation, not only evaluation. No new accepted route from these probes."
+}

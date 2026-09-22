@@ -1,0 +1,68 @@
+{
+  "schema_version": 1,
+  "record_type": "pilot_failure_classification_and_continuation",
+  "frozen_runtime": "e1d5cf0914157366848278ba02de4578e122c3dd",
+  "manifest_sha256": "cc342d7d4cf915a6c3880938bd9b84278bca376c74f1d7a3d88bb1d534bb8929",
+  "creation_S": {
+    "status": "exception",
+    "model_calls": 1,
+    "model_seconds": 371.46255970798666,
+    "lifecycle_seconds": 404.4071730829892,
+    "usage": {
+      "input_tokens": 18,
+      "output_tokens": 20696,
+      "cached_input_tokens": 220056,
+      "cache_creation_input_tokens": 50245,
+      "reasoning_tokens": 3497,
+      "cost_usd": null,
+      "reported_cost_usd": 1.2893104999999998
+    },
+    "observed_terminal_http": 529,
+    "observed_failure": "provider_server_overload",
+    "frozen_model_error": "Synthetic API-error record was mistaken for a model switch. The real modelUsage only lists claude-opus-5.",
+    "frozen_quota_error": "The rateLimitType key on an allowed informational event matched the controller quota regex. No quota error appears in the complete stream.",
+    "draft_files": [
+      "SKILL.md",
+      "references/formats.md"
+    ],
+    "draft_used_as_participant_skill": false,
+    "originals_unchanged": true,
+    "receipt_sha256": "f68412c474b5bdb05cd292315e6e8a69c09c3cb32bb61444a60eadbeb0f68e5a"
+  },
+  "creation_A": {
+    "status": "exception",
+    "model_calls": 0,
+    "lifecycle_seconds": 7.778215124970302,
+    "observed_terminal_http": 529,
+    "observed_failure": "provider_overload_during_model_availability_preflight",
+    "originals_unchanged": true,
+    "receipt_sha256": "a3d77e66d940583e7abd69624b9087fbd81f9affadf82215997719475ec18933"
+  },
+  "controller_correction": {
+    "adjudication_sha256": "176a0252abda298626eb4e182daa42681088dfebbfe24a0edd4fb0d5b5d21745",
+    "controller_sha256": "cfd0c3f2fde848bb169a17649d6891ea5516aa1cdb8a766181d85e66a0171422",
+    "verification_sha256": "410762b80e5d8089c454990ef2f181fe2bfda910c1c7e1c8e5c61df8a93a8dd7",
+    "scope": "Only exact hash-bound creation-S false quota flags. Original failure and consumed slot stay intact; later quota flags, locks, budgets and artifact preservation checks remain active.",
+    "mock_tests_passed": 16,
+    "model_calls_for_correction": 0
+  },
+  "product_correction": {
+    "files": [
+      "harness/src/eval_harness/claude_executor.py",
+      "harness/tests/test_claude_executor.py"
+    ],
+    "behavior": "Keep terminal API error text even if Claude subtype is success. Do not count flagged synthetic API-error diagnostics as model substitution; continue rejecting real model drift. Error terminal is not marked completed.",
+    "targeted_tests_passed": 24,
+    "mypy": "2 changed files pass",
+    "applied_to_frozen_pilot": false
+  },
+  "continuation": {
+    "S_A_applications": "blocked by incomplete required creator slots",
+    "N_applications": "continue in the frozen draw order; judges require completed source execution",
+    "automatic_retries": 0,
+    "replacement_tasks": 0,
+    "resets_or_extra_billing": false,
+    "comparison_complete": false
+  },
+  "local_evidence_root": ".audit/2026-09-22-nsa-pilot"
+}

@@ -1,0 +1,83 @@
+{
+  "schema_version": 1,
+  "kind": "known-probe-findings-and-bounded-correction",
+  "authorized_batch_sessions": 6,
+  "completed_probes": 2,
+  "remaining_evaluation_slots": 4,
+  "owner_authorization": "maximum six sessions explicitly approved; revised evaluator code stays within the same purpose/models/artifacts/billing/limits",
+  "probe_review": {
+    "path": ".audit/2026-09-21-next-acceptance-revised-evaluation/probe-review.json",
+    "sha256": "1d54744a9627e0ba80736ce933a40268ba436bfbb7eada57b50e92b729784117",
+    "content": {
+      "accepted": true,
+      "decision": "proceed_after_recorded_correction",
+      "completed_probes": {
+        "probe-codex": "d5e8c740c0824d15af1384110609c6c3458954e1e5e1f048a6ad7c65a51305b4",
+        "probe-claude-code": "002631a43636e8b9eed51b45236ed8d778d8c46eaec8b6f1e05f05e1c612a7a3"
+      },
+      "scope": "Permission to use the four unused saved-evaluation slots; not acceptance of every probe outcome.",
+      "codex": {
+        "status": "partial",
+        "model_execution_seconds": 345.6078127080109,
+        "full_marker_fields_correct": 7,
+        "full_marker_fields_total": 9,
+        "crop_marker_fields_correct": 3,
+        "crop_marker_fields_total": 3,
+        "real_formula": "5 -> 10",
+        "source_disagreement": "4 vs 3",
+        "audio": "unconfirmed, score null",
+        "problems": [
+          "incorrect shell visual-method references",
+          "non-string derivative location",
+          "unrelated stale workbook declaration invalidated derived-PDF lookup"
+        ]
+      },
+      "claude": {
+        "status": "known_contract_accepted",
+        "model_execution_seconds": 198.83990924997488,
+        "full_marker_fields_correct": 9,
+        "full_marker_fields_total": 9,
+        "crop_marker_fields_correct": 3,
+        "crop_marker_fields_total": 3,
+        "all_six_criterion_states_match": true,
+        "formula_source_derivation_and_order": "controller checked actual bytes, commands and journal"
+      },
+      "diagnosis": {
+        "path": ".audit/2026-09-21-next-acceptance/probe-review-codex/diagnosis.json",
+        "sha256": "ac96809cd2370375c02221983b0a39729da95005330d95b0f0adc52f98211722"
+      },
+      "claude_controller_review": {
+        "path": ".audit/2026-09-21-next-acceptance/claude-probe-controller-review.json",
+        "sha256": "0acedd45d56af48893ca437bad7a81458a2dd4c784c9da520587d6470748d274"
+      },
+      "correction": "Filter unrelated historical declarations before validating lineage of actual viewed bytes; retain all matching guards. Clarify nonempty-string location and actual visual-call references.",
+      "old_records_modified": false,
+      "new_model_sessions_for_review": 0,
+      "why_remaining_evaluations_are_useful": "They test whether the clarified item-level evidence contract works on original saved task artifacts. Neither favorable scores nor perfect participant solutions are a condition. Unsupported native items remain unconfirmed. New invalid/missing evidence is preserved, not auto-retried."
+    }
+  },
+  "correction": {
+    "path": ".audit/2026-09-21-next-acceptance/probe-review-codex/correction-report.json",
+    "sha256": "f76dd514f7de3136d34a3a0449bf1db387d527332aeac1ee3ad89ea37a19ff04",
+    "checks": {
+      "coverage": {
+        "inspection_lineage_percent": 93,
+        "inspection_protocol_percent": 89,
+        "universal_percentage_gate_applied": false
+      },
+      "ruff": "passed",
+      "ruff_format": "passed",
+      "strict_mypy": "passed 4 source files",
+      "targeted_tests": "163 passed"
+    }
+  },
+  "versions": {
+    "probes": "701baddb85dcb7eabd6440be838fd9e7d31f63e53d94caa935fa1cd965021d3e",
+    "remaining_evaluations": "00620ae4f577e98a5c2d0e7d731cf3d84f592be285130b1cecb765a77d935f7c"
+  },
+  "execution_manifest_sha256": "d5746b506bece3916d15e25ba4f2b301f45666afb251ff79185083840a68bf88",
+  "source_originals_changed": false,
+  "old_judgments_changed": false,
+  "participant_regeneration": false,
+  "all220_accepted": false
+}

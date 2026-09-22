@@ -1,0 +1,91 @@
+{
+  "schema_version": 1,
+  "kind": "controller-accepted-known-document-operations",
+  "decision": "Accept only the two known operation workflows and source-bound matching task/item components. No actual task correctness or native Word behavior inferred.",
+  "proof": {
+    "path": ".audit/2026-09-22-document-operations/report.json",
+    "sha256": "43d526dd1ae0b914dbce4ee1240834f528012be0895e4e843427b29da0bc8e6b"
+  },
+  "applicability": {
+    "path": ".audit/2026-09-22-document-operations/applicability.json",
+    "sha256": "7eb9ed1d1fb48f4162983f55d9c05e7393227551bb139ac92f61da95465c7bd2"
+  },
+  "controller_visual_review": {
+    "path": ".audit/2026-09-22-document-operations/controller-visual-review.json",
+    "sha256": "0d45c1cb24a678b1bbe125586f9ac8a0e746585cb27455b17bcc69706ea59677"
+  },
+  "roles": [
+    "application",
+    "evaluation"
+  ],
+  "workflows": {
+    "word": "Embed known PNG in DOCX beside editable body text; save/reopen/edit text and verify embedded byte/pixel identity; evaluator scratch-copy edit leaves submission unchanged; render and visually inspect.",
+    "pdf": "Type field value and generate appearance; preserve blank field; append separate label to original layout; save/reopen canonical/widget values, original streams/font resources, render original/result, and verify pixels outside two declared regions identical."
+  },
+  "elapsed_seconds": 13.229946832929272,
+  "originals_preserved": true,
+  "isolation_preflights": [
+    {
+      "path": ".audit/2026-09-22-document-operations/word/application/preflight.json",
+      "sha256": "a423aa248921cc94385fa8e10ed35c80376eb5222cb3eb07078c5a96286d72b6"
+    },
+    {
+      "path": ".audit/2026-09-22-document-operations/word/evaluation/preflight.json",
+      "sha256": "b6541999f2adae40e9589b249c9dc25b8a087b1e1ab9de1bf890936a8d970bca"
+    },
+    {
+      "path": ".audit/2026-09-22-document-operations/pdf/application/preflight.json",
+      "sha256": "cde0c03acb72d610f742a2a8bca06e8e6f57be0b5943ecf5bc1e6c2c0b041538"
+    },
+    {
+      "path": ".audit/2026-09-22-document-operations/pdf/evaluation/preflight.json",
+      "sha256": "e22c78a3e6538ef5d5ebd0022dab148ef6429f01d873372c4baeb20885c737a8"
+    }
+  ],
+  "model_calls": 0,
+  "network_calls": 0,
+  "new_dependencies": 0,
+  "product_runtime_changed": false,
+  "affected_task_item_components": {
+    "bb499d9c-0263-4684-9238-75e8e86077b1": [
+      "a51ad592-403b-4ea1-bab4-a5efc3d164a7",
+      "f0144687-cc15-459a-b7b5-f37e1ab62382",
+      "ab702091-e54c-4133-b03a-11f795193acf",
+      "61bd6428-ecf6-4da9-9e8d-94c5896f538e",
+      "d956fa03-c9b3-45bd-832b-96380acf48be"
+    ],
+    "43dc9778-450b-4b46-b77e-b6d82b202035": [
+      "8204401e-d008-44ad-b42f-26e3256db111",
+      "18b1321f-4219-4787-af09-d3a58a253893",
+      "88eb649d-7b56-4c5b-b2e7-290407ec5f84",
+      "ff84bde4-fd2e-48c9-85a7-3f800a62fc1f",
+      "3dabec87-1045-44bd-88f0-165d6007e45c",
+      "4d967333-5586-4a24-9f5f-82544a7b7e45"
+    ],
+    "e6429658-4de1-42dd-a9e0-2d2b9b02fb10": [
+      "bea6945d-c3b8-4906-9077-8634005e34bd",
+      "84ab15af-ce70-4ea1-83f0-1f780a736a66",
+      "394b53c7-e71c-4d9d-8cee-e58c5e6e4020",
+      "8986db33-4293-456d-8726-06914496cfcf",
+      "38fc4b36-39b4-47cc-9137-bd030228ac27"
+    ],
+    "58ac1cc5-5754-4580-8c9c-8c67e1a9d619": [
+      "d4982d7e-e6b7-4c3a-bd00-87d7bad911e4"
+    ],
+    "a73fbc98-90d4-4134-a54f-2b1d0c838791": [
+      "445fcf79-f960-4fd4-8b8f-3524c12c3ab5",
+      "dc0af1a8-9eee-4b70-8373-25b61071024b",
+      "42e62760-ee57-4f05-91b1-c5ce313c1cd3",
+      "9147cebc-81fb-4cb7-8950-09bbe3a8e53c"
+    ]
+  },
+  "source_dataset_sha256": "4d58ee30485093010bf8b0a11708f80924831eef2a643db4c2d23b72fd426470",
+  "scope_limits": [
+    "Word source requires visual diagrams and body text; it does not require native editable diagram objects.",
+    "PDF source predicates require digital/static completion or preserving original layout; no retained electronic-interactivity requirement is invented.",
+    "IRS/AbbVie original form acquisition remains a separate pending capability. No tax/medical/GMP/vendor-content correctness, signatures or task success inferred.",
+    "Known fixture compatibility does not establish every document feature or arbitrary form.",
+    "No original task/rubric/weight, old run, output or grading protocol is rewritten."
+  ],
+  "all220_accepted": false
+}

@@ -59,6 +59,67 @@ def test_failed_result_never_becomes_completed() -> None:
     assert result.usage["cost_usd"] is None
 
 
+def test_api_error_with_success_subtype_retains_diagnostic() -> None:
+    result = parse_claude_jsonl(
+        json.dumps(
+            {
+                "type": "result",
+                "subtype": "success",
+                "is_error": True,
+                "api_error_status": 529,
+                "result": "API Error: 529 Overloaded",
+                "usage": {"input_tokens": 18, "output_tokens": 20},
+            }
+        )
+    )
+    assert not result.terminal_completed
+    assert result.errors == ("API Error: 529 Overloaded",)
+    assert result.usage["output_tokens"] == 20
+
+
+@pytest.mark.parametrize(
+    ("diagnostic_model", "api_error_message", "model_drift"),
+    [("<synthetic>", True, False), ("<synthetic>", False, True), ("unexpected-model", True, True)],
+)
+def test_api_diagnostic_does_not_mask_failure_or_real_model_drift(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    diagnostic_model: str,
+    api_error_message: bool,
+    model_drift: bool,
+) -> None:
+    monkeypatch.setattr(ClaudeExecutor, "check_runtime", lambda *args: AuthStatus(True, True, "test preflight"))
+    credentials = tmp_path / "credentials"
+    credentials.mkdir()
+    (credentials / ".credentials.json").write_text('{"claudeAiOauth": {}}')
+    events = [
+        {"type": "system", "subtype": "init", "model": "recorded-model"},
+        {"type": "assistant", "is_api_error_message": api_error_message, "message": {"model": diagnostic_model}},
+        {
+            "type": "result",
+            "subtype": "success",
+            "is_error": True,
+            "result": "API Error: 529 Overloaded",
+            "modelUsage": {"recorded-model": {}},
+        },
+    ]
+    binary = tmp_path / "fake-claude"
+    payload = "\n".join(json.dumps(event) for event in events)
+    binary.write_text(f"#!/usr/bin/env python3\nimport sys\nsys.stdin.read()\nprint({payload!r})\n")
+    binary.chmod(0o700)
+    workspace = tmp_path / "work"
+    workspace.mkdir()
+    result = ClaudeExecutor(str(binary)).execute(
+        ExecutionRequest("task", workspace, "recorded-model", {"auth_source_home": str(credentials)}, "application")
+    )
+    assert result.status == "failed"
+    assert result.error is not None
+    if model_drift:
+        assert "model changed" in result.error
+    else:
+        assert result.error == "API Error: 529 Overloaded"
+
+
 def test_structured_result_replaces_prose_with_canonical_json() -> None:
     result = parse_claude_jsonl(
         "\n".join(

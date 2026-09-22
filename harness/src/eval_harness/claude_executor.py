@@ -68,7 +68,10 @@ def parse_claude_jsonl(stdout: str, *, require_structured_output: bool = False) 
                 structured_output_seen = True
                 structured_output = event.get("structured_output")
             if event.get("is_error") or event.get("subtype") != "success":
-                errors.append(str(event.get("subtype") or "Claude result failed"))
+                # Claude can label a terminal API failure subtype="success".
+                # Preserve the diagnostic instead of reporting "success" as its cause.
+                detail = final or str(event.get("subtype") or "Claude result failed")
+                errors.append(detail)
             measured = event.get("usage") or {}
             for source, target in (
                 ("input_tokens", "input_tokens"),
@@ -96,7 +99,10 @@ def parse_claude_jsonl(stdout: str, *, require_structured_output: bool = False) 
     elif require_structured_output:
         final = ""
         errors.append("Claude structured output was missing")
-    terminal = any(event.get("type") == "result" and event.get("subtype") == "success" for event in events)
+    terminal = any(
+        event.get("type") == "result" and event.get("subtype") == "success" and not event.get("is_error")
+        for event in events
+    )
     return ParsedCodexOutput(tuple(events), tuple(messages), final, usage, tuple(errors), terminal)
 
 
@@ -222,6 +228,12 @@ class ClaudeExecutor:
                     or not message.startswith(expected)
                 ):
                     raise HarnessError(f"Claude {name} unavailable for {model}: {message[:400]}")
+        from .capability_environment import enabled
+
+        if enabled(settings):
+            from .capability_executor import check_capability_runtime
+
+            check_capability_runtime(self, settings, purpose)
         self._checked[key] = monotonic()
         return AuthStatus(True, True, "Claude exact model/effort and subscription-only route verified")
 
@@ -445,6 +457,12 @@ class ClaudeExecutor:
             return AuthStatus(True, False, "Claude subscription login unavailable; run claude auth login")
 
     def execute(self, request: ExecutionRequest) -> ExecutionResult:
+        from .capability_environment import enabled
+
+        if enabled(request.settings):
+            from .capability_executor import execute_with_capabilities
+
+            return execute_with_capabilities(self, request, "claude-code")
         image_inputs = validate_image_inputs(request.images, request.cwd, purpose=request.purpose)
         if not request.model:
             raise HarnessError("an explicit Claude model is required")
@@ -531,7 +549,7 @@ class ClaudeExecutor:
             if receipt is not None:
                 stdout = json.dumps(receipt) + "\n" + stdout
         parsed = parse_claude_jsonl(stdout, require_structured_output=request.response_schema is not None)
-        terminal = any(event.get("type") == "result" and event.get("subtype") == "success" for event in parsed.events)
+        terminal = parsed.terminal_completed
         if parsed.errors:
             error = "; ".join(parsed.errors)
         observed_models = {
@@ -545,6 +563,7 @@ class ClaudeExecutor:
             if event.get("type") == "assistant"
             and isinstance(event.get("message"), dict)
             and event["message"].get("model")
+            and not (event.get("is_api_error_message") is True and event["message"].get("model") == "<synthetic>")
         )
         for event in parsed.events:
             if event.get("type") == "result" and isinstance(event.get("modelUsage"), dict):

@@ -246,6 +246,9 @@ def _record_workspace(
     record["participant_prompt_sha256"] = sha256_bytes(prompt.encode())
     record["skill_files"] = skill_entries
     record["skill_delivery"] = "file_and_prompt" if skill_entries else "none"
+    capability = next((event for event in result.parsed.events if event.get("environment_profile")), None)
+    if capability is not None:
+        record["capability_evidence"] = capability
     return record
 
 

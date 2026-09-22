@@ -27,6 +27,7 @@ from .executor import _stop_process_group
 OFFICE_SUFFIXES = {".docx": "writer_pdf_Export", ".xlsx": "calc_pdf_Export", ".pptx": "impress_pdf_Export"}
 MAX_PAGES = 20
 RENDER_TIMEOUT = 120
+FONT_POLICY = "bundled-libreoffice-v1"
 
 
 @dataclass(frozen=True)
@@ -120,8 +121,8 @@ def sandbox_policy(work: Path, inputs: Path, roots: Sequence[Path]) -> str:
     )
 
 
-def _environment(work: Path, poppler: Path) -> dict[str, str]:
-    return {
+def _environment(work: Path, poppler: Path, office: Path | None = None) -> dict[str, str]:
+    environment = {
         "HOME": str(work / "home"),
         "TMPDIR": str(work / "tmp"),
         "PATH": "/usr/bin:/bin",
@@ -129,9 +130,45 @@ def _environment(work: Path, poppler: Path) -> dict[str, str]:
         "SAL_USE_VCLPLUGIN": "svp",
         "DYLD_FALLBACK_LIBRARY_PATH": str(poppler / "lib"),
     }
+    if office is None:
+        return environment
+    # Relocated Poppler builds may retain a nonexistent compiled-in Fontconfig
+    # prefix. Use only the already fingerprinted Office bundle's fonts, never
+    # ambient user configuration, font directories, or shared writable caches.
+    fonts = office / "Contents/Resources/fonts/truetype"
+    if not fonts.is_dir() or not fonts.resolve().is_relative_to(office.resolve()):
+        raise ArtifactError("rendering requires bundled LibreOffice fonts inside the configured app")
+    if not any(fonts.glob("*.ttf")) and not any(fonts.glob("*.otf")):
+        raise ArtifactError("configured LibreOffice bundle has no usable font files")
+    font_config = ElementTree.Element("fontconfig")
+    ElementTree.SubElement(font_config, "dir").text = str(fonts.resolve())
+    cache = work / "font-cache"
+    cache.mkdir(exist_ok=True)
+    ElementTree.SubElement(font_config, "cachedir").text = str(cache)
+    for family, fallback in (
+        ("Helvetica", "Liberation Sans"),
+        ("Times", "Liberation Serif"),
+        ("Courier", "Liberation Mono"),
+    ):
+        alias = ElementTree.SubElement(font_config, "alias")
+        ElementTree.SubElement(alias, "family").text = family
+        ElementTree.SubElement(ElementTree.SubElement(alias, "prefer"), "family").text = fallback
+    config_path = work / "fonts.conf"
+    ElementTree.ElementTree(font_config).write(config_path, encoding="utf-8", xml_declaration=True)
+    environment["FONTCONFIG_FILE"] = str(config_path)
+    return environment
+
+
+def _font_snapshot(environment: Mapping[str, str]) -> dict[str, str] | None:
+    raw = environment.get("FONTCONFIG_FILE")
+    if raw is None:
+        return None
+    path = Path(raw)
+    return {"policy": FONT_POLICY, "sha256": sha256_file(path), "configuration": path.read_text(encoding="utf-8")}
 
 
 def _run(command: list[str], work: Path, environment: Mapping[str, str], logs: Path, name: str) -> None:
+    font_snapshot = _font_snapshot(environment)
     started = time.monotonic()
     process = subprocess.Popen(
         command,
@@ -160,6 +197,7 @@ def _run(command: list[str], work: Path, environment: Mapping[str, str], logs: P
             "returncode": process.returncode,
             "error": error,
             "elapsed_seconds": time.monotonic() - started,
+            "font_configuration": font_snapshot,
         },
     )
     if error or process.returncode:
@@ -326,7 +364,7 @@ def _render(source: Path, target: Path, config: OfficeRenderingConfig, roots: tu
                 str(work / "output" / "page"),
             ],
             work,
-            environment,
+            _environment(work, roots[1], roots[0]),
             target,
             "pdf-to-png",
         )

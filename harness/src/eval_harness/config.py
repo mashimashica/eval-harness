@@ -17,8 +17,11 @@ from typing import Any, Mapping, Sequence
 
 import yaml
 
+from .capability_environment import enabled as capability_enabled
+from .capability_environment import environment_fingerprint, parse_environment
 from .errors import ConfigError
 from .grading_criteria import load_criteria
+from .inspection_protocol import load_inspection_protocol
 from .models import CLAUDE_EFFORTS, CODEX_EFFORTS, MODEL_EFFORTS
 from .office_rendering import OfficeRenderingConfig, parse_rendering
 
@@ -86,6 +89,8 @@ class EvaluationConfig:
     criteria: dict[str, Any] | None = None
     pairs: tuple[tuple[str, str], ...] | None = None
     office_rendering: OfficeRenderingConfig | None = None
+    inspection_protocol: dict[str, Any] | None = None
+    include_partial_artifacts: bool = False
 
 
 @dataclass(frozen=True)
@@ -170,7 +175,17 @@ def _runtime(
     mapping = _mapping(value, field)
     allowed_fields = {"executor", "model", "settings"}
     if field == "evaluation":
-        allowed_fields.update({"method", "judges", "criteria", "pairs", "office_rendering"})
+        allowed_fields.update(
+            {
+                "method",
+                "judges",
+                "criteria",
+                "pairs",
+                "office_rendering",
+                "inspection_protocol",
+                "include_partial_artifacts",
+            }
+        )
     if field == "build":
         allowed_fields.update({"name", "prompt", "instructions", "inputs", "input_paths", "skills", "creator_skills"})
     unknown_fields = sorted(set(mapping) - allowed_fields)
@@ -208,6 +223,10 @@ def _runtime(
             rating_path = settings.get(path_key)
             if isinstance(rating_path, str) and rating_path.strip():
                 settings[path_key] = str(_resolve_path(base_dir, rating_path, f"{field}.settings.{path_key}"))
+    if "environment" in settings:
+        settings["environment"] = parse_environment(settings["environment"], base_dir or Path.cwd())
+        if "fingerprint" not in settings["environment"]:
+            settings["environment"]["fingerprint"] = environment_fingerprint(settings["environment"])
     assert executor_text is not None
     return RuntimeConfig(executor=executor_text, model=model_text, settings=_copy_mapping(settings))
 
@@ -354,6 +373,9 @@ def _evaluation(raw: Any, config_dir: Path) -> EvaluationConfig | None:
             raise ConfigError("evaluation.pairs must be a list of two distinct condition IDs")
         if "pairs" in runtime.settings:
             raise ConfigError("specify evaluation.pairs or legacy settings.pairs, not both")
+    include_partial = mapping.get("include_partial_artifacts", False)
+    if not isinstance(include_partial, bool):
+        raise ConfigError("evaluation.include_partial_artifacts must be boolean")
     return EvaluationConfig(
         method,
         runtime,
@@ -361,6 +383,8 @@ def _evaluation(raw: Any, config_dir: Path) -> EvaluationConfig | None:
         criteria,
         tuple(tuple(p) for p in pairs) if pairs is not None else None,
         parse_rendering(mapping.get("office_rendering"), config_dir),
+        load_inspection_protocol(mapping.get("inspection_protocol"), config_dir, criteria),
+        include_partial,
     )
 
 
@@ -461,6 +485,7 @@ def _validate_runtime(
         "reasoning_effort",
         "auth_source_home",
         "toolchain_read_paths",
+        "environment",
     } | extra_settings
     if runtime.executor == "claude-code":
         allowed_settings.add("max_turns")
@@ -473,6 +498,13 @@ def _validate_runtime(
             errors.append(f"{field}.settings.{key} must not contain credentials")
         if normalized in {"openai_base_url", "anthropic_base_url", "base_url"}:
             errors.append(f"{field}.settings.{key} is unsupported; API endpoint routing is not allowed")
+    if "environment" in runtime.settings:
+        try:
+            parse_environment(runtime.settings["environment"], Path.cwd())
+        except ConfigError as exc:
+            errors.append(str(exc))
+        if "tool_mode" in runtime.settings:
+            errors.append("environment and legacy tool_mode cannot be combined")
     timeout = runtime.settings.get("timeout_seconds", 600)
     if (
         isinstance(timeout, bool)
@@ -532,6 +564,37 @@ def validate_evaluation_config(config: EvaluationConfig) -> list[str]:
     """Return all actionable errors for an evaluation configuration."""
 
     panel_errors: list[str] = []
+    if not isinstance(config.include_partial_artifacts, bool):
+        panel_errors.append("evaluation.include_partial_artifacts must be boolean")
+    if config.include_partial_artifacts and config.method != "scalar":
+        panel_errors.append("include_partial_artifacts is currently supported only for scalar AI grading")
+    if config.inspection_protocol is not None:
+        try:
+            load_inspection_protocol(config.inspection_protocol, Path.cwd(), config.criteria)
+        except ConfigError as exc:
+            panel_errors.append(str(exc))
+        if config.method not in {"scalar", "pairwise"}:
+            panel_errors.append("inspection_protocol is supported only for scalar or pairwise AI grading")
+        if any(
+            not capability_enabled(runtime.settings)
+            for runtime in ([judge.runtime for judge in config.judges] or [config.runtime])
+        ):
+            panel_errors.append("inspection_protocol requires a capability environment for every judge")
+    capability_runtimes = [j.runtime for j in config.judges if capability_enabled(j.runtime.settings)]
+    if not config.judges and capability_enabled(config.runtime.settings):
+        capability_runtimes = [config.runtime]
+    if capability_runtimes:
+        if config.criteria is None:
+            panel_errors.append("gdpval-v1 evaluation requires explicit frozen criteria and unconfirmed-item handling")
+        if config.office_rendering is not None:
+            panel_errors.append(
+                "gdpval-v1 uses environment.office_rendering; do not combine legacy initial-image rendering"
+            )
+        native = [r.settings["environment"].get("office_rendering") for r in capability_runtimes]
+        if any(value != native[0] for value in native):
+            panel_errors.append(
+                "incremental judge panels require the same declared Office renderer for shared derivatives"
+            )
     if config.office_rendering is not None and config.method not in {"scalar", "pairwise"}:
         panel_errors.append("evaluation.office_rendering is supported only for scalar or pairwise AI grading")
     if config.pairs is not None and config.method != "pairwise":
@@ -724,12 +787,18 @@ def validate_config(config: ExperimentConfig) -> list[str]:
         and config.evaluation.method in {"scalar", "pairwise"}
     ):
         for runtime in [judge.runtime for judge in config.evaluation.judges] or [config.evaluation.runtime]:
-            if runtime.executor == "claude-code" and runtime.settings.get("tool_mode", "files") != "sandboxed_shell":
+            if (
+                runtime.executor == "claude-code"
+                and not capability_enabled(runtime.settings)
+                and runtime.settings.get("tool_mode", "files") != "sandboxed_shell"
+            ):
                 errors.append("Claude Code GDPval evaluation requires tool_mode: sandboxed_shell to inspect XLSX")
     if config.benchmark == "gdpval":
         runtimes = [config.application, *(condition.application for condition in config.conditions)]
         if any(
-            runtime.executor == "claude-code" and runtime.settings.get("tool_mode", "files") != "sandboxed_shell"
+            runtime.executor == "claude-code"
+            and not capability_enabled(runtime.settings)
+            and runtime.settings.get("tool_mode", "files") != "sandboxed_shell"
             for runtime in runtimes
         ):
             errors.append(
@@ -800,6 +869,7 @@ def evaluation_snapshot(config: EvaluationConfig) -> dict[str, Any]:
 
     return {
         "method": config.method,
+        **({"include_partial_artifacts": True} if config.include_partial_artifacts else {}),
         "executor": config.runtime.executor,
         "model": config.runtime.model,
         "settings": _redact(config.runtime.settings),
@@ -807,4 +877,9 @@ def evaluation_snapshot(config: EvaluationConfig) -> dict[str, Any]:
         "criteria": config.criteria,
         "pairs": [list(pair) for pair in config.pairs] if config.pairs is not None else None,
         "office_rendering": config.office_rendering.snapshot() if config.office_rendering is not None else None,
+        **(
+            {"inspection_protocol": _copy_mapping(config.inspection_protocol)}
+            if config.inspection_protocol is not None
+            else {}
+        ),
     }

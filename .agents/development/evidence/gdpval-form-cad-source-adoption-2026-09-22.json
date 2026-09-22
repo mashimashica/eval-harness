@@ -1,0 +1,273 @@
+{
+  "schema_version": 1,
+  "kind": "controller-accepted-ten-task-form-cad-source-adoption",
+  "decision": "Accept the bounded operation/classification mappings, preserving all original scoring and explicit source/native uncertainty. This is shared operation applicability, not all-task or artifact acceptance.",
+  "sealed_review": {
+    "path": ".audit/2026-09-22-form-layout-source-check/adoption/final-adoption-report.json",
+    "sha256": "f9f29f360fac84f30980323fc0c3117e23d26fefa498118e3c7d9e7a9b1a94cc"
+  },
+  "scope": "Seven printable/editable Office form-layout components; one accepted CAD primitive with two generation capabilities and 15 exact route links; two existing public source retrieval components with separate unconfirmed source/input obligations.",
+  "mapping_before": {
+    "path": ".audit/2026-09-22-form-layout-source-check/adoption/gdpval-220-route-applicability-before.json",
+    "sha256": "ae76df8b5763f7d314b77a7c5d939c065cdaaf6ddc638c7ce957983090b4fe9f"
+  },
+  "mapping_after": {
+    "path": ".agents/development/evidence/gdpval-220-route-applicability.json",
+    "sha256": "2a9af02290a82bdadf1270e0b27425e7c0e6e760974c3a15aebf901e292606c7"
+  },
+  "readiness_before": {
+    "path": ".audit/2026-09-22-form-layout-source-check/adoption/gdpval-task-readiness-before.json",
+    "sha256": "3245014251ec2afca0a53b46076370402dcd3f5af13e5e58a7e2622e8670e86e"
+  },
+  "readiness_after": {
+    "path": ".agents/development/gdpval-task-readiness.json",
+    "sha256": "e5c0430b3917feb6599f7c5c8edf7f73ad192a097490cdf2118fab83ff8cbf86"
+  },
+  "generator_receipt": {
+    "path": ".audit/2026-09-22-form-layout-source-check/adoption/readiness-generator-final.json",
+    "sha256": "0c0a225ba84d1e3561af53c611ece29079e87610f757f042f8b1a0a9c78eb0cf"
+  },
+  "controller_proofs": {
+    "form_layout": {
+      "path": ".agents/development/evidence/gdpval-form-layout-correction-2026-09-22.json",
+      "sha256": "843a0822d90274f69dd9f40751c122f1b4f58d29a7c818777e2bfe29ee2d215c"
+    },
+    "cad": {
+      "path": ".agents/development/evidence/gdpval-cad-drawing-operations-2026-09-22.json",
+      "sha256": "8e6612611892b88ee11826e377c3523eea2c503c4a681c023eba5180437950fe"
+    },
+    "official_source": {
+      "path": ".agents/development/evidence/gdpval-official-source-correction-2026-09-22.json",
+      "sha256": "2f28460ddf83661124c2f03a2614a371aa2e0804b0cee8d9b41dd4a7d49e683f"
+    }
+  },
+  "affected_tasks": [
+    {
+      "task_id": "41f6ef59-88c9-4b2c-bcc7-9ceb88422f48",
+      "row_sha256": "02b84a9e08dd1a5de53ade19b333bd8417bf230697e60f503ed5bd8d4c455513",
+      "reason": "classification: static Office layout",
+      "old_generation": "partial_shared_routes",
+      "new_generation": "shared_routes_applicable",
+      "old_combined": "route_gaps_remain",
+      "new_combined": "route_gaps_remain"
+    },
+    {
+      "task_id": "43dc9778-450b-4b46-b77e-b6d82b202035",
+      "row_sha256": "f4a94f0c726a36a78897f9ed2636cb02b1b446a75541b93f673a6e7bf4c996e3",
+      "reason": "classification: retrieval operation separate from exact source availability",
+      "old_generation": "partial_shared_routes",
+      "new_generation": "shared_routes_applicable",
+      "old_combined": "route_gaps_remain",
+      "new_combined": "common_routes_applicable_with_limits"
+    },
+    {
+      "task_id": "4d61a19a-8438-4d4c-9fc2-cf167e36dcd6",
+      "row_sha256": "4d91d8fc96b0c28060b6d18ed91a1086ba200ea45290a2bba05ee44c5c0d2274",
+      "reason": "classification: static Office layout",
+      "old_generation": "partial_shared_routes",
+      "new_generation": "shared_routes_applicable",
+      "old_combined": "route_gaps_remain",
+      "new_combined": "route_gaps_remain"
+    },
+    {
+      "task_id": "5e2b6aab-f9fb-4dd6-a1a5-874ef1743909",
+      "row_sha256": "f298505cf86c06687c21569d6edce3bb85d24861b881f95b63f423be51109b0d",
+      "reason": "existing accepted known CAD operation",
+      "old_generation": "partial_shared_routes",
+      "new_generation": "shared_routes_applicable",
+      "old_combined": "route_gaps_remain",
+      "new_combined": "common_routes_applicable_with_limits"
+    },
+    {
+      "task_id": "62f04c2f-e0f7-4710-876c-54ee9c2e8256",
+      "row_sha256": "d5cd354bb50cc32829acc06dfb29a04a8439bef4d2a41a015c4cd37212d3a275",
+      "reason": "classification: static Office layout",
+      "old_generation": "partial_shared_routes",
+      "new_generation": "shared_routes_applicable",
+      "old_combined": "route_gaps_remain",
+      "new_combined": "common_routes_applicable_with_limits"
+    },
+    {
+      "task_id": "6436ff9e-c5f2-47ba-9aaa-49d89b0594ab",
+      "row_sha256": "d32fcbcd1c81049d47070d572c9332dca5c4370bcfa216a1a2e824af63e8388a",
+      "reason": "classification: static Office layout",
+      "old_generation": "partial_shared_routes",
+      "new_generation": "shared_routes_applicable",
+      "old_combined": "route_gaps_remain",
+      "new_combined": "common_routes_applicable_with_limits"
+    },
+    {
+      "task_id": "7151c60a-d4cb-4fc4-8169-3d4cb446e6b9",
+      "row_sha256": "1813b7f878a31cae85cb4ff8664fad909f5f63abcf977cc0b7981486cdae92bc",
+      "reason": "classification: static Office layout",
+      "old_generation": "partial_shared_routes",
+      "new_generation": "shared_routes_applicable",
+      "old_combined": "route_gaps_remain",
+      "new_combined": "common_routes_applicable_with_limits"
+    },
+    {
+      "task_id": "a0552909-bc66-4a3a-8970-ee0d17b49718",
+      "row_sha256": "a7e0be7c588a2cc88f246a5c081fa287f283d7dafbd514cf75528020c5f3d07c",
+      "reason": "classification: static Office layout",
+      "old_generation": "partial_shared_routes",
+      "new_generation": "partial_shared_routes",
+      "old_combined": "route_gaps_remain",
+      "new_combined": "route_gaps_remain"
+    },
+    {
+      "task_id": "c9bf9801-9640-45fa-8166-1ab01f2d98e4",
+      "row_sha256": "235b514ffad1ca2cc889f8bf8925bda134f0a79d253368a88d3a458a10758117",
+      "reason": "classification: static Office layout",
+      "old_generation": "partial_shared_routes",
+      "new_generation": "shared_routes_applicable",
+      "old_combined": "route_gaps_remain",
+      "new_combined": "common_routes_applicable_with_limits"
+    },
+    {
+      "task_id": "e6429658-4de1-42dd-a9e0-2d2b9b02fb10",
+      "row_sha256": "3e66b95e4781638c9498a14ce38a9c4c578cef3bdd7a106a66ccb611f87cb12c",
+      "reason": "classification: retrieval operation separate from exact source availability",
+      "old_generation": "partial_shared_routes",
+      "new_generation": "shared_routes_applicable",
+      "old_combined": "route_gaps_remain",
+      "new_combined": "route_gaps_remain"
+    }
+  ],
+  "exact_cad_criterion_route_links": [
+    "2eaeaa21-bb3c-42db-b6e1-c277205adddf",
+    "166b4179-8a75-4ba4-9129-d4a56325dabe",
+    "535787a9-2ca1-4e68-841a-087a27ac4cbc",
+    "31355b86-dbff-4e66-9aab-b35749989468",
+    "4a0cfca8-ed54-4573-ba99-b041f2515ea2",
+    "33633d7b-61ac-47b0-9623-cf8332cc032d",
+    "6f13912a-e283-4a37-bc58-272f99d9859d",
+    "be14f751-ba19-4d45-9920-8238d939a0fa",
+    "1c8e4470-7f24-4784-b4ff-90211d1bc0fc",
+    "e55cf266-c6c2-438b-a4a9-d354e29f84f4",
+    "e08fa187-09dc-4e4e-bca1-99148eea4829",
+    "b9ef8cc2-3042-483e-a007-31a0555703cc",
+    "97165871-0235-40e0-9f7d-9d416341fe07",
+    "96e14e61-0411-4f2e-a801-d375e12ed9af",
+    "62240379-95a1-4467-a85e-8534b69e4144"
+  ],
+  "unchanged_task_records": 210,
+  "unchanged_criterion_records": 10438,
+  "original_criterion_ids_methods_statuses_scores_hashes_conditions_preserved": true,
+  "preserved_native_gate_ids": [
+    "00295906-e225-4e36-95da-790bc8778eaf",
+    "98115f22-024a-4570-81bc-a44484376062",
+    "64755c9a-1938-4066-8596-329d00d2a6ef",
+    "53b88dce-5f98-426f-aa59-86e53a232351",
+    "6791a39c-a0eb-41ed-8b6f-62d0376dad91",
+    "e1f0848c-6cb3-4d23-8324-cebd626b08a7",
+    "2170d243-936d-40c0-9d89-c7e99b54e39e",
+    "66f16260-a385-4d12-9cb4-78f7d723883d"
+  ],
+  "conditional_CAD_zip_capability_unchanged": true,
+  "counts": {
+    "before": {
+      "task_level_status_counts": {
+        "common_routes_applicable_with_limits": 185,
+        "route_gaps_remain": 35
+      },
+      "generation_status_counts": {
+        "partial_shared_routes": 34,
+        "shared_routes_applicable": 186
+      },
+      "evaluation_status_counts": {
+        "partial_shared_routes": 24,
+        "shared_routes_applicable": 196
+      }
+    },
+    "after": {
+      "task_level_status_counts": {
+        "common_routes_applicable_with_limits": 191,
+        "route_gaps_remain": 29
+      },
+      "generation_status_counts": {
+        "partial_shared_routes": 25,
+        "shared_routes_applicable": 195
+      },
+      "evaluation_status_counts": {
+        "partial_shared_routes": 24,
+        "shared_routes_applicable": 196
+      }
+    },
+    "content_unchanged": {
+      "candidate": 201,
+      "needs_clarification": 16,
+      "undetermined": 3
+    },
+    "all_original_tasks_included": 220,
+    "all_original_criteria": 10453
+  },
+  "checks": {
+    "focused_regression": {
+      "result": "38 passed",
+      "evidence": {
+        "path": ".audit/2026-09-22-form-layout-source-check/adoption/helper-regression-final-scoped.log",
+        "sha256": "5820660ec3010de64a702de867f5df2cf30c67130e042248a991f9440cddf42b"
+      }
+    },
+    "strict_mypy": {
+      "path": ".audit/2026-09-22-form-layout-source-check/adoption/mypy-final.log",
+      "sha256": "f9b031e5c45aa702cd4fef028d465551cb20a2c4698e0913c7b00766b20ac4d8"
+    },
+    "ruff": {
+      "path": ".audit/2026-09-22-form-layout-source-check/adoption/ruff-source-final.log",
+      "sha256": "82b3e6a6c090a57601d22943bd23fca9218d1031dbe5a7b754092f9a156b4f18"
+    },
+    "format": {
+      "path": ".audit/2026-09-22-form-layout-source-check/adoption/format-source-final.log",
+      "sha256": "3bc53bf3e981a98a34a852e175bf9b77af841edea74fca595d9aedcbaf9a4938"
+    },
+    "diff_check": {
+      "path": ".audit/2026-09-22-form-layout-source-check/adoption/diff-check-final.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "changed_helper_coverage": {
+      "statement_coverage_percent": 96,
+      "evidence": {
+        "path": ".audit/2026-09-22-form-layout-source-check/adoption/coverage-final.log",
+        "sha256": "311b07b83c1961fffa68b4cd6956b104478622d6d9a4efd91fce52b1ded24f27"
+      },
+      "percentage_is_not_acceptance_gate": true
+    },
+    "scope_and_source_preservation": "All assertions in this report-generation check passed."
+  },
+  "preserved_failures": [
+    {
+      "evidence": {
+        "path": ".audit/2026-09-22-form-layout-source-check/adoption/helper-regression.log",
+        "sha256": "aca9a1f1fea75993670a179c4fb916e5b3cb3dc46b69aef111cae3cbdb69e34e"
+      },
+      "cause": "First added seven-form test fixture omitted assessment.inspection_protocol; fixed test fixture only, no product failure."
+    },
+    {
+      "evidence": {
+        "path": ".audit/2026-09-22-form-layout-source-check/adoption/cad-row-hash-guard-failure.json",
+        "sha256": "38dd9f1656dd9f1bbfe247c1f33b3f6cec1101305af8a30ee7fe176f2397d1fd"
+      },
+      "cause": "Specialist raw JSONL line hash differs from ledger canonical row hash; both separately reproduced and bound, no source mutation."
+    },
+    {
+      "evidence": {
+        "path": ".audit/2026-09-22-form-layout-source-check/adoption/helper-regression-final.log",
+        "sha256": "5e5c45db2d21649ed684948da842d70e4e67625e342e573c02075c8e67943e15"
+      },
+      "cause": "All 38 checks passed, but inherited coverage fail-under=95 included unrelated helper modules. Repeated with scoped measurement and no universal threshold under project quality policy."
+    }
+  ],
+  "limits": {
+    "new_models": 0,
+    "new_network_calls": 0,
+    "new_native_operations": 0,
+    "new_dependencies": 0,
+    "new_candidate_runtime_edits": 0,
+    "task_success_inferred": false,
+    "scoring_rewritten": false,
+    "archived_sessions_or_protocols_written": false,
+    "interpretation": "Shared operation adoption is not an actual artifact observation, correct professional outcome, full native UI acceptance, exact external source availability, or participant task success. Existing native and content gates remain."
+  },
+  "all220_accepted": false
+}

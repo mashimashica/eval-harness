@@ -1,0 +1,52 @@
+{
+  "schema_version": 1,
+  "kind": "native-browser-feasibility-followup",
+  "model_calls": 0,
+  "candidate_runs": 0,
+  "new_chrome_launches": 3,
+  "total_chrome_launches": 6,
+  "evidence": [
+    {
+      "stage": "power_registration",
+      "findings": {
+        "path": ".audit/2026-09-21-next-acceptance-native-power/findings.json",
+        "sha256": "c54ee5063292d3e48c770e96f0fcc38d264bc0e69fabd20a1b7cbfd08f1dd724"
+      }
+    },
+    {
+      "stage": "own_pid_mach_registration",
+      "findings": {
+        "path": ".audit/2026-09-21-next-acceptance-native-mach/findings.json",
+        "sha256": "5423981d450c051b2693ea469ad7e4705aa6a51142438439ab9de67f4390f132"
+      }
+    },
+    {
+      "stage": "nested_sandbox_diagnosis",
+      "findings": {
+        "path": ".audit/2026-09-21-next-acceptance-native-nesting-readonly/findings.json",
+        "sha256": "815d33662edcbece2dd318ab3e62da6d8e00269bd82654a7c75f3c9f20d75e3d"
+      }
+    },
+    {
+      "stage": "outer_only_known_DOM",
+      "findings": {
+        "path": ".audit/2026-09-21-next-acceptance-native-outer-only/findings.json",
+        "sha256": "da265ff1bb48c10a965f2511b74ec5e7cf196da2e99fd1a0065ee2fa802c2bdc"
+      }
+    }
+  ],
+  "observations": [
+    "Launch4: narrowly controlled power registration removes prior null-port crash; exact own-PID Mach registration then fails.",
+    "Launch5: exact own-PID Mach registration succeeds; Chrome child sandbox initialization fails inside inherited Seatbelt.",
+    "Installed SDK and matching Chromium source support a nested sandbox collision; exact API failure is an inference.",
+    "Launch6: with only --no-sandbox added, known DOM events produce 6 then 21 and complete. Natural exit fails at 30 seconds; owned process group is killed and confirmed absent."
+  ],
+  "controls": "Eight fresh filesystem/Unix/TCP checks and owned-group cleanup pass for launch6; original files and native executable identities preserved.",
+  "limits": [
+    "Chrome inner renderer/GPU/utility isolation was removed in a trusted-controller diagnostic; outer policy stayed. This does not accept untrusted candidate isolation.",
+    "Detached descendants and inherited descriptors/Mach authority need bounded verification; no browser tool or task route is promoted.",
+    "No native Office, physical UI, notebook frontend, actual artifact, perception or live-service acceptance is inferred."
+  ],
+  "product_permissions_changed": false,
+  "all220_accepted": false
+}

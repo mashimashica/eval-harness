@@ -1,0 +1,152 @@
+{
+  "schema_version": 1,
+  "kind": "controller-adopted-five-task-document-operation-mapping",
+  "review": {
+    "path": ".audit/2026-09-22-document-operations/adoption/report.json",
+    "sha256": "f647dc6588b98a219486cef2b8083e53695919cbba50d4000e671534c6e1f6e5"
+  },
+  "operation_proof": {
+    "path": ".agents/development/evidence/gdpval-document-operations-2026-09-22.json",
+    "sha256": "258928a3f7dd7ef49dcd16804ed63f2c0d93e4249cc760dea69091543b9f492d"
+  },
+  "decision": "Adopt exactly the matched Word image/text and PDF completion/layout operations for five source-bound tasks, preserving original scoring and every unrelated task.",
+  "changed_task_ids": [
+    "bb499d9c-0263-4684-9238-75e8e86077b1",
+    "43dc9778-450b-4b46-b77e-b6d82b202035",
+    "e6429658-4de1-42dd-a9e0-2d2b9b02fb10",
+    "58ac1cc5-5754-4580-8c9c-8c67e1a9d619",
+    "a73fbc98-90d4-4134-a54f-2b1d0c838791"
+  ],
+  "changed_criterion_ids": {
+    "bb499d9c-0263-4684-9238-75e8e86077b1": [
+      "a51ad592-403b-4ea1-bab4-a5efc3d164a7",
+      "f0144687-cc15-459a-b7b5-f37e1ab62382",
+      "ab702091-e54c-4133-b03a-11f795193acf",
+      "61bd6428-ecf6-4da9-9e8d-94c5896f538e",
+      "d956fa03-c9b3-45bd-832b-96380acf48be"
+    ],
+    "43dc9778-450b-4b46-b77e-b6d82b202035": [
+      "8204401e-d008-44ad-b42f-26e3256db111",
+      "18b1321f-4219-4787-af09-d3a58a253893",
+      "88eb649d-7b56-4c5b-b2e7-290407ec5f84",
+      "ff84bde4-fd2e-48c9-85a7-3f800a62fc1f",
+      "3dabec87-1045-44bd-88f0-165d6007e45c",
+      "4d967333-5586-4a24-9f5f-82544a7b7e45"
+    ],
+    "e6429658-4de1-42dd-a9e0-2d2b9b02fb10": [
+      "bea6945d-c3b8-4906-9077-8634005e34bd",
+      "84ab15af-ce70-4ea1-83f0-1f780a736a66",
+      "394b53c7-e71c-4d9d-8cee-e58c5e6e4020",
+      "8986db33-4293-456d-8726-06914496cfcf",
+      "38fc4b36-39b4-47cc-9137-bd030228ac27"
+    ],
+    "58ac1cc5-5754-4580-8c9c-8c67e1a9d619": [
+      "d4982d7e-e6b7-4c3a-bd00-87d7bad911e4"
+    ],
+    "a73fbc98-90d4-4134-a54f-2b1d0c838791": [
+      "445fcf79-f960-4fd4-8b8f-3524c12c3ab5",
+      "dc0af1a8-9eee-4b70-8373-25b61071024b",
+      "42e62760-ee57-4f05-91b1-c5ce313c1cd3",
+      "9147cebc-81fb-4cb7-8950-09bbe3a8e53c"
+    ]
+  },
+  "unchanged_tasks": 215,
+  "unchanged_criterion_records": 10432,
+  "all_original_ids_methods_statuses_scores_and_hashes_preserved": true,
+  "current_summary_before": {
+    "tasks": 220,
+    "original_criteria": 10453,
+    "generation_status_counts": {
+      "shared_routes_applicable": 182,
+      "partial_shared_routes": 38
+    },
+    "generation_capability_status_counts": {
+      "shared_route_applicable": 574,
+      "partial_shared_route": 58,
+      "infrastructure_pending": 1,
+      "unconfirmed": 1
+    },
+    "criterion_route_status_counts": {
+      "shared_route_applicable": 10306,
+      "unconfirmed": 5,
+      "provisional_human_observation_pending": 75,
+      "partial_shared_route": 35,
+      "infrastructure_pending": 32
+    },
+    "source_bound_239_overrides": 239,
+    "source_bound_143_overrides": 143,
+    "sufficient_machine_alternatives": 5,
+    "task_successes_inferred": 0,
+    "criterion_results_inferred": 0,
+    "required_generation_capability_status_counts": {
+      "shared_route_applicable": 574,
+      "partial_shared_route": 57,
+      "infrastructure_pending": 1,
+      "unconfirmed": 1
+    },
+    "optional_generation_capability_status_counts": {
+      "partial_shared_route": 1
+    },
+    "source_bound_requirement_correction_tasks": 13
+  },
+  "current_summary_after": {
+    "tasks": 220,
+    "original_criteria": 10453,
+    "generation_status_counts": {
+      "shared_routes_applicable": 184,
+      "partial_shared_routes": 36
+    },
+    "generation_capability_status_counts": {
+      "shared_route_applicable": 578,
+      "partial_shared_route": 54,
+      "infrastructure_pending": 1,
+      "unconfirmed": 1
+    },
+    "criterion_route_status_counts": {
+      "shared_route_applicable": 10306,
+      "unconfirmed": 5,
+      "provisional_human_observation_pending": 75,
+      "partial_shared_route": 35,
+      "infrastructure_pending": 32
+    },
+    "source_bound_239_overrides": 239,
+    "source_bound_143_overrides": 143,
+    "sufficient_machine_alternatives": 5,
+    "task_successes_inferred": 0,
+    "criterion_results_inferred": 0,
+    "required_generation_capability_status_counts": {
+      "shared_route_applicable": 578,
+      "partial_shared_route": 53,
+      "infrastructure_pending": 1,
+      "unconfirmed": 1
+    },
+    "optional_generation_capability_status_counts": {
+      "partial_shared_route": 1
+    },
+    "source_bound_requirement_correction_tasks": 13
+  },
+  "prior_combined_counts": {
+    "common_routes_applicable_with_limits": 181,
+    "route_gaps_remain": 39
+  },
+  "new_combined_counts": {
+    "common_routes_applicable_with_limits": 183,
+    "route_gaps_remain": 37
+  },
+  "route": {
+    "path": ".agents/development/evidence/gdpval-220-route-applicability.json",
+    "sha256": "0bd722f798c2ff3f1e6f4da6b1d2e96d34b9b11ac70b53044b053256c4b018a4"
+  },
+  "readiness": {
+    "path": ".agents/development/gdpval-task-readiness.json",
+    "sha256": "1b3d8660807a7e0d36ef53f25ea9b6bbf54f58899643389e00ce372712c16d12"
+  },
+  "verification": {
+    "helper_tests": "35 passed; initial stale Word-gap expectation failure retained and corrected to require its own proof",
+    "strict_mypy": "passed",
+    "ruff_and_format": "passed",
+    "generator_changed": false,
+    "runtime_changed": false
+  },
+  "all220_accepted": false
+}

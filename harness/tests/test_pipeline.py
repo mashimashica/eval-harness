@@ -1022,3 +1022,92 @@ def test_interrupted_evaluation_resumes_and_reuses_generation_identity(tmp_path:
     assert replacement["generation_id"] == saved["generation_id"]
     state = json.loads((evaluation_dir / "evaluation_state.json").read_text())
     assert state["pending_generation_ids"] == []
+
+
+@pytest.mark.parametrize("include_partial", [False, True])
+def test_partial_evaluation_keeps_failed_execution_and_frozen_artifacts(tmp_path: Path, include_partial: bool) -> None:
+    from eval_harness.artifacts import file_manifest
+
+    source = _task_source(tmp_path)
+    run_dir = tmp_path / "run"
+    run_experiment(load_experiment(_config(tmp_path, source)), run_dir, OutcomeExecutor(["timeout"]))
+    before = file_manifest(run_dir)
+    evaluator = FakeExecutor()
+    config = EvaluationConfig(
+        "scalar",
+        RuntimeConfig("codex", "gpt-5.6-luna", {"timeout_seconds": 10}),
+        include_partial_artifacts=include_partial,
+    )
+    output = tmp_path / "evaluation"
+    evaluate_run(run_dir, config, output, evaluator)
+    record = json.loads((output / "judgments.jsonl").read_text().splitlines()[0])
+    assert record["execution_status"] == "timeout"
+    assert file_manifest(run_dir) == before
+    if include_partial:
+        assert record["evaluation_status"] == "completed"
+        assert record["partial_artifact_evaluation"] is True
+        assert record["submission_completeness"] == "partial"
+        assert len(evaluator.requests) == 1
+        prompt = evaluator.requests[0].prompt
+        assert "sealed partial submission" in prompt
+        assert "The answer file exists" in prompt and "baseline" not in prompt
+        assert (evaluator.requests[0].cwd / "submission" / "agent_response.txt").exists()
+        manifest = json.loads((output / "evaluation_manifest.json").read_text())
+        assert manifest["config_snapshot"]["include_partial_artifacts"] is True
+    else:
+        assert record["evaluation_status"] == "not_evaluated"
+        assert evaluator.requests == []
+
+
+def test_partial_evaluation_rejects_changed_artifact_before_model(tmp_path: Path) -> None:
+    source = _task_source(tmp_path)
+    run_dir = tmp_path / "run"
+    run_experiment(load_experiment(_config(tmp_path, source)), run_dir, OutcomeExecutor(["timeout"]))
+    (run_dir / "conditions/baseline/tasks/task-1/repeat_0/deliverables/agent_response.txt").write_text("changed")
+    evaluator = FakeExecutor()
+    config = EvaluationConfig(
+        "scalar",
+        RuntimeConfig("codex", "gpt-5.6-luna", {}),
+        include_partial_artifacts=True,
+    )
+    with pytest.raises(ArtifactError, match="artifact|manifest|deliverable"):
+        evaluate_run(run_dir, config, tmp_path / "evaluation", evaluator)
+    assert evaluator.requests == []
+
+
+def test_partial_evaluation_resume_preserves_opt_in_and_source_status(tmp_path: Path) -> None:
+    from eval_harness.artifacts import file_manifest
+
+    source = _task_source(tmp_path)
+    run_dir = tmp_path / "run"
+    run_experiment(load_experiment(_config(tmp_path, source)), run_dir, OutcomeExecutor(["failed"]))
+    before = file_manifest(run_dir)
+    output = tmp_path / "evaluation"
+    config = EvaluationConfig(
+        "scalar",
+        RuntimeConfig("codex", "gpt-5.6-luna", {}),
+        include_partial_artifacts=True,
+    )
+    evaluate_run(run_dir, config, output, InterruptedJudgeExecutor())
+    resumed = resume_evaluation(output, FakeExecutor())
+    record = json.loads((output / "judgments.jsonl").read_text().splitlines()[0])
+    assert resumed.status == "completed"
+    assert record["execution_status"] == "failed"
+    assert record["partial_artifact_evaluation"] is True
+    assert file_manifest(run_dir) == before
+
+
+def test_partial_evaluation_config_is_explicit_and_scalar_only(tmp_path: Path) -> None:
+    from eval_harness.config import evaluation_snapshot, load_evaluation_config, validate_evaluation_config
+    from eval_harness.evaluate_pipeline import _evaluation_config_from_snapshot, _saved_execution_is_evaluable
+
+    path = tmp_path / "evaluation.yaml"
+    path.write_text("method: scalar\nexecutor: codex\nmodel: gpt-5.6-luna\ninclude_partial_artifacts: true\n")
+    config = load_evaluation_config(path)
+    assert config.include_partial_artifacts is True
+    assert _evaluation_config_from_snapshot(evaluation_snapshot(config)).include_partial_artifacts is True
+    assert not _saved_execution_is_evaluable({"execution_status": "pending"}, config)
+    assert validate_evaluation_config(replace(config, method="pairwise"))
+    path.write_text(path.read_text().replace("true", "'true'"))
+    with pytest.raises(ConfigError, match="must be boolean"):
+        load_evaluation_config(path)

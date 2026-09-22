@@ -1,0 +1,158 @@
+{
+  "schema_version": 1,
+  "kind": "gdpval-evaluation-follow-up-preparation",
+  "baseline_commit": "89967aa6605655232d623f3b047156c8cbd69557",
+  "candidate_environment_fingerprint": "701baddb85dcb7eabd6440be838fd9e7d31f63e53d94caa935fa1cd965021d3e",
+  "authorization": "proposed; await explicit owner approval for six model sessions",
+  "additional_model_sessions_executed": 0,
+  "old_model_sessions_preserved": {
+    "original": 11,
+    "all220_batch": 10
+  },
+  "runtime_changes": [
+    {
+      "path": "harness/src/eval_harness/inspection_protocol.py",
+      "sha256": "33268a55a0996387b5c79b0b4494ebd1c9b94bb16c2b5c6aadfa6327cd790e9e"
+    },
+    {
+      "path": "harness/src/eval_harness/inspection_lineage.py",
+      "sha256": "4f049bc20194dfe37d8be5cf743b115f134f30f306cec77583e2e4905e5cc517"
+    }
+  ],
+  "diagnosis": {
+    "path": ".audit/2026-09-21-next-acceptance-evaluation/diagnosis.json",
+    "sha256": "d5cad118b418660f13f733e7f7a2334521a0115027e309fce1d85768d49e1c3c"
+  },
+  "verification": {
+    "tests": {
+      "passed": 159,
+      "elapsed_seconds": 7.73,
+      "path": ".audit/2026-09-21-next-acceptance-evaluation/tests-final.log",
+      "sha256": "ff649a456765993e7a54b216f132f97a159411e14709b98f7376960457ed6808"
+    },
+    "strict_mypy": {
+      "status": "passed",
+      "files": 4,
+      "path": ".audit/2026-09-21-next-acceptance-evaluation/mypy-final.log",
+      "sha256": "71144743c83babea384888a735db0c4daba3d4d7b7942b6839984bd5c21b52bb"
+    },
+    "harness_config_ruff": {
+      "status": "passed",
+      "path": ".audit/2026-09-21-next-acceptance-evaluation/ruff-final.log",
+      "sha256": "4bd8248f4985e327cd636d5b563aa46d1d34db2021498c8d8b37613b35f181d1"
+    },
+    "coverage": {
+      "path": ".audit/2026-09-21-next-acceptance-evaluation/coverage.json",
+      "sha256": "7aa710419c11cd4d08ff9f32be50ef87ffddc9099331cadfddd219782f35630f",
+      "inspection_protocol_percent": 89.22651933701657,
+      "inspection_lineage_percent": 93.33333333333333,
+      "universal_percentage_gate": false
+    },
+    "runtime_limit": "No native or model operation was executed by this worker. Synthetic receipts prove validator behavior; fresh contract probes must establish model use of the updated prompt and actual visual tools."
+  },
+  "saved_claims_retagged": false,
+  "crop": {
+    "receipt": {
+      "path": ".audit/2026-09-21-next-acceptance/crop-verification/report.json",
+      "sha256": "c24b8508e0a10a903d582d7fffa0a4444fab866b2ccff88802b51c30a54b681e"
+    },
+    "source_sha256": "bdd6c769929d9d158fa2247c977d8f5b0d10af79dc1dae2ab05e25efea0d5b0d",
+    "full_page21_sha256": "2e08b7c0b84afcc52051163ed404cf270d558e9dc20a0436c752e2f824c38696",
+    "crop_sha256": "27b0147de1a285c0601acc8fc80eb34a7ae63703ae55e8e62110522893a84325",
+    "crop_region": [
+      280,
+      130,
+      720,
+      565
+    ],
+    "crop_pixels_exact": true,
+    "original_unchanged": true,
+    "elapsed_seconds": 47.022099416994024,
+    "model_calls": 0,
+    "network_calls": 0,
+    "meaning": "Exact same prior image bytes; crop transport and controller observation established, future model recognition unconfirmed."
+  },
+  "science_source_render": {
+    "receipt": {
+      "path": ".audit/2026-09-21-next-acceptance/source-render/report.json",
+      "sha256": "28b0d7b490a7ca8732233306be3c9f10cbafc64bb4ddf8c78d324c087c450853"
+    },
+    "original_sha256": "c575a5476fac2f921cfd192ca5c48622d98e3d96f18e93f1a46f047d69c58df0",
+    "derivative_sha256": "8ab9f50c7063956ee5b8352635f5784e2f700866e0efc7bd34db7bfaa6a1c1f2",
+    "expanded_name_xml_trees_equal": true,
+    "other_zip_member_bytes_unchanged": true,
+    "modified_zip_members": [
+      "[Content_Types].xml",
+      "_rels/.rels"
+    ],
+    "original_unchanged": true,
+    "elapsed_seconds": 77.16763499996159,
+    "model_calls": 0,
+    "network_calls": 0,
+    "original_render": "failed",
+    "namespace_serialization_copy": "rendered two pages",
+    "meaning": "Differential renderer compatibility evidence; no original-source defect, automatic repair or layout-equivalence claim."
+  },
+  "prepared_files": [
+    {
+      "path": ".audit/2026-09-21-next-acceptance/prepared-plan.json",
+      "sha256": "0a1d5f52131f8a4d33009d00876cacf6292058180a9ebae6e8bb975291ea47c5"
+    },
+    {
+      "path": ".audit/2026-09-21-next-acceptance/known-contract/manifest.json",
+      "sha256": "36a84d5a5af5b95d952f81d1c11125c8363a7765453d57faabd638cfa92e6e9a"
+    },
+    {
+      "path": ".audit/2026-09-21-next-acceptance/configs/evaluation-1-claude-code.yaml",
+      "sha256": "559b52df13c0b6920f5d9f30f03412626ef820a522c006d2cb4287e023b8905d"
+    },
+    {
+      "path": ".audit/2026-09-21-next-acceptance/configs/evaluation-1-codex.yaml",
+      "sha256": "aca288886b48eefc2da28b3a6af5572c1a99b3107ddb9de832a9c5819c670936"
+    },
+    {
+      "path": ".audit/2026-09-21-next-acceptance/configs/evaluation-2-claude-code.yaml",
+      "sha256": "aad0c11ae08e71f4ce40bcecf859f1942ff84bb95a9f7a9b2e7a5a03e28ddd99"
+    },
+    {
+      "path": ".audit/2026-09-21-next-acceptance/configs/evaluation-2-codex.yaml",
+      "sha256": "b7d40a531bbd664ce7152a73fb092fc8b51e31e0f3c426c34707edc55b0b34fa"
+    }
+  ],
+  "new_trial_budget": {
+    "sessions": 6,
+    "model_timeout_seconds": 6000,
+    "probe_seconds_each": 600,
+    "evaluation_seconds_each": 1200,
+    "parallelism": 1,
+    "automatic_retries": 0,
+    "models": {
+      "codex": "gpt-5.6-sol/medium",
+      "claude-code": "claude-opus-5/medium"
+    },
+    "claude_max_turns": 40,
+    "billing": "existing subscriptions only; no extra usage/API/auxiliary AI"
+  },
+  "remaining": {
+    "all220_complete": false,
+    "applicable_common_routes": 180,
+    "required_route_gap_tasks": 40,
+    "fixed_task_native_gates": 4,
+    "native_gate_acceptance_changed": false,
+    "human_coordination_owner": "requester",
+    "human_reviewers": "assign before experiment",
+    "official_grading_equivalence": "unconfirmed; custom grading"
+  },
+  "impact": {
+    "outcomes": [
+      3,
+      4,
+      5
+    ],
+    "participant_regeneration_for_this_correction": false,
+    "new_evaluation_identity_required": true,
+    "old_records_rewritten": false,
+    "production_alps_run": false,
+    "merge": false
+  }
+}

@@ -1,0 +1,125 @@
+{
+  "schema_version": 1,
+  "kind": "saved-dashboard-findings-and-durable-evaluator-correction",
+  "sessions": [
+    {
+      "client": "codex",
+      "receipt": {
+        "path": ".audit/2026-09-21-next-acceptance-revised-evaluation/sessions/evaluation-1-codex/slot-result.json",
+        "sha256": "a75cbfbaa9c8e8e86a7fc260316109cd65d1a3dd8877af2af0faa720c7c7cd11"
+      },
+      "evaluation_id": "57642608f164493ab32566eaf971ef10",
+      "model_seconds": 597.7381168330321,
+      "lifecycle_seconds": 632.6168802919565,
+      "usage": {
+        "cached_input_tokens": 980608,
+        "cost_usd": null,
+        "input_tokens": 1067386,
+        "output_tokens": 27915,
+        "reasoning_tokens": 2396
+      },
+      "model_calls": 1,
+      "originals_unchanged": true,
+      "effective_criterion_counts": {
+        "pass": 49,
+        "fail": 6,
+        "unconfirmed": 2
+      },
+      "aggregate_score": null
+    },
+    {
+      "client": "claude-code",
+      "receipt": {
+        "path": ".audit/2026-09-21-next-acceptance-revised-evaluation/sessions/evaluation-1-claude-code/slot-result.json",
+        "sha256": "4e3a0abe2b2af46321272e6e3603f8a1a1292432fd7df48fbabb4aac4998f24f"
+      },
+      "evaluation_id": "c834a3c788744c49ace201cf03ea9831",
+      "model_seconds": 470.974517332972,
+      "lifecycle_seconds": 550.2404780000215,
+      "usage": {
+        "cache_creation_input_tokens": 182215,
+        "cached_input_tokens": 2246215,
+        "cost_usd": null,
+        "input_tokens": 52,
+        "output_tokens": 23979,
+        "reasoning_tokens": 4829,
+        "reported_cost_usd": 3.890378000000001
+      },
+      "model_calls": 1,
+      "originals_unchanged": true,
+      "effective_criterion_counts": {
+        "pass": 0,
+        "fail": 0,
+        "unconfirmed": 57
+      },
+      "aggregate_score": null
+    }
+  ],
+  "observations": {
+    "codex": {
+      "review": {
+        "path": ".audit/2026-09-21-next-acceptance-revised-review/evaluation-1-codex/report.json",
+        "sha256": "7354d7930342fb54ba5cac37ac73ac57e6cb67c8a1adb32ceb8950d466e5c451"
+      },
+      "validated_non_native_item_refs": 55,
+      "limitations": [
+        "Updated chart source cells were observed; all four updated chart output caches were later corroborated by the controller, not explicitly recorded by the judge.",
+        "The supplied data give 58.4/41.6 day/night percentages and conflict with literal 51/49 rubric requirements; preserve the literal rubric failures and source conflict separately.",
+        "Two native controls remain unconfirmed."
+      ]
+    },
+    "claude": {
+      "diagnosis": {
+        "path": ".audit/2026-09-22-evaluator-inputs/diagnosis-corrected.json",
+        "sha256": "f7fa071a804753d840752dc3b647d6efe72e5a809b9974fc7d5a464431bb9daa"
+      },
+      "failure_class": "evaluator infrastructure: durable criterion context unavailable after compaction",
+      "native_compaction": {
+        "pre_tokens": 167498,
+        "post_tokens": 9932,
+        "dropped_tokens": 157566
+      },
+      "qualification": "The failed outside-transcript read returned No such file or directory; it alone does not prove OS permission denial. No correctness or hallucination claim is made."
+    }
+  },
+  "correction": {
+    "report": {
+      "path": ".audit/2026-09-22-evaluator-inputs/report.json",
+      "sha256": "8aaf4d175239a408ca5301ca72c9c7a45e71e1f3d31d059579feeaf893b7f47a"
+    },
+    "targeted_tests": 181,
+    "exact_task_item_roundtrips": [
+      57,
+      46
+    ],
+    "model_free_protection": "Protected context readable; writes and existing outside-task read denied; original bytes preserved.",
+    "source_sha256": {
+      "harness/src/eval_harness/evaluate_pipeline.py": "dd35b8befa8d8317cdd9b747c11ebaa96eb1741beaeb616c966eeea9ff5612c0",
+      "harness/tests/test_evaluator_inputs.py": "4b03cc393932c1be68cd8db41308800b52ba7a833db09146213cee7449b0e78b"
+    },
+    "limits": "Actual model use after compaction must still be observed; file availability does not guarantee judgment correctness."
+  },
+  "approved_batch": {
+    "total": 6,
+    "completed_before_science": 4,
+    "remaining_science_slots": 2,
+    "parallelism": 1,
+    "automatic_retries": 0,
+    "each_timeout_seconds": 1200,
+    "new_frozen_environment_fingerprint": "ecd1071aac425229104a253df7de66b92e89c6fbcaf0b4c76848a4c08d9328e4",
+    "manifest": {
+      "path": ".audit/2026-09-22-science-evaluation-correction/manifest.json",
+      "sha256": "b2b87501923cd60816211e6a3f7a02e29dab8b6ef2259e68538fdafd94c0b434"
+    },
+    "controller_decision": {
+      "path": ".audit/2026-09-22-science-evaluation-correction/controller-revision.json",
+      "sha256": "fde57a8ec9c133fb0fe0479ff77b36052407eee195c9df4504cec511e76a87f6"
+    }
+  },
+  "impact": {
+    "old_judgments_modified": false,
+    "participant_regeneration": false,
+    "new_evaluation_identity_required": true,
+    "all220_accepted": false
+  }
+}

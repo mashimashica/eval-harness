@@ -1,0 +1,1315 @@
+{
+  "schema_version": 1,
+  "kind": "Bounded source-input defect impact mapping; not task acceptance or scoring",
+  "review_date": "2026-09-21",
+  "scope": {
+    "affected_tasks": 4,
+    "affected_provided_files": 5,
+    "original_criteria_in_partition": 170,
+    "model_calls": 0,
+    "network_calls": 0,
+    "new_parser_or_native_trials": 0,
+    "source_reads": "Frozen original prompts/rubrics, existing parse/identity evidence, and read-only word/document.xml for the two damaged DOCX files plus the valid Bass Edit Spots.docx."
+  },
+  "source": {
+    "sha256": "4d58ee30485093010bf8b0a11708f80924831eef2a643db4c2d23b72fd426470",
+    "row_index_basis": "Both zero-based index and one-based source line are explicit. Raw-line SHA256 excludes the line terminator. Canonical row hashes are retained from the existing requirements map."
+  },
+  "evidence": [
+    {
+      "path": ".audit/2026-09-21-provided-parsing/files.json",
+      "sha256": "ba4b0970f0a369da548be23110ae0cf91997111721a8826518216c6914049d88",
+      "scope": "Five parser/header findings; historical original/staged before/after equality."
+    },
+    {
+      "path": ".audit/2026-09-21-provided-parsing/docx-xml-diagnosis.json",
+      "sha256": "3e4c7157faf7865a80fb63da0756b084d11782563d35443005b5e05e1388e2ed",
+      "scope": "Prior evaluation-role XML member diagnosis; malformed relationships and readable main body."
+    },
+    {
+      "path": ".audit/2026-09-21-all-tasks/remote-object-verification.json",
+      "sha256": "35a0c7b626de19eb2c232e9471fffcdeac82af6db021d0c08b3f80662a164429",
+      "scope": "Controller-provided pinned remote identities match all 261 local supplied payloads: 67 LFS SHA256 and 194 Git-blob SHA1. Therefore these five findings are present in the exact supplied objects, not evidence of transfer truncation."
+    }
+  ],
+  "definitions": {
+    "direct_source_dependency": "An original criterion explicitly names the defective source, or the original prompt assigns task-specific content/material to that source and the criterion tests that content. Dependence does not mean the source is exclusive, all its content is inaccessible, or the criterion is failed.",
+    "conditional_source_route": "The source is one allowed route or its use is conditional. Preserve the alternative/condition; do not turn it into a mandatory source dependency.",
+    "potential_indirect_effect": "The defect may affect the requested construction or evidence chain, but the original criterion can be evaluated using an output or other sources. Actual effect remains unknown.",
+    "remainder_unknown": "Not analyzed further for this source defect; not cleared, failed, or excluded.",
+    "source_input_status": "Unconfirmed impact on task completion/evaluation, separate from the established file-format fact and separate from baseline content feasibility.",
+    "fallback_available": "Specific body text is readable from raw XML on a working copy; this does not prove native DOCX semantics, a complete content read, or participant capability.",
+    "missing_wav_tail": "Bytes declared by the PCM data chunk are absent from the exact source object. Rewriting metadata cannot recover original absent samples."
+  },
+  "summary": {
+    "partition_counts": {
+      "direct_source_dependency": 30,
+      "conditional_source_route": 3,
+      "remainder_unknown": 124,
+      "potential_indirect_effect": 13
+    },
+    "task_inclusion_changed": false,
+    "automatic_failures_assigned": 0,
+    "task_quality_judgments": 0,
+    "content_feasibility_reclassifications": 0
+  },
+  "content_feasibility_separation": {
+    "review_path": ".agents/development/evidence/gdpval-220-requirements-review.json",
+    "review_sha256_unchanged": "96aa6c1575c08505eb8446bd9f6e24b86f54929c3596718a912a3811b182d1bc",
+    "existing_counts_preserved": {
+      "needs_clarification": 13,
+      "candidate": 201,
+      "undetermined": 6
+    },
+    "disposition": "This supplemental source-input uncertainty record does not edit the requirements review, frozen source, original rubric items, or inspection protocols. The controller may connect it to the ledger while retaining unresolved source conditions."
+  },
+  "affected_files": [
+    {
+      "path": "028fb83486152124cfecf2667c3cef37/DRUM REFERENCE TRACK.wav",
+      "task_ids": [
+        "38889c3b-e3d4-49c8-816a-3cc8e5313aba"
+      ],
+      "bytes": 33554432,
+      "source_sha256": "6d290de658f620fccd714a3406601fcf5a296e940f9f1a9f0bc2cee4399ce234",
+      "observed_issue": "blocked_truncated_payload",
+      "error": "RIFF or data chunk declares bytes beyond the actual end of file",
+      "pinned_remote_identity": {
+        "hash_kind": "sha256",
+        "expected_hash": "6d290de658f620fccd714a3406601fcf5a296e940f9f1a9f0bc2cee4399ce234",
+        "observed_hash": "6d290de658f620fccd714a3406601fcf5a296e940f9f1a9f0bc2cee4399ce234",
+        "status": "passed"
+      },
+      "prior_staging_identity": {
+        "source": ".audit/2026-09-21-provided-parsing/files.json",
+        "original_before_sha256": "6d290de658f620fccd714a3406601fcf5a296e940f9f1a9f0bc2cee4399ce234",
+        "original_after_sha256": "6d290de658f620fccd714a3406601fcf5a296e940f9f1a9f0bc2cee4399ce234",
+        "staged_before_sha256": "6d290de658f620fccd714a3406601fcf5a296e940f9f1a9f0bc2cee4399ce234",
+        "staged_after_sha256": "6d290de658f620fccd714a3406601fcf5a296e940f9f1a9f0bc2cee4399ce234"
+      },
+      "payload_scope": {
+        "riff_declared_end": 39497228,
+        "data_offset": 80,
+        "data_declared_bytes": 39497148,
+        "data_available_bytes": 33554352,
+        "sample_rate": 48000,
+        "byte_rate": 288000,
+        "block_align": 6,
+        "declared_pcm_seconds": 137.142875,
+        "available_payload_seconds_by_bytes": 116.50816666666667,
+        "available_complete_pcm_frames_seconds": 116.50816666666667,
+        "partial_final_frame_bytes": 0,
+        "missing_payload_seconds_by_bytes": 20.634708333333332
+      },
+      "fallback_limit": "Header repair can make the available prefix easier to decode but cannot reconstruct missing tail samples. No source alteration, repair, padding, inference, or audio listening was performed."
+    },
+    {
+      "path": "073946a18125717bdad58178466039fd/State of Affairs_STEM_BASS.wav",
+      "task_ids": [
+        "4b894ae3-1f23-4560-b13d-07ed1132074e"
+      ],
+      "bytes": 33554432,
+      "source_sha256": "157c0500975f01c5256d7b8288d9c29096e69ca3f925b4b274249e57425009fa",
+      "observed_issue": "blocked_truncated_payload",
+      "error": "RIFF or data chunk declares bytes beyond the actual end of file",
+      "pinned_remote_identity": {
+        "hash_kind": "sha256",
+        "expected_hash": "157c0500975f01c5256d7b8288d9c29096e69ca3f925b4b274249e57425009fa",
+        "observed_hash": "157c0500975f01c5256d7b8288d9c29096e69ca3f925b4b274249e57425009fa",
+        "status": "passed"
+      },
+      "prior_staging_identity": {
+        "source": ".audit/2026-09-21-provided-parsing/files.json",
+        "original_before_sha256": "157c0500975f01c5256d7b8288d9c29096e69ca3f925b4b274249e57425009fa",
+        "original_after_sha256": "157c0500975f01c5256d7b8288d9c29096e69ca3f925b4b274249e57425009fa",
+        "staged_before_sha256": "157c0500975f01c5256d7b8288d9c29096e69ca3f925b4b274249e57425009fa",
+        "staged_after_sha256": "157c0500975f01c5256d7b8288d9c29096e69ca3f925b4b274249e57425009fa"
+      },
+      "payload_scope": {
+        "riff_declared_end": 59064714,
+        "data_offset": 1024,
+        "data_declared_bytes": 58752000,
+        "data_available_bytes": 33553408,
+        "sample_rate": 48000,
+        "byte_rate": 288000,
+        "block_align": 6,
+        "declared_pcm_seconds": 204.0,
+        "available_payload_seconds_by_bytes": 116.50488888888889,
+        "available_complete_pcm_frames_seconds": 116.504875,
+        "partial_final_frame_bytes": 4,
+        "missing_payload_seconds_by_bytes": 87.49511111111111
+      },
+      "fallback_limit": "Header repair can make the available prefix easier to decode but cannot reconstruct missing tail samples. No source alteration, repair, padding, inference, or audio listening was performed."
+    },
+    {
+      "path": "40407caad9b871b09e3a075bdd971b15/Research Material.docx",
+      "task_ids": [
+        "46b34f78-6c06-4416-87e2-77b6d8b20ce9"
+      ],
+      "bytes": 2799328,
+      "source_sha256": "40407caad9b871b09e3a075bdd971b1539c7c2704f21d979cfae6400cdb0020e",
+      "observed_issue": "blocked_parse_error",
+      "error": "attributes construct error, line 2, column 258 (<string>, line 2)",
+      "pinned_remote_identity": {
+        "hash_kind": "sha256",
+        "expected_hash": "40407caad9b871b09e3a075bdd971b1539c7c2704f21d979cfae6400cdb0020e",
+        "observed_hash": "40407caad9b871b09e3a075bdd971b1539c7c2704f21d979cfae6400cdb0020e",
+        "status": "passed"
+      },
+      "prior_staging_identity": {
+        "source": ".audit/2026-09-21-provided-parsing/files.json",
+        "original_before_sha256": "40407caad9b871b09e3a075bdd971b1539c7c2704f21d979cfae6400cdb0020e",
+        "original_after_sha256": "40407caad9b871b09e3a075bdd971b1539c7c2704f21d979cfae6400cdb0020e",
+        "staged_before_sha256": "40407caad9b871b09e3a075bdd971b1539c7c2704f21d979cfae6400cdb0020e",
+        "staged_after_sha256": "40407caad9b871b09e3a075bdd971b1539c7c2704f21d979cfae6400cdb0020e"
+      },
+      "body_xml_fallback": {
+        "member": "word/document.xml",
+        "sha256": "1f1a408b908992890f46fca08613020c2b83f1822c01908a57543557d6542d55",
+        "well_formed": true,
+        "scope": "Literal body text read directly from the original ZIP member, read-only. The prior evaluator inspection established XML well-formedness on the staged copy. A working copy/raw XML reading route is available; no package repair or native rendering was attempted."
+      },
+      "broken_member": "word/_rels/document.xml.rels"
+    },
+    {
+      "path": "48836e54ef271e8fd1a301d3e20ea470/State of Affairs_STEM_ACGTRS.wav",
+      "task_ids": [
+        "4b894ae3-1f23-4560-b13d-07ed1132074e"
+      ],
+      "bytes": 33554432,
+      "source_sha256": "151356e97565977d9633140f8165f8c12f06f444f4c8b250716537ac818fb4ef",
+      "observed_issue": "blocked_truncated_payload",
+      "error": "RIFF or data chunk declares bytes beyond the actual end of file",
+      "pinned_remote_identity": {
+        "hash_kind": "sha256",
+        "expected_hash": "151356e97565977d9633140f8165f8c12f06f444f4c8b250716537ac818fb4ef",
+        "observed_hash": "151356e97565977d9633140f8165f8c12f06f444f4c8b250716537ac818fb4ef",
+        "status": "passed"
+      },
+      "prior_staging_identity": {
+        "source": ".audit/2026-09-21-provided-parsing/files.json",
+        "original_before_sha256": "151356e97565977d9633140f8165f8c12f06f444f4c8b250716537ac818fb4ef",
+        "original_after_sha256": "151356e97565977d9633140f8165f8c12f06f444f4c8b250716537ac818fb4ef",
+        "staged_before_sha256": "151356e97565977d9633140f8165f8c12f06f444f4c8b250716537ac818fb4ef",
+        "staged_after_sha256": "151356e97565977d9633140f8165f8c12f06f444f4c8b250716537ac818fb4ef"
+      },
+      "payload_scope": {
+        "riff_declared_end": 59064714,
+        "data_offset": 1024,
+        "data_declared_bytes": 58752000,
+        "data_available_bytes": 33553408,
+        "sample_rate": 48000,
+        "byte_rate": 288000,
+        "block_align": 6,
+        "declared_pcm_seconds": 204.0,
+        "available_payload_seconds_by_bytes": 116.50488888888889,
+        "available_complete_pcm_frames_seconds": 116.504875,
+        "partial_final_frame_bytes": 4,
+        "missing_payload_seconds_by_bytes": 87.49511111111111
+      },
+      "fallback_limit": "Header repair can make the available prefix easier to decode but cannot reconstruct missing tail samples. No source alteration, repair, padding, inference, or audio listening was performed."
+    },
+    {
+      "path": "ec76eafe083d0175de7e957f857f4292/Recreare_Contract_Outline.docx",
+      "task_ids": [
+        "01d7e53e-0513-4109-a242-8ccaf442cd21"
+      ],
+      "bytes": 27587,
+      "source_sha256": "ec76eafe083d0175de7e957f857f42929284d70e8630f105ca2915326f872869",
+      "observed_issue": "blocked_parse_error",
+      "error": "attributes construct error, line 2, column 256 (<string>, line 2)",
+      "pinned_remote_identity": {
+        "hash_kind": "git_blob_sha1",
+        "expected_hash": "a95479b79087d2d410ce629e0f1049ec37586f4c",
+        "observed_hash": "a95479b79087d2d410ce629e0f1049ec37586f4c",
+        "status": "passed"
+      },
+      "prior_staging_identity": {
+        "source": ".audit/2026-09-21-provided-parsing/files.json",
+        "original_before_sha256": "ec76eafe083d0175de7e957f857f42929284d70e8630f105ca2915326f872869",
+        "original_after_sha256": "ec76eafe083d0175de7e957f857f42929284d70e8630f105ca2915326f872869",
+        "staged_before_sha256": "ec76eafe083d0175de7e957f857f42929284d70e8630f105ca2915326f872869",
+        "staged_after_sha256": "ec76eafe083d0175de7e957f857f42929284d70e8630f105ca2915326f872869"
+      },
+      "body_xml_fallback": {
+        "member": "word/document.xml",
+        "sha256": "3825d9f321fa1e3b86a0bc593b233d382f0435f2f4b50d119c3698c782cedf22",
+        "well_formed": true,
+        "scope": "Literal body text read directly from the original ZIP member, read-only. The prior evaluator inspection established XML well-formedness on the staged copy. A working copy/raw XML reading route is available; no package repair or native rendering was attempted."
+      },
+      "broken_member": "word/_rels/document.xml.rels"
+    }
+  ],
+  "tasks": [
+    {
+      "task_id": "38889c3b-e3d4-49c8-816a-3cc8e5313aba",
+      "source_index_zero_based": 12,
+      "source_line_one_based": 13,
+      "raw_line_sha256_excluding_newline": "198ecac58a13ac3d8f74809e9e038779b1603ff0ba81534d5d76649253e5b1f0",
+      "review_canonical_row_sha256": "01130962efdd338a07c2b536fc749444889d09ff0a1c36122ba6df8c18cf398e",
+      "source_input_status": "unconfirmed",
+      "baseline_content_feasibility_preserved": "needs_clarification",
+      "original_rubric_count": 35,
+      "dependency_groups": [
+        {
+          "dependency_kind": "direct_source_dependency",
+          "original_criteria": [
+            {
+              "index_zero_based": 22,
+              "rubric_item_id": "55f75d8c-a054-42db-9c92-1bafc1e75a0d",
+              "signed_score": 2,
+              "criterion": "The Master track is tightly synchronized to the provided DRUM REFERENCE TRACK.wav with initial start-offset ≤ 10 ms when both start at t=0 (48 kHz)."
+            },
+            {
+              "index_zero_based": 24,
+              "rubric_item_id": "ed2c2deb-548d-4432-a590-9ced8f41eb31",
+              "signed_score": 1,
+              "criterion": "If deliverable incorporated samples, Samples stem is tightly synchronized to DRUM REFERENCE TRACK.wav with initial start-offset ≤ 10 ms at t=0."
+            }
+          ],
+          "affected_files": [
+            "028fb83486152124cfecf2667c3cef37/DRUM REFERENCE TRACK.wav"
+          ],
+          "basis": "These criteria explicitly compare the initial offset with the supplied drum reference; index 24 applies only when samples were incorporated.",
+          "source_input_impact": "unconfirmed",
+          "impact": "The beginning is inside the available approximately 116.508-second PCM payload. Tail truncation alone does not remove initial-offset evidence. No synchronization check or auditory inspection was performed."
+        },
+        {
+          "dependency_kind": "direct_source_dependency",
+          "original_criteria": [
+            {
+              "index_zero_based": 23,
+              "rubric_item_id": "bc6da168-177b-4121-98ef-05dbe7479939",
+              "signed_score": 2,
+              "criterion": "The Master track exhibits end-to-end drift ≤ 10 ms relative to DRUM REFERENCE TRACK.wav over the full duration."
+            },
+            {
+              "index_zero_based": 25,
+              "rubric_item_id": "f926158a-e2f5-40f9-87f9-c050b373e4c2",
+              "signed_score": 1,
+              "criterion": "If deliverable incorporated samples, Samples stem exhibits end-to-end drift ≤ 10 ms relative to DRUM REFERENCE TRACK.wav over the full duration."
+            }
+          ],
+          "affected_files": [
+            "028fb83486152124cfecf2667c3cef37/DRUM REFERENCE TRACK.wav"
+          ],
+          "basis": "These criteria explicitly require end-to-end drift relative to the reference over the full duration; index 25 applies only when samples were incorporated.",
+          "source_input_impact": "unconfirmed",
+          "impact": "The declared PCM duration is approximately 137.143 seconds, but only approximately 116.508 seconds of payload is present. A full-length source-relative drift conclusion is unconfirmed because the final approximately 20.635 seconds is absent."
+        },
+        {
+          "dependency_kind": "direct_source_dependency",
+          "original_criteria": [
+            {
+              "index_zero_based": 26,
+              "rubric_item_id": "a8d133de-7218-4a02-96be-84b4f1a7e917",
+              "signed_score": 2,
+              "criterion": "The drum content in the Master track matches the provided DRUM REFERENCE TRACK.wav when aligned (e.g., cross-correlation peak at lag ≤ 10 ms with high similarity)."
+            }
+          ],
+          "affected_files": [
+            "028fb83486152124cfecf2667c3cef37/DRUM REFERENCE TRACK.wav"
+          ],
+          "basis": "This criterion explicitly compares drum content in the Master with the supplied drum reference.",
+          "source_input_impact": "unconfirmed",
+          "impact": "The available head can support a partial comparison; it cannot establish equivalence to absent tail audio. The intended comparison extent and any treatment of the truncated source remain unconfirmed."
+        },
+        {
+          "dependency_kind": "conditional_source_route",
+          "original_criteria": [
+            {
+              "index_zero_based": 32,
+              "rubric_item_id": "cc539bb4-ea6f-459a-b520-5a0cb8bdc1a1",
+              "signed_score": 2,
+              "criterion": "The Master track tempo is 140 BPM (± 1 BPM), verified by alignment to the provided drum reference or tempo analysis."
+            }
+          ],
+          "affected_files": [
+            "028fb83486152124cfecf2667c3cef37/DRUM REFERENCE TRACK.wav"
+          ],
+          "basis": "The criterion permits either reference alignment or tempo analysis.",
+          "source_input_impact": "unconfirmed",
+          "impact": "A reference-alignment route inherits the source limit. Output tempo analysis is an explicit alternative; this defect does not establish failure of the tempo criterion."
+        }
+      ],
+      "prompt_level_obligations": [
+        {
+          "prompt_excerpt": "The instrumental track should be 140 bpm, and all instrumentation should be tightly synchronized to the Drum track provided.",
+          "impact": "Using the supplied drums across the requested approximately 2:17 Master requires an explicit treatment of unavailable tail data. Header repair or padding cannot recover the original missing samples; this record does not choose a substitute or judge an output."
+        }
+      ],
+      "remainder_unknown": {
+        "status": "not_assessed_for_source_defect_impact",
+        "rubric_item_ids": [
+          "cd6371ef-3939-42dc-87ea-1e7491ee5daf",
+          "9c8783e0-4d36-48d6-b839-3e34f8e5014a",
+          "4978367d-3356-4a01-9500-2feeeff0223d",
+          "184d6147-15fb-49d7-a0b9-346a510f4bcb",
+          "d85306c6-4e63-4a23-b736-7c8d9ce207d1",
+          "c6af875b-9299-41da-abb4-5fe5f3f6a259",
+          "40a65e61-8162-4ac9-b383-dd737d9b9646",
+          "f9437482-03fa-4f5d-8e55-b6204a592632",
+          "f150d9ab-38fa-416a-8634-e362eb0bb6e5",
+          "a776e43d-4523-4c14-89ad-312e06d19e3a",
+          "c4d354ce-bca4-4339-84b3-5c40a7748ebc",
+          "9894fd1b-9c50-46cd-bbce-44e7a577ffd8",
+          "294cbd0a-e4c0-4f20-8f3f-045a8c53a599",
+          "1cb64e85-3079-4b3d-9b29-de31199db64f",
+          "d9f2b90c-9537-475f-8cef-904458b25da3",
+          "4564d2c5-9ebb-417d-8f23-2b46cdb72d69",
+          "b20b454f-f9e8-438c-94bf-83c84e3858d8",
+          "43a9f60a-f9ac-44c2-aff3-426b796ad59a",
+          "f9a4ecbc-729c-4f41-a75d-2ff6e6e77fb2",
+          "6ae8ee64-7418-4c6c-aa5b-8418702178a3",
+          "a43b4545-4f7e-40df-821f-24bfdfdd2f6c",
+          "91486da0-612b-4b6c-851d-bfd2cb2f3269",
+          "18450dbc-8c9f-41d1-bc5d-0332fd5f2baa",
+          "b9c637a4-69f6-45ba-9a09-97943e5c1c31",
+          "1d506d14-8140-4d4f-aeb6-9ec0d8530666",
+          "19ca3fcd-9037-4f42-a3a5-959798c29bd5",
+          "0134bb64-c397-4163-9bc3-dca1ab1364cc",
+          "90499dfb-4cc7-45bf-a621-4cdf993682f9",
+          "c4d68059-387d-48ed-8e98-9ed906f08779"
+        ],
+        "meaning": "No direct dependence conclusion is made for these criteria in this bounded mapping. They are neither cleared nor failed; task outputs and other evidence have not been evaluated."
+      },
+      "source_linked_observations": []
+    },
+    {
+      "task_id": "4b894ae3-1f23-4560-b13d-07ed1132074e",
+      "source_index_zero_based": 14,
+      "source_line_one_based": 15,
+      "raw_line_sha256_excluding_newline": "268ec95454b11f9dd495a41effb2849e00bc7947587b9c9c60595ee43654ec6b",
+      "review_canonical_row_sha256": "3e4070d599dd69c0aea1d7ccb721846ea378516c886542afa91f0ad945305807",
+      "source_input_status": "unconfirmed",
+      "baseline_content_feasibility_preserved": "candidate",
+      "original_rubric_count": 17,
+      "dependency_groups": [
+        {
+          "dependency_kind": "direct_source_dependency",
+          "original_criteria": [
+            {
+              "index_zero_based": 11,
+              "rubric_item_id": "a822b083-0caf-4600-97fe-d4c4ce419d20",
+              "signed_score": 2,
+              "criterion": "Every timestamp labeled as a wrong note in Bass Edit Spots.docx is pitch‑corrected by replacement from a matching repeated section."
+            }
+          ],
+          "affected_files": [
+            "073946a18125717bdad58178466039fd/State of Affairs_STEM_BASS.wav"
+          ],
+          "basis": "The prompt identifies the supplied raw bass as the editing source, and the criterion requires replacement from a matching repeated section.",
+          "source_input_impact": "unconfirmed",
+          "impact": "All five listed edit times occur before the available approximately 116.505-second cutoff. Matching donor sections and their availability were not inspected. Missing tail samples cannot be restored by header repair; the defect alone does not establish that these local edits are impossible.",
+          "source_evidence": {
+            "file": "5940a94634a27388fbbcebb96df50f03/Bass Edit Spots.docx",
+            "member": "word/document.xml",
+            "member_sha256": "beb1bb90d2704e28fb3077f6f9ebe47d634a04f86881955a651606f52d88e5b9",
+            "paragraph_index_basis": "zero-based w:p descendants in document.xml",
+            "paragraphs": [
+              {
+                "index": 3,
+                "text": "Edit 1 - 00:35.142"
+              },
+              {
+                "index": 5,
+                "text": "Edit 2 - 00:50.785"
+              },
+              {
+                "index": 7,
+                "text": "Edit 3 - 01:17.571"
+              },
+              {
+                "index": 9,
+                "text": "Edit 4 - 01:33.428"
+              },
+              {
+                "index": 11,
+                "text": "Edit 5 - 01:45.709"
+              }
+            ]
+          }
+        },
+        {
+          "dependency_kind": "direct_source_dependency",
+          "original_criteria": [
+            {
+              "index_zero_based": 12,
+              "rubric_item_id": "a28cf793-894b-4b91-a505-ce8680be5927",
+              "signed_score": 2,
+              "criterion": "Every timestamp labeled as string noise/click/pop in Bass Edit Spots.docx is silenced without changing total length of the bass"
+            },
+            {
+              "index_zero_based": 13,
+              "rubric_item_id": "2dcbf63c-2df0-4ae3-b60d-ee95301b86c0",
+              "signed_score": 1,
+              "criterion": "Edit boundary cleanliness: at each Bass Edit Spots.docx timestamp, the bass edit introduces no audible artifacts, including but not limited to double notes, clicks, pops, dropouts, or glitches"
+            }
+          ],
+          "affected_files": [
+            "073946a18125717bdad58178466039fd/State of Affairs_STEM_BASS.wav"
+          ],
+          "basis": "The prompt requires editing the supplied raw bass; these criteria assess silence replacement without changing bass length and local edit-boundary cleanliness.",
+          "source_input_impact": "unconfirmed",
+          "impact": "All listed edit positions lie in the available head. Local audio quality and edit success remain untested. For the length-preservation part of index 12, the complete declared 204-second source payload is unavailable."
+        },
+        {
+          "dependency_kind": "potential_indirect_effect",
+          "original_criteria": [
+            {
+              "index_zero_based": 5,
+              "rubric_item_id": "35793836-234c-4b0d-8d7b-ebdf7c0058fb",
+              "signed_score": 2,
+              "criterion": "The delivered file’s total length is 3 minutes and 24 seconds (±1%)."
+            },
+            {
+              "index_zero_based": 6,
+              "rubric_item_id": "a48a6056-2d74-46da-b658-130e47329d29",
+              "signed_score": 2,
+              "criterion": "Start and end alignment of the delivered file match the Rough Mix without added leading or trailing silence."
+            },
+            {
+              "index_zero_based": 8,
+              "rubric_item_id": "f623a2c6-58aa-4f46-84fb-06f61cc569b0",
+              "signed_score": 2,
+              "criterion": "The non-bass guitar tonal balance between the rough mix and the final mix is not audibly exaggerated"
+            },
+            {
+              "index_zero_based": 9,
+              "rubric_item_id": "eb2e13df-2240-4838-bc28-4b5cafba6ac7",
+              "signed_score": 2,
+              "criterion": "Stereo image preserved: the stereo image of the delivered file is not audibly skewed compared to the rough mix"
+            },
+            {
+              "index_zero_based": 10,
+              "rubric_item_id": "e15dd64d-e6a5-413c-b6a9-44ab5829e62b",
+              "signed_score": 1,
+              "criterion": "Overall loudness proximity: integrated loudness difference between delivered mix and Rough Mix is within ±2.0 LUFS."
+            },
+            {
+              "index_zero_based": 15,
+              "rubric_item_id": "1368593f-1c4b-4c2e-bcf6-4764a4f767bb",
+              "signed_score": 2,
+              "criterion": "The delivered file has no audible time-stretching"
+            },
+            {
+              "index_zero_based": 16,
+              "rubric_item_id": "343647c5-29ae-457b-8cb2-96fbdbfdb10c",
+              "signed_score": 2,
+              "criterion": "The delivered file has no audible tempo change"
+            }
+          ],
+          "affected_files": [
+            "073946a18125717bdad58178466039fd/State of Affairs_STEM_BASS.wav",
+            "48836e54ef271e8fd1a301d3e20ea470/State of Affairs_STEM_ACGTRS.wav"
+          ],
+          "basis": "The requested final mix combines edited bass with the other supplied stems while preserving their lengths and the Rough Mix character. These criteria assess the resulting full mix, including length, alignment, guitar balance, stereo image, loudness, and timing artifacts.",
+          "source_input_impact": "unconfirmed",
+          "impact": "Both stems end around 116.505 seconds while their data chunks declare 204 seconds. This constrains a full-length reconstruction from these stems. The complete Rough Mix and other supplied stems provide additional evidence; their use does not automatically establish equivalence to missing isolated samples. These output criteria do not directly require a valid original WAV header and are not automatically failed."
+        }
+      ],
+      "prompt_level_obligations": [
+        {
+          "prompt_excerpt": "All track lengths should remain the same before and after editing to ensure that all instruments sync up.",
+          "impact": "The bass and acoustic-guitar stem tails are missing from the exact supplied objects. Changing header lengths cannot recreate those samples. No donor-selection, stem reconstruction, alternate-mix strategy, or output acceptability judgment was attempted."
+        }
+      ],
+      "remainder_unknown": {
+        "status": "not_assessed_for_source_defect_impact",
+        "rubric_item_ids": [
+          "ba10bf52-e77d-494e-aba9-7473da1afb36",
+          "fed094f0-f2cc-4e15-95fb-8e48e375ff70",
+          "29f9cda6-83a6-4a69-874f-81fc58133563",
+          "ad0fcfce-790b-4a8c-a7c6-667d9c6eaca4",
+          "8b457fd7-dd0a-42ee-8afe-236196206c24",
+          "eec14662-b395-4712-8a0f-b5db8b8e75ed",
+          "b7e74ac9-3641-4f96-85e4-72da4b58969a"
+        ],
+        "meaning": "No direct dependence conclusion is made for these criteria in this bounded mapping. They are neither cleared nor failed; task outputs and other evidence have not been evaluated."
+      },
+      "source_linked_observations": [
+        {
+          "kind": "available_edit_positions",
+          "timecodes": [
+            "00:35.142",
+            "00:50.785",
+            "01:17.571",
+            "01:33.428",
+            "01:45.709"
+          ],
+          "all_before_available_cutoff": true,
+          "limits": "The timecodes were read from the valid Bass Edit Spots.docx body. No audio was listened to and no matching donor section was selected."
+        }
+      ]
+    },
+    {
+      "task_id": "46b34f78-6c06-4416-87e2-77b6d8b20ce9",
+      "source_index_zero_based": 64,
+      "source_line_one_based": 65,
+      "raw_line_sha256_excluding_newline": "416edc9b420fb16a9a44025ca20004549f599cec124ef672a3c6ed1db54ceacb",
+      "review_canonical_row_sha256": "0dbed55652c954834f67997487daaf42a6df2994a850c73c09b75fec238048b8",
+      "source_input_status": "unconfirmed",
+      "baseline_content_feasibility_preserved": "candidate",
+      "original_rubric_count": 53,
+      "dependency_groups": [
+        {
+          "dependency_kind": "direct_source_dependency",
+          "original_criteria": [
+            {
+              "index_zero_based": 22,
+              "rubric_item_id": "eaf36aaa-26e8-4b0f-999a-798d7ec3d6e7",
+              "signed_score": 2,
+              "criterion": "At least one oil‑market citation is drawn from a source listed in the Reference File \"Research Material.docx\" and includes a working URL."
+            },
+            {
+              "index_zero_based": 23,
+              "rubric_item_id": "725ec155-5bb3-40fe-8fb9-b57c3eefcc8c",
+              "signed_score": 2,
+              "criterion": "At least one natural‑gas‑market citation is drawn from a source listed in the Reference File \"Research Material.docx\" and includes a working URL."
+            }
+          ],
+          "affected_files": [
+            "40407caad9b871b09e3a075bdd971b15/Research Material.docx"
+          ],
+          "basis": "These criteria explicitly require at least one oil and one natural-gas citation from the source list in Research Material.docx.",
+          "source_input_impact": "unconfirmed",
+          "impact": "The ordinary python-docx reader raises XMLSyntaxError in document relationships. Read-only access to word/document.xml exposes all nine source-name/literal-URL entries, so the list is available through raw XML on a scratch copy. Working URLs, current public access, relevant data, and actual citations remain unverified.",
+          "source_evidence": {
+            "file": "40407caad9b871b09e3a075bdd971b15/Research Material.docx",
+            "member": "word/document.xml",
+            "member_sha256": "1f1a408b908992890f46fca08613020c2b83f1822c01908a57543557d6542d55",
+            "paragraph_index_basis": "zero-based w:p descendants in document.xml",
+            "paragraphs": [
+              {
+                "index": 0,
+                "text": "Reference MaterialTo prepare your report, you'll need to leverage publicly available energy market data and research databases from the following industry publications. Note that you should only use publicly available data from these sources that do not require going behind paywalls, as this public information is sufficient to successfully complete the task."
+              },
+              {
+                "index": 1,
+                "text": "Source List"
+              },
+              {
+                "index": 2,
+                "text": "EIA (Energy Information Administration): https://www.eia.gov/"
+              },
+              {
+                "index": 3,
+                "text": "Bloomberg Markets: https://www.bloomberg.com/markets/commodities"
+              },
+              {
+                "index": 4,
+                "text": "S&P Global Ratings: https://www.spglobal.com/ratings/en/"
+              },
+              {
+                "index": 5,
+                "text": "World Bank Commodity Outlook: https://www.worldbank.org/en/research/commodity-markets"
+              },
+              {
+                "index": 6,
+                "text": "PIMCO Insights: https://www.pimco.com/en-us/insights"
+              },
+              {
+                "index": 7,
+                "text": "ICE Fixed Income: https://www.ice.com/insights/fixed-income/fixed-income-in-2025"
+              },
+              {
+                "index": 8,
+                "text": "Janus Henderson High Yield Outlook: https://www.janushenderson.com/en-us/investor/article/high-yield-bonds-outlook-taking-the-scenic-route-in-2025/"
+              },
+              {
+                "index": 9,
+                "text": "Morgan Stanley Fixed Income Outlook: https://www.morganstanley.com/insights/articles/bond-market-outlook-fixed-income-2025-sector-picks"
+              },
+              {
+                "index": 10,
+                "text": "Moody’s Sustainable Bond Market: https://www.esgtoday.com/moodys-predicts-1-trillion-sustainable-bond-market-in-2025-despite-political-headwinds/"
+              }
+            ]
+          }
+        },
+        {
+          "dependency_kind": "potential_indirect_effect",
+          "original_criteria": [
+            {
+              "index_zero_based": 20,
+              "rubric_item_id": "799d7f99-54a3-4a68-bead-5219fafa8751",
+              "signed_score": 2,
+              "criterion": "Oil market overview includes at least one quantitative datapoint (e.g., price range, supply/demand, inventory, or production) with a working citation URL."
+            },
+            {
+              "index_zero_based": 21,
+              "rubric_item_id": "25c24fb2-231f-48ba-9daf-8b0fd394ce8c",
+              "signed_score": 2,
+              "criterion": "Natural gas market overview includes at least one quantitative datapoint (e.g., price, storage levels, production, exports) with a working citation URL."
+            },
+            {
+              "index_zero_based": 24,
+              "rubric_item_id": "5538b146-d785-4eb9-87a6-6f5b000e615e",
+              "signed_score": 2,
+              "criterion": "All cited sources used in the report are publicly accessible without login or paywall."
+            },
+            {
+              "index_zero_based": 25,
+              "rubric_item_id": "96d105cb-a776-41ae-9575-06497878b19f",
+              "signed_score": 1,
+              "criterion": "Each citation includes a publication date or an access date alongside the URL."
+            }
+          ],
+          "affected_files": [
+            "40407caad9b871b09e3a075bdd971b15/Research Material.docx"
+          ],
+          "basis": "These criteria concern quantitative oil/gas citations, public accessibility, and citation dates. The prompt directs the report to the attached public-source leads.",
+          "source_input_impact": "unconfirmed",
+          "impact": "The malformed relationships do not by themselves establish a lack of working public data: source names and literal URLs are readable. No network research or access/date validation was performed, so downstream effect remains unknown."
+        }
+      ],
+      "prompt_level_obligations": [
+        {
+          "prompt_excerpt": "To prepare your report, you'll need to leverage publicly available energy market data from industry sources that do not require paid access, attached in the reference file.",
+          "impact": "Use of the source list can proceed through the observed body-XML fallback. This is a limited reading route, not a repair of the original DOCX, a native application compatibility proof, or evidence that its external resources are accessible."
+        }
+      ],
+      "remainder_unknown": {
+        "status": "not_assessed_for_source_defect_impact",
+        "rubric_item_ids": [
+          "36d8a34a-8ab9-404b-be95-899a8ec5aec6",
+          "d4bc0708-077c-4561-8adf-4ca4b805c2f7",
+          "0257fb54-c66f-471b-8dc9-64ca154f7513",
+          "027c3bf8-5436-46b0-bcf6-5697c1083f5d",
+          "766d358c-2361-4614-8421-1a6dc0e044c7",
+          "53324549-b613-49de-b149-55f9c26adf80",
+          "305bc74c-b671-404a-9fa7-394acb209ddc",
+          "32a7a8aa-c8e8-4cea-94d1-eeff02b0d8b0",
+          "4b046cbb-985b-415d-b473-282be04e2607",
+          "50c3de1a-b5c6-43dd-a9da-59664ed2bc2c",
+          "1fe67563-9ba3-4212-a3bf-f0d45beaafc7",
+          "4799e667-87d8-457a-8858-a8d46a1b076c",
+          "243d816c-181f-4285-9b80-1297b97d4ccf",
+          "13e033e2-0dc5-4d97-b231-a9b6670a32d2",
+          "5c9b8c75-c68d-4f1d-846a-c8adb3605d09",
+          "643830c2-a322-41bd-95d5-5697de1ee5c3",
+          "1e2218d2-858b-4474-8cf8-69bcfccc61f5",
+          "61dbec90-49b7-4440-8dc1-c002068f575c",
+          "6a14d8de-9608-4a92-8e9a-ee060c2dd298",
+          "0eeb773b-5ea6-41a3-8c55-6a15183acc3b",
+          "b5d68843-e3b7-41cd-b943-7457ac3d624b",
+          "d29a34bb-68ca-4d1d-b854-b94e2897da34",
+          "d66c6806-8279-4ac6-af17-3a03e4bf3cdd",
+          "a7c6a88d-f1ee-4d01-ae3a-3b1156425ed2",
+          "b6135ba8-8eab-4103-a1e9-681ffaed45af",
+          "f7446fff-8005-4507-9762-accd3e5ca6a4",
+          "079189d2-065c-4594-b0d5-cec60d444b1e",
+          "65a590e2-c8cd-421a-a4dd-d70367cf7296",
+          "9ada208c-7f1b-4b29-b62d-052642b97997",
+          "f3823b90-cf1d-4d5d-9801-a8ae8ad59c69",
+          "e79aa12c-0aa3-481c-b12e-80edae5d6796",
+          "ea75d446-9b13-4cd4-8d74-19e5e814637b",
+          "e2102451-ef54-4e78-867f-750da539c72f",
+          "463246f5-a9d1-41d2-a381-13a5832cdac7",
+          "f5ae2cd5-614d-4914-88c3-4bd54939ebd9",
+          "ba72db24-475e-44f5-a1d2-fb77b7267d91",
+          "2c8d9ee8-7200-4859-b813-c5e2766548dd",
+          "9d9209d6-9852-457f-aa1e-67f2b8d6f82b",
+          "a8f89294-1fe8-4714-8e14-0d6148bac753",
+          "30688218-0ccb-439a-9872-23bcc0009805",
+          "3f42c08b-3cf2-4d7f-a22b-6f08bd9c71c8",
+          "ed8d2a25-e43d-4c52-9bde-561a36c4e976",
+          "e7f43843-d3ed-4e51-b9d5-a6d8acb6294e",
+          "e2921410-a822-407b-877a-40792accc98b",
+          "c70afa11-9715-4e06-bf03-b139af6fd08a",
+          "764c0c17-9930-452a-8fe0-e4bd6d6512f5",
+          "2946ace2-57f3-4699-acf0-8a5b3f8d06b1"
+        ],
+        "meaning": "No direct dependence conclusion is made for these criteria in this bounded mapping. They are neither cleared nor failed; task outputs and other evidence have not been evaluated."
+      },
+      "source_linked_observations": []
+    },
+    {
+      "task_id": "01d7e53e-0513-4109-a242-8ccaf442cd21",
+      "source_index_zero_based": 178,
+      "source_line_one_based": 179,
+      "raw_line_sha256_excluding_newline": "216549f83aedae921fc53db9f5a251be8967af26600d6f132ad30d04d41ca12a",
+      "review_canonical_row_sha256": "85ed62ac95c99799087364f94030ee438ab67763b6d8e5165af928d949ad93df",
+      "source_input_status": "unconfirmed",
+      "baseline_content_feasibility_preserved": "candidate",
+      "original_rubric_count": 65,
+      "dependency_groups": [
+        {
+          "dependency_kind": "direct_source_dependency",
+          "original_criteria": [
+            {
+              "index_zero_based": 16,
+              "rubric_item_id": "2475c0b6-95dd-477a-ac1f-4852289b3537",
+              "signed_score": 1,
+              "criterion": "Exhibit A (or equivalent schedule attachment) lists program days and start/end times for weeknight and weekend sessions taken directly from \"Recreare_Contract_Outline.docx\""
+            },
+            {
+              "index_zero_based": 17,
+              "rubric_item_id": "fe3bfa63-8902-45b2-9d90-a2943c50c923",
+              "signed_score": 1,
+              "criterion": "Exhibit B (or equivalent space/equipment attachment) lists the Multi-Purpose Room and the locked storage closet directly taken from\"Recreare_Contract_Outline.docx\""
+            }
+          ],
+          "affected_files": [
+            "ec76eafe083d0175de7e957f857f4292/Recreare_Contract_Outline.docx"
+          ],
+          "basis": "The criteria explicitly require information taken directly from Recreare_Contract_Outline.docx.",
+          "source_input_impact": "unconfirmed",
+          "impact": "The main body is readable by raw XML despite invalid relationships, but its observed exhibit contents do not establish the exact schedule and Multi-Purpose Room data requested by these criteria. Retain source-to-rubric alignment uncertainty; do not invent those source values.",
+          "source_evidence": {
+            "file": "ec76eafe083d0175de7e957f857f4292/Recreare_Contract_Outline.docx",
+            "member": "word/document.xml",
+            "member_sha256": "3825d9f321fa1e3b86a0bc593b233d382f0435f2f4b50d119c3698c782cedf22",
+            "paragraph_index_basis": "zero-based w:p descendants in document.xml",
+            "paragraphs": [
+              {
+                "index": 77,
+                "text": "EXHIBIT A"
+              },
+              {
+                "index": 78,
+                "text": "Spaces Subject to this Agreement"
+              },
+              {
+                "index": 81,
+                "text": "Fitness Room: 450 sq. ft. Tiled floor."
+              },
+              {
+                "index": 87,
+                "text": "Fitness Closet: 175 sq. ft. Concrete floor."
+              },
+              {
+                "index": 93,
+                "text": "EXHIBIT B"
+              },
+              {
+                "index": 95,
+                "text": "Ownership of Equipment"
+              },
+              {
+                "index": 101,
+                "text": "RU will bring additional equipment for exclusive RecFit program use. RecFit- owned items will be stored in the Fitness Room storage closet and shall be referred to as the RecFit Storage Closet RecFit items allowed to be stored will include program t-shirts, water bottles, participation incentive items, and materials needed for RecFit programming. RecFit will be responsible for reimbursing the City for any rekeyed locks and City Staff will have access to the closet to perform necessary Facility and Fire inspections. General facility users will not have access to the locked RecFit Storage Room."
+              }
+            ]
+          }
+        },
+        {
+          "dependency_kind": "direct_source_dependency",
+          "original_criteria": [
+            {
+              "index_zero_based": 10,
+              "rubric_item_id": "f1acc2fd-ba66-4302-b9e6-ddfa76dd5485",
+              "signed_score": 1,
+              "criterion": "A 'Renewal and Extensions' provision appears and caps renewals at two single-year extensions subject to mutual written agreement."
+            },
+            {
+              "index_zero_based": 25,
+              "rubric_item_id": "1b04661d-734f-45d2-9eb0-b5e14a223fd7",
+              "signed_score": 1,
+              "criterion": "A nondiscrimination/equal opportunity clause is included."
+            },
+            {
+              "index_zero_based": 29,
+              "rubric_item_id": "26b83e13-46d2-4d02-9796-f66e546a21c2",
+              "signed_score": 1,
+              "criterion": "A Termination for Cause provision (e.g., for material breach) is included."
+            },
+            {
+              "index_zero_based": 30,
+              "rubric_item_id": "d5d467ff-f8b1-42ba-a2ce-0ee120760a75",
+              "signed_score": 1,
+              "criterion": "A Termination for Convenience provision with advance written notice is included."
+            },
+            {
+              "index_zero_based": 33,
+              "rubric_item_id": "c5c79302-6ac1-4329-8d03-0eab0f496b86",
+              "signed_score": 1,
+              "criterion": "A General Terms section appears in the agreement."
+            },
+            {
+              "index_zero_based": 34,
+              "rubric_item_id": "f5a8cd63-f898-4acf-b9dd-510957dad664",
+              "signed_score": 1,
+              "criterion": "A section addressing Use and Care of Space and Responsibilities appears in the agreement."
+            },
+            {
+              "index_zero_based": 35,
+              "rubric_item_id": "15fc9d7b-57e0-452a-8d31-a4d7ecc91303",
+              "signed_score": 1,
+              "criterion": "A section for Applicable Federal, State and City Requirements appears in the agreement."
+            },
+            {
+              "index_zero_based": 36,
+              "rubric_item_id": "3318ebb8-0cbe-4068-9f81-9aae41c73810",
+              "signed_score": 1,
+              "criterion": "A section for Insurance and Indemnity appears in the agreement."
+            },
+            {
+              "index_zero_based": 37,
+              "rubric_item_id": "97f394ba-6cdf-4064-9d1f-11f921b2fe91",
+              "signed_score": 1,
+              "criterion": "A Termination of Agreement section appears in the agreement."
+            },
+            {
+              "index_zero_based": 38,
+              "rubric_item_id": "93d774d8-038b-4e47-b3cd-c7a4317353d1",
+              "signed_score": 1,
+              "criterion": "A Miscellaneous section appears in the agreement."
+            },
+            {
+              "index_zero_based": 51,
+              "rubric_item_id": "eb4e4f12-6ee1-43b5-bec1-d4706c4fd167",
+              "signed_score": 1,
+              "criterion": "A subsection for Attachments appears in the Miscellaneous section."
+            },
+            {
+              "index_zero_based": 63,
+              "rubric_item_id": "2cc74d37-c57c-4348-a5d2-1dfd9b438afd",
+              "signed_score": 1,
+              "criterion": "The agreement includes a 'Business License' or equivalent compliance subsection (if applicable) under insurance/indemnity or miscellaneous."
+            }
+          ],
+          "affected_files": [
+            "ec76eafe083d0175de7e957f857f4292/Recreare_Contract_Outline.docx"
+          ],
+          "basis": "The prompt explicitly assigns the expected articles and subsections to the outline; these criteria correspond to the observed headings.",
+          "source_input_impact": "unconfirmed",
+          "impact": "The headings are available through body-XML reading on a scratch copy. The malformed relationship file blocks the ordinary DOCX reader but does not remove these visible heading strings. Inclusion, detailed legal content, and suitability of a produced agreement were not evaluated.",
+          "source_evidence": {
+            "file": "ec76eafe083d0175de7e957f857f4292/Recreare_Contract_Outline.docx",
+            "member": "word/document.xml",
+            "member_sha256": "3825d9f321fa1e3b86a0bc593b233d382f0435f2f4b50d119c3698c782cedf22",
+            "paragraph_index_basis": "zero-based w:p descendants in document.xml",
+            "paragraphs": [
+              {
+                "index": 1,
+                "text": "ARTICLE 1. GENERAL TERMS"
+              },
+              {
+                "index": 3,
+                "text": "    1.2 RENEWAL AND EXTENSIONS"
+              },
+              {
+                "index": 7,
+                "text": "ARTICLE 2. USE AND CARE OF SPACE; RESPONSIBILITIES"
+              },
+              {
+                "index": 12,
+                "text": "ARTICLE 3. APPLICABLE FEDERAL, STATE, AND CITY REQUIREMENTS"
+              },
+              {
+                "index": 13,
+                "text": "    3.1 EQUAL BUSINESS OPPORTUNITY ORDINANCE"
+              },
+              {
+                "index": 14,
+                "text": "ARTICLE 4. INSURANCE AND INDEMNITY"
+              },
+              {
+                "index": 16,
+                "text": "    4.2 BUSINESS LICENSE"
+              },
+              {
+                "index": 18,
+                "text": "ARTICLE 5. TERMINATION OF AGREEMENT"
+              },
+              {
+                "index": 19,
+                "text": "    5.1 TERMINATION FOR CAUSE"
+              },
+              {
+                "index": 20,
+                "text": "    5.2 TERMINATION FOR CONVENIENCE"
+              },
+              {
+                "index": 21,
+                "text": "ARTICLE 6. MISCELLANEOUS"
+              },
+              {
+                "index": 22,
+                "text": "    6.1 ATTACHMENTS"
+              }
+            ]
+          }
+        },
+        {
+          "dependency_kind": "direct_source_dependency",
+          "original_criteria": [
+            {
+              "index_zero_based": 52,
+              "rubric_item_id": "de528867-1550-4af4-9d6c-ecc2220abeb5",
+              "signed_score": 1,
+              "criterion": "The body text cross-references 'Exhibit A' and 'Exhibit B' where their contents are described."
+            }
+          ],
+          "affected_files": [
+            "ec76eafe083d0175de7e957f857f4292/Recreare_Contract_Outline.docx"
+          ],
+          "basis": "The prompt requires the two outline exhibits, and this criterion requires cross-references where their contents are described.",
+          "source_input_impact": "unconfirmed",
+          "impact": "Raw body XML identifies Exhibit A as spaces and Exhibit B as equipment ownership. The cross-references can be inspected through this fallback; their correct content and reconciliation with the schedule/space wording of indices 16 and 17 remain unconfirmed."
+        },
+        {
+          "dependency_kind": "direct_source_dependency",
+          "original_criteria": [
+            {
+              "index_zero_based": 53,
+              "rubric_item_id": "b3a956a0-87d7-4a58-ad3e-4b02958b2952",
+              "signed_score": 1,
+              "criterion": "An Equipment Liability statement assigns RU responsibility for damage to City equipment arising from program use."
+            },
+            {
+              "index_zero_based": 54,
+              "rubric_item_id": "e9d1b155-eebe-4330-9a4b-3bac77f5c972",
+              "signed_score": 1,
+              "criterion": "An Equipment Liability statement disclaims City liability for loss of or damage to RU’s property brought to the Center."
+            }
+          ],
+          "affected_files": [
+            "ec76eafe083d0175de7e957f857f4292/Recreare_Contract_Outline.docx"
+          ],
+          "basis": "The prompt assigns Equipment Liability to the supplied outline; these criteria specify resulting responsibility/disclaimer statements.",
+          "source_input_impact": "unconfirmed",
+          "impact": "The Equipment Liability text is readable. It expressly allocates liability for equipment donated to the City and for RecFit-owned equipment. This does not, without additional interpretation, establish the two differently worded responsibility/disclaimer statements in the rubric. No legal equivalence judgment is made.",
+          "source_evidence": {
+            "file": "ec76eafe083d0175de7e957f857f4292/Recreare_Contract_Outline.docx",
+            "member": "word/document.xml",
+            "member_sha256": "3825d9f321fa1e3b86a0bc593b233d382f0435f2f4b50d119c3698c782cedf22",
+            "paragraph_index_basis": "zero-based w:p descendants in document.xml",
+            "paragraphs": [
+              {
+                "index": 105,
+                "text": "Equipment Liability"
+              },
+              {
+                "index": 107,
+                "text": "Upon acceptance of any donated equipment to the City, the City shall assume liability for all equipment that is purchased by RU and donated to the City. RU will assume liability for any equipment that is owned by RecFit."
+              }
+            ]
+          }
+        },
+        {
+          "dependency_kind": "direct_source_dependency",
+          "original_criteria": [
+            {
+              "index_zero_based": 55,
+              "rubric_item_id": "50f95a81-4b64-45a2-863a-ca9df35ed144",
+              "signed_score": 1,
+              "criterion": "A storage provision restricts storage of RU equipment to the designated locked storage closet."
+            }
+          ],
+          "affected_files": [
+            "ec76eafe083d0175de7e957f857f4292/Recreare_Contract_Outline.docx"
+          ],
+          "basis": "The outline provides the storage terms for RecFit-owned items, and the rubric requires a restriction to the designated locked closet.",
+          "source_input_impact": "unconfirmed",
+          "impact": "The body-XML fallback exposes the storage paragraph. Its use is available without repairing the original package; resolving the Fitness Room versus Multi-Purpose Room wording remains unconfirmed.",
+          "source_evidence": {
+            "file": "ec76eafe083d0175de7e957f857f4292/Recreare_Contract_Outline.docx",
+            "member": "word/document.xml",
+            "member_sha256": "3825d9f321fa1e3b86a0bc593b233d382f0435f2f4b50d119c3698c782cedf22",
+            "paragraph_index_basis": "zero-based w:p descendants in document.xml",
+            "paragraphs": [
+              {
+                "index": 101,
+                "text": "RU will bring additional equipment for exclusive RecFit program use. RecFit- owned items will be stored in the Fitness Room storage closet and shall be referred to as the RecFit Storage Closet RecFit items allowed to be stored will include program t-shirts, water bottles, participation incentive items, and materials needed for RecFit programming. RecFit will be responsible for reimbursing the City for any rekeyed locks and City Staff will have access to the closet to perform necessary Facility and Fire inspections. General facility users will not have access to the locked RecFit Storage Room."
+              }
+            ]
+          }
+        },
+        {
+          "dependency_kind": "direct_source_dependency",
+          "original_criteria": [
+            {
+              "index_zero_based": 56,
+              "rubric_item_id": "86902670-d098-442c-bec5-018ec3a13af3",
+              "signed_score": 1,
+              "criterion": "Primary City program contact details include name, title, postal address, phone number, and email address."
+            },
+            {
+              "index_zero_based": 57,
+              "rubric_item_id": "13295960-a5bf-4bf3-a12f-bf69d1dcd1d3",
+              "signed_score": 1,
+              "criterion": "Primary RU program contact details include name, title, postal address, phone number, and email address."
+            }
+          ],
+          "affected_files": [
+            "ec76eafe083d0175de7e957f857f4292/Recreare_Contract_Outline.docx"
+          ],
+          "basis": "The prompt explicitly locates primary contact details in the outline, and these criteria require name, title, address, phone, and email.",
+          "source_input_impact": "unconfirmed",
+          "impact": "The City and RU primary contact fields are present in readable body XML. The ordinary reader failure does not establish that this source data is unavailable; correctness in a participant output is untested.",
+          "source_evidence": {
+            "file": "ec76eafe083d0175de7e957f857f4292/Recreare_Contract_Outline.docx",
+            "member": "word/document.xml",
+            "member_sha256": "3825d9f321fa1e3b86a0bc593b233d382f0435f2f4b50d119c3698c782cedf22",
+            "paragraph_index_basis": "zero-based w:p descendants in document.xml",
+            "paragraphs": [
+              {
+                "index": 54,
+                "text": "Primary Contacts: "
+              },
+              {
+                "index": 55,
+                "text": "For the City:"
+              },
+              {
+                "index": 57,
+                "text": "John Wood"
+              },
+              {
+                "index": 58,
+                "text": "Assistant Director"
+              },
+              {
+                "index": 59,
+                "text": "Recreare Parks and Recreation"
+              },
+              {
+                "index": 60,
+                "text": "123 A Street"
+              },
+              {
+                "index": 61,
+                "text": "Recreare, NC 54321"
+              },
+              {
+                "index": 62,
+                "text": "123-555-5555"
+              },
+              {
+                "index": 63,
+                "text": "AssistantDirector@Recreare.gov"
+              },
+              {
+                "index": 65,
+                "text": "For RU:"
+              },
+              {
+                "index": 67,
+                "text": "Steve Southgate"
+              },
+              {
+                "index": 68,
+                "text": "Chief, Division of General Pediatrics"
+              },
+              {
+                "index": 69,
+                "text": "Recreare University"
+              },
+              {
+                "index": 70,
+                "text": "321 First St."
+              },
+              {
+                "index": 71,
+                "text": "Recreare, NC 54321"
+              },
+              {
+                "index": 72,
+                "text": "123-555-4444"
+              },
+              {
+                "index": 73,
+                "text": "ChiefGenPeds@RU.edu"
+              }
+            ]
+          }
+        },
+        {
+          "dependency_kind": "conditional_source_route",
+          "original_criteria": [
+            {
+              "index_zero_based": 58,
+              "rubric_item_id": "7902267c-911e-400b-a7eb-ea3aba37e85b",
+              "signed_score": 1,
+              "criterion": "The agreement names the role or person responsible for day-to-day cancellations and space issues."
+            },
+            {
+              "index_zero_based": 59,
+              "rubric_item_id": "864771e3-34f8-406a-a8e9-b673be6c3ad5",
+              "signed_score": 1,
+              "criterion": "The agreement specifies at least one notification channel (email or phone) for cancellations/space changes."
+            }
+          ],
+          "affected_files": [
+            "ec76eafe083d0175de7e957f857f4292/Recreare_Contract_Outline.docx"
+          ],
+          "basis": "The prompt requests contacts for day-to-day program decisions; the outline supplies Initial Liaisons and Primary Contacts. These can inform the named decision role and notification channel.",
+          "source_input_impact": "unconfirmed",
+          "impact": "Relevant roles, email addresses, and telephone numbers are readable. The allocation of day-to-day authority and the channel chosen in an agreement remain unconfirmed; these criteria do not themselves name this file as an exclusive source.",
+          "source_evidence": {
+            "file": "ec76eafe083d0175de7e957f857f4292/Recreare_Contract_Outline.docx",
+            "member": "word/document.xml",
+            "member_sha256": "3825d9f321fa1e3b86a0bc593b233d382f0435f2f4b50d119c3698c782cedf22",
+            "paragraph_index_basis": "zero-based w:p descendants in document.xml",
+            "paragraphs": [
+              {
+                "index": 39,
+                "text": "Initial Liaisons"
+              },
+              {
+                "index": 40,
+                "text": "Recreation Services Manager"
+              },
+              {
+                "index": 41,
+                "text": "Recreare Parks & Recreation"
+              },
+              {
+                "index": 42,
+                "text": "123 A Street. Recreare, NC 54321"
+              },
+              {
+                "index": 43,
+                "text": "123-555-5555"
+              },
+              {
+                "index": 44,
+                "text": "RecreationServicesManager@Recreare.gov "
+              },
+              {
+                "index": 48,
+                "text": "Chief, Divisions of General Pediatrics and Adolescent Health"
+              },
+              {
+                "index": 49,
+                "text": "Recreare University"
+              },
+              {
+                "index": 50,
+                "text": "321 First St. Recreare, NC 54321"
+              },
+              {
+                "index": 51,
+                "text": "123-555-4444"
+              },
+              {
+                "index": 52,
+                "text": "ChiefGenPeds@RU.edu"
+              }
+            ]
+          }
+        },
+        {
+          "dependency_kind": "potential_indirect_effect",
+          "original_criteria": [
+            {
+              "index_zero_based": 14,
+              "rubric_item_id": "c96a0ff1-f3f1-4763-b57c-f7aa7938fd91",
+              "signed_score": 2,
+              "criterion": "The agreement identifies the Fitness Center as the principal program space, with additional spaces (if any) listed in Exhibit B."
+            },
+            {
+              "index_zero_based": 15,
+              "rubric_item_id": "f57849bb-dc74-4440-85e6-7182a7ed1388",
+              "signed_score": 2,
+              "criterion": "The City will provide a locked storage closet in the Multi-Purpose Room for program storage."
+            }
+          ],
+          "affected_files": [
+            "ec76eafe083d0175de7e957f857f4292/Recreare_Contract_Outline.docx"
+          ],
+          "basis": "These space/closet criteria overlap the outline exhibit contents, while the prompt independently specifies the Fitness Center.",
+          "source_input_impact": "unconfirmed",
+          "impact": "The body-XML fallback does not establish the rubric's Multi-Purpose Room location or its assignment of additional spaces to Exhibit B. Source alignment remains unresolved; this record does not revise the original prompt or rubric."
+        }
+      ],
+      "prompt_level_obligations": [
+        {
+          "prompt_excerpt": "The attached Recreare_Contract_Outline.docx contains the articles and subsections that are expected, as well as primary contact details, two Exhibits, and the Equipment Liability.",
+          "impact": "Raw body XML supplies substantial task-specific content despite ordinary DOCX-reader failure. Preserve the original and use a working copy/raw XML for reading; rendered layout, external relationship semantics, and native-app repair behavior are not established."
+        }
+      ],
+      "remainder_unknown": {
+        "status": "not_assessed_for_source_defect_impact",
+        "rubric_item_ids": [
+          "6ff8448f-23a6-4fdc-bb87-97c79b89ea9c",
+          "217baee2-f101-4875-b94b-2b5b84a1973b",
+          "c8954b3f-0da0-4cc4-9928-d4eb701d3c67",
+          "bc5f7b9b-4bdb-4143-b748-5bac9a6b67c6",
+          "565c4709-0e30-4a23-99fb-6019516cd1e3",
+          "c23bf591-dcb3-47f1-98e3-3cfb5b8b1e01",
+          "35a61a6a-b151-4d75-9c7e-ad25b0bc6dab",
+          "81025a4f-46b8-406c-a2e6-3ff37b4653f4",
+          "233996a3-1bf5-4f40-8d7f-cc92d9a85fb1",
+          "29ad0eda-3c20-40ed-bde9-707482079895",
+          "bb2b85b3-1798-47a3-91ad-330c9f451bf6",
+          "799a216f-1d7b-40de-8905-de38c9a481f4",
+          "e3914015-7f7f-4620-ad4c-fb10a835310c",
+          "e329d443-9486-48e9-b87e-b4e5f48b125a",
+          "bf1cf5d0-9278-4033-a81c-d91d32c300f4",
+          "990e4386-1ded-490f-9406-843e7e5d7e91",
+          "6b43dd9c-1281-441f-9bc8-89d8d7d7e81f",
+          "986e9c49-aa1b-4422-8934-caa601d1dcfe",
+          "150719d4-6253-415f-99a3-0244f34dc273",
+          "9da4d1a9-1ee4-42ee-afd2-cff016ed10ae",
+          "1fc24592-8798-4a17-a215-a414f6d70082",
+          "168ef7c0-3a4e-4e6d-8c10-9fe7e00850ea",
+          "da1a4a01-0200-408d-8d19-53601c3c684a",
+          "479f07d8-a549-4bc8-be57-5e8821d6c5bc",
+          "d5f216f6-0d43-41e8-a0b3-91b43c5b14dd",
+          "b4ce3393-3037-4479-a69d-39219bbbef5e",
+          "fd9fae25-279e-4378-b469-fbc4d73543b6",
+          "c481b5d7-797c-45d6-bd34-d0f4564bff55",
+          "2d121c24-cd77-4e07-ab75-bf74c7dbbc62",
+          "3cbe6262-3e8d-404d-b8c4-5ba9b1d1709e",
+          "f9e7d203-9200-40fb-9ba6-c95414f735e9",
+          "279b8b5d-61ba-4e54-b21c-fd0c4a90642f",
+          "3d71be3b-4114-4c3d-8568-5dfbf40305e7",
+          "dc3d0650-e3e9-45c2-a689-e53f14ce94ef",
+          "e5b95828-56a4-4f06-bceb-9000a5f7c24d",
+          "d7edf173-7337-49e7-b086-8e3363afa4ac",
+          "54848948-1c15-4d4d-93be-b18addb79c2d",
+          "99c58fa7-78ea-4061-ae60-b3388f513ad8",
+          "3e35a222-3227-4dbb-ac3a-6c1999438f6b",
+          "15c34650-d514-4a77-a554-fa9132e3293a",
+          "e4fc0be1-bb2a-47fb-aab0-71216c97d83d"
+        ],
+        "meaning": "No direct dependence conclusion is made for these criteria in this bounded mapping. They are neither cleared nor failed; task outputs and other evidence have not been evaluated."
+      },
+      "source_linked_observations": [
+        {
+          "kind": "source_body_rubric_alignment_unconfirmed",
+          "rubric_item_ids": [
+            "2475c0b6-95dd-477a-ac1f-4852289b3537"
+          ],
+          "observation": "The inspected main-body text labels Exhibit A \"Spaces Subject to this Agreement\" and does not list specific program days or start/end clock times. The rubric asks for such times taken directly from the outline. The prompt supplies minimum session durations/frequency but not those exact values. This is a limited body-text observation, not a complete rendered-document inspection."
+        },
+        {
+          "kind": "source_body_rubric_alignment_unconfirmed",
+          "rubric_item_ids": [
+            "c96a0ff1-f3f1-4763-b57c-f7aa7938fd91",
+            "f57849bb-dc74-4440-85e6-7182a7ed1388",
+            "fe3bfa63-8902-45b2-9d90-a2943c50c923",
+            "50f95a81-4b64-45a2-863a-ca9df35ed144"
+          ],
+          "observation": "The prompt locates storage in the Fitness Center; the inspected outline body describes Fitness Room storage and lists spaces under Exhibit A. The rubric refers to a Multi-Purpose Room and space/equipment Exhibit B. Preserve all wording and retain the alignment question."
+        },
+        {
+          "kind": "source_body_rubric_alignment_unconfirmed",
+          "rubric_item_ids": [
+            "b3a956a0-87d7-4a58-ad3e-4b02958b2952",
+            "e9d1b155-eebe-4330-9a4b-3bac77f5c972"
+          ],
+          "observation": "The source Equipment Liability paragraph is available, but its donation/ownership allocation and the rubric's damage/disclaimer statements are not identical. No automatic entailment or conflict resolution is assigned."
+        }
+      ]
+    }
+  ],
+  "validation": {
+    "exact_task_count": 4,
+    "exact_file_count": 5,
+    "all_170_original_rubric_ids_partitioned_once": true,
+    "original_criterion_text_and_signed_scores_copied_from_frozen_source": true,
+    "frozen_source_sha256_unchanged": true,
+    "requirements_review_sha256_unchanged": true,
+    "all_five_original_file_sha256_unchanged_on_current_read": true,
+    "prior_staged_before_after_identity_retained_as_historical_evidence": true,
+    "native_or_model_capability_acceptance_inferred": false,
+    "final_scoring_or_task_exclusion_inferred": false
+  },
+  "origin": {
+    "path": ".audit/2026-09-21-provided-parsing/source-impact.json",
+    "sha256": "cf2d49898ae9c45a800b914be51f58a4f6821c711db2b765afa01aa906c817a5"
+  }
+}
