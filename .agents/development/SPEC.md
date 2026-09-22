@@ -414,6 +414,9 @@ turn missing evidence into zero or a successful assessment. Pairwise `unjudgeabl
 
 An interrupted evaluator or malformed final judgment has `assessment_status: evaluation_failure`, with
 `assessment_failure` recording the evaluation stage, CLI execution status, reason and `cause: unclassified`.
+Claude terminal API failures retain their error text even when the native event labels its subtype `success`. A
+flagged `<synthetic>` API-error diagnostic is not a model identity; real assistant/init/usage model changes remain
+failures. Original native events and available usage are retained, and error terminals never establish completion.
 This locates the failed stage without assigning the cause to the participant, evaluator or infrastructure. Classify
 the cause separately from observed evidence. It retains a null score and contributes to failed/missing counts;
 missing item records do not convert a failed session into a completed unconfirmed assessment. Existing records with

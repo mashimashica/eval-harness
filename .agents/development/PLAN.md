@@ -12,7 +12,11 @@ selected-task source/prerequisite review. Existing completed evidence and all sp
 Current step: inputs/order/aggregation and29slots are frozen in [the dispatch receipt](evidence/gdpval-nsa-pilot-dispatch.json).
 All4 role/client preflights passed without model calls,5 provided files and108 original criterion units are preserved;
 14 exact housing conflicts remain evaluator-only unknowns. The once-only runner passes14 mock guards and typing/Ruff.
-Creator S started at2026-09-22T00:45:53Z; continue A,9applications and18judges within the new envelope. Preserve unavailable/failed/unstarted slots if quota blocks progression.
+Creator S failed after371.46s on provider HTTP529; A failed its availability preflight after7.78s with0model calls.
+Both slots remain consumed without retries. A hash-bound controller adjudication corrects only S's false quota flag
+(the native notification said allowed), preserving all frozen bytes and failures. S/A applications are blocked on their
+missing completed Skills; N applications continue in fixed order. See [failure classification](evidence/gdpval-nsa-pilot-failure-classification.json).
+The product API-error diagnostic repair passes24 targeted tests and types/Ruff; it is not applied to the frozen pilot.
 
 ## Active continuation: September22 remaining allowance
 
