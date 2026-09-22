@@ -183,6 +183,15 @@ and changed completed ratings are retained as immutable evidence. The mechanical
 for a valid score of `1`, `false` for a valid score of `0`, and `null` for an invalid grade; AI and human methods leave
 task success unknown unless a separate success rule is declared.
 
+Scalar evaluation defaults to completed executions only. Explicit `include_partial_artifacts: true` also admits
+saved `failed` and `timeout` submissions, after the same artifact-manifest verification and isolated copying. It does
+not admit pending/interrupted executions or reconstruct missing files. Preserve the source execution status and add
+`partial_artifact_evaluation: true` and `submission_completeness: partial` to its judgment; instruct the judge to assess
+original criteria and distinguish established failures from unconfirmed items without repairing the submission.
+The strict boolean option is scalar-only, retained in evaluation snapshots for resume, and omitted from snapshots
+when false to preserve legacy identities. Changed policy requires a new evaluation identity and consistent use across
+comparison conditions; it does not authorize generation retries or relabel the source as completed.
+
 ## Matched Skill comparisons and two kinds of repetition
 
 `comparison_design` defaults to `general` to preserve experiments that intentionally compare application settings.

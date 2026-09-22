@@ -3,8 +3,9 @@
 
 ## Active work: owner-authorized three-task N/S/A pilot
 
-The new owner instruction, relayed through side task `01a0c290-ff84-71e1-a873-3d614f4cc139`, authorizes a finite29-session
-exploratory comparison, not the220-task production proposal. Follow [the frozen pilot plan](evidence/gdpval-nsa-pilot-plan.md).
+The owner requests a small random exploratory N/S/A comparison, relayed through side task
+`01a0c290-ff84-71e1-a873-3d614f4cc139`. The29-logical-session baseline was a side-controller operational proposal,
+not an immutable owner requirement; it is separate from the220-task production proposal. Follow [the frozen pilot plan](evidence/gdpval-nsa-pilot-plan.md).
 The191-task population and3-task random draw are saved before outcomes; tasks are never replaced. One reusable S Skill
 and one reusable A Skill share the same generic brief and creator; all N/S/A applications share the same environment.
 The controller owns selection/configuration/dispatch/report; worker owns the once-only runner and specialist owns only
@@ -13,10 +14,25 @@ Current step: inputs/order/aggregation and29slots are frozen in [the dispatch re
 All4 role/client preflights passed without model calls,5 provided files and108 original criterion units are preserved;
 14 exact housing conflicts remain evaluator-only unknowns. The once-only runner passes14 mock guards and typing/Ruff.
 Creator S failed after371.46s on provider HTTP529; A failed its availability preflight after7.78s with0model calls.
-Both slots remain consumed without retries. A hash-bound controller adjudication corrects only S's false quota flag
+Both initial attempts remain preserved. A hash-bound controller adjudication corrects only S's false quota flag
 (the native notification said allowed), preserving all frozen bytes and failures. S/A applications are blocked on their
 missing completed Skills; N applications continue in fixed order. See [failure classification](evidence/gdpval-nsa-pilot-failure-classification.json).
 The product API-error diagnostic repair passes24 targeted tests and types/Ruff; it is not applied to the frozen pilot.
+The owner now explicitly authorizes [finite transient-service recovery](evidence/gdpval-nsa-transient-recovery-plan.md):
+at most2 extra attempts per logical slot, never for timeout/quota/auth/permissions/poor output. Recover creators S/A
+with the same conditions while independent Codex applications continue. First declared batch:2creator retries,600s each,
+Claude Opus5/medium,max_turns24,serial1,subscription only. Preserve all failures and adopt only the first valid completion. The latest owner correction permits one Codex plus
+one Claude concurrently and evaluation of inspectable saved partial artifacts without rewriting failed execution status.
+N1 ended at its900s limit (904.24s measured), is not retry-eligible, and saved only a312-byte response; no workbook
+remains. Its original evaluation slots may assess that exact saved partial submission, retaining execution timeout.
+The old driver finished; controller-only hold markers were archived. No model session was interrupted.
+The v3 dispatcher passes15 mocks and scoped typing/Ruff. A42.89s native zero-model concurrent isolation probe
+confirms private auth homes, own workspace access, denied cross-workspace/auth access and independent timeout cleanup.
+S/A recovery and original N2/N3 began concurrently at01:34UTC, each client serial, with separate outputs and immutable
+first-completion adoptions. Partial scalar evaluation is explicit, manifest-verified and resume-stable;71 affected tests,
+8 evaluation-dispatch guards and scoped typing/Ruff pass. Fern reports0errors/1existing unauthenticated redirect warning.
+The evaluation-only snapshot changes config/evaluation routing, uniformly for all18planned judgments; participant and
+creator snapshots remain unchanged. Real partial-submission evaluation is pending while the two clients are occupied.
 
 ## Active continuation: September22 remaining allowance
 

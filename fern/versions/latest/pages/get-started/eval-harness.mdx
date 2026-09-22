@@ -788,6 +788,14 @@ a JSON object containing a numeric `score` in [0, 1] and a non-empty `rationale`
 criteria are configured. Invalid judgments are failures,
 not zero scores. Judge settings are independent of application settings.
 
+Scalar evaluation normally skips failed or timed-out executions. To evaluate their saved partial submissions, set
+`include_partial_artifacts: true` in the evaluation mapping and use a new evaluation output directory. Apply the same
+policy across the compared conditions. The judge receives the sealed saved files and original criteria, with an
+instruction to distinguish demonstrated failures from unconfirmed items. The harness verifies the artifact manifest;
+it does not recover unsaved work or repair the submission. Judgments retain the original execution status and record
+`partial_artifact_evaluation: true` and `submission_completeness: partial`. Pending or interrupted executions remain
+ineligible. This option is saved for resume and is currently limited to scalar AI evaluation.
+
 For an anonymous comparison of N and A, save `experiments/pairwise.yaml`:
 
 ```yaml

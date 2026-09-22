@@ -90,6 +90,7 @@ class EvaluationConfig:
     pairs: tuple[tuple[str, str], ...] | None = None
     office_rendering: OfficeRenderingConfig | None = None
     inspection_protocol: dict[str, Any] | None = None
+    include_partial_artifacts: bool = False
 
 
 @dataclass(frozen=True)
@@ -174,7 +175,17 @@ def _runtime(
     mapping = _mapping(value, field)
     allowed_fields = {"executor", "model", "settings"}
     if field == "evaluation":
-        allowed_fields.update({"method", "judges", "criteria", "pairs", "office_rendering", "inspection_protocol"})
+        allowed_fields.update(
+            {
+                "method",
+                "judges",
+                "criteria",
+                "pairs",
+                "office_rendering",
+                "inspection_protocol",
+                "include_partial_artifacts",
+            }
+        )
     if field == "build":
         allowed_fields.update({"name", "prompt", "instructions", "inputs", "input_paths", "skills", "creator_skills"})
     unknown_fields = sorted(set(mapping) - allowed_fields)
@@ -362,6 +373,9 @@ def _evaluation(raw: Any, config_dir: Path) -> EvaluationConfig | None:
             raise ConfigError("evaluation.pairs must be a list of two distinct condition IDs")
         if "pairs" in runtime.settings:
             raise ConfigError("specify evaluation.pairs or legacy settings.pairs, not both")
+    include_partial = mapping.get("include_partial_artifacts", False)
+    if not isinstance(include_partial, bool):
+        raise ConfigError("evaluation.include_partial_artifacts must be boolean")
     return EvaluationConfig(
         method,
         runtime,
@@ -370,6 +384,7 @@ def _evaluation(raw: Any, config_dir: Path) -> EvaluationConfig | None:
         tuple(tuple(p) for p in pairs) if pairs is not None else None,
         parse_rendering(mapping.get("office_rendering"), config_dir),
         load_inspection_protocol(mapping.get("inspection_protocol"), config_dir, criteria),
+        include_partial,
     )
 
 
@@ -549,6 +564,10 @@ def validate_evaluation_config(config: EvaluationConfig) -> list[str]:
     """Return all actionable errors for an evaluation configuration."""
 
     panel_errors: list[str] = []
+    if not isinstance(config.include_partial_artifacts, bool):
+        panel_errors.append("evaluation.include_partial_artifacts must be boolean")
+    if config.include_partial_artifacts and config.method != "scalar":
+        panel_errors.append("include_partial_artifacts is currently supported only for scalar AI grading")
     if config.inspection_protocol is not None:
         try:
             load_inspection_protocol(config.inspection_protocol, Path.cwd(), config.criteria)
@@ -850,6 +869,7 @@ def evaluation_snapshot(config: EvaluationConfig) -> dict[str, Any]:
 
     return {
         "method": config.method,
+        **({"include_partial_artifacts": True} if config.include_partial_artifacts else {}),
         "executor": config.runtime.executor,
         "model": config.runtime.model,
         "settings": _redact(config.runtime.settings),

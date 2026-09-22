@@ -62,6 +62,11 @@ from .office_rendering import OFFICE_SUFFIXES, attach_previews, parse_rendering,
 ExecutorFactory: TypeAlias = Callable[[str], Executor]
 
 
+def _saved_execution_is_evaluable(execution: Mapping[str, Any], config: EvaluationConfig) -> bool:
+    status = execution.get("execution_status")
+    return status == "completed" or (config.include_partial_artifacts and status in {"failed", "timeout"})
+
+
 def _prepare_office_previews(
     source: Path,
     state: Sequence[Mapping[str, Any]],
@@ -83,7 +88,7 @@ def _prepare_office_previews(
                 raise ArtifactError("saved shared inspection previews changed; regeneration is forbidden")
             capability_sources: list[Path] = []
             for execution in state:
-                if execution.get("execution_status") != "completed":
+                if not _saved_execution_is_evaluable(execution, config):
                     continue
                 execution_dir = _source_execution_path(source, execution)
                 _verify_saved_artifact(execution, execution_dir)
@@ -105,7 +110,7 @@ def _prepare_office_previews(
     started = monotonic()
     try:
         for execution in state:
-            if execution.get("execution_status") != "completed":
+            if not _saved_execution_is_evaluable(execution, config):
                 continue
             execution_dir = _source_execution_path(source, execution)
             _verify_saved_artifact(execution, execution_dir)
@@ -1260,7 +1265,7 @@ def _evaluate_one(
     task_criteria = _task_criteria(config.criteria, task_id, source_benchmark)
     judgment_dir = _judgment_directory(evaluation_dir, execution, selected_judge.id)
     judgment_dir.mkdir(parents=True, exist_ok=True)
-    if execution.get("execution_status") != "completed":
+    if not _saved_execution_is_evaluable(execution, config):
         record = {
             **_judge_metadata(selected_judge, criteria_digest),
             "judgment_id": _judgment_id(_generation_id(execution, source_run_id), selected_judge.id),
@@ -1335,6 +1340,15 @@ def _evaluate_one(
         write_json(findings_path, findings)
         mechanical_findings_path = str(findings_path.relative_to(evaluation_dir))
     prompt = render_scalar_prompt(task) + _criteria_prompt(task_criteria)
+    partial_submission = execution.get("execution_status") != "completed"
+    if partial_submission:
+        prompt += (
+            "\nThis is a sealed partial submission from an execution that did not complete. "
+            "Assess only the saved artifacts against the original criteria. Do not automatically assign zero "
+            "because execution failed, and do not waive missing required outputs. Distinguish directly established "
+            "failures from unconfirmed items; retain original conditional alternatives. Do not complete, repair or "
+            "regenerate the submission.\n"
+        )
     if capability_enabled(selected_judge.runtime.settings):
         prompt = _inspection_prompt(prompt)
         _stage_research(
@@ -1417,6 +1431,9 @@ def _evaluate_one(
         criteria_digest=criteria_digest,
         mechanical_findings_path=mechanical_findings_path,
     )
+    if partial_submission:
+        record["partial_artifact_evaluation"] = True
+        record["submission_completeness"] = "partial"
     _record_protocol_result(record, config, reported_score)
     write_json(judgment_dir / "judgment.json", record)
     return record
@@ -2615,6 +2632,7 @@ def _evaluation_config_from_snapshot(snapshot: Mapping[str, Any]) -> EvaluationC
         pairs=pairs,
         office_rendering=parse_rendering(snapshot.get("office_rendering"), Path.cwd()),
         inspection_protocol=load_inspection_protocol(snapshot.get("inspection_protocol"), Path.cwd(), criteria),
+        include_partial_artifacts=snapshot.get("include_partial_artifacts", False),
     )
 
 
